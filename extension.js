@@ -282,20 +282,19 @@ function getWebviewContent() {
         <div class="sidebar">
             <div class="node-palette">
                 <h3>节点类型</h3>
-                <button class="node-type" onclick="addNode('number')">📊 数字节点</button>
-                <button class="node-type" onclick="addNode('string')">📝 字符串节点</button>
-                <button class="node-type" onclick="addNode('math')">➕ 数学运算</button>
-                <button class="node-type" onclick="addNode('logic')">⚡ 逻辑判断</button>
-                <button class="node-type" onclick="addNode('print')">🖨️ 打印输出</button>
+                <button class="node-type" onclick="addNode('recipes')">📖 recipe</button>
+                <button class="node-type" onclick="addNode('elements')">📇 element/aspect</button>
+                <button class="node-type" onclick="addNode('decks')">🗃 deck</button>
+                <button class="node-type" onclick="addNode('verbs')">⚡ verb</button>
+                <button class="node-type" onclick="addNode('text')">📝 文本</button>
             </div>
             
             <div class="node-palette">
                 <h3>操作</h3>
-                <button class="btn" onclick="executeGraph()">▶️ 执行节点图</button>
                 <button class="btn btn-secondary" onclick="saveGraph()">💾 保存为 JSON</button>
                 <button class="btn btn-secondary" onclick="loadGraph()">📂 加载 JSON</button>
+                <button class="btn btn-secondary" onclick="readMod()">🔧 读取mod</button>
                 <button class="btn" onclick="clearCanvas()">🗑️ 清空画布</button>
-                <button class="btn" onclick="sendTest()">🔧 测试通信</button>
             </div>
             
             <div class="node-palette">
@@ -307,6 +306,9 @@ function getWebviewContent() {
         <div class="editor-area">
             <div class="toolbar">
                 <button class="btn" style="width: auto;" onclick="addTestNode()">添加测试节点</button>
+                <button class="btn" style="width: auto;" onclick="addTestNode()">引入json文件</button>
+                <button class="btn" style="width: auto;" onclick="addTestNode()">引入素材文件</button>
+                <button class="btn" style="width: auto;" onclick="addTestNode()">原版游戏文件（！如果修改过请引用修改后的文件）</button>
                 <span style="margin-left: auto; font-size: 12px; color: #888;">节点编辑器 v0.1</span>
             </div>
             
@@ -348,9 +350,9 @@ function getWebviewContent() {
             });
         }
         
-        // 发送测试消息
-        function sendTest() {
-            updateStatus('发送测试消息...');
+        // 读取mod生成节点图
+        function readMod() {
+            updateStatus('读取mod中，如果mod文件过大，读取时间可能较长');
             vscode.postMessage({
                 command: 'test',
                 message: 'Hello from Webview!'
@@ -485,7 +487,7 @@ function getWebviewContent() {
                     break;
                 case 'addNodeResult':
                     updateStatus('添加节点成功: ' + message.nodeType);
-                    addTestNode(); // 自动添加一个测试节点
+                    // addTestNode(); // 自动添加一个测试节点
                     break;
                 case 'graphLoaded':
                     updateStatus('图表加载完成');
