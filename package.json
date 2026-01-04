@@ -9,13 +9,17 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:cultist-node-editor.openEditor"
+  ],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "cultist-node-editor.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "cultist-node-editor.openEditor",
+        "title": "打开密教模拟器节点编辑器"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",
