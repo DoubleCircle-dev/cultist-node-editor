@@ -8,9 +8,34 @@ const nodeTypes = {
     test: {
         title: '测试节点',
         color: '#6c5ce7',
-        inputs: 1,
-        outputs: 1,
-        content: (id) => `这是一个测试节点<br>ID: ${id}<br>类型: 通用测试`,
+        inputs: [
+            { type: 'port', label: '测试输入' }
+        ],
+        outputs: [
+            { type: 'port', label: '测试输出' }
+        ],
+        content: `这是一个测试节点<br>ID: <br>类型: 通用测试`,
+        icon: '⚡',
+        properties: [
+            { label: '数值', type: 'range', min: 0, max: 100, default: 50 },
+            { label: '选项', type: 'select', options: ['选项1', '选项2', '选项3'], default: 0 },
+            { label: '开关', type: 'checkbox', default: false },
+            { label: '二择', type: 'bool', default: false },
+            { label: '数值', type: 'number', min: 0, max: 100, default: 50 },
+            { label: '整数输入', type: 'int', default: 0 },
+            { label: '文本输入', type: 'text', default: '测试文本' }
+        ]
+    },
+    legacy: {
+        title: '职业',
+        color: '#6c5ce7',
+        inputs: [
+            { type: 'port', label: '前置结局' }
+        ],
+        outputs: [
+            { type: 'port', label: '初始verb' }
+        ],
+        content: `这是一个测试节点<br>ID: <br>类型: 通用测试`,
         icon: '⚡',
         properties: [
             { label: '数值', type: 'number', min: 0, max: 100, default: 50 },
@@ -18,33 +43,41 @@ const nodeTypes = {
         ]
     },
     recipes: {
-        title: '交互',
-        color: '#4CAF50',
-        inputs: 1,
-        outputs: 1,
-        content: (id) => `音频输入节点<br>ID: ${id}<br>采样率: 44100Hz`,
+        title: '交互(recipes)',
+        color: '#f1912aff',
+        inputs: [
+            { type: 'port', label: 'requirements' }
+        ],
+        outputs: [
+            { type: 'port', label: 'alt' },
+            { type: 'port', label: 'linked' },
+            { type: 'port', label: 'inductions' }
+        ],
+        content: `交互界面(recipes)，是使用行动与卡牌交互的一种过程，可以实现多样化的功能`,
         icon: '📖',
         properties: [
+            { label: 'aspects', type: 'range', min: 0, max: 100, default: 75 }
         ]
     },
     elements: {
-        title: '音频输出',
+        title: '元素',
         color: '#2196F3',
-        inputs: 1,
-        outputs: 0,
-        content: (id) => `音频输出节点<br>ID: ${id}<br>声道: 立体声`,
+        inputs: [],
+        outputs: [],
+        content: `游戏中的卡牌、性相均属于elements`,
         icon: '🔊',
         properties: [
+            { label: '类型', type: 'select', options: ['card', 'aspect'], default: 0 },
             { label: '声道', type: 'select', options: ['单声道', '立体声', '5.1'], default: 1 },
             { label: '音量', type: 'range', min: 0, max: 100, default: 75 }
         ]
     },
     decks: {
-        title: '滤波器',
+        title: '卡池',
         color: '#FF9800',
-        inputs: 1,
-        outputs: 1,
-        content: (id) => `滤波器节点<br>ID: ${id}<br>类型: 低通滤波器`,
+        inputs: [],
+        outputs: [],
+        content: `滤波器节点<br>ID: <br>类型: 低通滤波器`,
         icon: '🎛️',
         properties: [
             { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
@@ -53,24 +86,53 @@ const nodeTypes = {
         ]
     },
     verbs: {
-        title: '延迟效果',
+        title: '行动框',
         color: '#9C27B0',
-        inputs: 1,
-        outputs: 1,
-        content: (id) => `延迟节点<br>ID: ${id}<br>最大延迟: 2000ms`,
-        icon: '⏱️',
+        outputs: [
+            { type: 'port', label: 'verb' }
+        ],
+        content: `延迟节点<br>ID: <br>最大延迟: 2000ms`,
+        icon: '⚡',
         properties: [
-            { label: '延迟时间', type: 'range', min: 0, max: 2000, default: 500 },
-            { label: '反馈', type: 'range', min: 0, max: 100, default: 30 },
-            { label: '混合', type: 'range', min: 0, max: 100, default: 50 }
+            { label: 'id', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
+            { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
+            { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 }
+        ]
+    },
+    slots: {
+        title: '卡槽',
+        color: '#3F51B5',
+        inputs: [],
+        outputs: [],
+        content: `混音器节点<br>ID: <br>通道: 4进2出`,
+        icon: '🎚️',
+        properties: [
+            { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
+            { label: '通道2', type: 'range', min: 0, max: 100, default: 100 },
+            { label: '通道3', type: 'range', min: 0, max: 100, default: 100 },
+            { label: '通道4', type: 'range', min: 0, max: 100, default: 100 }
+        ]
+    },
+    levers: {
+        title: '继承物品',
+        color: '#3F51B5',
+        inputs: [],
+        outputs: [],
+        content: `混音器节点<br>ID: <br>通道: 4进2出`,
+        icon: '🎚️',
+        properties: [
+            { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
+            { label: '通道2', type: 'range', min: 0, max: 100, default: 100 },
+            { label: '通道3', type: 'range', min: 0, max: 100, default: 100 },
+            { label: '通道4', type: 'range', min: 0, max: 100, default: 100 }
         ]
     },
     text: {
-        title: '混音器',
+        title: '文本',
         color: '#3F51B5',
-        inputs: 4,
-        outputs: 2,
-        content: (id) => `混音器节点<br>ID: ${id}<br>通道: 4进2出`,
+        inputs: [],
+        outputs: [],
+        content: `混音器节点<br>ID: <br>通道: 4进2出`,
         icon: '🎚️',
         properties: [
             { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
@@ -85,9 +147,7 @@ const nodeTypes = {
 const vscode = acquireVsCodeApi();
 let nodeCount = 0;
 let selectedNodes = new Set();
-let isDragging = false;
 let isConnecting = false;
-let dragOffset = { x: 0, y: 0 };
 let connectionStart = null;
 const nodes = new Map();
 const connections = [];
@@ -168,6 +228,10 @@ function clearCanvas() {
 
 // 添加测试节点（直接在Webview中）
 function addTestNode() {
+    addNode('test', Math.random() * (canvas.clientWidth - 150), Math.random() * (canvas.clientHeight - 100));
+}
+
+function addSimpleTestNode() {
     nodeCount++;
     const canvas = document.getElementById("canvas");
     const placeholder = document.getElementById("placeholder");
@@ -272,7 +336,7 @@ function addNode(type, x, y) {
             placeholder.style.display = 'none';
         }
 
-        // updateStatus(`测试点 #${nodeCount}...`);
+        updateStatus(`测试点 #${nodeCount}...`);
 
         updateStatus(`添加 ${config.title} #${nodeCount}`);
 
@@ -280,7 +344,7 @@ function addNode(type, x, y) {
     } catch (error) {
         console.error('❌ 添加节点时出错:' + error);
         nodeCount--;
-        updateStatus('添加节点时出错');
+        updateStatus('添加节点时出错' + error.message);
     }
 
 
@@ -298,103 +362,53 @@ function createNodeElement(node) {
     element.style.top = node.y + 'px';
     element.style.borderColor = node.config.color;
 
-    // 构建HTML
-    let portsHTML = '';
+    node.element = element;
 
-    // 输入端口
-    for (let i = 0; i < node.config.inputs; i++) {
-        const topPercent = ((i + 1) * 100 / (node.config.inputs + 1));
-        portsHTML += `
-            <div class="port input" 
-                 data-node-id="${node.id}"
-                 data-port-type="input"
-                 data-port-index="${i}"
-                 style="top: ${topPercent}%"
-                 onmousedown="startConnection(event, '${node.id}', ${i}, 'input')">
-                <div class="port-label">输入 ${i + 1}</div>
-            </div>
-        `;
-    }
-
-    // 输出端口
-    for (let i = 0; i < node.config.outputs; i++) {
-        const topPercent = ((i + 1) * 100 / (node.config.outputs + 1));
-        portsHTML += `
-            <div class="port output" 
-                 data-node-id="${node.id}"
-                 data-port-type="output"
-                 data-port-index="${i}"
-                 style="top: ${topPercent}%"
-                 onmousedown="startConnection(event, '${node.id}', ${i}, 'output')">
-                <div class="port-label">输出 ${i + 1}</div>
-            </div>
-        `;
-    }
-
-    // 属性输入
-    let propertiesHTML = '';
-    if (node.config.properties) {
-        node.config.properties.forEach((prop, index) => {
-            let inputHTML = '';
-            switch (prop.type) {
-                case 'range':
-                    inputHTML = `
-                        <input type="range" 
-                               class="property-input"
-                               min="${prop.min || 0}" 
-                               max="${prop.max || 100}" 
-                               step="${prop.step || 1}"
-                               value="${prop.default || 50}"
-                               onchange="updateNodeProperty('${node.id}', ${index}, this.value)">
-                    `;
-                    break;
-                case 'select':
-                    const options = prop.options.map((opt, i) =>
-                        `<option value="${i}" ${i === prop.default ? 'selected' : ''}>${opt}</option>`
-                    ).join('');
-                    inputHTML = `
-                        <select class="property-input" 
-                                onchange="updateNodeProperty('${node.id}', ${index}, this.value)">
-                            ${options}
-                        </select>
-                    `;
-                    break;
-                case 'checkbox':
-                    inputHTML = `
-                        <input type="checkbox" 
-                               class="property-input"
-                               ${prop.default ? 'checked' : ''}
-                               onchange="updateNodeProperty('${node.id}', ${index}, this.checked)">
-                    `;
-                    break;
-                default:
-                    inputHTML = `
-                        <input type="${prop.type}" 
-                               class="property-input"
-                               value="${prop.default || ''}"
-                               onchange="updateNodeProperty('${node.id}', ${index}, this.value)">
-                    `;
-            }
-
-            propertiesHTML += `
-                <div class="property-item">
-                    <div class="property-label">${prop.label}:</div>
-                    ${inputHTML}
-                </div>
-            `;
-        });
-    }
-
-    element.innerHTML = `
+    // header设置，包括图标，标题，id
+    element.innerHTML = '';
+    element.innerHTML += `
         <div class="node-header">
             <div class="node-icon" style="color: ${node.config.color}">${node.config.icon}</div>
-            <div class="node-title">${node.config.title} #${node.id.split('-')[1]}</div>
+            <div class="node-title">
+                <input type="text" 
+                       class="node-title-input" 
+                       value="${node.config.title}" 
+                       placeholder="节点标题"
+                       onchange="updateNodeTitle('${node.id}', this.value)"
+                       onclick="event.stopPropagation()"
+                       onkeydown="if(event.key === 'Enter') this.blur()">
+                <span class="node-id">#${node.id.split('-')[1]}</span>
+            </div>
         </div>
+    `;
+
+    // 内容设置
+    element.innerHTML += `
         <div class="node-content">
-            <div class="node-info">${node.config.content(node.id.split('-')[1])}</div>
-            ${propertiesHTML ? `<div class="node-properties">${propertiesHTML}</div>` : ''}
+            <div class="node-info">${node.config.content}  </div>
+    `;
+
+    // 属性设置
+    let propertiesHTML = '';
+    if (node.config.properties) {
+        propertiesHTML = createPropertiesHTML(node);
+    }
+
+    element.innerHTML += `
+            ${propertiesHTML ? `<div class="node-properties">${propertiesHTML}</div>` : ''} 
+    `;
+
+    // port-hub设置
+    element.innerHTML += `
+        <div class="node-port-hub">
+            <div class="ports-container">
+                ${createPortHubHTML(node)}
+            </div>
         </div>
-        <div class="node-ports">${portsHTML}</div>
+    `;
+
+    element.innerHTML += `
+        </div>
     `;
 
     // 初始化节点数据
@@ -405,7 +419,6 @@ function createNodeElement(node) {
     }
 
     canvas.appendChild(element);
-    node.element = element;
 
     // 为整个节点添加选中事件监听（端口和输入框除外）
     // 相关变量
@@ -425,6 +438,281 @@ function createNodeElement(node) {
     element.tabIndex = -1;
 
     updateStatus(`节点已添加: ${node.element} #${node.id.split('-')[1]}`);
+}
+
+function createPropertiesHTML(node) {
+    let propertiesHTML = '';
+    node.config.properties.forEach((prop, index) => {
+        let inputHTML = '';
+        switch (prop.type) {
+            case 'range':
+                inputHTML = `
+                        <input type="range" 
+                               class="property-input"
+                               min="${prop.min || 0}" 
+                               max="${prop.max || 100}" 
+                               step="${prop.step || 1}"
+                               value="${prop.default || 50}"
+                               onchange="updateNodeProperty('${node.id}', ${index}, this.value)">
+                    `;
+                break;
+            case 'select':
+                const options = prop.options.map((opt, i) =>
+                    `<option value="${i}" ${i === prop.default ? 'selected' : ''}>${opt}</option>`
+                ).join('');
+                inputHTML = `
+                        <select class="property-input" 
+                                onchange="updateNodeProperty('${node.id}', ${index}, this.value)">
+                            ${options}
+                        </select>
+                    `;
+                break;
+            case 'checkbox':
+                inputHTML = `
+                    <div class="property-checkbox-wrapper">
+                        <input type="checkbox" 
+                                class="property-input property-checkbox"
+                                ${prop.default ? 'checked' : ''}
+                                onchange="updateNodeProperty('${node.id}', ${index}, this.checked)">
+                    </div>
+                `;
+                break;
+            case 'bool':  // 布尔类型使用单选按钮组
+                const boolId = `bool-${node.id}-${index}`;
+                const trueLabel = prop.labels?.true || '是';
+                const falseLabel = prop.labels?.false || '否';
+                inputHTML = `
+                    <div class="bool-radio-group" data-id="${boolId}">
+                        <label class="bool-option">
+                            <input type="radio" 
+                                   name="${boolId}" 
+                                   value="true"
+                                   ${prop.default === true ? 'checked' : ''}
+                                   onchange="updateNodeProperty('${node.id}', ${index}, true)">
+                            <span class="bool-radio-label">${trueLabel}</span>
+                        </label>
+                        <label class="bool-option">
+                            <input type="radio" 
+                                   name="${boolId}" 
+                                   value="false"
+                                   ${prop.default === false ? 'checked' : ''}
+                                   onchange="updateNodeProperty('${node.id}', ${index}, false)">
+                            <span class="bool-radio-label">${falseLabel}</span>
+                        </label>
+                    </div>
+                `;
+                break;
+            case 'text':  // 文本输入
+                inputHTML = `
+                        <input type="text" 
+                               class="property-input property-text"
+                               value="${prop.default || ''}"
+                               placeholder="${prop.placeholder || ''}"
+                               onchange="updateNodeProperty('${node.id}', ${index}, this.value)"
+                               onblur="updateNodeProperty('${node.id}', ${index}, this.value)">
+                `;
+                break;
+            case 'int':  // 整数数值输入
+                inputHTML = `
+                        <input type="number" 
+                               class="property-input property-int"
+                               min="${prop.min || ''}"
+                               max="${prop.max || ''}"
+                               step="1"
+                               value="${prop.default || 0}"
+                               placeholder="${prop.placeholder || ''}"
+                               onchange="updateNodeProperty('${node.id}', ${index}, parseInt(this.value) || 0)"
+                               onblur="updateNodeProperty('${node.id}', ${index}, parseInt(this.value) || 0)">
+                `;
+                break;
+            default:
+                inputHTML = `
+                        <input type="${prop.type}" 
+                               class="property-input"
+                               value="${prop.default || ''}"
+                               onchange="updateNodeProperty('${node.id}', ${index}, this.value)">
+                    `;
+        }
+
+        propertiesHTML += `
+                <div class="property-item">
+                    <div class="property-label">${prop.label}:</div>
+                    ${inputHTML}
+                </div>
+            `;
+    });
+    return propertiesHTML
+}
+
+// 创建port hub区域存放连接端口
+function createPortHubHTML(node) {
+    let portsHTML = '';
+
+    // 左侧输入端口区域
+    portsHTML += `<div class="port-column port-inputs">`;
+
+    if (node.config.inputs && node.config.inputs.length > 0) {
+        portsHTML += `<div class="port-column-title">输入端口</div>`;
+
+        node.config.inputs.forEach((input, index) => {
+            portsHTML += createPortHubItem(node, 'input', index, input);
+        });
+
+    }
+    portsHTML += `</div>`;
+
+    // 右侧输出端口区域
+    portsHTML += `<div class="port-column port-outputs">`;
+
+    if (node.config.outputs && node.config.outputs.length > 0) {
+        portsHTML += `<div class="port-column-title">输出端口</div>`;
+
+        node.config.outputs.forEach((output, index) => {
+            portsHTML += createPortHubItem(node, 'output', index, output);
+        });
+
+    }
+    portsHTML += `</div>`;
+
+    return portsHTML;
+}
+
+// 创建单个端口项（不带删除按钮）
+function createPortHubItem(node, portType, portIndex, portData) {
+    const portId = `${node.id}-${portType}-${portIndex}`;
+
+    let portHTML = '';
+    portHTML += `
+        <div class="port-hub-item port-${portType}" 
+             data-port-id="${portId}">
+    `;
+
+    switch (portType) {
+        case 'input':
+            portHTML += `
+                <div class="port-dot port-${portType}-dot"></div>
+                <span class="port-label">${portData.label}</span>
+            `;
+            break;
+        case 'output':
+            portHTML += `
+                <span class="port-label">${portData.label}</span>
+                <div class="port-dot port-${portType}-dot"></div>
+            `;
+            break;
+        default:
+            break;
+    }
+
+    portHTML += `
+        </div>
+    `;
+
+
+    return portHTML;
+
+}
+
+function updateNodeTitle(nodeId, newTitle) {
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+        node.config.title = newTitle;
+        console.log(`节点 ${nodeId} 标题更新为: ${newTitle}`);
+    }
+}
+
+function addNewPort(nodeId, portType, event) {
+    if (event) event.stopPropagation();
+
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+        if (!node.config[`${portType}s`]) {
+            node.config[`${portType}s`] = [];
+        }
+
+        const newPort = {
+            label: `${portType === 'input' ? '输入' : '输出'} ${node.config[`${portType}s`].length + 1}`,
+            name: '',
+            default: null
+        };
+
+        node.config[`${portType}s`].push(newPort);
+        refreshNodeElement(nodeId);
+    }
+}
+
+function dragPortStart(event, nodeId, portType, portIndex) {
+    event.dataTransfer.setData('application/json', JSON.stringify({
+        nodeId: nodeId,
+        portType: portType,
+        portIndex: portIndex,
+        action: 'connect'
+    }));
+    event.stopPropagation();
+}
+
+// 添加刷新节点函数
+function refreshNodeElement(nodeId) {
+    const node = nodes.find(n => n.id === nodeId);
+    if (node && node.element) {
+        // 保存当前位置
+        const rect = node.element.getBoundingClientRect();
+        node.x = rect.left - canvas.offsetLeft;
+        node.y = rect.top - canvas.offsetTop;
+
+        // 删除旧元素
+        node.element.remove();
+
+        // 创建新元素
+        createNodeElement(node);
+
+        updateStatus(`节点 ${nodeId} 已刷新`);
+    }
+}
+
+// === 为节点创建端口 ===
+function createPort(node, type, index, location) {
+    let portsHTML = ''
+    switch (type) {
+        case 'input':
+            portsHTML += `
+            <div class="port input" 
+                 data-node-id="${node.id}"
+                 data-port-type="input"
+                 data-port-index="${index}"
+                 style="top: ${location}%"
+                 onmousedown="startConnection(event, '${node.id}', ${index}, 'input')">
+                <div class="port-label">${node.config.inputs[index].label}</div>
+            </div>
+        `;
+            break;
+        case 'output':
+            portsHTML += `
+            <div class="port output" 
+                 data-node-id="${node.id}"
+                 data-port-type="output"
+                 data-port-index="${index}"
+                 style="top: ${location}%"
+                 onmousedown="startConnection(event, '${node.id}', ${index}, 'output')">
+                <div class="port-label">${node.config.outputs[index].label}</div>
+            </div>
+        `;
+            break;
+        default:
+            portsHTML += `
+            <div class="port output" 
+                 data-node-id="${node.id}"
+                 data-port-type="output"
+                 data-port-index="${index}"
+                 style="top: ${location}%"
+                 onmousedown="startConnection(event, '${node.id}', ${index}, 'output')">
+                <div class="port-label">测试port</div>
+            </div>
+        `;
+            break;
+    }
+
+    return portsHTML
 }
 
 // === 节点选中事件处理 ===

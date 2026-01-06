@@ -1,4 +1,4 @@
-*{
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -164,59 +164,500 @@ h3 {
     z-index: 10000;
 }
 
- /* 端口样式 */
- .node-ports {
-     position: absolute;
-     top: 0;
-     left: 0;
-     right: 0;
-     bottom: 0;
-     pointer-events: none;
- }
+/* 端口样式 */
+.node-ports {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
 
- .port {
-     position: absolute;
-     width: 16px;
-     height: 16px;
-     background: #3e3e42;
-     border-radius: 50%;
-     transform: translateX(-50%);
-     pointer-events: auto;
-     cursor: crosshair;
-     transition: all 0.2s;
-     border: 2px solid #1e1e1e;
- }
+.port {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #3e3e42;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    cursor: crosshair;
+    transition: all 0.2s;
+    border: 2px solid #1e1e1e;
+}
 
- .port.input {
-     left: -8px;
- }
+.port.input {
+    left: -8px;
+}
 
- .port.output {
-     left: calc(100% + 8px);
- }
+.port.output {
+    left: calc(100% + 8px);
+}
 
- .port:hover {
-     background: #007acc;
-     transform: translateX(-50%) scale(1.2);
- }
+.port:hover {
+    background: #007acc;
+    transform: translateX(-50%) scale(1.2);
+}
 
- .port-label {
-     position: absolute;
-     top: 50%;
-     transform: translateY(-50%);
-     font-size: 10px;
-     white-space: nowrap;
-     opacity: 0.8;
-     pointer-events: none;
- }
+.port-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0.8;
+    pointer-events: none;
+}
 
- .port.input .port-label {
-     left: 20px;
- }
+.port.input.port-label {
+    left: 20px;
+}
 
- .port.output .port-label {
-     right: 20px;
-     text-align: right;
- }
+.port.output.port-label {
+    right: 20px;
+    text-align: right;
+}
 
+/* 端口中心布局 - 双列显示 */
+.node-port-hub {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+}
 
+.ports-container {
+    display: flex !important;
+    /* 使用 !important 确保样式应用 */
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    gap: 10px !important;
+}
+
+/* 端口列 - 确保两侧都有 */
+.port-column {
+    flex: 1;
+    min-width: 0;
+    /* 允许缩小 */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.port-column-title {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 端口项样式 */
+.port-hub-item {
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+    border-radius: 6px;
+    user-select: none;
+    transition: all 0.2s ease;
+    cursor: default;
+    margin-bottom: 4px;
+    background: rgba(30, 30, 30, 0.9);
+    border: 1px solid rgba(62, 62, 66, 0.3);
+    padding: 0 10px;
+    overflow: visible;
+}
+
+/* 输入端口：从左到右排列（圆点-标签） */
+.port-inputs .port-hub-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+}
+
+/* 输出端口：从右到左排列（标签-圆点） */
+.port-outputs .port-hub-item {
+    flex-direction: row;
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.port-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.port-input-dot {
+    background: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
+}
+
+.port-output-dot {
+    background: #2196F3;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
+}
+
+.port-label {
+    font-size: 11px;
+    color: #cccccc;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    line-height: 1.2;
+    flex: 1;
+    min-width: 0;
+    padding: 0 2px;
+}
+
+/* 确保输入端口标签左对齐 */
+.port-inputs .port-label {
+    text-align: left;
+    margin-left: 12px;
+}
+
+/* 确保输出端口标签右对齐 */
+.port-outputs .port-label {
+    text-align: right;
+    margin-right: 12px;
+    order: -1;
+    /* 确保标签在flex布局中先显示 */
+}
+
+/* 鼠标悬停效果 */
+.port-hub-item:hover {
+    background: rgba(40, 40, 40, 0.9);
+    border-color: rgba(100, 100, 100, 0.8);
+}
+
+.port-hub-item:hover .port-dot {
+    transform: scale(1.2);
+}
+
+.port-hub-item:hover .port-label {
+    opacity: 1;
+    color: #ffffff;
+}
+
+/* 输入端口悬停时特殊效果 */
+.port-inputs .port-hub-item:hover .port-input-dot {
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.5);
+}
+
+/* 输出端口悬停时特殊效果 */
+.port-outputs .port-hub-item:hover .port-output-dot {
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.5);
+}
+
+/* 确保连接线正确连接 */
+.port-hub-item {
+    position: relative;
+}
+
+/* 为端口添加连接点区域 */
+.port-dot::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    cursor: crosshair;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* 高亮状态 */
+.port-hub-item.port-highlighted {
+    background: rgba(50, 50, 50, 0.9);
+    border-color: rgba(0, 122, 204, 0.8);
+}
+
+.port-hub-item.port-highlighted .port-dot {
+    transform: scale(1.3);
+    box-shadow: 0 0 0 4px rgba(0, 122, 204, 0.4);
+}
+
+/* 属性样式 */
+
+/* 基础属性样式 */
+.node-properties {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #3e3e42;
+}
+
+.property-item {
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.property-label {
+    font-size: 11px;
+    color: #a0a0a0;
+    margin-bottom: 4px;
+    min-width: auto;
+    margin-right: 0;
+    width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.property-input {
+    width: 100%;
+    min-width: 0;
+    padding: 4px 8px;
+    background: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 3px;
+    font-size: 11px;
+    color: #e0e0e0;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.property-input:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 1px rgba(0, 122, 204, 0.3);
+}
+
+/* 文本输入样式 */
+.property-text {
+    font-family: inherit;
+    background-color: #252526;
+}
+
+.property-text:focus {
+    background-color: #2a2a2a;
+}
+
+/* 整数输入样式 */
+.property-int {
+    width: 100%;
+    text-align: left;
+    background-color: #252526;
+}
+
+/* 限制数字输入框的上下箭头样式 */
+.property-int::-webkit-inner-spin-button,
+.property-int::-webkit-outer-spin-button {
+    opacity: 0.6;
+    margin: 0;
+    height: 14px;
+}
+
+/* 布尔输入样式 - 紧凑水平布局 */
+/* 布尔输入样式 - 传统单选按钮样式 */
+.bool-radio-group {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 2px 0;
+}
+
+.bool-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    margin-right: 12px;
+}
+
+.bool-option:hover .bool-radio-label {
+    color: #007acc;
+}
+
+.bool-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.bool-option .bool-radio-label {
+    display: flex;
+    align-items: center;
+    color: #cccccc;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding-left: 20px;
+    position: relative;
+    height: 18px;
+    line-height: 18px;
+}
+
+/* 自定义单选按钮圆圈 */
+.bool-option .bool-radio-label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    border: 1px solid #3e3e42;
+    border-radius: 50%;
+    background-color: #252526;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* 选中状态的圆点 */
+.bool-option .bool-radio-label::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #007acc;
+    transition: all 0.2s ease;
+}
+
+/* 选中状态 */
+.bool-option input[type="radio"]:checked+.bool-radio-label::before {
+    border-color: #007acc;
+    background-color: #252526;
+}
+
+.bool-option input[type="radio"]:checked+.bool-radio-label::after {
+    transform: translateY(-50%) scale(1);
+}
+
+.bool-option input[type="radio"]:checked+.bool-radio-label {
+    color: #007acc;
+    font-weight: 600;
+}
+
+/* 焦点状态 */
+.bool-option input[type="radio"]:focus+.bool-radio-label::before {
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
+    border-color: #007acc;
+}
+
+/* 悬停状态 */
+.bool-option:hover .bool-radio-label::before {
+    border-color: #666;
+}
+
+/* 范围滑块样式 */
+.property-range {
+    cursor: pointer;
+    height: 4px;
+    background: #3e3e42;
+    border-radius: 2px;
+    padding: 0;
+    margin: 2px 0;
+}
+
+.property-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #007acc;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.property-range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: #007acc;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+/* 下拉选择框样式 */
+.property-select {
+    cursor: pointer;
+    background-color: #252526;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23cccccc' d='M4 6L1 2h6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 8px;
+    padding-right: 20px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    font-size: 11px;
+}
+
+.property-select option {
+    padding: 4px;
+    font-size: 11px;
+    background: #1e1e1e;
+    color: #cccccc;
+}
+
+/* 复选框样式 */
+.property-checkbox {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    margin: 0;
+    background-color: #252526;
+    border-color: #3e3e42;
+    margin-top: 2px;
+}
+
+.property-checkbox:checked {
+    background-color: #007acc;
+    border-color: #007acc;
+    position: relative;
+}
+
+.property-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 9px;
+    font-weight: bold;
+}
+
+/* 针对复选框类型，调整布局使其更紧凑 */
+.property-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+/* 当属性类型是checkbox时，重新组织布局 */
+.property-item:has(.property-checkbox) {
+    flex-direction: row;
+    align-items: center;
+}
+
+.property-item:has(.property-checkbox) .property-label {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 0;
+}
