@@ -4,6 +4,18 @@
     padding: 0;
 }
 
+/* SVG连接线容器 */
+#connections-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    overflow: visible;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
         Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -164,59 +176,9 @@ h3 {
     z-index: 10000;
 }
 
-/* 端口样式 */
-.node-ports {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-}
-
-.port {
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    background: #3e3e42;
-    border-radius: 50%;
-    transform: translateX(-50%);
-    pointer-events: auto;
-    cursor: crosshair;
-    transition: all 0.2s;
-    border: 2px solid #1e1e1e;
-}
-
-.port.input {
-    left: -8px;
-}
-
-.port.output {
-    left: calc(100% + 8px);
-}
-
-.port:hover {
-    background: #007acc;
-    transform: translateX(-50%) scale(1.2);
-}
-
-.port-label {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 10px;
-    white-space: nowrap;
-    opacity: 0.8;
-    pointer-events: none;
-}
-
-.port.input.port-label {
-    left: 20px;
-}
-
-.port.output.port-label {
-    right: 20px;
-    text-align: right;
+/* 节点拖拽时的连接线过渡 */
+.node.dragging~#connections-svg .connection-path {
+    transition: none;
 }
 
 /* 端口中心布局 - 双列显示 */
@@ -382,16 +344,45 @@ h3 {
     z-index: 1;
 }
 
-/* 高亮状态 */
-.port-hub-item.port-highlighted {
-    background: rgba(50, 50, 50, 0.9);
-    border-color: rgba(0, 122, 204, 0.8);
+/* 端口悬停高亮 */
+.port-hub-item.port-highlight {
+    background: rgba(50, 50, 50, 0.95);
+    border-color: rgba(0, 122, 204, 0.9);
+    transform: translateX(2px);
 }
 
-.port-hub-item.port-highlighted .port-dot {
+.port-hub-item.port-highlight .port-dot {
     transform: scale(1.3);
     box-shadow: 0 0 0 4px rgba(0, 122, 204, 0.4);
 }
+
+.port-hub-item.port-highlight .port-label {
+    color: #ffffff;
+}
+
+/* 端口拖拽状态 */
+.port-hub-item.port-dragging {
+    background: rgba(50, 50, 50, 0.95);
+    border-color: rgba(0, 122, 204, 0.9);
+}
+
+.port-hub-item.port-dragging .port-dot {
+    transform: scale(1.4);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
 
 /* 属性样式 */
 
@@ -465,7 +456,6 @@ h3 {
     height: 14px;
 }
 
-/* 布尔输入样式 - 紧凑水平布局 */
 /* 布尔输入样式 - 传统单选按钮样式 */
 .bool-radio-group {
     display: flex;
@@ -660,4 +650,131 @@ h3 {
     margin-bottom: 0;
     flex: 1;
     min-width: 0;
+}
+
+/* 连接线样式 */
+.connection-path {
+    fill: none;
+    stroke: #4a90e2;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.2s ease, stroke-width 0.2s ease;
+    pointer-events: stroke;
+    cursor: pointer;
+    opacity: 0.9;
+}
+
+.connection-path:hover {
+    stroke: #5ba3f5;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 3px rgba(74, 144, 226, 0.5));
+}
+
+.connection-path.permanent-connection {
+    stroke: #4a90e2;
+    stroke-width: 3;
+}
+
+.connection-path.permanent-connection {
+    stroke: #666;
+    stroke-width: 2;
+}
+
+.connection-path.temp-connection {
+    stroke: #4a90e2;
+    stroke-width: 3;
+    stroke-dasharray: 8, 6;
+    opacity: 0.8;
+}
+
+.connection-path.connection-hover {
+    stroke: #5ba3f5;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 4px rgba(74, 144, 226, 0.6));
+}
+
+/* 已连接的端口样式 */
+.port-dot.connected {
+    box-shadow: 0 0 0 2px currentColor;
+    transform: scale(1.1);
+}
+
+.port-input-dot.connected {
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.8);
+}
+
+.port-output-dot.connected {
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.8);
+}
+
+/* 右键菜单样式 */
+.node-context-menu {
+    position: fixed;
+    display: none;
+    background: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 999999;
+    min-width: 150px;
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #cccccc;
+    font-size: 13px;
+}
+
+.context-menu-item:hover {
+    background: #094771;
+    color: #ffffff;
+}
+
+.menu-icon {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.menu-text {
+    flex: 1;
+}
+
+/* 右键菜单分隔符 */
+.context-menu-separator {
+    height: 1px;
+    background: #3e3e42;
+    margin: 4px 0;
+}
+
+/* 全局右键菜单样式 */
+.global-context-menu {
+    position: fixed;
+    display: none;
+    background: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 999999;
+    min-width: 150px;
+    padding: 4px 0;
+}
+
+/* 撤销按钮样式 */
+.btn-undo {
+  background: #3a3a3a;
+}
+
+.btn-undo:hover {
+  background: #454545;
+}
+
+.btn-undo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -121,38 +121,113 @@ function getWebviewContent(panel) {
         console.log('📝 HTML内容大小:', htmlContent.length, '字符');
 
         // 获取资源路径并转换为webview URI
-        // const basePath = vscode.Uri.file(context.extensionPath);
+        // 获取资源映射
+        const uiDir = path.join(__dirname, 'ui');
+        const resources = getResourceUris(panel, uiDir);
 
-        // CSS文件路径
-        const cssPath = vscode.Uri.file(
-            path.join(__dirname, 'ui', 'style.css')
-        );
-        const cssUri = panel.webview.asWebviewUri(cssPath);
-        console.log('🎨 CSS URI:', cssUri.toString());
+        // 动态替换所有资源引用
+        htmlContent = replaceResources(htmlContent, resources);
 
-        // webviewJS文件路径
-        const jsPath = vscode.Uri.file(
-            path.join(__dirname, 'ui', 'webview.js')
-        );
-        const jsUri = panel.webview.asWebviewUri(jsPath);
-        console.log('📜 JS URI:', jsUri.toString());
-
-        // 替换HTML中的资源路径
-        // 方法1: 如果HTML中使用相对路径
-        htmlContent = htmlContent.replace(
-            /(<link[^>]*href=["'])(style\.css)(["'][^>]*>)/gi,
-            `$1${cssUri}$3`
-        );
-
-        htmlContent = htmlContent.replace(
-            /(<script[^>]*src=["'])(webview\.js)(["'][^>]*>)/gi,
-            `$1${jsUri}$3`
-        );
         return htmlContent;
     } catch (error) {
         console.error('❌读取文件时出错:', error);
         return getSimpleHtml(); // 返回一个简单的HTML作为后备
     }
+}
+
+// 获取所有资源的URI映射
+function getResourceUris(panel, uiDir) {
+    const resources = {};
+
+    // 递归扫描ui目录下的所有资源文件
+    const scanDir = (dir, basePath = '') => {
+        const files = fs.readdirSync(dir, { withFileTypes: true });
+
+        files.forEach(file => {
+            const fullPath = path.join(dir, file.name);
+            const relativePath = path.join(basePath, file.name);
+
+            if (file.isDirectory()) {
+                scanDir(fullPath, relativePath);
+            } else {
+                const ext = path.extname(file.name).toLowerCase();
+                const uri = panel.webview.asWebviewUri(vscode.Uri.file(fullPath));
+
+                // 根据文件类型分类存储
+                if (ext === '.css') {
+                    resources[relativePath] = { type: 'css', uri };
+                } else if (ext === '.js') {
+                    resources[relativePath] = { type: 'js', uri };
+                } else if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico'].includes(ext)) {
+                    resources[relativePath] = { type: 'image', uri };
+                } else if (ext === '.html') {
+                    // HTML文件不处理
+                } else {
+                    resources[relativePath] = { type: 'other', uri };
+                }
+            }
+        });
+    };
+
+    scanDir(uiDir);
+    return resources;
+}
+
+// 替换HTML中的资源引用
+function replaceResources(htmlContent, resources) {
+    let content = htmlContent;
+
+    console.log('🔍 开始替换资源...');
+    console.log('📋 可用资源:', Object.keys(resources).map(k => `${k}: ${resources[k].type}`));
+
+    // 替换CSS文件
+    content = content.replace(
+        /<link\s+[^>]*href\s*=\s*["']([^"']+\.css)["'][^>]*>/gi,
+        (match, filePath) => {
+            console.log(`🎨 匹配到CSS: ${filePath}`);
+            const normalizedPath = filePath.replace(/^[./]+/, '');
+            const resource = resources[normalizedPath] || resources[filePath];
+            if (resource && resource.type === 'css') {
+                const newMatch = match.replace(
+                    new RegExp(`(["'])${filePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\1`),
+                    `$1${resource.uri.toString()}$1`
+                );
+                console.log(`✅ 替换CSS: ${filePath} -> ${resource.uri.toString()}`);
+                return newMatch;
+            } else {
+                console.warn(`⚠️  CSS资源未找到: ${filePath} (尝试了 ${normalizedPath})`);
+            }
+            return match;
+        }
+    );
+
+    // 替换JS文件
+    content = content.replace(
+        /<script\s+[^>]*src\s*=\s*["']([^"']+\.js)["'][^>]*>/gi,
+        (match, filePath) => {
+            console.log(`📜 匹配到JS: ${filePath}`);
+            const normalizedPath = filePath.replace(/^[./]+/, '');
+            const resource = resources[normalizedPath] || resources[filePath];
+            if (resource && resource.type === 'js') {
+                const newMatch = match.replace(
+                    new RegExp(`(["'])${filePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\1`),
+                    `$1${resource.uri.toString()}$1`
+                );
+                console.log(`✅ 替换JS: ${filePath} -> ${resource.uri.toString()}`);
+                return newMatch;
+            } else {
+                console.warn(`⚠️  JS资源未找到: ${filePath} (尝试了 ${normalizedPath})`);
+                console.log('可用的JS资源:',
+                    Object.entries(resources)
+                        .filter(([_, r]) => r.type === 'js')
+                        .map(([k, _]) => k)
+                );
+            }
+            return match;
+        }
+    );
+
+    return content;
 }
 
 function getSimpleHtml() {

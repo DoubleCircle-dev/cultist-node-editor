@@ -2,6 +2,39 @@
 /* eslint-disable no-undef */
 // @ts-nocheck
 
+// PortDragManager将通过全局对象访问
+
+// 全局变量管理
+const vscode = acquireVsCodeApi();
+let nodeCount = 0;
+let selectedNodes = new Set();
+let isConnecting = false;
+let connectionStart = null;
+const nodes = new Map();
+const connections = [];
+
+// 创建全局管理器实例
+// 在DOM加载完成后初始化PortDragManager
+let portDragManager;
+let actionManager;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('canvas');
+    portDragManager = new PortDragManager(
+        nodes,  // 节点Map
+        connections,  // 连接数组
+        canvas,  // 画布元素
+        updateStatus  // 状态更新函数
+    );
+
+    actionManager = new BasicActionManager(
+        nodes,  // 节点Map
+        connections,  // 连接数组
+        canvas,  // 画布元素
+        updateStatus  // 状态更新函数
+    );
+});
+// 在DOM加载完成后初始化BasicActionManager
 
 // 节点类型配置
 const nodeTypes = {
@@ -21,14 +54,14 @@ const nodeTypes = {
             { label: '选项', type: 'select', options: ['选项1', '选项2', '选项3'], default: 0 },
             { label: '开关', type: 'checkbox', default: false },
             { label: '二择', type: 'bool', default: false },
-            { label: '数值', type: 'number', min: 0, max: 100, default: 50 },
+            { label: '数字', type: 'number', min: 0, max: 100, default: 50 },
             { label: '整数输入', type: 'int', default: 0 },
             { label: '文本输入', type: 'text', default: '测试文本' }
         ]
     },
     legacy: {
         title: '职业',
-        color: '#6c5ce7',
+        color: '#d73141ff',
         inputs: [
             { type: 'port', label: '前置结局' }
         ],
@@ -68,13 +101,11 @@ const nodeTypes = {
         icon: '🔊',
         properties: [
             { label: '类型', type: 'select', options: ['card', 'aspect'], default: 0 },
-            { label: '声道', type: 'select', options: ['单声道', '立体声', '5.1'], default: 1 },
-            { label: '音量', type: 'range', min: 0, max: 100, default: 75 }
         ]
     },
     decks: {
         title: '卡池',
-        color: '#FF9800',
+        color: '#23bf30ff',
         inputs: [],
         outputs: [],
         content: `滤波器节点<br>ID: <br>类型: 低通滤波器`,
@@ -101,7 +132,7 @@ const nodeTypes = {
     },
     slots: {
         title: '卡槽',
-        color: '#3F51B5',
+        color: '#fdf622ff',
         inputs: [],
         outputs: [],
         content: `混音器节点<br>ID: <br>通道: 4进2出`,
@@ -129,7 +160,7 @@ const nodeTypes = {
     },
     text: {
         title: '文本',
-        color: '#3F51B5',
+        color: '#3fb3b5ff',
         inputs: [],
         outputs: [],
         content: `混音器节点<br>ID: <br>通道: 4进2出`,
@@ -143,15 +174,6 @@ const nodeTypes = {
     }
 };
 
-
-const vscode = acquireVsCodeApi();
-let nodeCount = 0;
-let selectedNodes = new Set();
-let isConnecting = false;
-let connectionStart = null;
-const nodes = new Map();
-const connections = [];
-
 // 更新状态显示
 function updateStatus(text) {
     const statusElement = document.getElementById("status");
@@ -164,13 +186,6 @@ function updateStatus(text) {
         statusTextElement.textContent = text;
     }
 }
-
-// 初始化
-document.addEventListener('DOMContentLoaded', () => {
-    initNodePalette();
-    initCanvasEvents();
-    updateStatus('就绪');
-});
 
 // 读取mod生成节点图
 function readMod() {
@@ -263,6 +278,7 @@ function addSimpleTestNode() {
     node.addEventListener("mousedown", startDrag);
 
     function startDrag(e) {
+        console.log('拖动中');
         if (e.target.classList.contains("port")) return;
 
         isDragging = true;
@@ -307,7 +323,7 @@ function addSimpleTestNode() {
     updateStatus(`添加测试节点 #${nodeCount}`);
 }
 
-/// 添加节点
+// 添加节点
 function addNode(type, x, y) {
     try {
         nodeCount++;
@@ -330,13 +346,28 @@ function addNode(type, x, y) {
         nodes.set(nodeId, node);
         createNodeElement(node);
 
+        // 添加操作到历史记录
+        if (actionManager) {
+            actionManager.addActionToHistory({
+                type: 'addNode',
+                nodeId: nodeId,
+                nodeData: {
+                    id: node.id,
+                    type: node.type,
+                    config: node.config,
+                    x: node.x,
+                    y: node.y,
+                    connections: node.connections,
+                    data: node.data
+                }
+            });
+        }
+
         // 隐藏占位符
         const placeholder = document.getElementById('placeholder');
         if (placeholder) {
             placeholder.style.display = 'none';
         }
-
-        updateStatus(`测试点 #${nodeCount}...`);
 
         updateStatus(`添加 ${config.title} #${nodeCount}`);
 
@@ -346,8 +377,6 @@ function addNode(type, x, y) {
         nodeCount--;
         updateStatus('添加节点时出错' + error.message);
     }
-
-
 }
 
 // 创建节点DOM元素
@@ -361,6 +390,7 @@ function createNodeElement(node) {
     element.style.left = node.x + 'px';
     element.style.top = node.y + 'px';
     element.style.borderColor = node.config.color;
+    element.locked = false;
 
     node.element = element;
 
@@ -398,15 +428,6 @@ function createNodeElement(node) {
             ${propertiesHTML ? `<div class="node-properties">${propertiesHTML}</div>` : ''} 
     `;
 
-    // port-hub设置
-    element.innerHTML += `
-        <div class="node-port-hub">
-            <div class="ports-container">
-                ${createPortHubHTML(node)}
-            </div>
-        </div>
-    `;
-
     element.innerHTML += `
         </div>
     `;
@@ -420,8 +441,14 @@ function createNodeElement(node) {
 
     canvas.appendChild(element);
 
+    // port-hub设置
+    const portHub = document.createElement('div');
+    portHub.className = 'node-port-hub';
+    const portsContainer = createPortHub(node);
+    portHub.appendChild(portsContainer);
+    element.appendChild(portHub);
+
     // 为整个节点添加选中事件监听（端口和输入框除外）
-    // 相关变量
     setupNodeSelected(element);
 
     // 为整个节点添加拖拽事件监听（端口和输入框除外）
@@ -429,13 +456,18 @@ function createNodeElement(node) {
 
     // 添加键盘事件监听
     element.addEventListener('keydown', (e) => {
-        if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (e.key === 'Delete') {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
             deleteNode(node.id);
         }
     });
 
     // 聚焦节点使其可接收键盘事件
-    element.tabIndex = -1;
+    element.tabIndex = 0;
 
     updateStatus(`节点已添加: ${node.element} #${node.id.split('-')[1]}`);
 }
@@ -545,110 +577,100 @@ function createPropertiesHTML(node) {
 }
 
 // 创建port hub区域存放连接端口
-function createPortHubHTML(node) {
-    let portsHTML = '';
+function createPortHub(node) {
+    const portsContainer = document.createElement('div');
+    portsContainer.className = 'ports-container';
 
     // 左侧输入端口区域
-    portsHTML += `<div class="port-column port-inputs">`;
+    const inputColumn = document.createElement('div');
+    inputColumn.className = 'port-column port-inputs';
 
     if (node.config.inputs && node.config.inputs.length > 0) {
-        portsHTML += `<div class="port-column-title">输入端口</div>`;
+        const title = document.createElement('div');
+        title.className = 'port-column-title';
+        title.textContent = '输入端口';
+        inputColumn.appendChild(title);
 
         node.config.inputs.forEach((input, index) => {
-            portsHTML += createPortHubItem(node, 'input', index, input);
+            const portElement = createPortHubItem(node, 'input', index, input);
+            inputColumn.appendChild(portElement);
         });
-
     }
-    portsHTML += `</div>`;
+    portsContainer.appendChild(inputColumn);
 
     // 右侧输出端口区域
-    portsHTML += `<div class="port-column port-outputs">`;
+    const outputColumn = document.createElement('div');
+    outputColumn.className = 'port-column port-outputs';
 
     if (node.config.outputs && node.config.outputs.length > 0) {
-        portsHTML += `<div class="port-column-title">输出端口</div>`;
+        const title = document.createElement('div');
+        title.className = 'port-column-title';
+        title.textContent = '输出端口';
+        outputColumn.appendChild(title);
 
         node.config.outputs.forEach((output, index) => {
-            portsHTML += createPortHubItem(node, 'output', index, output);
+            const portElement = createPortHubItem(node, 'output', index, output);
+            outputColumn.appendChild(portElement);
         });
-
     }
-    portsHTML += `</div>`;
+    portsContainer.appendChild(outputColumn);
 
-    return portsHTML;
+    return portsContainer;
 }
 
-// 创建单个端口项（不带删除按钮）
+// 创建单个端口项
 function createPortHubItem(node, portType, portIndex, portData) {
     const portId = `${node.id}-${portType}-${portIndex}`;
 
-    let portHTML = '';
-    portHTML += `
-        <div class="port-hub-item port-${portType}" 
-             data-port-id="${portId}">
-    `;
+    // 创建DOM元素
+    const element = document.createElement('div');
+    element.className = `port-hub-item port-${portType}`;
+    element.dataset.portId = portId;
 
+    // 根据端口类型创建内容
     switch (portType) {
         case 'input':
-            portHTML += `
-                <div class="port-dot port-${portType}-dot"></div>
-                <span class="port-label">${portData.label}</span>
-            `;
+            const inputDot = document.createElement('div');
+            inputDot.className = 'port-dot port-input-dot';
+            element.appendChild(inputDot);
+
+            const inputLabel = document.createElement('span');
+            inputLabel.className = 'port-label';
+            inputLabel.textContent = portData.label;
+            element.appendChild(inputLabel);
             break;
+
         case 'output':
-            portHTML += `
-                <span class="port-label">${portData.label}</span>
-                <div class="port-dot port-${portType}-dot"></div>
-            `;
+            const outputLabel = document.createElement('span');
+            outputLabel.className = 'port-label';
+            outputLabel.textContent = portData.label;
+            element.appendChild(outputLabel);
+
+            const outputDot = document.createElement('div');
+            outputDot.className = 'port-dot port-output-dot';
+            element.appendChild(outputDot);
             break;
+
         default:
+            console.warn(`未知的端口类型: ${portType}`);
+            // 默认情况下创建一个基础端口
+            const defaultDot = document.createElement('div');
+            defaultDot.className = 'port-dot';
+            element.appendChild(defaultDot);
+
+            const defaultLabel = document.createElement('span');
+            defaultLabel.className = 'port-label';
+            defaultLabel.textContent = portData.label || '未命名端口';
+            element.appendChild(defaultLabel);
             break;
     }
 
-    portHTML += `
-        </div>
-    `;
-
-
-    return portHTML;
-
-}
-
-function updateNodeTitle(nodeId, newTitle) {
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-        node.config.title = newTitle;
-        console.log(`节点 ${nodeId} 标题更新为: ${newTitle}`);
+    // 初始化端口拖拽
+    if (portDragManager) {
+        portDragManager.initPortDrag(element, node.id, portType, portIndex);
     }
-}
 
-function addNewPort(nodeId, portType, event) {
-    if (event) event.stopPropagation();
-
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-        if (!node.config[`${portType}s`]) {
-            node.config[`${portType}s`] = [];
-        }
-
-        const newPort = {
-            label: `${portType === 'input' ? '输入' : '输出'} ${node.config[`${portType}s`].length + 1}`,
-            name: '',
-            default: null
-        };
-
-        node.config[`${portType}s`].push(newPort);
-        refreshNodeElement(nodeId);
-    }
-}
-
-function dragPortStart(event, nodeId, portType, portIndex) {
-    event.dataTransfer.setData('application/json', JSON.stringify({
-        nodeId: nodeId,
-        portType: portType,
-        portIndex: portIndex,
-        action: 'connect'
-    }));
-    event.stopPropagation();
+    return element;
 }
 
 // 添加刷新节点函数
@@ -670,65 +692,222 @@ function refreshNodeElement(nodeId) {
     }
 }
 
-// === 为节点创建端口 ===
-function createPort(node, type, index, location) {
-    let portsHTML = ''
-    switch (type) {
-        case 'input':
-            portsHTML += `
-            <div class="port input" 
-                 data-node-id="${node.id}"
-                 data-port-type="input"
-                 data-port-index="${index}"
-                 style="top: ${location}%"
-                 onmousedown="startConnection(event, '${node.id}', ${index}, 'input')">
-                <div class="port-label">${node.config.inputs[index].label}</div>
-            </div>
-        `;
-            break;
-        case 'output':
-            portsHTML += `
-            <div class="port output" 
-                 data-node-id="${node.id}"
-                 data-port-type="output"
-                 data-port-index="${index}"
-                 style="top: ${location}%"
-                 onmousedown="startConnection(event, '${node.id}', ${index}, 'output')">
-                <div class="port-label">${node.config.outputs[index].label}</div>
-            </div>
-        `;
-            break;
-        default:
-            portsHTML += `
-            <div class="port output" 
-                 data-node-id="${node.id}"
-                 data-port-type="output"
-                 data-port-index="${index}"
-                 style="top: ${location}%"
-                 onmousedown="startConnection(event, '${node.id}', ${index}, 'output')">
-                <div class="port-label">测试port</div>
-            </div>
-        `;
-            break;
-    }
-
-    return portsHTML
-}
-
 // === 节点选中事件处理 ===
 function setupNodeSelected(element) {
     element.addEventListener('mousedown', (e) => {
         if (shouldIgnoreDrag(e.target)) {
-            return
+            return;
         }
 
         // 选中节点
-        document
-            .querySelectorAll('.node')
-            .forEach((n) => n.classList.remove('selected'));
+        document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
         element.classList.add('selected');
 
+        // 获取焦点，使节点可以接收键盘事件
+        element.focus();
     });
+
+    // 添加右键菜单事件
+    element.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // 获取节点ID
+        const nodeId = element.id;
+
+        // 显示右键菜单
+        showNodeContextMenu(nodeId, e.clientX, e.clientY);
+    });
+}
+
+// === 右键菜单功能 ===
+
+// 创建节点的右键菜单
+function createNodeContextMenu() {
+    const menu = document.createElement('div');
+    menu.className = 'node-context-menu';
+    menu.innerHTML = `
+        <div class="context-menu-item" data-action="delete">
+            <span class="menu-icon">🗑️</span>
+            <span class="menu-text">删除节点</span>
+        </div>
+    `;
+
+    // 添加菜单项点击事件
+    menu.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const menuItem = e.target.closest('.context-menu-item');
+        if (menuItem) {
+            const action = menuItem.dataset.action;
+            const nodeId = menu.dataset.nodeId;
+
+            if (action === 'delete' && nodeId) {
+                // 先关闭菜单
+                hideNodeContextMenu();
+
+                // 延迟执行删除操作，确保菜单已关闭
+                setTimeout(() => {
+                    deleteNode(nodeId);
+                }, 50);
+            }
+        } else {
+            hideNodeContextMenu();
+        }
+    });
+
+    // 点击其他地方关闭菜单
+    document.addEventListener('click', (e) => {
+        if (!menu.contains(e.target)) {
+            hideNodeContextMenu();
+        }
+    });
+
+    document.body.appendChild(menu);
+    return menu;
+}
+
+// 显示节点的右键菜单
+function showNodeContextMenu(nodeId, x, y) {
+    let menu = document.querySelector('.node-context-menu');
+    if (!menu) {
+        menu = createNodeContextMenu();
+    }
+
+    menu.dataset.nodeId = nodeId;
+    menu.style.display = 'block';
+
+    // 确保菜单在视口内
+    const menuWidth = menu.offsetWidth || 150;
+    const menuHeight = menu.offsetHeight || 40;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let finalX = x;
+    let finalY = y;
+
+    // 防止菜单超出右边界
+    if (x + menuWidth > viewportWidth) {
+        finalX = x - menuWidth;
+    }
+
+    // 防止菜单超出下边界
+    if (y + menuHeight > viewportHeight) {
+        finalY = y - menuHeight;
+    }
+
+    menu.style.left = `${finalX}px`;
+    menu.style.top = `${finalY}px`;
+}
+
+// 隐藏节点的右键菜单
+function hideNodeContextMenu() {
+    const menu = document.querySelector('.node-context-menu');
+    if (menu) {
+        menu.style.display = 'none';
+    }
+}
+
+// === 全局右键菜单 ===
+
+// 创建全局右键菜单
+function createGlobalContextMenu() {
+    const menu = document.createElement('div');
+    menu.className = 'global-context-menu';
+    menu.innerHTML = `
+        <div class="context-menu-item" data-action="undo">
+            <span class="menu-icon">↩️</span>
+            <span class="menu-text">撤销操作</span>
+        </div>
+        <div class="context-menu-item" data-action="redo">
+            <span class="menu-icon">↪️</span>
+            <span class="menu-text">重做操作</span>
+        </div>
+    `;
+
+    // 添加菜单项点击事件
+    menu.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const menuItem = e.target.closest('.context-menu-item');
+        if (menuItem) {
+            const action = menuItem.dataset.action;
+
+            if (action === 'undo') {
+                // 先关闭菜单
+                hideGlobalContextMenu();
+
+                // 延迟执行撤销操作，确保菜单已关闭
+                setTimeout(() => {
+                    undoLastAction();
+                }, 50);
+            } else if (action === 'redo') {
+                // 先关闭菜单
+                hideGlobalContextMenu();
+
+                // 延迟执行重做操作，确保菜单已关闭
+                setTimeout(() => {
+                    redoLastAction();
+                }, 50);
+            }
+        } else {
+            hideGlobalContextMenu();
+        }
+    });
+
+    // 点击其他地方关闭菜单
+    document.addEventListener('click', (e) => {
+        if (!menu.contains(e.target)) {
+            hideGlobalContextMenu();
+        }
+    });
+
+    document.body.appendChild(menu);
+    return menu;
+}
+
+// 显示全局右键菜单
+function showGlobalContextMenu(x, y) {
+    let menu = document.querySelector('.global-context-menu');
+    if (!menu) {
+        menu = createGlobalContextMenu();
+    }
+
+    menu.style.display = 'block';
+
+    // 确保菜单在视口内
+    const menuWidth = menu.offsetWidth || 150;
+    const menuHeight = menu.offsetHeight || 40;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let finalX = x;
+    let finalY = y;
+
+    // 防止菜单超出右边界
+    if (x + menuWidth > viewportWidth) {
+        finalX = x - menuWidth;
+    }
+
+    // 防止菜单超出下边界
+    if (y + menuHeight > viewportHeight) {
+        finalY = y - menuHeight;
+    }
+
+    menu.style.left = `${finalX}px`;
+    menu.style.top = `${finalY}px`;
+}
+
+// 隐藏全局右键菜单
+function hideGlobalContextMenu() {
+    const menu = document.querySelector('.global-context-menu');
+    if (menu) {
+        menu.style.display = 'none';
+    }
 }
 
 // === 拖拽功能实现 ===
@@ -749,8 +928,11 @@ function setupNodeDrag(element, nodeId) {
     // 在节点上添加鼠标按下事件监听
     element.addEventListener('mousedown', (e) => {
         // 检查是否点击了不应该触发拖拽的元素
-        if (shouldIgnoreDrag(e.target)) {
-            return;
+        //锁定时随意拖动
+        if (!element.locked) {
+            if (shouldIgnoreDrag(e.target)) {
+                return;
+            }
         }
 
         startDrag(e, nodeId);
@@ -764,15 +946,21 @@ function setupNodeDrag(element, nodeId) {
     });
 }
 
+// 如果点击的是以下元素，则忽略拖拽
+let ignoreDragItem = [
+    '.node-title',// 节点标题
+    '.port-hub-item',// 端口
+    '.property-input',// 属性输入框
+    '.node-action-btn', // 删除按钮
+    'select',// 下拉框
+    'input[type="range"]',// 滑块
+    '.bool-option',// 二择单选开关
+    'input[type="checkbox"]'// 复选框
+];
+
 // 检查是否应该忽略拖拽
 function shouldIgnoreDrag(target) {
-    // 如果点击的是以下元素，则忽略拖拽
-    return target.closest('.port') ||           // 端口
-        target.closest('.property-input') ||  // 属性输入框
-        target.closest('.node-action-btn') || // 删除按钮
-        target.closest('select') ||           // 下拉框
-        target.closest('input[type="range"]') || // 滑块
-        target.closest('input[type="checkbox"]'); // 复选框
+    return ignoreDragItem.some((item) => target.closest(item));
 }
 
 // 开始拖拽
@@ -798,6 +986,9 @@ function startDrag(event, nodeId) {
     };
 
     node.element.classList.add('selected');
+
+    // 获取焦点，使节点可以接收键盘事件
+    node.element.focus();
 
     // 添加拖拽样式
     node.element.classList.add('dragging');
@@ -852,6 +1043,18 @@ function stopDrag(event) {
         // 检查位置是否有变化
         const moved = node.x !== dragState.initialX || node.y !== dragState.initialY;
         if (moved) {
+            // 添加操作到历史记录
+            if (actionManager) {
+                actionManager.addActionToHistory({
+                    type: 'moveNode',
+                    nodeId: node.id,
+                    oldX: dragState.initialX,
+                    oldY: dragState.initialY,
+                    newX: node.x,
+                    newY: node.y
+                });
+            }
+
             updateStatus(`移动节点到: (${Math.round(node.x)}, ${Math.round(node.y)})`);
 
             // 触发保存或更新操作
@@ -883,27 +1086,37 @@ function updateNodeConnections(nodeId) {
     if (!node) return;
 
     // 更新输入连接线
-    node.connections.inputs.forEach((connection, index) => {
-        if (connection) {
-            updateConnectionPosition(connection.id);
+    node.connections.inputs.forEach((connectionId, index) => {
+        if (connectionId) {
+            // 处理连接ID数组
+            if (Array.isArray(connectionId)) {
+                connectionId.forEach(id => updateConnectionPosition(id));
+            } else {
+                updateConnectionPosition(connectionId);
+            }
         }
     });
 
     // 更新输出连接线
-    node.connections.outputs.forEach((connection, index) => {
-        if (connection) {
-            updateConnectionPosition(connection.id);
+    node.connections.outputs.forEach((connectionId, index) => {
+        if (connectionId) {
+            // 处理连接ID数组
+            if (Array.isArray(connectionId)) {
+                connectionId.forEach(id => updateConnectionPosition(id));
+            } else {
+                updateConnectionPosition(connectionId);
+            }
         }
     });
 }
 
 // 更新单个连接线的位置
 function updateConnectionPosition(connectionId) {
-    const connection = connections.get(connectionId);
+    const connection = connections.find(conn => conn.id === connectionId);
     if (!connection) return;
 
-    const line = document.querySelector(`.connection-line[data-connection-id="${connectionId}"]`);
-    if (!line) return;
+    const path = document.querySelector(`.connection-path[data-connection-id="${connectionId}"]`);
+    if (!path) return;
 
     const fromNode = nodes.get(connection.from.nodeId);
     const toNode = nodes.get(connection.to.nodeId);
@@ -915,16 +1128,21 @@ function updateConnectionPosition(connectionId) {
     const toPort = getPortPosition(toNode, connection.to.portIndex, 'input');
 
     // 更新SVG路径
-    const path = line.querySelector('path');
-    if (path) {
-        path.setAttribute('d', createConnectionPath(fromPort, toPort));
+    if (portDragManager) {
+        path.setAttribute('d', portDragManager.createCurvedPath(fromPort.x, fromPort.y, toPort.x, toPort.y));
     }
 }
 
 // 获取端口位置
 function getPortPosition(node, portIndex, type) {
-    const port = node.element.querySelector(`.port[data-port-type="${type}"][data-port-index="${portIndex}"]`);
-    if (!port) return { x: node.x, y: node.y };
+    const port = node.element.querySelector(`.port-hub-item[data-port-id="${node.id}-${type}-${portIndex}"] .port-dot`);
+    if (!port) {
+        // 如果找不到端口，返回节点中心位置
+        return {
+            x: node.x + node.element.offsetWidth / 2,
+            y: node.y + node.element.offsetHeight / 2
+        };
+    }
 
     const portRect = port.getBoundingClientRect();
     const canvasRect = canvas.getBoundingClientRect();
@@ -952,12 +1170,34 @@ function bringNodeToFront(nodeId) {
 
 // 删除节点
 function deleteNode(nodeId) {
+    updateStatus(`删除节点中...`);
     const node = nodes.get(nodeId);
-    if (!node) return;
+    if (!node) {
+        console.error('未找到节点:', nodeId);
+        updateStatus(`删除失败: 未找到节点 ${nodeId}`);
+        return;
+    }
 
-    if (confirm(`确定要删除节点 "${node.config.title}" 吗？`)) {
+    // 添加操作到历史记录
+    if (actionManager) {
+        actionManager.addActionToHistory({
+            type: 'deleteNode',
+            nodeId: nodeId,
+            nodeData: {
+                id: node.id,
+                type: node.type,
+                config: node.config,
+                x: node.x,
+                y: node.y,
+                connections: JSON.parse(JSON.stringify(node.connections)),
+                data: JSON.parse(JSON.stringify(node.data))
+            }
+        });
+
         // 移除所有连接
-        removeAllConnections(nodeId);
+        if (actionManager) {
+            actionManager.removeAllConnections(nodeId);
+        }
 
         // 从DOM中移除节点
         if (node.element && node.element.parentNode) {
@@ -969,212 +1209,6 @@ function deleteNode(nodeId) {
 
         updateStatus(`已删除节点: ${node.config.title} #${nodeId.split('-')[1]}`);
     }
-}
-
-// 移除节点的所有连接
-function removeAllConnections(nodeId) {
-    const node = nodes.get(nodeId);
-    if (!node) return;
-
-    // 移除输入连接
-    node.connections.inputs.forEach((connection, index) => {
-        if (connection) {
-            removeConnection(connection.id);
-        }
-    });
-
-    // 移除输出连接
-    node.connections.outputs.forEach((connection, index) => {
-        if (connection) {
-            removeConnection(connection.id);
-        }
-    });
-}
-
-// 开始创建连接
-function startConnection(e, nodeId, portIndex, portType) {
-    isConnecting = true;
-    connectionStart = { nodeId, portIndex, portType };
-
-    // 创建临时连接线
-    const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    tempPath.id = 'temp-connection';
-    tempPath.classList.add('connection-path');
-    document.getElementById('connections').appendChild(tempPath);
-
-    document.addEventListener('mousemove', updateTempConnection);
-    document.addEventListener('mouseup', endConnection);
-
-    e.stopPropagation();
-}
-
-// 更新临时连接线
-function updateTempConnection(e) {
-    if (!isConnecting || !connectionStart) return;
-
-    const startPort = document.querySelector(`[data-node-id="${connectionStart.nodeId}"][data-port-index="${connectionStart.portIndex}"]`);
-    if (!startPort) return;
-
-    const canvas = document.getElementById('canvas');
-    const canvasRect = canvas.getBoundingClientRect();
-    const startRect = startPort.getBoundingClientRect();
-
-    const startX = startRect.left + startRect.width / 2 - canvasRect.left;
-    const startY = startRect.top + startRect.height / 2 - canvasRect.top;
-    const endX = e.clientX - canvasRect.left;
-    const endY = e.clientY - canvasRect.top;
-
-    const path = `M ${startX} ${startY} C ${startX + 100} ${startY}, ${endX - 100} ${endY}, ${endX} ${endY}`;
-
-    const tempPath = document.getElementById('temp-connection');
-    tempPath.setAttribute('d', path);
-}
-
-// 结束连接
-function endConnection(e) {
-    if (!isConnecting || !connectionStart) return;
-
-    // 移除临时连接线
-    const tempPath = document.getElementById('temp-connection');
-    if (tempPath) tempPath.remove();
-
-    // 检查是否连接到了端口
-    const targetPort = e.target.closest('.port');
-    if (targetPort && targetPort !== document.querySelector(`[data-node-id="${connectionStart.nodeId}"]`)) {
-        const endNodeId = targetPort.dataset.nodeId;
-        const endPortIndex = parseInt(targetPort.dataset.portIndex);
-        const endPortType = targetPort.dataset.portType;
-
-        // 检查连接是否有效（输入连输出或输出连输入）
-        if ((connectionStart.portType === 'output' && endPortType === 'input') ||
-            (connectionStart.portType === 'input' && endPortType === 'output')) {
-
-            createConnection(
-                connectionStart.nodeId,
-                connectionStart.portIndex,
-                connectionStart.portType,
-                endNodeId,
-                endPortIndex,
-                endPortType
-            );
-        }
-    }
-
-    isConnecting = false;
-    connectionStart = null;
-    document.removeEventListener('mousemove', updateTempConnection);
-    document.removeEventListener('mouseup', endConnection);
-}
-
-// 创建连接
-function createConnection(startNodeId, startPortIndex, startPortType, endNodeId, endPortIndex, endPortType) {
-    const connectionId = `${startNodeId}-${startPortIndex}-${endNodeId}-${endPortIndex}`;
-
-    // 检查连接是否已存在
-    if (connections.some(c => c.id === connectionId)) {
-        return;
-    }
-
-    const connection = {
-        id: connectionId,
-        start: { nodeId: startNodeId, portIndex: startPortIndex, portType: startPortType },
-        end: { nodeId: endNodeId, portIndex: endPortIndex, portType: endPortType }
-    };
-
-    connections.push(connection);
-
-    // 更新节点连接状态
-    const startNode = nodes.get(startNodeId);
-    const endNode = nodes.get(endNodeId);
-
-    if (startPortType === 'output') {
-        startNode.connections.outputs[startPortIndex] = connectionId;
-    } else {
-        startNode.connections.inputs[startPortIndex] = connectionId;
-    }
-
-    if (endPortType === 'output') {
-        endNode.connections.outputs[endPortIndex] = connectionId;
-    } else {
-        endNode.connections.inputs[endPortIndex] = connectionId;
-    }
-
-    // 更新端口样式
-    updatePortStyles();
-    // 绘制连接线
-    drawConnections();
-
-    updateStatus(`创建连接: ${startNodeId} → ${endNodeId}`);
-}
-
-// 绘制所有连接线
-function drawConnections() {
-    const svg = document.getElementById('connections');
-    svg.innerHTML = '';
-
-    connections.forEach(connection => {
-        const startPort = document.querySelector(
-            `[data-node-id="${connection.start.nodeId}"][data-port-index="${connection.start.portIndex}"]`
-        );
-        const endPort = document.querySelector(
-            `[data-node-id="${connection.end.nodeId}"][data-port-index="${connection.end.portIndex}"]`
-        );
-
-        if (!startPort || !endPort) return;
-
-        const canvas = document.getElementById('canvas');
-        const canvasRect = canvas.getBoundingClientRect();
-        const startRect = startPort.getBoundingClientRect();
-        const endRect = endPort.getBoundingClientRect();
-
-        const startX = startRect.left + startRect.width / 2 - canvasRect.left;
-        const startY = startRect.top + startRect.height / 2 - canvasRect.top;
-        const endX = endRect.left + endRect.width / 2 - canvasRect.left;
-        const endY = endRect.top + endRect.height / 2 - canvasRect.top;
-
-        // 贝塞尔曲线
-        const dx = Math.abs(endX - startX);
-        const curve = Math.min(dx * 0.5, 150);
-
-        let path;
-        if (connection.start.portType === 'output') {
-            path = `M ${startX} ${startY} C ${startX + curve} ${startY}, ${endX - curve} ${endY}, ${endX} ${endY}`;
-        } else {
-            path = `M ${startX} ${startY} C ${startX - curve} ${startY}, ${endX + curve} ${endY}, ${endX} ${endY}`;
-        }
-
-        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pathElement.setAttribute('d', path);
-        pathElement.classList.add('connection-path');
-        pathElement.dataset.connectionId = connection.id;
-        pathElement.addEventListener('dblclick', () => removeConnection(connection.id));
-
-        svg.appendChild(pathElement);
-    });
-}
-
-// 更新连接线
-function updateConnections() {
-    drawConnections();
-}
-
-// 更新端口样式
-function updatePortStyles() {
-    document.querySelectorAll('.port').forEach(port => {
-        port.classList.remove('connected');
-    });
-
-    connections.forEach(connection => {
-        const startPort = document.querySelector(
-            `[data-node-id="${connection.start.nodeId}"][data-port-index="${connection.start.portIndex}"]`
-        );
-        const endPort = document.querySelector(
-            `[data-node-id="${connection.end.nodeId}"][data-port-index="${connection.end.portIndex}"]`
-        );
-
-        if (startPort) startPort.classList.add('connected');
-        if (endPort) endPort.classList.add('connected');
-    });
 }
 
 // 初始化函数
@@ -1191,6 +1225,7 @@ function initWebview() {
             updateStatus("Webview 就绪");
         }, 100);
     });
+
 
     // 监听来自扩展的消息
     window.addEventListener("message", (event) => {
@@ -1221,6 +1256,20 @@ function initWebview() {
     });
 }
 
+// 撤销上一次操作
+function undoLastAction() {
+    if (actionManager) {
+        actionManager.undoLastAction();
+    }
+}
+
+// 重做上一次撤销的操作
+function redoLastAction() {
+    if (actionManager) {
+        actionManager.redoLastAction();
+    }
+}
+
 // 导出函数到全局作用域
 window.vscodeAPI = {
     updateStatus,
@@ -1231,8 +1280,25 @@ window.vscodeAPI = {
     executeGraph,
     clearCanvas,
     addTestNode,
-    initWebview
+    initWebview,
+    undoLastAction: () => {
+        if (actionManager) {
+            actionManager.undoLastAction();
+        }
+    },
+    redoLastAction: () => {
+        if (actionManager) {
+            actionManager.redoLastAction();
+        }
+    },
+    get actionManager() {
+        return actionManager;
+    },
+    getPortPosition,
+    updateNodeConnections
 };
+
+window.actionManager = actionManager;
 
 // 自动初始化
 if (document.readyState === 'loading') {
@@ -1240,4 +1306,3 @@ if (document.readyState === 'loading') {
 } else {
     initWebview();
 }
-
