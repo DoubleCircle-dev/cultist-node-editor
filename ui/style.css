@@ -58,6 +58,13 @@ body {
     gap: 8px;
 }
 
+/* 调试按钮组容器 */
+.debug-buttons {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 .canvas {
     flex: 1;
     position: relative;

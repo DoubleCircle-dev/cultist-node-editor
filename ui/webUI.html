@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>节点编辑器</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="container">
@@ -17,23 +17,59 @@
           <button class="node-type" onclick="addNode('elements')">
             📇 element/aspect
           </button>
-          <button class="node-type" onclick="addNode('decks')">🗃 deck</button>
-          <button class="node-type" onclick="addNode('verbs')">⚡ verb</button>
-          <button class="node-type" onclick="addNode('text')">📝 文本</button>
+          <button class="node-type" onclick="addNode('decks')">
+            🗃 deck
+          </button>
+          <button class="node-type" onclick="addNode('verbs')">
+            ⚡ verb
+          </button>
+          <button class="node-type" onclick="addNode('text')">
+            📝 文本
+          </button>
         </div>
 
         <div class="node-palette">
           <h3>操作</h3>
-          <button class="btn btn-secondary" onclick="saveGraph()">
+          <button
+            class="btn btn-secondary"
+            style="width: auto"
+            onclick="testCommunication()"
+          >
+            🔌 通讯测试
+          </button>
+          <button
+            class="btn btn-secondary"
+            style="width: auto"
+            onclick="generateTest()"
+          >
+            🧪 生成测试
+          </button>
+          <button
+            class="btn btn-secondary"
+            style="width: auto"
+            onclick="toggleConsole()"
+          >
+            🔍 控制台
+          </button>
+          <button
+            class="btn btn-secondary"
+            style="width: auto"
+            onclick="customCheck()"
+          >
+            ⚙️ 自定义检测
+          </button>
+          <button class="btn btn-secondary" onclick="generateTest()">
             💾 保存为 JSON
           </button>
           <button class="btn btn-secondary" onclick="loadGraph()">
             📂 加载 JSON
           </button>
-          <button class="btn btn-secondary" onclick="readMod()">
+          <button id="btn-readMod" class="btn btn-secondary" onclick="readMod()">
             🔧 读取mod
           </button>
-          <button class="btn" onclick="clearCanvas()">🗑️ 清空画布</button>
+          <button class="btn" onclick="clearCanvas()">
+            🗑️ 清空画布
+          </button>
         </div>
 
         <div class="node-palette">
@@ -44,21 +80,34 @@
 
       <div class="editor-area">
         <div class="toolbar">
-          <button class="btn" style="width: auto" onclick="addTestNode()">
+          <button
+            class="btn"
+            style="width: auto"
+            onclick="addTestNode()"
+          >
             添加测试节点
           </button>
-          <button class="btn" style="width: auto" onclick="addTestNode()">
+          <button
+            class="btn"
+            style="width: auto"
+            onclick="addTestNode()"
+          >
             引入json文件
           </button>
-          <button class="btn" style="width: auto" onclick="addTestNode()">
+          <button
+            class="btn"
+            style="width: auto"
+            onclick="addTestNode()"
+          >
             引入素材文件
           </button>
-          <button class="btn" style="width: auto" onclick="addTestNode()">
+          <button
+            class="btn"
+            style="width: auto"
+            onclick="addTestNode()"
+          >
             原版游戏文件（！如果修改过请引用修改后的文件）
           </button>
-  <button class="btn btn-undo" style="width: auto" onclick="window.vscodeAPI.undoLastAction()">
-    ↩️ 撤销操作
-  </button>
           <span style="margin-left: auto; font-size: 12px; color: #888"
             >节点编辑器 v0.1</span
           >
@@ -93,8 +142,9 @@
       </div>
     </div>
 
+    <script src="webview.js"></script>
     <script src="basicOP.js"></script>
     <script src="PortDragManager.js"></script>
-    <script src="webview.js"></script>
+
   </body>
 </html>

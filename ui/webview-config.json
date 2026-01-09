@@ -1,0 +1,41 @@
+{
+  "name": "节点编辑器",
+  "version": "0.1.0",
+  "resources": {
+    "styles": ["style.css"],
+    "scripts": ["basicOP.js", "PortDragManager.js", "webview.js"]
+  },
+  "nodeTypes": {
+    "recipes": {
+      "title": "交互(recipes)",
+      "color": "#f1912aff",
+      "icon": "📖"
+    },
+    "elements": {
+      "title": "元素",
+      "color": "#2196F3",
+      "icon": "🔊"
+    },
+    "decks": {
+      "title": "卡池",
+      "color": "#23bf30ff",
+      "icon": "🎛️"
+    },
+    "verbs": {
+      "title": "行动框",
+      "color": "#9C27B0",
+      "icon": "⚡"
+    },
+    "text": {
+      "title": "文本",
+      "color": "#3fb3b5ff",
+      "icon": "🎚️"
+    }
+  },
+  "features": {
+    "undoRedo": true,
+    "dragDrop": true,
+    "connections": true,
+    "contextMenus": true
+  }
+}

@@ -5,11 +5,14 @@ const path = require('path');
 let currentPanel = undefined;
 function activate(context) {
     console.log('✅ Node Editor 扩展已激活');
-
     // 重要：检查命令是否成功注册
     const openEditorCommand = vscode.commands.registerCommand('cultist-node-editor.openEditor', () => {
         console.log('📝 命令 "cultist-node-editor.openEditor" 被调用');
-        createNodeEditorPanel(context);
+        try {
+            createNodeEditorPanel(context);
+        } catch (error) {
+            console.error('🚨 创建面板时出错:', error);
+        }
     });
 
     context.subscriptions.push(openEditorCommand);
@@ -29,6 +32,10 @@ function activate(context) {
         extensionPath: context.extensionPath,
         subscriptionsCount: context.subscriptions.length
     });
+    setTimeout(() => {
+        console.log('🚀 自动打开节点编辑器');
+        vscode.commands.executeCommand('cultist-node-editor.openEditor');
+    }, 1500);
 }
 
 function createNodeEditorPanel(context) {
@@ -57,8 +64,9 @@ function createNodeEditorPanel(context) {
         currentPanel = panel;
 
         // 设置HTML内容
-        // panel.webview.html = getWebviewContent();
-        panel.webview.html = getWebviewContent(panel);
+        panel.webview.html = getWebviewContent(panel, context);
+
+
         // 监听面板关闭事件
         panel.onDidDispose(
             () => {
@@ -90,6 +98,14 @@ function createNodeEditorPanel(context) {
                     case 'test':
                         vscode.window.showInformationMessage('Webview通信正常！');
                         return;
+                    case 'openConsole':
+                        try {
+                            // 打开开发者工具以进行调试
+                            vscode.commands.executeCommand('workbench.action.webview.openDeveloperTools');
+                            console.log('🔍 开发者工具已打开');
+                        } catch (error) {
+                            console.error('🚨 打开开发者工具时出错:', error);
+                        }
                 }
             },
             undefined,
@@ -105,135 +121,155 @@ function createNodeEditorPanel(context) {
         }, 500);
 
         console.log('✅ 节点编辑器面板创建成功');
-
+        console.log('面板html:' + panel.webview.html);
     } catch (error) {
         console.error('❌ 创建面板时出错:', error);
         vscode.window.showErrorMessage(`创建节点编辑器失败: ${error.message}`);
     }
 }
 
-function getWebviewContent(panel) {
+function getWebviewContent(panel, context) {
+    const uiDir = path.join(context.extensionPath, 'ui');
+
     try {
-        const htmlPath = path.join(__dirname, 'ui', 'webUI.html');
-        console.log('📄 HTML文件路径:', htmlPath);
+        // 读取配置文件
+        const configPath = path.join(uiDir, 'webview-config.json');
+        let config = {};
+        if (fs.existsSync(configPath)) {
+            config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        }
 
-        let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
-        console.log('📝 HTML内容大小:', htmlContent.length, '字符');
+        // 读取HTML模板
+        const htmlPath = path.join(uiDir, 'webUI.html');
+        let htmlContent = '';
 
-        // 获取资源路径并转换为webview URI
-        // 获取资源映射
-        const uiDir = path.join(__dirname, 'ui');
-        const resources = getResourceUris(panel, uiDir);
+        if (fs.existsSync(htmlPath)) {
+            htmlContent = fs.readFileSync(htmlPath, 'utf8');
+        } else {
+            // 如果HTML文件不存在，创建默认内容
+            throw new Error('HTML文件不存在' + htmlPath);
+        }
 
-        // 动态替换所有资源引用
-        htmlContent = replaceResources(htmlContent, resources);
+        // 获取所有资源文件的Webview URI
+        const resources = processResources(panel, uiDir, config.resources);
+
+        // 替换HTML中的资源引用
+        htmlContent = replaceResourceReferences(htmlContent, resources);
+
+        // 注入配置数据
+        htmlContent = injectConfigData(htmlContent, config);
 
         return htmlContent;
+
     } catch (error) {
-        console.error('❌读取文件时出错:', error);
-        return getSimpleHtml(); // 返回一个简单的HTML作为后备
+        console.error('加载Webview内容失败:', error);
+        return getErrorHtml();
     }
 }
 
-// 获取所有资源的URI映射
-function getResourceUris(panel, uiDir) {
-    const resources = {};
-
-    // 递归扫描ui目录下的所有资源文件
-    const scanDir = (dir, basePath = '') => {
-        const files = fs.readdirSync(dir, { withFileTypes: true });
-
-        files.forEach(file => {
-            const fullPath = path.join(dir, file.name);
-            const relativePath = path.join(basePath, file.name);
-
-            if (file.isDirectory()) {
-                scanDir(fullPath, relativePath);
-            } else {
-                const ext = path.extname(file.name).toLowerCase();
-                const uri = panel.webview.asWebviewUri(vscode.Uri.file(fullPath));
-
-                // 根据文件类型分类存储
-                if (ext === '.css') {
-                    resources[relativePath] = { type: 'css', uri };
-                } else if (ext === '.js') {
-                    resources[relativePath] = { type: 'js', uri };
-                } else if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico'].includes(ext)) {
-                    resources[relativePath] = { type: 'image', uri };
-                } else if (ext === '.html') {
-                    // HTML文件不处理
-                } else {
-                    resources[relativePath] = { type: 'other', uri };
-                }
-            }
-        });
+function processResources(panel, uiDir, resourceConfig) {
+    const resources = {
+        styles: [],
+        scripts: []
     };
 
-    scanDir(uiDir);
+    // 处理样式文件
+    if (resourceConfig && resourceConfig.styles) {
+        resources.styles = resourceConfig.styles.map(styleFile => {
+            const stylePath = path.join(uiDir, styleFile);
+            if (fs.existsSync(stylePath)) {
+                const uri = panel.webview.asWebviewUri(vscode.Uri.file(stylePath));
+                return {
+                    name: styleFile,
+                    uri: uri.toString(),
+                    type: 'style'
+                };
+            }
+            return null;
+        }).filter(item => item !== null);
+    }
+
+    // 处理脚本文件
+    if (resourceConfig && resourceConfig.scripts) {
+        resources.scripts = resourceConfig.scripts.map(scriptFile => {
+            const scriptPath = path.join(uiDir, scriptFile);
+            if (fs.existsSync(scriptPath)) {
+                const uri = panel.webview.asWebviewUri(vscode.Uri.file(scriptPath));
+                return {
+                    name: scriptFile,
+                    uri: uri.toString(),
+                    type: 'script'
+                };
+            }
+            return null;
+        }).filter(item => item !== null);
+    }
+
     return resources;
 }
 
-// 替换HTML中的资源引用
-function replaceResources(htmlContent, resources) {
-    let content = htmlContent;
+function replaceResourceReferences(htmlContent, resources) {
+    let result = htmlContent;
 
-    console.log('🔍 开始替换资源...');
-    console.log('📋 可用资源:', Object.keys(resources).map(k => `${k}: ${resources[k].type}`));
+    // 移除原有的资源引用
+    result = result.replace(/<link\s+rel="stylesheet"\s+href="[^"]*"\s*\/?>/g, '');
+    result = result.replace(/<script\s+src="[^"]*"><\/script>/g, '');
 
-    // 替换CSS文件
-    content = content.replace(
-        /<link\s+[^>]*href\s*=\s*["']([^"']+\.css)["'][^>]*>/gi,
-        (match, filePath) => {
-            console.log(`🎨 匹配到CSS: ${filePath}`);
-            const normalizedPath = filePath.replace(/^[./]+/, '');
-            const resource = resources[normalizedPath] || resources[filePath];
-            if (resource && resource.type === 'css') {
-                const newMatch = match.replace(
-                    new RegExp(`(["'])${filePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\1`),
-                    `$1${resource.uri.toString()}$1`
-                );
-                console.log(`✅ 替换CSS: ${filePath} -> ${resource.uri.toString()}`);
-                return newMatch;
-            } else {
-                console.warn(`⚠️  CSS资源未找到: ${filePath} (尝试了 ${normalizedPath})`);
-            }
-            return match;
-        }
-    );
+    // 添加新的样式引用
+    const styleTags = resources.styles.map(style =>
+        `<link rel="stylesheet" href="${style.uri}">`
+    ).join('\n');
 
-    // 替换JS文件
-    content = content.replace(
-        /<script\s+[^>]*src\s*=\s*["']([^"']+\.js)["'][^>]*>/gi,
-        (match, filePath) => {
-            console.log(`📜 匹配到JS: ${filePath}`);
-            const normalizedPath = filePath.replace(/^[./]+/, '');
-            const resource = resources[normalizedPath] || resources[filePath];
-            if (resource && resource.type === 'js') {
-                const newMatch = match.replace(
-                    new RegExp(`(["'])${filePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\1`),
-                    `$1${resource.uri.toString()}$1`
-                );
-                console.log(`✅ 替换JS: ${filePath} -> ${resource.uri.toString()}`);
-                return newMatch;
-            } else {
-                console.warn(`⚠️  JS资源未找到: ${filePath} (尝试了 ${normalizedPath})`);
-                console.log('可用的JS资源:',
-                    Object.entries(resources)
-                        .filter(([_, r]) => r.type === 'js')
-                        .map(([k, _]) => k)
-                );
-            }
-            return match;
-        }
-    );
+    // 添加新的脚本引用
+    const scriptTags = resources.scripts.map(script =>
+        `<script src="${script.uri}"></script>`
+    ).join('\n');
 
-    return content;
+    // 插入到head结束前
+    if (styleTags) {
+        result = result.replace('</head>', `${styleTags}\n</head>`);
+    }
+
+    // 插入到body结束前
+    if (scriptTags) {
+        result = result.replace('</body>', `${scriptTags}\n</body>`);
+    }
+
+    return result;
 }
 
-function getSimpleHtml() {
+function injectConfigData(htmlContent, config) {
+    // 将配置注入到JavaScript中
+    const configScript = `
+        <script>
+            // 注入配置数据
+            window.NODE_EDITOR_CONFIG = ${JSON.stringify(config, null, 2)};
+            
+            // 确保在DOM加载完成后初始化
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    if (window.initWebview && typeof window.initWebview === 'function') {
+                        window.initWebview();
+                    }
+                });
+            } else {
+                // DOM已经加载完成
+                if (window.initWebview && typeof window.initWebview === 'function') {
+                    window.initWebview();
+                }
+            }
+        </script>
+    `;
+
+    // 将配置脚本插入到body结束前
+    return htmlContent.replace('</body>', `${configScript}\n</body>`);
+}
+
+
+function getErrorHtml() {
     // 使用更简单可靠的HTML进行测试
     try {
-        const htmlPath = path.join(__dirname, 'ui', 'basic.html');
+        const htmlPath = path.join(__dirname, 'ui', 'error.html');
         let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
         return htmlContent;
     } catch (error) {
@@ -321,5 +357,4 @@ module.exports = {
     activate,
     deactivate
 };
-
 

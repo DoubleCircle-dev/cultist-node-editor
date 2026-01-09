@@ -7,9 +7,10 @@
     "vscode": "^1.107.0"
   },
   "categories": [
+    "Visualization",
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": ["*"],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -32,5 +33,9 @@
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qqf-dev/cultist-node-editor"
   }
 }

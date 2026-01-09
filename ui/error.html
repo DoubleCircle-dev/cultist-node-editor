@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错误 - 节点编辑器</title>
+    <link rel="stylesheet" href="vscode.css">
+    <style>
+        /* 基础样式 - 与VS Code主题兼容 */
+        :root {
+            --background: var(--vscode-editor-background, #1e1e1e);
+            --foreground: var(--vscode-editor-foreground, #cccccc);
+            --error-color: var(--vscode-errorForeground, #f48771);
+            --border-color: var(--vscode-panel-border, #3e3e42);
+            --button-bg: var(--vscode-button-background, #007acc);
+            --button-hover-bg: var(--vscode-button-hoverBackground, #0062a3);
+            --secondary-bg: var(--vscode-secondaryButton-background, #3a3a3a);
+            --secondary-hover-bg: var(--vscode-secondaryButton-hoverBackground, #454545);
+            --input-bg: var(--vscode-input-background, #252526);
+            --input-border: var(--vscode-input-border, #3e3e42);
+            --focus-border: var(--vscode-focusBorder, #007acc);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+            background: var(--background);
+            color: var(--foreground);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .error-container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--vscode-panel-background, #252526);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            margin: 20px;
+        }
+        
+        .error-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .error-icon {
+            font-size: 48px;
+            margin-right: 20px;
+            line-height: 1;
+        }
+        
+        .error-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--error-color);
+            margin: 0;
+        }
+        
+        .error-subtitle {
+            font-size: 16px;
+            color: var(--foreground);
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .error-details {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .error-details pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        
+        .error-suggestions {
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(0, 122, 204, 0.1);
+            border-left: 4px solid var(--button-bg);
+            border-radius: 4px;
+        }
+        
+        .error-suggestions h3 {
+            color: var(--button-bg);
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .error-suggestions ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+        
+        .error-suggestions li {
+            margin-bottom: 8px;
+        }
+        
+        .error-suggestions li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .error-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            min-height: 36px;
+        }
+        
+        .btn-primary {
+            background: var(--button-bg);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--button-hover-bg);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-bg);
+            color: var(--foreground);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--secondary-hover-bg);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--foreground);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--focus-border);
+        }
+        
+        .btn-icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--focus-border);
+        }
+        
+        .tech-details {
+            margin-top: 30px;
+            padding: 15px;
+            background: var(--input-bg);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .tech-details summary {
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--foreground);
+            opacity: 0.8;
+        }
+        
+        .tech-details pre {
+            font-size: 12px;
+            opacity: 0.7;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .error-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .error-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .error-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            
+            .error-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .error-container {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--input-bg);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--foreground);
+            opacity: 0.5;
+        }
+        
+        /* 代码高亮 */
+        .error-code {
+            color: #569cd6;
+        }
+        
+        .error-string {
+            color: #ce9178;
+        }
+        
+        .error-number {
+            color: #b5cea8;
+        }
+        
+        .error-keyword {
+            color: #c586c0;
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-error {
+            background-color: var(--error-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-header">
+            <div class="error-icon">⚠️</div>
+            <div>
+                <h1 class="error-title">节点编辑器加载失败</h1>
+                <p class="error-subtitle">无法加载编辑器界面，请参考以下信息解决问题</p>
+            </div>
+        </div>
+        
+        <div class="error-details">
+            <pre id="error-message">加载错误信息...</pre>
+        </div>
+        
+        <div class="error-suggestions">
+            <h3>可能的原因和解决方案：</h3>
+            <ul>
+                <li><span class="status-indicator status-error"></span>扩展文件结构不完整或路径错误</li>
+                <li><span class="status-indicator status-error"></span>资源文件缺失或权限不足</li>
+                <li><span class="status-indicator status-error"></span>VS Code插件兼容性问题</li>
+                <li><span class="status-indicator status-error"></span>网络或安全策略限制</li>
+                <li><span class="status-indicator status-error"></span>扩展版本与VS Code版本不匹配</li>
+            </ul>
+        </div>
+        
+        <div class="error-actions">
+            <button class="btn btn-primary" id="retry-btn" onclick="handleRetry()">
+                <span class="btn-icon">🔄</span> 重试加载
+            </button>
+            
+            <button class="btn btn-secondary" id="report-btn" onclick="handleReportError()">
+                <span class="btn-icon">📤</span> 报告错误
+            </button>
+            
+            <button class="btn btn-outline" id="details-btn" onclick="toggleDetails()">
+                <span class="btn-icon">🔍</span> 查看技术详情
+            </button>
+            
+            <button class="btn btn-outline" id="help-btn" onclick="openHelp()">
+                <span class="btn-icon">❓</span> 获取帮助
+            </button>
+        </div>
+        
+        <div class="tech-details" id="tech-details" style="display: none;">
+            <summary>技术详情</summary>
+            <pre id="tech-info">正在加载技术信息...</pre>
+        </div>
+    </div>
+    
+    <script>
+        // 获取VS Code API
+        const vscode = acquireVsCodeApi();
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', () => {
+            // 从URL参数中获取错误信息
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorMessage = urlParams.get('message') || '未知错误';
+            const errorStack = urlParams.get('stack') || '';
+            const errorCode = urlParams.get('code') || '';
+            
+            // 显示错误信息
+            document.getElementById('error-message').textContent = errorMessage;
+            
+            // 构建技术信息
+            const techInfo = {
+                timestamp: new Date().toISOString(),
+                errorCode: errorCode,
+                errorMessage: errorMessage,
+                errorStack: errorStack,
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                vscodeAPI: typeof acquireVsCodeApi !== 'undefined' ? '可用' : '不可用',
+                url: window.location.href,
+                host: window.location.host
+            };
+            
+            document.getElementById('tech-info').textContent = JSON.stringify(techInfo, null, 2);
+            
+            // 保存错误状态
+            vscode.setState({ 
+                lastError: errorMessage,
+                timestamp: techInfo.timestamp 
+            });
+            
+            // 发送错误报告到扩展
+            setTimeout(() => {
+                vscode.postMessage({
+                    command: 'errorReport',
+                    type: 'pageLoaded',
+                    error: {
+                        message: errorMessage,
+                        code: errorCode,
+                        stack: errorStack
+                    }
+                });
+            }, 1000);
+        });
+        
+        // 重试加载
+        function handleRetry() {
+            const retryBtn = document.getElementById('retry-btn');
+            retryBtn.disabled = true;
+            retryBtn.innerHTML = '<span class="btn-icon">⏳</span> 重试中...';
+            
+            // 发送重试消息到扩展
+            vscode.postMessage({
+                command: 'retry',
+                timestamp: new Date().toISOString()
+            });
+            
+            // 显示提示
+            setTimeout(() => {
+                const status = document.createElement('div');
+                status.className = 'error-suggestions';
+                status.style.marginTop = '15px';
+                status.innerHTML = '<p>正在尝试重新加载编辑器，请稍候...</p>';
+                
+                document.querySelector('.error-actions').after(status);
+            }, 500);
+            
+            // 3秒后重新加载页面
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
+        }
+        
+        // 报告错误
+        function handleReportError() {
+            const reportBtn = document.getElementById('report-btn');
+            reportBtn.disabled = true;
+            reportBtn.innerHTML = '<span class="btn-icon">📨</span> 发送中...';
+            
+            // 收集错误信息
+            const errorMessage = document.getElementById('error-message').textContent;
+            const techInfo = document.getElementById('tech-info').textContent;
+            
+            // 发送错误报告到扩展
+            vscode.postMessage({
+                command: 'reportError',
+                data: {
+                    error: errorMessage,
+                    details: techInfo,
+                    userMessage: '用户主动报告错误'
+                }
+            });
+            
+            // 显示确认消息
+            setTimeout(() => {
+                reportBtn.innerHTML = '<span class="btn-icon">✅</span> 已发送';
+                
+                const confirmation = document.createElement('div');
+                confirmation.className = 'error-suggestions';
+                confirmation.style.marginTop = '15px';
+                confirmation.innerHTML = '<p>错误报告已发送给开发者，感谢您的反馈！</p>';
+                
+                document.querySelector('.error-actions').after(confirmation);
+            }, 1000);
+            
+            // 5秒后恢复按钮状态
+            setTimeout(() => {
+                reportBtn.disabled = false;
+                reportBtn.innerHTML = '<span class="btn-icon">📤</span> 报告错误';
+            }, 5000);
+        }
+        
+        // 切换技术详情显示
+        function toggleDetails() {
+            const detailsPanel = document.getElementById('tech-details');
+            const detailsBtn = document.getElementById('details-btn');
+            
+            if (detailsPanel.style.display === 'none') {
+                detailsPanel.style.display = 'block';
+                detailsBtn.innerHTML = '<span class="btn-icon">👁️</span> 隐藏详情';
+                
+                // 发送分析事件
+                vscode.postMessage({
+                    command: 'analytics',
+                    event: 'errorDetailsViewed'
+                });
+            } else {
+                detailsPanel.style.display = 'none';
+                detailsBtn.innerHTML = '<span class="btn-icon">🔍</span> 查看技术详情';
+            }
+        }
+        
+        // 打开帮助
+        function openHelp() {
+            vscode.postMessage({
+                command: 'openHelp',
+                context: 'errorPage'
+            });
+            
+            // 显示帮助信息
+            const helpInfo = document.createElement('div');
+            helpInfo.className = 'error-suggestions';
+            helpInfo.style.marginTop = '15px';
+            helpInfo.innerHTML = `
+                <h3>获取帮助：</h3>
+                <ul>
+                    <li>1. 检查扩展是否完整安装</li>
+                    <li>2. 重启VS Code并重试</li>
+                    <li>3. 查看扩展日志获取更多信息</li>
+                    <li>4. 访问GitHub仓库查看常见问题</li>
+                </ul>
+            `;
+            
+            document.querySelector('.error-actions').after(helpInfo);
+        }
+        
+        // 监听扩展消息
+        window.addEventListener('message', event => {
+            const message = event.data;
+            
+            switch (message.command) {
+                case 'updateError':
+                    document.getElementById('error-message').textContent = message.message;
+                    break;
+                    
+                case 'retryConfirmed':
+                    // 扩展确认了重试请求
+                    const status = document.createElement('div');
+                    status.className = 'error-suggestions';
+                    status.style.marginTop = '15px';
+                    status.innerHTML = `<p>${message.message || '正在重新加载...'}</p>`;
+                    
+                    document.querySelector('.error-actions').after(status);
+                    break;
+                    
+                case 'reportConfirmed':
+                    // 错误报告已确认
+                    console.log('错误报告已确认:', message);
+                    break;
+            }
+        });
+        
+        // 键盘快捷键支持
+        document.addEventListener('keydown', (event) => {
+            // Ctrl/Cmd + R 重试
+            if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+                event.preventDefault();
+                handleRetry();
+            }
+            
+            // Esc 关闭详情
+            if (event.key === 'Escape') {
+                const detailsPanel = document.getElementById('tech-details');
+                if (detailsPanel.style.display === 'block') {
+                    toggleDetails();
+                }
+            }
+            
+            // F1 打开帮助
+            if (event.key === 'F1') {
+                openHelp();
+            }
+        });
+        
+        // 添加复制错误信息功能
+        document.getElementById('error-message').addEventListener('click', () => {
+            const errorText = document.getElementById('error-message').textContent;
+            
+            // 使用现代 Clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(errorText).then(() => {
+                    // 显示复制成功提示
+                    const originalText = document.getElementById('error-message').textContent;
+                    document.getElementById('error-message').textContent = '✓ 已复制到剪贴板';
+                    
+                    setTimeout(() => {
+                        document.getElementById('error-message').textContent = originalText;
+                    }, 2000);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
