@@ -25,6 +25,8 @@ function updateStatus(text) {
     if (statusTextElement) {
         statusTextElement.textContent = text;
     }
+
+    console.log(`状态更新---${text}`);
 }
 
 // todo 读取mod生成节点图
@@ -86,7 +88,6 @@ function addTestNode() {
 
 // 添加节点
 function addNode(type) {
-    console.log(nodeManager.constructor.name);
     try {
         let x = Math.random() * (canvas.clientWidth - 220);
         let y = Math.random() * (canvas.clientHeight - 120);
@@ -96,6 +97,11 @@ function addNode(type) {
         updateStatus('添加节点时出错' + error.message);
     }
 }
+
+function addPlaneNode() {
+    addNode('plane');
+}
+
 
 // 初始化函数
 function initWebview() {
@@ -205,6 +211,10 @@ function testCommunication() {
 }
 
 function generateTest() {
+    for (let index = 0; index < 1000; index++) {
+        addTestNode();        
+    }
+
     vscode.postMessage({
         command: "generateTest",
         message: "生成测试",
