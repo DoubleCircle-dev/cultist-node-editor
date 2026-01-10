@@ -6,7 +6,6 @@
 
 // 全局变量管理
 const vscode = acquireVsCodeApi();
-let nodeCount = 0;
 const nodes = new Map();
 const connections = [];
 
@@ -14,146 +13,6 @@ const connections = [];
 let portDragManager = null;
 let actionManager = null;
 let nodeManager = null;
-
-
-
-// 节点类型配置
-const nodeTypes = {
-    test: {
-        title: '测试节点',
-        color: '#6c5ce7',
-        inputs: [
-            { type: 'port', label: '测试输入' }
-        ],
-        outputs: [
-            { type: 'port', label: '测试输出' }
-        ],
-        content: `这是一个测试节点<br>ID: <br>类型: 通用测试`,
-        icon: '⚡',
-        properties: [
-            { label: '数值', type: 'range', min: 0, max: 100, default: 50 },
-            { label: '选项', type: 'select', options: ['选项1', '选项2', '选项3'], default: 0 },
-            { label: '开关', type: 'checkbox', default: false },
-            { label: '二择', type: 'bool', default: false },
-            { label: '数字', type: 'number', min: 0, max: 100, default: 50 },
-            { label: '整数输入', type: 'int', default: 0 },
-            { label: '文本输入', type: 'text', default: '测试文本' }
-        ]
-    },
-    legacy: {
-        title: '职业',
-        color: '#d73141ff',
-        inputs: [
-            { type: 'port', label: '前置结局' }
-        ],
-        outputs: [
-            { type: 'port', label: '初始verb' }
-        ],
-        content: `这是一个测试节点<br>ID: <br>类型: 通用测试`,
-        icon: '⚡',
-        properties: [
-            { label: '数值', type: 'number', min: 0, max: 100, default: 50 },
-            { label: '开关', type: 'checkbox', default: false }
-        ]
-    },
-    recipes: {
-        title: '交互(recipes)',
-        color: '#f1912aff',
-        inputs: [
-            { type: 'port', label: 'requirements' }
-        ],
-        outputs: [
-            { type: 'port', label: 'alt' },
-            { type: 'port', label: 'linked' },
-            { type: 'port', label: 'inductions' }
-        ],
-        content: `交互界面(recipes)，是使用行动与卡牌交互的一种过程，可以实现多样化的功能`,
-        icon: '📖',
-        properties: [
-            { label: 'aspects', type: 'range', min: 0, max: 100, default: 75 }
-        ]
-    },
-    elements: {
-        title: '元素',
-        color: '#2196F3',
-        inputs: [],
-        outputs: [],
-        content: `游戏中的卡牌、性相均属于elements`,
-        icon: '🔊',
-        properties: [
-            { label: '类型', type: 'select', options: ['card', 'aspect'], default: 0 },
-        ]
-    },
-    decks: {
-        title: '卡池',
-        color: '#23bf30ff',
-        inputs: [],
-        outputs: [],
-        content: `滤波器节点<br>ID: <br>类型: 低通滤波器`,
-        icon: '🎛️',
-        properties: [
-            { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
-            { label: '频率', type: 'range', min: 20, max: 20000, default: 1000 },
-            { label: 'Q值', type: 'range', min: 0.1, max: 10, step: 0.1, default: 1 }
-        ]
-    },
-    verbs: {
-        title: '行动框',
-        color: '#9C27B0',
-        outputs: [
-            { type: 'port', label: 'verb' }
-        ],
-        content: `延迟节点<br>ID: <br>最大延迟: 2000ms`,
-        icon: '⚡',
-        properties: [
-            { label: 'id', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
-            { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
-            { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 }
-        ]
-    },
-    slots: {
-        title: '卡槽',
-        color: '#fdf622ff',
-        inputs: [],
-        outputs: [],
-        content: `混音器节点<br>ID: <br>通道: 4进2出`,
-        icon: '🎚️',
-        properties: [
-            { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道2', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道3', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道4', type: 'range', min: 0, max: 100, default: 100 }
-        ]
-    },
-    levers: {
-        title: '继承物品',
-        color: '#3F51B5',
-        inputs: [],
-        outputs: [],
-        content: `混音器节点<br>ID: <br>通道: 4进2出`,
-        icon: '🎚️',
-        properties: [
-            { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道2', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道3', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道4', type: 'range', min: 0, max: 100, default: 100 }
-        ]
-    },
-    text: {
-        title: '文本',
-        color: '#3fb3b5ff',
-        inputs: [],
-        outputs: [],
-        content: `混音器节点<br>ID: <br>通道: 4进2出`,
-        icon: '🎚️',
-        properties: [
-            { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道2', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道3', type: 'range', min: 0, max: 100, default: 100 },
-            { label: '通道4', type: 'range', min: 0, max: 100, default: 100 }
-        ]
-    }
-};
 
 // 更新状态显示
 function updateStatus(text) {
@@ -168,7 +27,7 @@ function updateStatus(text) {
     }
 }
 
-// 读取mod生成节点图
+// todo 读取mod生成节点图
 function readMod() {
     updateStatus("读取mod中，如果mod文件过大，读取时间可能较长");
     vscode.postMessage({
@@ -177,7 +36,7 @@ function readMod() {
     });
 }
 
-// 保存图表
+// todo 保存图表
 function saveGraph() {
     const graphData = {
         nodes: [],
@@ -195,7 +54,7 @@ function saveGraph() {
     });
 }
 
-// 加载图表
+// todo 加载图表
 function loadGraph() {
     updateStatus("加载图表...");
     vscode.postMessage({
@@ -203,7 +62,7 @@ function loadGraph() {
     });
 }
 
-// 清空画布
+// todo 清空画布
 function clearCanvas() {
     const canvas = document.getElementById("canvas");
     const test_nodes = canvas.querySelectorAll(".test-node");
@@ -216,8 +75,6 @@ function clearCanvas() {
     if (placeholder) {
         placeholder.style.display = "block";
     }
-
-    nodeCount = 0;
 
     updateStatus("画布已清空");
 }
@@ -356,7 +213,6 @@ function generateTest() {
 }
 
 function toggleConsole() {
-
     vscode.postMessage({
         command: "openConsole",
         message: "打开控制台",
