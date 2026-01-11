@@ -121,7 +121,6 @@ function createNodeEditorPanel(context) {
         }, 500);
 
         console.log('✅ 节点编辑器面板创建成功');
-        console.log('面板html:' + panel.webview.html);
     } catch (error) {
         console.error('❌ 创建面板时出错:', error);
         vscode.window.showErrorMessage(`创建节点编辑器失败: ${error.message}`);

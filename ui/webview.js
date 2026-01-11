@@ -2,7 +2,6 @@
 /* eslint-disable no-undef */
 // @ts-nocheck
 
-// PortDragManager将通过全局对象访问
 
 // 全局变量管理
 const vscode = acquireVsCodeApi();
@@ -10,7 +9,6 @@ const nodes = new Map();
 const connections = [];
 
 // 创建全局管理器实例
-let portDragManager = null;
 let actionManager = null;
 let nodeManager = null;
 

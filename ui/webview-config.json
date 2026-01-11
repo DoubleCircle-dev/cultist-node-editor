@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "resources": {
     "styles": ["style.css"],
-    "scripts": ["basicOP.js", "PortDragManager.js", "webview.js"]
+    "scripts": ["basicOP.js", "webview.js"]
   },
   "nodeTypes": {
     "recipes": {

@@ -217,6 +217,12 @@ class NodeManager {
             highlightedPorts: new Set(),
         }
 
+        // 添加高亮状态缓存
+        this.highlightCache = {
+            highlightedNodes: new Set(),
+            dimmedConnections: new Set()
+        };
+
         this.basciActionManager = new BasicActionManager(this.nodes, this.connections, this.canvas, this.updateStatus);
 
         this.handleEvent();
@@ -312,6 +318,10 @@ class NodeManager {
 
             // 选中节点
             nodeElement.classList.add('selected');
+            this.bringNodeToFront(nodeElement.id);
+
+            // 更新连接线样式
+            this.updateSelectedNodesConnections();
 
             // 获取焦点，使节点可以接收键盘事件
             nodeElement.focus();
@@ -320,6 +330,9 @@ class NodeManager {
             document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
             // 取消焦点，使节点无法接收键盘事件
             document.querySelectorAll('.node').forEach((n) => n.blur());
+
+            // 清除所有连接线高亮
+            this.clearConnectionHighlights();
         }
         return;
 
@@ -429,6 +442,7 @@ class NodeManager {
 
     // 处理鼠标按下事件
     handleCanvasMouseDown(e) {
+        this.handleCanvasClick(e)
         const portDotElement = e.target.closest('.port-dot');
         const portElement = e.target.closest('.port-hub-item');
         const nodeElement = e.target.closest('.node');
@@ -565,6 +579,7 @@ class NodeManager {
 
         // 实时更新连接线位置
         this.updateNodeConnections(node.id);
+
     }
 
     // 停止拖拽
@@ -956,10 +971,7 @@ class NodeManager {
             const portHubItem = element.closest('.port-hub-item');
             if (!portHubItem) continue;
 
-            const portId = portHubItem.dataset.portId;
-            if (!portId) continue;
-
-            const [nodeId, portType, portIndex] = this.parsePortId(portId);
+            const {nodeId, portType, portIndex} = portHubItem;
 
             // 检查是否可以连接
             if (this.isValidConnectionTarget(nodeId, portType, parseInt(portIndex))) {
@@ -1060,6 +1072,9 @@ class NodeManager {
 
         // 更新端口样式
         this.updatePortStyles();
+
+        // 更新连接线高亮
+        this.updateSelectedNodesConnections();
 
         this.updateStatus(`已连接: ${fromNode.config.title} → ${toNode.config.title}`);
     }
@@ -1206,16 +1221,6 @@ class NodeManager {
         return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
     }
 
-    // 解析端口ID
-    parsePortId(portId) {
-        const parts = portId.split('-');
-        const nodeId = `${parts[0]}-${parts[1]}`;
-        const portType = parts[2];
-        const portIndex = parts[3];
-
-        return [nodeId, portType, parseInt(portIndex)];
-    }
-
     // 移除端口连接
     removePortConnection(nodeId, portType, portIndex) {
         const node = this.getNode(nodeId);
@@ -1278,6 +1283,9 @@ class NodeManager {
         // 更新端口样式
         this.updatePortStyles();
 
+        // 更新连接线高亮
+        this.updateSelectedNodesConnections();
+
         this.updateStatus(`已断开连接`);
     }
 
@@ -1333,6 +1341,163 @@ class NodeManager {
             `.port-hub-item[data-port-id="${nodeId}-${portType}-${portIndex}"] .port-dot`
         );
     }
+
+    // === 连接线高亮功能 ===
+
+    /**
+     * 高亮节点相关的所有连接线
+     * @param {number} nodeId - 节点ID
+     */
+    highlightNodeConnections(nodeId) {
+        // 移除所有连接线的高亮和淡化样式
+        this.clearConnectionHighlights();
+
+        // 获取节点
+        const node = this.getNode(nodeId);
+        if (!node) return;
+
+        // 收集所有相关的连接线ID
+        const relatedConnectionIds = new Set();
+
+        // 检查输入连接
+        if (node.connections.inputs) {
+            node.connections.inputs.forEach(connectionArray => {
+                if (connectionArray && Array.isArray(connectionArray)) {
+                    connectionArray.forEach(connectionId => {
+                        if (connectionId) relatedConnectionIds.add(connectionId);
+                    });
+                } else if (connectionArray) {
+                    relatedConnectionIds.add(connectionArray);
+                }
+            });
+        }
+
+        // 检查输出连接
+        if (node.connections.outputs) {
+            node.connections.outputs.forEach(connectionArray => {
+                if (connectionArray && Array.isArray(connectionArray)) {
+                    connectionArray.forEach(connectionId => {
+                        if (connectionId) relatedConnectionIds.add(connectionId);
+                    });
+                } else if (connectionArray) {
+                    relatedConnectionIds.add(connectionArray);
+                }
+            });
+        }
+
+        // 高亮相关连接线
+        relatedConnectionIds.forEach(connectionId => {
+            const path = document.querySelector(`.connection-path[data-connection-id="${connectionId}"]`);
+            if (path) {
+                // 确保为永久连接线添加高亮样式
+                if (path.classList.contains('permanent-connection')) {
+                    path.classList.add('highlighted');
+                    path.classList.remove('dimmed');
+                }
+            }
+        });
+
+        // 淡化其他连接线
+        this.dimOtherConnections(Array.from(relatedConnectionIds));
+
+        this.updateStatus(`已高亮显示节点 ${node.config.title} 的连接线`);
+    }
+
+    /**
+     * 淡化非相关的连接线
+     * @param {Array} highlightedConnectionIds - 高亮连接线ID数组
+     */
+    dimOtherConnections(highlightedConnectionIds) {
+        const allPaths = document.querySelectorAll('.connection-path.permanent-connection');
+        allPaths.forEach(path => {
+            const connectionId = path.getAttribute('data-connection-id');
+            if (connectionId && !highlightedConnectionIds.includes(connectionId)) {
+                path.classList.add('dimmed');
+                path.classList.remove('highlighted');
+            }
+        });
+    }
+
+    /**
+     * 清除所有连接线的高亮和淡化样式
+     */
+    clearConnectionHighlights() {
+        const allPaths = document.querySelectorAll('.connection-path');
+        allPaths.forEach(path => {
+            path.classList.remove('highlighted');
+            path.classList.remove('dimmed');
+        });
+    }
+
+    /**
+     * 更新多个选中节点的连接线高亮
+     */
+    updateSelectedNodesConnections() {
+        // 获取所有选中的节点
+        const selectedNodes = document.querySelectorAll('.node.selected');
+
+        // 如果没有选中的节点，清除所有高亮
+        if (selectedNodes.length === 0) {
+            this.clearConnectionHighlights();
+            return;
+        }
+
+        // 收集所有相关连接线ID
+        const relatedConnectionIds = new Set();
+
+        // 遍历每个选中的节点
+        selectedNodes.forEach(nodeElement => {
+            const nodeId = parseInt(nodeElement.id);
+            const node = this.getNode(nodeId);
+            if (!node) return;
+
+            // 添加输入连接
+            if (node.connections.inputs) {
+                node.connections.inputs.forEach(connectionArray => {
+                    if (connectionArray && Array.isArray(connectionArray)) {
+                        connectionArray.forEach(connectionId => {
+                            if (connectionId) relatedConnectionIds.add(connectionId);
+                        });
+                    } else if (connectionArray) {
+                        relatedConnectionIds.add(connectionArray);
+                    }
+                });
+            }
+
+            // 添加输出连接
+            if (node.connections.outputs) {
+                node.connections.outputs.forEach(connectionArray => {
+                    if (connectionArray && Array.isArray(connectionArray)) {
+                        connectionArray.forEach(connectionId => {
+                            if (connectionId) relatedConnectionIds.add(connectionId);
+                        });
+                    } else if (connectionArray) {
+                        relatedConnectionIds.add(connectionArray);
+                    }
+                });
+            }
+        });
+
+        // 清除之前的高亮
+        this.clearConnectionHighlights();
+
+        // 高亮相关连接线
+        relatedConnectionIds.forEach(connectionId => {
+            const path = document.querySelector(`.connection-path[data-connection-id="${connectionId}"]`);
+            if (path && path.classList.contains('permanent-connection')) {
+                path.classList.add('highlighted');
+                path.classList.remove('dimmed');
+            }
+        });
+
+        // 淡化其他连接线
+        this.dimOtherConnections(Array.from(relatedConnectionIds));
+
+        const count = relatedConnectionIds.size;
+        this.updateStatus(`已高亮显示 ${selectedNodes.length} 个节点的 ${count} 条连接线`);
+    }
+
+    
 }
 
 /**
