@@ -66,11 +66,8 @@ function loadGraph() {
 
 // todo 清空画布
 function clearCanvas() {
-    const canvas = document.getElementById("canvas");
-    const test_nodes = canvas.querySelectorAll(".test-node");
-    test_nodes.forEach((node) => node.remove());
-    const nodes = canvas.querySelectorAll(".node");
-    nodes.forEach((node) => node.remove());
+
+    nodeManager.clear();
 
     // 显示占位符
     const placeholder = document.getElementById("placeholder");
@@ -107,25 +104,6 @@ function addPlaneNode() {
 function initWebview() {
     updateStatus("已连接");
 
-
-    if (typeof PortDragManager === 'undefined') {
-        console.error('❌ PortDragManager 未加载');
-        setTimeout(initWebview, 100);
-        return;
-    }
-
-    if (typeof BasicActionManager === 'undefined') {
-        console.error('❌ BasicActionManager 未加载');
-        setTimeout(initWebview, 100);
-        return;
-    }
-
-    if (typeof NodeManager === 'undefined') {
-        console.error('❌ NodeManager 未加载');
-        setTimeout(initWebview, 100);
-        return;
-    }
-
     const canvas = document.getElementById('canvas');
     if (!canvas) {
         console.error('❌ Canvas 元素未找到');
@@ -133,21 +111,12 @@ function initWebview() {
         return;
     }
 
-    portDragManager = new PortDragManager(
-        nodes,  // 节点Map
-        connections,  // 连接数组
-        canvas,  // 画布元素
-        updateStatus  // 状态更新函数
-    );
-
-    actionManager = new BasicActionManager(
-        nodes,  // 节点Map
-        connections,  // 连接数组
-        canvas,  // 画布元素
-        updateStatus  // 状态更新函数
-    );
-
-    nodeManager = new NodeManager(canvas, updateStatus); // 节点管理器实例
+    if (!nodeManager) {
+        nodeManager = new NodeManager(canvas, updateStatus); // 节点管理器实例
+        console.error('nodeManager 加载中');
+        setTimeout(initWebview, 100);
+        return;
+    }
 
     // 页面加载完成后发送就绪消息
     window.addEventListener("load", () => {

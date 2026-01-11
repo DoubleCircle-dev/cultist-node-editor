@@ -175,6 +175,7 @@ class NodeManager {
      */
     constructor(canvas, updateStatus) {
         this.idGenerator = new BitmapIdGenerator();
+        this.id = 'node-manager-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 
         // 构造函数中可以初始化节点的属性和管理器所需的状态
         this.canvas = canvas;
@@ -206,7 +207,11 @@ class NodeManager {
         // 连接线相关变量
         this.connectionState = {
             isDragging: false,
-            startInfo: null,
+            startInfo: {
+                nodeId: null,
+                portIndex: null,
+                portType: null,
+            },
             tempLine: null,
             currentPortElement: null,
             highlightedPorts: new Set(),
@@ -214,9 +219,23 @@ class NodeManager {
 
         this.basciActionManager = new BasicActionManager(this.nodes, this.connections, this.canvas, this.updateStatus);
 
+        this.handleEvent();
     }
 
     getNode(id) {
+        // 类型检查
+        if (typeof id !== 'string' && typeof id !== 'number') {
+            throw new Error('节点ID格式不对', typeof id);
+        }
+        if (typeof id === 'string') {
+            id = parseInt(id, 10);
+        }
+
+        // 检查节点是否存在
+        if (!this.nodes.has(id)) {
+            throw new Error('节点不存在');
+        }
+
         return this.nodes.get(id);
     }
 
@@ -232,7 +251,7 @@ class NodeManager {
             // 创建节点实例
             let node = new Node(id, type, x, y, NodeManager.nodeTypes[type]);
 
-
+            console.log(NodeManager.nodeTypes[type]);
 
             // 添加键盘事件监听删除快捷键
             node.element.addEventListener('keydown', (e) => {
@@ -250,17 +269,14 @@ class NodeManager {
             // this.setupNodeSelected(node.element, node.id);
 
             // 为整个节点添加拖拽事件监听（端口和输入框除外）
-            this.setupNodeDrag(node.element, node.id);
+            // this.setupNodeDrag(node.element, node.id);
 
-            this.setupNodePortDrag(node.ports, node.id);
+            // this.setupNodePortDrag(node.ports, node.id);
 
-            // 等待下个事件循环批量添加
-            requestAnimationFrame(() => {
-                this.canvas.appendChild(node.element);
-                this.nodes.set(id, node);
-                this.updateStatus('成功添加' + node.type + '节点:#' + node.id);
-            });
-
+            this.canvas.appendChild(node.element);
+            this.nodes.set(id, node);
+            this.updateStatus('成功添加' + node.type + '节点:#' + node.id);
+            this.bringNodeToFront(id);
         } catch (error) {
             console.error('添加节点失败:', error);
             if (id) {
@@ -270,9 +286,59 @@ class NodeManager {
         }
     }
 
+    // 检查是否应该忽略拖拽
+    shouldIgnoreDrag(target) {
+        return BasicActionManager.ignoreDragItem.some((item) => target.closest(item));
+    }
 
+    // 处理事件
+    handleEvent() {
+        this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e)); // 添加点击事件监听器
+        this.canvas.addEventListener('contextmenu', (e) => this.handleContextMenu(e)); // 添加contextmenu事件监听
+        this.canvas.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e)); // 添加鼠标按下事件监听器
+        // this.canvas.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));  // 添加鼠标移动事件监听器
+        // this.canvas.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));    // 添加鼠标松开事件监听器
+    }
+
+    // 处理画布点击事件
+    handleCanvasClick(e) {
+        const nodeElement = e.target.closest('.node');
+        // 如果在节点上点击
+        if (nodeElement) {
+            // 如果不是多选（ctrl未按下）
+            if (!e.ctrlKey) {
+                document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
+            }
+
+            // 选中节点
+            nodeElement.classList.add('selected');
+
+            // 获取焦点，使节点可以接收键盘事件
+            nodeElement.focus();
+        } else {
+            // 如果点击的是画布空白处，取消选中所有节点
+            document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
+            // 取消焦点，使节点无法接收键盘事件
+            document.querySelectorAll('.node').forEach((n) => n.blur());
+        }
+        return;
+
+    }
 
     // === 右键菜单功能 ===
+
+    // 处理右键菜单事件
+    handleContextMenu(e) {
+        const nodeElement = e.target.closest('.node');
+        if (nodeElement) {
+            e.preventDefault(); // 阻止默认右键菜单
+            const nodeId = parseInt(nodeElement.id);
+            this.showNodeContextMenu(nodeId, e.clientX, e.clientY);
+        } else {
+            // 如果点击的是画布空白处，隐藏右键菜单
+            this.hideNodeContextMenu();
+        }
+    }
 
     // 创建节点的右键菜单
     createNodeContextMenu() {
@@ -283,7 +349,7 @@ class NodeManager {
             <span class="menu-icon">🗑️</span>
             <span class="menu-text">删除节点</span>
         </div>
-    `;
+        `;
 
         // 添加菜单项点击事件
         menu.addEventListener('click', (e) => {
@@ -296,13 +362,12 @@ class NodeManager {
                 const nodeId = menu.dataset.nodeId;
 
                 if (action === 'delete' && nodeId) {
+
                     // 先关闭菜单
                     this.hideNodeContextMenu();
 
-                    // 延迟执行删除操作，确保菜单已关闭
-                    setTimeout(() => {
-                        this.deleteNode(parseInt(nodeId));
-                    }, 50);
+                    // 删除操作
+                    this.deleteNode(nodeId);
                 }
             } else {
                 this.hideNodeContextMenu();
@@ -360,6 +425,46 @@ class NodeManager {
         if (menu) {
             menu.style.display = 'none';
         }
+    }
+
+    // 处理鼠标按下事件
+    handleCanvasMouseDown(e) {
+        const portDotElement = e.target.closest('.port-dot');
+        const portElement = e.target.closest('.port-hub-item');
+        const nodeElement = e.target.closest('.node');
+
+        if (e.button === 2) { // 右键点击
+            if (portElement) {
+                return;
+            }
+            this.handleContextMenu(e);
+            return;
+        }
+
+        if (portDotElement) {
+            if (portElement) {
+                this.startPortDrag(e, portElement, nodeElement.id, portElement.portType, portElement.portIndex);
+            } else {
+                throw new Error('端口未正确初始化：portElement为空');
+            }
+        }
+        if (nodeElement) {
+            const nodeId = parseInt(nodeElement.id);
+            if (!nodeElement.locked) {
+                if (this.shouldIgnoreDrag(e.target)) {
+                    return;
+                }
+            }
+
+            this.startDrag(e, nodeId);
+            return;
+        }
+        else {
+            // 如果点击的是画布空白处，取消选中所有节点
+            document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
+        }
+
+
     }
 
     // === 拖拽功能实现 ===
@@ -493,37 +598,6 @@ class NodeManager {
         document.removeEventListener('mouseup', this.stopDrag);
     }
 
-    // 更新节点的所有连接线
-    updateNodeConnections(nodeId) {
-        const node = this.getNode(nodeId);
-        if (!node) return;
-
-
-        // 更新输入连接线
-        node.connections.inputs.forEach((connectionId, index) => {
-            if (connectionId) {
-                // 处理连接ID数组
-                if (Array.isArray(connectionId)) {
-                    connectionId.forEach(id => this.updateConnectionPosition(id));
-                } else {
-                    this.updateConnectionPosition(connectionId);
-                }
-            }
-        });
-
-        // 更新输出连接线
-        node.connections.outputs.forEach((connectionId, index) => {
-            if (connectionId) {
-                // 处理连接ID数组
-                if (Array.isArray(connectionId)) {
-                    connectionId.forEach(id => this.updateConnectionPosition(id));
-                } else {
-                    this.updateConnectionPosition(connectionId);
-                }
-            }
-        });
-    }
-
     // 更新单个连接线的位置
     updateConnectionPosition(connectionId) {
         const connection = this.connections.find(conn => conn.id === connectionId);
@@ -532,30 +606,76 @@ class NodeManager {
         const path = document.querySelector(`.connection-path[data-connection-id="${connectionId}"]`);
         if (!path) return;
 
-        const fromNode = this.nodes.get(connection.from.nodeId);
-        const toNode = this.nodes.get(connection.to.nodeId);
+        const fromNode = this.getNode(connection.from.nodeId);
+        const toNode = this.getNode(connection.to.nodeId);
 
         if (!fromNode || !toNode) return;
 
         // 获取端口位置
-        const fromPort = this.getPortPosition(fromNode, connection.from.portIndex, 'output');
-        const toPort = this.getPortPosition(toNode, connection.to.portIndex, 'input');
+        const fromPos = this.getPortPosition(connection.from.nodeId, connection.from.portIndex, 'output');
+        const toPos = this.getPortPosition(connection.to.nodeId, connection.to.portIndex, 'input');
 
-        // 更新SVG路径
-        if (portDragManager) {
-            path.setAttribute('d', portDragManager.createCurvedPath(fromPort.x, fromPort.y, toPort.x, toPort.y));
-        }
+        // 更新路径
+        const newPath = this.createCurvedPath(fromPos.x, fromPos.y, toPos.x, toPos.y);
+        path.setAttribute('d', newPath);
+
+        // 更新连接对象的line引用
+        connection.line = path;
+    }
+
+    // 更新节点的所有连接线
+    updateNodeConnections(nodeId) {
+        const node = this.getNode(nodeId);
+        if (!node) return;
+
+        console.log(`更新节点 ${nodeId} 的所有连接线`);
+
+        // 收集所有需要更新的连接线
+        const connectionsToUpdate = new Set();
+
+        // 更新输入连接线
+        node.connections.inputs.forEach((connectionIds, index) => {
+            if (connectionIds && connectionIds.length > 0) {
+                connectionIds.forEach(connectionId => {
+                    if (connectionId) {
+                        connectionsToUpdate.add(connectionId);
+                    }
+                });
+            }
+        });
+
+        // 更新输出连接线
+        node.connections.outputs.forEach((connectionIds, index) => {
+            if (connectionIds && connectionIds.length > 0) {
+                connectionIds.forEach(connectionId => {
+                    if (connectionId) {
+                        connectionsToUpdate.add(connectionId);
+                    }
+                });
+            }
+        });
+
+        // 更新所有相关连接线
+        connectionsToUpdate.forEach(connectionId => {
+            this.updateConnectionPosition(connectionId);
+        });
     }
 
     // 获取端口位置
-    getPortPosition(node, portIndex, type) {
-        const port = node.element.querySelector(`.port-hub-item[data-port-id="${node.id}-${type}-${portIndex}"] .port-dot`);
+    getPortPosition(nodeId, portIndex, type) {
+        const node = this.getNode(nodeId)
+        if (!node) {
+            console.error(`找不到节点 ${nodeId}`);
+        }
+
+        const port = node.getPort(portIndex, type);
         if (!port) {
             // 如果找不到端口，返回节点中心位置
+            console.warn(`找不到节点 ${nodeId} 的端口 ${portIndex} (${type})`);
             return {
                 x: node.x + node.element.offsetWidth / 2,
                 y: node.y + node.element.offsetHeight / 2
-            };
+            }
         }
 
         const portRect = port.getBoundingClientRect();
@@ -585,6 +705,14 @@ class NodeManager {
     // 删除节点
     deleteNode(nodeId) {
         this.updateStatus(`删除节点中... `);
+        if (typeof nodeId !== 'number' && typeof nodeId !== 'string') {
+            console.error('无效的节点ID:', nodeId);
+            return;
+        }
+        if (typeof nodeId == 'string') {
+            nodeId = parseInt(nodeId);
+        }
+
         const node = this.getNode(nodeId);
         if (!node) {
             console.error('未找到节点:', nodeId);
@@ -604,10 +732,24 @@ class NodeManager {
         this.updateStatus(`已删除节点: ${node.config.title} #${nodeId}`);
     }
 
+    // 删除所有节点
+    clear() {
+        this.nodes.clear();
+        this.connections = [];
+        this.idGenerator.reset();
+
+        const test_nodes = this.canvas.querySelectorAll(".test-node");
+        test_nodes.forEach((node) => node.remove());
+        const nodes = this.canvas.querySelectorAll(".node");
+        nodes.forEach((node) => node.remove());
+
+        this.updateStatus(`已清空所有节点`);
+    }
+
     // === 连接线功能实现 ===
 
     setupNodePortDrag(ports, nodeId) {
-        const node = this.nodes.get(nodeId);
+        const node = this.getNode(nodeId);
         if (!node) return;
 
         // 初始化输入端口拖拽事件
@@ -651,8 +793,11 @@ class NodeManager {
         event.preventDefault();
         event.stopPropagation();
 
-        const node = this.nodes.get(nodeId);
+        console.log(`开始建立连接 起始端口${portElement.portId}`);
+
+        const node = this.getNode(nodeId);
         if (!node) return;
+
 
         // 检查端口是否已连接
         if (this.isPortConnected(nodeId, portType, portIndex)) {
@@ -660,9 +805,12 @@ class NodeManager {
             return;
         }
 
+
         // 设置拖拽状态
         this.connectionState.isDragging = true;
-        this.connectionState.startInfo = { nodeId, portType, portIndex };
+        this.connectionState.startInfo.nodeId = nodeId;
+        this.connectionState.startInfo.portType = portType;
+        this.connectionState.startInfo.portIndex = portIndex;
         this.connectionState.currentPortElement = portElement;
 
         // 添加拖拽样式
@@ -672,10 +820,9 @@ class NodeManager {
         this.createTempLine(event);
 
         // 绑定全局事件
-        document.addEventListener('mousemove', this.handleDragMove.bind(this));
-        document.addEventListener('mouseup', this.handleDragEnd.bind(this));
+        document.addEventListener('mousemove', this.handlePortDragMove.bind(this));
+        document.addEventListener('mouseup', this.handlePortDragEnd.bind(this));
 
-        this.updateStatus(`开始连接 ${portType === 'input' ? '输入' : '输出'}端口`);
     }
 
     // 处理已连接端口的点击
@@ -694,7 +841,8 @@ class NodeManager {
         const connectionsSvg = this.canvas.querySelector('svg') || this.createConnectionsSvg();
 
         // 获取起始端口位置
-        const startPos = this.getPortPosition(this.connectionState.startInfo);
+        const { nodeId, portIndex, portType } = this.connectionState.startInfo;
+        const startPos = this.getPortPosition(nodeId, portIndex, portType);
 
         // 创建SVG路径
         const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -732,15 +880,17 @@ class NodeManager {
     }
 
     // 处理拖拽移动
-    handleDragMove(event) {
+    handlePortDragMove(event) {
         if (!this.connectionState.isDragging || !this.connectionState.tempLine) return;
 
         const canvasRect = this.canvas.getBoundingClientRect();
 
         // 获取起始端口位置
-        const startPos = this.getPortPosition(this.connectionState.startInfo);
+        const { nodeId, portIndex, portType } = this.connectionState.startInfo;
+        const startPos = this.getPortPosition(nodeId, portIndex, portType);
+        // 更新临时连接线
 
-        // 获取当前鼠标位置
+        // 获取当前鼠标位置 
         const endX = event.clientX - canvasRect.left;
         const endY = event.clientY - canvasRect.top;
 
@@ -753,7 +903,7 @@ class NodeManager {
     }
 
     // 处理拖拽结束
-    handleDragEnd(event) {
+    handlePortDragEnd(event) {
         if (!this.connectionState.isDragging) return;
 
         const targetPort = this.findTargetPort(event);
@@ -775,11 +925,9 @@ class NodeManager {
             const portHubItem = element.closest('.port-hub-item');
             if (!portHubItem) continue;
 
-            const portId = portHubItem.dataset.portId;
-            if (!portId) continue;
+            const { nodeId, portType, portIndex } = portHubItem;
 
-            const [nodeId, portType, portIndex] = this.parsePortId(portId);
-
+            // TODO 暂时不允许自连
             // 不能连接到同一节点
             if (nodeId === this.connectionState.startInfo.nodeId) continue;
 
@@ -850,6 +998,8 @@ class NodeManager {
             toPortIndex = startPortIndex;
         }
 
+        console.log(`尝试连接: ${fromNodeId}:${fromPortIndex} → ${toNodeId}:${toPortIndex}`);
+
         // 创建连接
         this.createConnection(fromNodeId, fromPortIndex, toNodeId, toPortIndex);
     }
@@ -880,27 +1030,20 @@ class NodeManager {
             line: null
         };
 
-        // 添加操作到历史记录
-        if (window.vscodeAPI && window.vscodeAPI.addActionToHistory) {
-            window.vscodeAPI.addActionToHistory({
-                type: 'addConnection',
-                connectionId: connectionId,
-                connection: JSON.parse(JSON.stringify(connection))
-            });
-        }
-
         // 添加到connections数组
         this.connections.push(connection);
 
         // 更新节点连接状态
-        const fromNode = this.nodes.get(fromNodeId);
-        const toNode = this.nodes.get(toNodeId);
+        const fromNode = this.getNode(fromNodeId);
+        const toNode = this.getNode(toNodeId);
 
         if (fromNode) {
             if (!fromNode.connections.outputs[fromPortIndex]) {
                 fromNode.connections.outputs[fromPortIndex] = [];
             }
             fromNode.connections.outputs[fromPortIndex].push(connectionId);
+        } else {
+            throw new Error("起始节点不存在");
         }
 
         if (toNode) {
@@ -908,6 +1051,8 @@ class NodeManager {
                 toNode.connections.inputs[toPortIndex] = [];
             }
             toNode.connections.inputs[toPortIndex].push(connectionId);
+        } else {
+            throw new Error("终点节点不存在");
         }
 
         // 创建连接线
@@ -924,22 +1069,26 @@ class NodeManager {
         const svg = this.canvas.querySelector('#connections-svg') || this.createConnectionsSvg();
 
         // 获取节点和端口位置
-        const fromNode = this.nodes.get(connection.from.nodeId);
-        const toNode = this.nodes.get(connection.to.nodeId);
+        const fromNode = this.getNode(connection.from.nodeId);
+        const toNode = this.getNode(connection.to.nodeId);
 
-        if (!fromNode || !toNode) return;
+        if (!fromNode || !toNode) {
+            console.error('创建连接线失败：节点不存在', connection);
+            return;
+        }
+        const fromPos = this.getPortPosition(
+            connection.from.nodeId,
+            connection.from.portIndex,
+            'output'
+        );
 
-        const fromPos = this.getPortPosition({
-            nodeId: connection.from.nodeId,
-            portType: 'output',
-            portIndex: connection.from.portIndex
-        });
+        const toPos = this.getPortPosition(
+            connection.to.nodeId,
+            connection.to.portIndex,
+            'input'
+        );
 
-        const toPos = this.getPortPosition({
-            nodeId: connection.to.nodeId,
-            portType: 'input',
-            portIndex: connection.to.portIndex
-        });
+        console.log(`创建连接线: ${fromPos.x},${fromPos.y} -> ${toPos.x},${toPos.y}`);
 
         // 创建SVG路径
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -983,18 +1132,23 @@ class NodeManager {
         this.clearHighlights();
 
         // 移除全局事件监听
-        document.removeEventListener('mousemove', this.handleDragMove.bind(this));
-        document.removeEventListener('mouseup', this.handleDragEnd.bind(this));
+        document.removeEventListener('mousemove', this.handlePortDragMove.bind(this));
+        document.removeEventListener('mouseup', this.handlePortDragEnd.bind(this));
 
         // 重置状态
         this.connectionState.isDragging = false;
-        this.connectionState.startInfo = null;
-        this.connectionState.currentPortElement = null;
+        this.connectionState.startInfo = {
+            nodeId: null,
+            portId: null,
+            portType: null,
+        },
+            this.connectionState.currentPortElement = null;
     }
 
+    // TODO 暂时不允许多连
     // 检查端口是否已连接
     isPortConnected(nodeId, portType, portIndex) {
-        const node = this.nodes.get(nodeId);
+        const node = this.getNode(nodeId);
         if (!node) return false;
 
         if (portType === 'input') {
@@ -1013,40 +1167,12 @@ class NodeManager {
         // 基本验证
         if (nodeId === startNodeId) return false;
         if (this.isPortConnected(nodeId, portType, portIndex)) return false;
-        if (startPortType === portType) return false;
 
         // 输入必须连输出，输出必须连输入
         if (startPortType === 'input' && portType !== 'output') return false;
         if (startPortType === 'output' && portType !== 'input') return false;
 
         return true;
-    }
-
-    // 获取端口位置
-    getPortPosition(portInfo) {
-        const { nodeId, portType, portIndex } = portInfo;
-        const node = this.nodes.get(nodeId);
-        if (!node || !node.element) return { x: 0, y: 0 };
-
-        const portElement = node.element.querySelector(
-            `.port-hub-item[data-port-id="${nodeId}-${portType}-${portIndex}"] .port-dot`
-        );
-
-        if (!portElement) {
-            // 返回节点的中心位置作为备用
-            return {
-                x: node.x + node.element.offsetWidth / 2,
-                y: node.y + node.element.offsetHeight / 2
-            };
-        }
-
-        const canvasRect = this.canvas.getBoundingClientRect();
-        const portRect = portElement.getBoundingClientRect();
-
-        return {
-            x: portRect.left + portRect.width / 2 - canvasRect.left,
-            y: portRect.top + portRect.height / 2 - canvasRect.top
-        };
     }
 
     // 创建曲线路径
@@ -1092,7 +1218,7 @@ class NodeManager {
 
     // 移除端口连接
     removePortConnection(nodeId, portType, portIndex) {
-        const node = this.nodes.get(nodeId);
+        const node = this.getNode(nodeId);
         if (!node) return;
 
         let connectionIds = [];
@@ -1122,8 +1248,8 @@ class NodeManager {
         const connection = this.connections[connectionIndex];
 
         // 从节点连接中移除
-        const fromNode = this.nodes.get(connection.from.nodeId);
-        const toNode = this.nodes.get(connection.to.nodeId);
+        const fromNode = this.getNode(connection.from.nodeId);
+        const toNode = this.getNode(connection.to.nodeId);
 
         if (fromNode) {
             const outputIndex = fromNode.connections.outputs[connection.from.portIndex]
@@ -1157,7 +1283,7 @@ class NodeManager {
 
     // 显示连接信息
     showConnectionInfo(nodeId, portType, portIndex) {
-        const node = this.nodes.get(nodeId);
+        const node = this.getNode(nodeId);
         if (!node) return;
 
         const connectionIds = portType === 'input'
@@ -1169,8 +1295,8 @@ class NodeManager {
             connectionIds.forEach((connId, index) => {
                 const connection = this.connections.find(conn => conn.id === connId);
                 if (connection) {
-                    const fromNode = this.nodes.get(connection.from.nodeId);
-                    const toNode = this.nodes.get(connection.to.nodeId);
+                    const fromNode = this.getNode(connection.from.nodeId);
+                    const toNode = this.getNode(connection.to.nodeId);
                     if (fromNode && toNode) {
                         info += `${fromNode.config.title} → ${toNode.config.title}`;
                         if (index < connectionIds.length - 1) info += ', ';
@@ -1208,9 +1334,6 @@ class NodeManager {
         );
     }
 }
-
-
-
 
 /**
  * BitmapIdGenerator 类 - 使用位图算法高效管理ID的生成和释放
@@ -1326,6 +1449,11 @@ class BitmapIdGenerator {
     getBitmap() {
         return this.bitmap;
     }
+
+    reset() {
+        this.bitmap.fill(0);
+        this.nextId = 1;
+    }
 }
 
 /**
@@ -1340,7 +1468,7 @@ class Node {
         this.config = config;
         this.x = x;
         this.y = y;
-        this.ports = [];
+        this.ports = new Map();
         this.data = {};
         this.connections = {
             inputs: [],
@@ -1580,8 +1708,11 @@ class Node {
 
         // 创建DOM元素
         const element = document.createElement('div');
-        element.className = `port-hub-item port-${portType}`;
-        element.dataset.portId = portId;
+        element.className = `port-hub-item`;
+        element.nodeId = this.id;
+        element.portId = portId;
+        element.portType = portType;
+        element.portIndex = portIndex;
 
         // 根据端口类型创建内容
         switch (portType) {
@@ -1621,19 +1752,30 @@ class Node {
                 break;
         }
 
-
-        // 初始化端口拖拽
-        if (portDragManager) {
-            portDragManager.initPortDrag(element, this.id, portType, portIndex);
-        }
-
-        this.ports[portId] = {
-            type: portType,
-            index: portIndex,
-            data: portData
-        }
+        this.ports.set(portId, element);
 
         return element;
+    }
+
+    // 锁定节点
+    lockNode() {
+        this.element.locked = true;
+    }
+
+    // 解锁节点
+    unlockNode() {
+        this.element.locked = false;
+    }
+
+    // 获取端口
+    getPort(portIndex, portType) {
+        const portId = `${this.id}-${portType}-${portIndex}`;
+        const port = this.ports.get(portId)
+        if (!port) {
+            console.warn(`节点 ${this.id} 没有端口 ${portIndex} (${portType})`);
+            return null;
+        }
+        return port;
     }
 
     lockElement() {
@@ -1647,6 +1789,7 @@ class Node {
 }
 
 class BasicActionManager {
+
     constructor(nodes, connections, canvas, updateStatus) {
         this.nodes = nodes;
         this.connections = connections;
@@ -1658,48 +1801,8 @@ class BasicActionManager {
         this.MAX_HISTORY_SIZE = 50; // 最大历史记录数量
         this.historyIndex = -1; // 当前历史记录位置
 
-        this.handleEvent();
 
     }
-
-    // 处理事件
-    handleEvent() {
-        this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e)); // 添加点击事件监听器
-        this.canvas.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e)); // 添加鼠标按下事件监听器
-        this.canvas.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));  // 添加鼠标移动事件监听器
-        this.canvas.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));    // 添加鼠标松开事件监听器
-    }
-
-    // 处理画布点击事件
-    handleCanvasClick(e) {
-
-        
-        const nodeElement = e.target.closest('.node');
-        // 如果在节点上点击
-        if (nodeElement) {
-            // 选中节点
-            nodeElement.classList.add('selected');
-
-            // 获取焦点，使节点可以接收键盘事件
-            nodeElement.focus();
-
-            // 如果不是多选（ctrl未按下）
-            if (!e.ctrlKey) {
-                document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
-            }
-
-            // 如果是右键点击
-            if (e.button === 1) {
-
-
-
-
-            }
-        }
-
-        return;
-    }
-
 
     // 添加操作到历史记录
     addActionToHistory(action) {

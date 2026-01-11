@@ -172,6 +172,7 @@ h3 {
 .node.selected {
     border-color: #007acc;
     box-shadow: 0 0 0 2px #007acc;
+    z-index: 1001;
 }
 
 /* 拖拽时的样式 */
@@ -243,6 +244,7 @@ h3 {
     background: rgba(30, 30, 30, 0.9);
     border: 1px solid rgba(62, 62, 66, 0.3);
     padding: 0 10px;
+    z-index: 1;
     overflow: visible;
 }
 
@@ -269,6 +271,8 @@ h3 {
     position: relative;
     z-index: 2;
 }
+
+
 
 .port-input-dot {
     background: #4CAF50;
