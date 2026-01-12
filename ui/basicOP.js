@@ -625,8 +625,8 @@ class NodeManager {
         if (!fromNode || !toNode) return;
 
         // 获取端口位置
-        const fromPos = this.getPortPosition(connection.from.nodeId, connection.from.portIndex, 'output');
-        const toPos = this.getPortPosition(connection.to.nodeId, connection.to.portIndex, 'input');
+        const fromPos = this.getPortDotPosition(connection.from.nodeId, connection.from.portIndex, 'output');
+        const toPos = this.getPortDotPosition(connection.to.nodeId, connection.to.portIndex, 'input');
 
         // 更新路径
         const newPath = this.createCurvedPath(fromPos.x, fromPos.y, toPos.x, toPos.y);
@@ -672,7 +672,39 @@ class NodeManager {
         });
     }
 
-    // 获取端口位置
+    // 获取端口圆点位置
+    getPortDotPosition(nodeId, portIndex, type) {
+        const node = this.getNode(nodeId)
+        if (!node) {
+            console.error(`找不到节点 ${nodeId}`);
+        }
+
+        const port = node.getPort(portIndex, type);
+        if (!port) {
+            // 如果找不到端口，返回节点中心位置
+            console.warn(`找不到节点 ${nodeId} 的端口 ${portIndex} (${type})`);
+            return {
+                x: node.x + node.element.offsetWidth / 2,
+                y: node.y + node.element.offsetHeight / 2
+            }
+        }
+
+        const portDot = port.querySelector('.port-dot');
+        if (!portDot) {
+            console.warn(`找不到节点 ${nodeId} 的端口 ${portIndex} 的圆点`);
+            return this.getPortPosition(nodeId, portIndex, type);
+        }
+
+        const portDotRect = portDot.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+
+        return {
+            x: portDotRect.left + portDotRect.width / 2 - canvasRect.left,
+            y: portDotRect.top + portDotRect.height / 2 - canvasRect.top
+        };
+    }
+
+    // 获取端口中心位置
     getPortPosition(nodeId, portIndex, type) {
         const node = this.getNode(nodeId)
         if (!node) {
@@ -867,7 +899,7 @@ class NodeManager {
 
         // 获取起始端口位置
         const { nodeId, portIndex, portType } = this.connectionState.startInfo;
-        const startPos = this.getPortPosition(nodeId, portIndex, portType);
+        const startPos = this.getPortDotPosition(nodeId, portIndex, portType);
 
         // 创建SVG路径
         const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -879,7 +911,7 @@ class NodeManager {
         const endX = event.clientX - canvasRect.left;
         const endY = event.clientY - canvasRect.top;
 
-        const path = this.createCurvedPath(startPos.x, startPos.y, endX, endY);
+        const path = this.createCurvedPath(startPos.x, startPos.y, endX, endY, portType, null);
         tempLine.setAttribute('d', path);
 
         connectionsSvg.appendChild(tempLine);
@@ -912,7 +944,7 @@ class NodeManager {
 
         // 获取起始端口位置
         const { nodeId, portIndex, portType } = this.connectionState.startInfo;
-        const startPos = this.getPortPosition(nodeId, portIndex, portType);
+        const startPos = this.getPortDotPosition(nodeId, portIndex, portType);
         // 更新临时连接线
 
         // 获取当前鼠标位置 
@@ -981,7 +1013,7 @@ class NodeManager {
             const portHubItem = element.closest('.port-hub-item');
             if (!portHubItem) continue;
 
-            const {nodeId, portType, portIndex} = portHubItem;
+            const { nodeId, portType, portIndex } = portHubItem;
 
             // 检查是否可以连接
             if (this.isValidConnectionTarget(nodeId, portType, parseInt(portIndex))) {
@@ -1101,13 +1133,13 @@ class NodeManager {
             console.error('创建连接线失败：节点不存在', connection);
             return;
         }
-        const fromPos = this.getPortPosition(
+        const fromPos = this.getPortDotPosition(
             connection.from.nodeId,
             connection.from.portIndex,
             'output'
         );
 
-        const toPos = this.getPortPosition(
+        const toPos = this.getPortDotPosition(
             connection.to.nodeId,
             connection.to.portIndex,
             'input'
@@ -1201,35 +1233,181 @@ class NodeManager {
     }
 
     // 创建曲线路径
-    createCurvedPath(startX, startY, endX, endY) {
-        const dx = endX - startX;
-        const dy = endY - startY;
+    createCurvedPath(startX, startY, endX, endY, startPortType = 'output', endPortType = 'input') {
+        // 计算节点边界偏移量
+        const boundaryOffset = 50; // 基础离开节点边界的距离
 
-        // 计算控制点距离，根据水平距离动态调整
-        const minControlDistance = 50;
-        const maxControlDistance = 200;
-        let controlDistance = Math.abs(dx) * 0.5;
-        controlDistance = Math.max(minControlDistance, Math.min(controlDistance, maxControlDistance));
+        // 计算垂直和水平距离
+        const verticalDistance = Math.abs(endY - startY);
+        const horizontalDistance = Math.abs(endX - startX);
 
-        // 计算控制点
-        let cp1x, cp1y, cp2x, cp2y;
+        // 对于永久连接（startPortType=output, endPortType=input）
+        if (startPortType === 'output' && endPortType === 'input') {
+            // 判断连接方向
+            const isForward = endX - startX > 40; // 正向连接：output在左侧
+            const isBackward = !isForward; // 反向连接：output在右侧
 
-        if (dx >= 0) {
-            // 向右连接
-            cp1x = startX + controlDistance;
-            cp1y = startY;
-            cp2x = endX - controlDistance;
-            cp2y = endY;
-        } else {
-            // 向左连接
-            cp1x = startX - controlDistance;
-            cp1y = startY;
-            cp2x = endX + controlDistance;
-            cp2y = endY;
+            // 计算控制点
+            let cp1x, cp1y, cp2x, cp2y;
+
+            if (isForward) {
+                // 正向连接：output在左侧，input在右侧
+                // 计算水平偏移：基于水平距离的30-40%
+                const horizontalOffset = Math.max(boundaryOffset, horizontalDistance * 0.4);
+
+                // 第一个控制点：水平向右离开节点
+                cp1x = startX + horizontalOffset;
+                cp1y = startY; // 保持水平，确保起点附近斜率接近0
+
+                // 第二个控制点：水平向左进入节点
+                cp2x = endX - horizontalOffset;
+                cp2y = endY; // 保持水平，确保终点附近斜率接近0
+
+                // 如果垂直距离较大，创建拉伸的S型曲线
+                if (verticalDistance > 20) {
+                    // 计算中间控制点的垂直偏移
+                    // 使用一个较小的系数，确保两端30%的区域保持水平
+                    const verticalCurveFactor = 0.15; // 垂直弯曲因子，控制S型曲线的幅度
+                    const verticalOffset = Math.min(verticalDistance * verticalCurveFactor, 100);
+
+                    // 确定弯曲方向
+                    if (startY < endY) {
+                        // 起点在上，终点在下：创建先向下再向上的拉伸S型
+                        // 起点控制点稍微向下
+                        cp1y = startY + verticalOffset * 0.2;
+                        // 终点控制点稍微向上
+                        cp2y = endY - verticalOffset * 0.2;
+                    } else {
+                        // 起点在下，终点在上：创建先向上再向下的拉伸S型
+                        cp1y = startY - verticalOffset * 0.2;
+                        cp2y = endY + verticalOffset * 0.2;
+                    }
+                }
+
+                // 为了使曲线更平滑，添加中间控制点的轻微水平调整
+                // 这有助于创建更优美的拉伸S型
+                const midX = (startX + endX) / 2;
+                const horizontalAdjustment = Math.min(horizontalDistance * 0.1, 20);
+
+                // 轻微调整控制点的水平位置，使曲线更平滑
+                cp1x = startX + horizontalOffset + horizontalAdjustment;
+                cp2x = endX - horizontalOffset - horizontalAdjustment;
+
+            } else if (isBackward) {
+                // 反向连接：output在右侧，input在左侧
+                // 增大基础偏移，确保曲线明显离开节点
+                const backwardOffset = Math.max(boundaryOffset * 1.8, horizontalDistance * 0.6);
+
+                // 第一个控制点：从output向右延伸更远，保持水平
+                cp1x = startX + backwardOffset;
+                cp1y = startY;
+
+                // 第二个控制点：从input向左延伸更远，保持水平
+                cp2x = endX - backwardOffset;
+                cp2y = endY;
+
+                // 如果垂直距离较大，创建反向连接的拉伸S型
+                if (verticalDistance > 20) {
+                    const verticalCurveFactor = 0.12; // 反向连接的弯曲幅度稍小
+                    const verticalOffset = Math.min(verticalDistance * verticalCurveFactor, 80);
+
+                    if (startY < endY) {
+                        // 起点在上，终点在下
+                        cp1y = startY + verticalOffset * 0.3;
+                        cp2y = endY - verticalOffset * 0.3;
+                    } else {
+                        // 起点在下，终点在上
+                        cp1y = startY - verticalOffset * 0.3;
+                        cp2y = endY + verticalOffset * 0.3;
+                    }
+                }
+            } else {
+                // 垂直连接，节点在同一垂直线上
+                // 创建明显的水平S型过渡
+                const horizontalCurveOffset = Math.max(boundaryOffset, 70);
+
+                cp1x = startX + horizontalCurveOffset;
+                cp1y = startY;
+                cp2x = endX - horizontalCurveOffset;
+                cp2y = endY;
+
+                // 对于垂直连接，创建拉伸的S型曲线
+                if (verticalDistance > 30) {
+                    const midY = (startY + endY) / 2;
+                    const verticalOffset = Math.min(verticalDistance * 0.2, 60);
+
+                    if (startY < endY) {
+                        // 起点在上，终点在下：创建向下的拉伸S型
+                        cp1y = startY + verticalOffset * 0.3;
+                        cp2y = endY - verticalOffset * 0.3;
+                    } else {
+                        // 起点在下，终点在上：创建向上的拉伸S型
+                        cp1y = startY - verticalOffset * 0.3;
+                        cp2y = endY + verticalOffset * 0.3;
+                    }
+                }
+            }
+
+            return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
+        }
+
+        // 对于临时连接线（临时连接线可能会从input出发）
+        if (endPortType === null) {
+            // 临时连接线，只有起点有端口类型
+            let cp1x, cp1y, cp2x, cp2y;
+
+            if (startPortType === 'output') {
+                // 从output出发的临时连接线：水平向右延伸
+                cp1x = startX + boundaryOffset;
+                cp1y = startY;
+
+                // 计算终点偏移，使临时连接线也有一定的水平过渡
+                const distance = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+                const endOffset = Math.min(boundaryOffset, distance * 0.3);
+
+                cp2x = endX - endOffset;
+                cp2y = endY;
+            } else {
+                // 从input出发的临时连接线：水平向左延伸
+                cp1x = startX - boundaryOffset;
+                cp1y = startY;
+
+                // 计算终点偏移
+                const distance = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+                const endOffset = Math.min(boundaryOffset, distance * 0.3);
+
+                cp2x = endX + endOffset;
+                cp2y = endY;
+            }
+
+            return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
+        }
+
+        // 其他情况（比如input到output的连接）
+        // 使用默认的贝塞尔曲线，创建拉伸的S型
+        const defaultOffset = 60;
+        const cp1x = startX + (startPortType === 'output' ? defaultOffset : -defaultOffset);
+        const cp2x = endX + (endPortType === 'input' ? -defaultOffset : defaultOffset);
+
+        // 创建拉伸S型曲线的控制点
+        let cp1y = startY;
+        let cp2y = endY;
+
+        if (verticalDistance > 20) {
+            const verticalOffset = Math.min(verticalDistance * 0.15, 60);
+
+            if (startY < endY) {
+                cp1y = startY + verticalOffset * 0.25;
+                cp2y = endY - verticalOffset * 0.25;
+            } else {
+                cp1y = startY - verticalOffset * 0.25;
+                cp2y = endY + verticalOffset * 0.25;
+            }
         }
 
         return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
     }
+
 
     // 移除端口连接
     removePortConnection(nodeId, portType, portIndex) {
@@ -1506,7 +1684,7 @@ class NodeManager {
         const count = relatedConnectionIds.size;
     }
 
-    
+
 }
 
 /**
@@ -2233,8 +2411,8 @@ class BasicActionManager {
 
             // 创建连接线
             if (window.vscodeAPI && window.vscodeAPI.portDragManager) {
-                const fromPort = window.vscodeAPI.getPortPosition(fromNode, connection.from.portIndex, 'output');
-                const toPort = window.vscodeAPI.getPortPosition(toNode, connection.to.portIndex, 'input');
+                const fromPort = window.vscodeAPI.getPortDotPosition(fromNode, connection.from.portIndex, 'output');
+                const toPort = window.vscodeAPI.getPortDotPosition(toNode, connection.to.portIndex, 'input');
 
                 const svg = this.canvas.querySelector('#connections-svg') || window.vscodeAPI.portDragManager.createConnectionsSvg();
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -2282,8 +2460,8 @@ class BasicActionManager {
 
             // 创建连接线
             if (window.vscodeAPI && window.vscodeAPI.portDragManager) {
-                const fromPort = window.vscodeAPI.getPortPosition(fromNode, connection.from.portIndex, 'output');
-                const toPort = window.vscodeAPI.getPortPosition(toNode, connection.to.portIndex, 'input');
+                const fromPort = window.vscodeAPI.getPortDotPosition(fromNode, connection.from.portIndex, 'output');
+                const toPort = window.vscodeAPI.getPortDotPosition(toNode, connection.to.portIndex, 'input');
 
                 const svg = this.canvas.querySelector('#connections-svg') || window.vscodeAPI.portDragManager.createConnectionsSvg();
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');

@@ -713,9 +713,9 @@ h3 {
 
 /* 淡化连接线样式 - 覆盖永久连接线样式 */
 .connection-path.permanent-connection.dimmed {
-    stroke: #666;
-    stroke-width: 1;
-    opacity: 0.2;
+    stroke: #4a91e26d;
+    stroke-width: 3;
+    opacity: 1;
 }
 
 /* 高亮动画效果 */
