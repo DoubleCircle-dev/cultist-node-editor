@@ -708,6 +708,7 @@ h3 {
     opacity: 1;
     filter: drop-shadow(0 0 6px rgba(255, 152, 0, 0.8));
     animation: pulse-highlight 2s infinite;
+    z-index: 1001;
 }
 
 /* 淡化连接线样式 - 覆盖永久连接线样式 */

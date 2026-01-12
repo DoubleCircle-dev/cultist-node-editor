@@ -93,8 +93,8 @@ function addNode(type) {
     }
 }
 
-function addPlaneNode() {
-    addNode('plane');
+function addBlankNode() {
+    addNode('blank');
 }
 
 

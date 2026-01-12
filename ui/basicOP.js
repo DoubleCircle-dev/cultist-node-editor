@@ -12,7 +12,7 @@
 class NodeManager {
     // 节点类型配置
     static nodeTypes = {
-        plane: {
+        blank: {
             title: '空节点',
             color: '#ffffffff',
             inputs: [],
@@ -256,8 +256,6 @@ class NodeManager {
 
             // 创建节点实例
             let node = new Node(id, type, x, y, NodeManager.nodeTypes[type]);
-
-            console.log(NodeManager.nodeTypes[type]);
 
             // 添加键盘事件监听删除快捷键
             node.element.addEventListener('keydown', (e) => {
@@ -643,8 +641,6 @@ class NodeManager {
         const node = this.getNode(nodeId);
         if (!node) return;
 
-        console.log(`更新节点 ${nodeId} 的所有连接线`);
-
         // 收集所有需要更新的连接线
         const connectionsToUpdate = new Set();
 
@@ -740,9 +736,17 @@ class NodeManager {
             node.element.parentNode.removeChild(node.element);
         }
 
+        // 从connections中移除连接线
+        const connectionsToRemove = this.connections.filter(conn =>
+            conn.from.nodeId === nodeId || conn.to.nodeId === nodeId
+        );
+        connectionsToRemove.forEach(conn => {
+            this.removeConnection(conn.id);
+        });
         // 从nodes集合中移除
         this.nodes.delete(nodeId);
         this.idGenerator.release(nodeId);
+
 
         this.updateStatus(`已删除节点: ${node.config.title} #${nodeId}`);
     }
@@ -752,13 +756,19 @@ class NodeManager {
         this.nodes.clear();
         this.connections = [];
         this.idGenerator.reset();
+        this.highlightCache = {
+            highlightedNodes: new Set(),
+            dimmedConnections: new Set()
+        };
 
         const test_nodes = this.canvas.querySelectorAll(".test-node");
         test_nodes.forEach((node) => node.remove());
         const nodes = this.canvas.querySelectorAll(".node");
         nodes.forEach((node) => node.remove());
+        const connections = this.canvas.querySelectorAll(".connection-path");
+        connections.forEach((connection) => connection.remove());
 
-        this.updateStatus(`已清空所有节点`);
+        this.updateStatus(`已清空所有节点及连接线`);
     }
 
     // === 连接线功能实现 ===
@@ -929,7 +939,7 @@ class NodeManager {
         }
 
         // 清理拖拽状态
-        this.cleanupDrag();
+        this.cleanupPortDrag();
     }
 
     // 查找目标端口
@@ -1037,8 +1047,8 @@ class NodeManager {
         // 创建连接对象
         const connection = {
             id: connectionId,
-            from: { nodeId: fromNodeId, portIndex: fromPortIndex },
-            to: { nodeId: toNodeId, portIndex: toPortIndex },
+            from: { nodeId: parseInt(fromNodeId), portIndex: fromPortIndex },
+            to: { nodeId: parseInt(toNodeId), portIndex: toPortIndex },
             line: null
         };
 
@@ -1131,7 +1141,7 @@ class NodeManager {
     }
 
     // 清理拖拽状态
-    cleanupDrag() {
+    cleanupPortDrag() {
         // 移除临时连接线
         if (this.connectionState.tempLine) {
             this.connectionState.tempLine.remove();
@@ -1241,7 +1251,7 @@ class NodeManager {
             this.removeConnection(connectionId);
         });
 
-        this.updateStatus(`已断开连接`);
+        this.updateStatus(`已删除连接`);
     }
 
     // 移除连接
@@ -1494,7 +1504,6 @@ class NodeManager {
         this.dimOtherConnections(Array.from(relatedConnectionIds));
 
         const count = relatedConnectionIds.size;
-        this.updateStatus(`已高亮显示 ${selectedNodes.length} 个节点的 ${count} 条连接线`);
     }
 
     
