@@ -10,152 +10,7 @@
  * @class NodeManager
  */
 class NodeManager {
-    // 节点类型配置
-    static nodeTypes = {
-        blank: {
-            title: '空节点',
-            color: '#ffffffff',
-            inputs: [],
-            outputs: [],
-            content: `这是一个空节点`,
-            icon: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-            properties: []
-        },
-        test: {
-            title: '测试节点',
-            color: '#6c5ce7',
-            inputs: [
-                { type: 'port', label: '测试输入' }
-            ],
-            outputs: [
-                { type: 'port', label: '测试输出' }
-            ],
-            content: `这是一个测试节点<br>ID: <br>类型: 通用测试`,
-            icon: '⚡',
-            properties: [
-                { label: '数值', type: 'range', min: 0, max: 100, default: 50 },
-                { label: '选项', type: 'select', options: ['选项1', '选项2', '选项3'], default: 0 },
-                { label: '开关', type: 'checkbox', default: false },
-                { label: '二择', type: 'bool', default: false },
-                { label: '数字', type: 'number', min: 0, max: 100, default: 50 },
-                { label: '整数输入', type: 'int', default: 0 },
-                { label: '文本输入', type: 'text', default: '测试文本' }
-            ]
-        },
-        legacy: {
-            title: '职业',
-            color: '#d73141ff',
-            inputs: [
-                { type: 'port', label: '前置结局' }
-            ],
-            outputs: [
-                { type: 'port', label: '初始verb' }
-            ],
-            content: `这是一个测试节点<br>ID: <br>类型: 通用测试`,
-            icon: '⚡',
-            properties: [
-                { label: '数值', type: 'number', min: 0, max: 100, default: 50 },
-                { label: '开关', type: 'checkbox', default: false }
-            ]
-        },
-        recipes: {
-            title: '交互(recipes)',
-            color: '#f1912aff',
-            inputs: [
-                { type: 'port', label: 'requirements' }
-            ],
-            outputs: [
-                { type: 'port', label: 'alt' },
-                { type: 'port', label: 'linked' },
-                { type: 'port', label: 'inductions' }
-            ],
-            content: `交互界面(recipes)，是使用行动与卡牌交互的一种过程，可以实现多样化的功能`,
-            icon: '📖',
-            properties: [
-                { label: 'aspects', type: 'range', min: 0, max: 100, default: 75 }
-            ]
-        },
-        elements: {
-            title: '元素',
-            color: '#2196F3',
-            inputs: [],
-            outputs: [],
-            content: `游戏中的卡牌、性相均属于elements`,
-            icon: '🔊',
-            properties: [
-                { label: '类型', type: 'select', options: ['card', 'aspect'], default: 0 },
-            ]
-        },
-        decks: {
-            title: '卡池',
-            color: '#23bf30ff',
-            inputs: [],
-            outputs: [],
-            content: `滤波器节点<br>ID: <br>类型: 低通滤波器`,
-            icon: '🎛️',
-            properties: [
-                { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
-                { label: '频率', type: 'range', min: 20, max: 20000, default: 1000 },
-                { label: 'Q值', type: 'range', min: 0.1, max: 10, step: 0.1, default: 1 }
-            ]
-        },
-        verbs: {
-            title: '行动框',
-            color: '#9C27B0',
-            outputs: [
-                { type: 'port', label: 'verb' }
-            ],
-            content: `延迟节点<br>ID: <br>最大延迟: 2000ms`,
-            icon: '⚡',
-            properties: [
-                { label: 'id', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
-                { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 },
-                { label: '类型', type: 'select', options: ['低通', '高通', '带通'], default: 0 }
-            ]
-        },
-        slots: {
-            title: '卡槽',
-            color: '#fdf622ff',
-            inputs: [],
-            outputs: [],
-            content: `混音器节点<br>ID: <br>通道: 4进2出`,
-            icon: '🎚️',
-            properties: [
-                { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道2', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道3', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道4', type: 'range', min: 0, max: 100, default: 100 }
-            ]
-        },
-        levers: {
-            title: '继承物品',
-            color: '#3F51B5',
-            inputs: [],
-            outputs: [],
-            content: `混音器节点<br>ID: <br>通道: 4进2出`,
-            icon: '🎚️',
-            properties: [
-                { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道2', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道3', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道4', type: 'range', min: 0, max: 100, default: 100 }
-            ]
-        },
-        text: {
-            title: '文本',
-            color: '#3fb3b5ff',
-            inputs: [],
-            outputs: [],
-            content: `混音器节点<br>ID: <br>通道: 4进2出`,
-            icon: '🎚️',
-            properties: [
-                { label: '通道1', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道2', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道3', type: 'range', min: 0, max: 100, default: 100 },
-                { label: '通道4', type: 'range', min: 0, max: 100, default: 100 }
-            ]
-        }
-    };
+
     // 如果点击的是以下元素，则忽略拖拽
     static ignoreDragItem = [
         '.node-title',// 节点标题
@@ -223,7 +78,7 @@ class NodeManager {
             dimmedConnections: new Set()
         };
 
-        this.basciActionManager = new BasicActionManager(this.nodes, this.connections, this.canvas, this.updateStatus);
+        this.basicActionManager = new BasicActionManager(this.nodes, this.connections, this.canvas, this.updateStatus);
 
         this.handleEvent();
     }
@@ -255,7 +110,7 @@ class NodeManager {
             }
 
             // 创建节点实例
-            let node = new Node(id, type, x, y, NodeManager.nodeTypes[type]);
+            let node = new Node(id, type, x, y, nodeTypes[type]);
 
             // 添加键盘事件监听删除快捷键
             node.element.addEventListener('keydown', (e) => {
@@ -279,6 +134,9 @@ class NodeManager {
 
             this.canvas.appendChild(node.element);
             this.nodes.set(id, node);
+
+            // this.basicActionManager.addActionToHistory('addNode');
+
             this.updateStatus('成功添加' + node.type + '节点:#' + node.id);
             this.bringNodeToFront(id);
         } catch (error) {
@@ -2156,6 +2014,7 @@ class BasicActionManager {
 
     }
 
+
     // 添加操作到历史记录
     addActionToHistory(action) {
         // 如果当前位置不在历史记录末尾，删除当前位置之后的所有记录
@@ -2699,6 +2558,18 @@ class BasicActionManager {
             actions: [...this.actionHistory],
             currentIndex: this.historyIndex
         };
+    }
+
+    // 恢复初始状态
+    reset() {
+        this.clearHistory();
+        this.nodes.clear();
+        this.connections = [];
+    }
+
+    clearHistory() {
+        this.actionHistory = [];
+        this.historyIndex = -1;
     }
 }
 

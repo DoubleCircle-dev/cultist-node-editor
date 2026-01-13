@@ -10,7 +10,9 @@
     "Visualization",
     "Other"
   ],
-  "activationEvents": ["*"],
+  "activationEvents": [
+    "*"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -37,5 +39,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/qqf-dev/cultist-node-editor"
+  },
+  "dependencies": {
+    "json5": "^2.2.3"
   }
 }

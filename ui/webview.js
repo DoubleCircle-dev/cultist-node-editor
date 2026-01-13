@@ -29,10 +29,10 @@ function updateStatus(text) {
 
 // todo 读取mod生成节点图
 function readMod() {
-    updateStatus("读取mod中，如果mod文件过大，读取时间可能较长");
+    updateStatus("读取mod中，请选择synopsis.json，如果mod文件夹内项目过多，读取时间可能较长");
     vscode.postMessage({
-        command: "test",
-        message: "Hello from Webview!",
+        command: "readMod",
+        message: "读取mod文件",
     });
 }
 

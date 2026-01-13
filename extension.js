@@ -1,3 +1,5 @@
+const modReader = require('./core/readMod');
+const modReaderJSON5 = require('./core/readModJSON5');
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
@@ -95,6 +97,9 @@ function createNodeEditorPanel(context) {
                     case 'loadGraph':
                         handleLoadGraph(panel);
                         return;
+                    case 'readMod':
+                        handleReadMod(panel);
+                        break;
                     case 'test':
                         vscode.window.showInformationMessage('Webview通信正常！');
                         return;
@@ -345,6 +350,48 @@ function handleLoadGraph(panel) {
     });
 }
 
+function handleReadMod(panel) {
+    console.log('📂 读取mod请求');
+
+    vscode.window.showOpenDialog({
+        filters: { 'JSON文件': ['json'] },
+        canSelectMany: false
+    }).then(files => {
+        if (files && files[0]) {
+            try {
+                console.log(files[0].fsPath);
+                // 如果文件名不是synopsis.json，则提示用户选择正确的文件
+                if (!files[0].fsPath.endsWith('synopsis.json')) {
+                    throw new Error('请选择正确的synopsis文件');
+                }
+
+                const content = fs.readFileSync(files[0].fsPath, 'utf8');
+                const synopsisData = JSON.parse(content);
+
+                if (!synopsisData.name) {
+                    vscode.window.showInformationMessage(`你还未给MOD命名！`);
+                }else {
+                    vscode.window.showInformationMessage(`✅ MOD已加载: ${synopsisData.name}`);
+                }
+
+                // TODO 处理MOD文件数据
+                modReaderJSON5.analyzeModJSON5(files[0].fsPath.replace("synopsis.json", ""))
+                    .then(data => console.log(data))
+                    .catch(err => console.error(err));
+            } catch (error) {
+                console.log(error);
+                vscode.window.showErrorMessage(`❌ 加载失败: ${error.message}`);
+                panel.webview.postMessage({
+                    command: 'error',
+                    message: error.message
+                });
+            }
+        }
+    });
+}
+
+// 处理文件夹的
+
 function deactivate() {
     console.log('👋 Node Editor 扩展已停用');
     if (currentPanel) {
@@ -356,4 +403,3 @@ module.exports = {
     activate,
     deactivate
 };
-
