@@ -105,7 +105,10 @@ const nodeTypes = {
         color: '#f1912aff',
         inputs: [
             { type: 'port', requireType:'recipes', label: '前置交互', description: '跳转进本交互界面的入口，craftable为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发' },
-            { type: 'port', requireType:'set', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element;tablereqs检测的是桌面上的element' }
+            { type: 'port', requireType:'set', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element;tablereqs检测的是桌面上的element' },
+            { type: 'port', requireType: 'set', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element;tablereqs检测的是桌面上的element' },
+            { type: 'port', requireType: 'set', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element;tablereqs检测的是桌面上的element' }
+
         ],
         outputs: [
             { type: 'port', label: '分支', description: 'alt: 指向满足一定条件后会立刻取代该recipe生效的recipe，如果additional为真值则新的recipe在对应行动框中额外进行且不会立刻取代，要注意这种情况下若该行动框已创建，那么这次转换不会生效。' },
@@ -120,8 +123,9 @@ const nodeTypes = {
             { label: '描述', type: 'text', default: '结束后显示的文本', description: 'description: 结束后显示的文本' }
         ],
         properties: [
-            { type: 'port', requireType:'set', label: '生成元素', description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
+            { label: '生成元素', type: 'port', requireType:'set', description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
             { label: '性相', type: 'port', requireType: 'set', description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。' }
+            
         ]
     },
     // TODO 根据wiki完善elements
