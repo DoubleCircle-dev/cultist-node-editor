@@ -1,0 +1,24 @@
+{"achievements": [
+
+  { "id": "A_ENDING_WORKVICTORYMARRIAGE", "label": "Ewiges Glück: Ich",
+  "descriptionunlocked": "Ich bin eine erfolgreich Trophäe."
+  },
+  { "id": "A_ENDING_MINORMOTHVICTORY", "label": "Der Dodo und der Drache",
+  "descriptionunlocked": "Ich bin zu etwas Geflügeltem, Dunklem und Unsterblichem geworden: etwas, das nicht mehr existiert."
+  },
+  { "id": "A_ENDING_MINORMOTHVICTORY_WITHRISEN", "label": "Der Dodo und der Draugr",
+  "descriptionunlocked": "Wir sind zu etwas Geflügeltem, Dunklem und Unsterblichem geworden: etwas, das nicht mehr existiert."
+  },
+  { "id": "A_ENDING_MINORHEARTVICTORY", "label": "Garantie meiner Konstanz",
+  "descriptionunlocked": "Ich habe mich dem Sturmchor der Donnerhaut angeschlossen. Ich werde niemals aufhören."
+  },
+  { "id": "A_ENDING_MINORHEARTVICTORY_WITHRISEN", "label": "Garantie unserer Konstanz",
+  "descriptionunlocked": "Wir haben uns dem Sturmchor der Donnerhaut angeschlossen. Wir werden niemals aufhören."
+  },
+  { "id": "A_ENDING_MINORMENISCATEVICTORY", "label": "Das Haus des Mondes",
+  "descriptionunlocked": "Die Meniskate war mir wohlgesonnen."
+  },
+  { "id": "A_ENDING_MINORMENISCATEVICTORY_WITHRISEN", "label": "Das Haus meines Mondes",
+  "descriptionunlocked": "Die Meniskate war uns wohlgesonnen."
+  },
+]}

@@ -1,0 +1,25 @@
+{"achievements": [
+
+  { "id": "A_ENDING_WORKVICTORYMARRIAGE", "label": "Долго и счастливо: Я",
+  "descriptionunlocked": "Теперь я успешный трофей."
+  },
+  { "id": "A_ENDING_MINORMOTHVICTORY", "label": "Додо и Дракон",
+  "descriptionunlocked": "Теперь я - что-то крылатое, тёмное и бессмертное; что-то не живое."
+  },
+  { "id": "A_ENDING_MINORMOTHVICTORY_WITHRISEN", "label": "Додо и Драугр",
+  "descriptionunlocked": "Теперь мы - что-то крылатое, тёмное и бессмертное; что-то не живое."
+  },
+  { "id": "A_ENDING_MINORHEARTVICTORY", "label": "Гарантированное бессмертие",
+  "descriptionunlocked": "Теперь, после присоединения к хору Громового Ритма, я обрету постоянство."
+  },
+  { "id": "A_ENDING_MINORHEARTVICTORY_WITHRISEN", "label": "Наше гарантированное бессмертие",
+  "descriptionunlocked": "Теперь, после присоединения к хору Громового Ритма, мы обретём постоянство."
+  },
+  { "id": "A_ENDING_MINORMENISCATEVICTORY_WITHRISEN", "label": "Дом Луны",
+  "descriptionunlocked": "Мениската поддержала нас."
+  },
+  { "id": "A_ENDING_MINORMENISCATEVICTORY", "label": "Дом Луны",
+  "descriptionunlocked": "Мениската поддержала нас."
+  },
+  
+]}

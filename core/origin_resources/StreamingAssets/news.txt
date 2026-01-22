@@ -1,0 +1,6 @@
+WELCOME TO HUSH HOUSE
+
+This is the launch edition of BOOK OF HOURS. If you've actually bought it in launch week, it's also the PERPETUAL EDITION,
+which means you're getting all the expansions for the game for free, forever, at no extra cost. Thanks for supporting the game at launch.
+
+<i>and if you run into problems...</i> mail us at support@weatherfactory.biz! Please send us your autosave.json and your player.log from your save directory- ask over email if you can't find that.

@@ -1,0 +1,37 @@
+{"achievements": [
+
+  { "id": "A_ENDING_FOECAUGHTUP", "label": "クリスマスプレゼント",
+  "descriptionunlocked": "遺体と言うよりは土産と言ったほうが良いかもしれない。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYA", "label": "世界の向こう側",
+  "descriptionunlocked": "もう二度と痕跡を見つけられてしまうような危険は冒せない。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYB", "label": "甘い骨",
+  "descriptionunlocked": "精算人お断り。例外なし。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYC", "label": "ベルベットハウス",
+  "descriptionunlocked": "貧乏も金持ちも経験したから言えるが、金持ちであったほうが良い。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYA_FOESLAIN", "label": "最高のものだけを",
+  "descriptionunlocked": "依頼に関して、特別におすすめしたいことがある。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYB_FOESLAIN", "label": "雇用機会",
+  "descriptionunlocked": "なぜか頭から離れなくて......"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYC_FOESLAIN", "label": "太陽のそばにいる",
+  "descriptionunlocked": "世界にはまだ地図に載っていない場所がたくさんある。"
+  },
+  { "id": "A_ENDING_WOLF", "label": "火の最終機能",
+  "descriptionunlocked": "狼と彷徨う炎がごちそうにありつく。"
+  },
+  { "id": "A_ENDING_COLONEL", "label": "永遠の維持",
+  "descriptionunlocked": "永遠の争いが世界を動かす原動力である。"
+  },
+  { "id": "A_ENDING_LIONSMITH", "label": "楽しくてしょうがない",
+   "descriptionunlocked": "戦いの反対は死である。" 
+  },
+  { "id": "A_ENDING_VELVET", "label": "血筋関係",
+  "descriptionunlocked": "歴史を学ぶ者なら誰でも知っていることだ、内にも外にも。どちらにしても。"
+  },
+
+]}

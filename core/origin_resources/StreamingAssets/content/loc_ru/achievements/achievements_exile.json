@@ -1,0 +1,37 @@
+{"achievements": [
+
+  { "id": "A_ENDING_FOECAUGHTUP", "label": "Пусть это будет подарком на Рождество",
+  "descriptionunlocked": "Это даже трупом назвать нельзя — скорее, сувенир."
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYA", "label": "Другая сторона мира",
+  "descriptionunlocked": "Я не могу рисковать и позволить им снова взять мой след."
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYB", "label": "Сладкие кости",
+  "descriptionunlocked": "НИКАКИХ СЧИТАЛЬЦЕВ. БЕЗ ИСКЛЮЧЕНИЙ!"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYC", "label": "Дом Бархата",
+  "descriptionunlocked": "Мне приходилось жить в и бедствии и в богатстве, и теперь я понимаю, что лучше быть богатым."
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYA_FOESLAIN", "label": "Только лучшее",
+  "descriptionunlocked": "«У меня есть одна особая рекомендация для этого контракта...»"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYB_FOESLAIN", "label": "Возможности работы",
+  "descriptionunlocked": "Почему-то я не могу перестать об этом думать..."
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYC_FOESLAIN", "label": "Повстречаться с закатом",
+  "descriptionunlocked": "Мир огромен, и он еще не весь на карте."
+  },
+  { "id": "A_ENDING_COLONEL", "label": "Бесконечный процесс",
+  "descriptionunlocked": "Совражество — это двигатель мира."
+  },
+  { "id": "A_ENDING_LIONSMITH", "label": "Слишком весело",
+  "descriptionunlocked": "Жизнь без битвы — это смерть."
+  },
+  { "id": "A_ENDING_WOLF", "label": "Последняя функция огня",
+  "descriptionunlocked": "Волк и блуждающие огни будут пировать."
+  },
+  { "id": "A_ENDING_VELVET", "label": "Родство",
+  "descriptionunlocked": "Как известно любому, кто изучал Истории, то, что внутри, то и извне. Так или иначе."
+  },
+  
+]}

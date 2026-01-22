@@ -1,0 +1,25 @@
+{"achievements": [
+  
+  { "id": "A_ENDING_WORKVICTORYMARRIAGE", "label": "いつまでも幸せに：自分",
+  "descriptionunlocked": "今では私は魅力的なトロフィーだ。"
+  },
+  { "id": "A_ENDING_MINORMOTHVICTORY", "label": "ドードーとドラゴン",
+  "descriptionunlocked": "私は翼を生やし、暗くて不滅で、もはや、存在しないものになってしまった。"
+  },
+  { "id": "A_ENDING_MINORMOTHVICTORY_WITHRISEN", "label": "ドードーとドラウグル",
+  "descriptionunlocked": "私たちは翼を生やし、暗くて不滅で、もはや、存在しないものになってしまった。"
+  },
+  { "id": "A_ENDING_MINORHEARTVICTORY", "label": "私の不変さは保証されている",
+  "descriptionunlocked": "私はサンダースキンの嵐の合唱に加わった。決して止まることはない。"
+  },
+  { "id": "A_ENDING_MINORHEARTVICTORY_WITHRISEN", "label": "我々の不変さは保証されている",
+  "descriptionunlocked": "我々はサンダースキンの嵐の合唱に加わった。決して止まることはない。"
+  },
+  { "id": "A_ENDING_MINORMENISCATEVICTORY", "label": "月の棲む家",
+  "descriptionunlocked": "メニスカーテは私に目を向けてくれた。"
+  },
+  { "id": "A_ENDING_MINORMENISCATEVICTORY_WITHRISEN", "label": "私の月が棲む家",
+  "descriptionunlocked": "メニスカーテは私たちに目を向けてくれた。"
+  },
+
+]}

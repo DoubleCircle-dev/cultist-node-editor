@@ -1,0 +1,476 @@
+{
+	"elements": [
+		{
+				"id": "versionnews.2024.7.c.1", "icon": "spirit_winterd_edge",
+				"label": "2024.11.c.1 CECILIA",
+				"description": "
+- The font used in the Russian localization was less aesthetically pleasing than intended (also fixed some typos).
+- Due to a misunderstanding, a localiser (<font=NotoSansCJKsc-Regular>夜雨</font>) hadn't been mentioned in Exile Chinese localization credits.
+				"
+	},
+
+		{
+				"id": "versionnews.2024.7.b.3", "icon": "waypeacock",
+				"label": "2024.7.b.3 BALBINA",
+				"description": "
+- B.3: Cards vanishing animation in the Mansus is slightly longer.
+
+- B.3 HOTFIX: Resolution setting works again.
+
+- B.3 MODDING: Experimental - $ operations are fully localizable now (you aren't supposed to, but life is life).
+
+- B.2 HOTFIX: Fixed a crash for mod achievements, additional belts and braces.
+
+- Start recipe button (S by default) now makes all cards flying into the current verb's slots to arrive instantly.
+
+- Abort button text was displayed as [{SETTINGS:KBABORT}] in non-English languages.
+
+- Changed the layout of the promotional blocks in the main menu.
+
+- Increased stability of loading of older save files.
+
+- A frame-perfect click at the logo screen could crash the game.
+
+- Due to an ongoing confusion on how to close the Dream window after its contents were snatched by a magnet slot, it now has an explicit close button.
+
+- MODDING: Several remaining edge cases of case sensitivity for IDs are ironed out.
+				"
+	},
+
+		{
+				"id": "versionnews.2024.5.a.3", "icon": "toolknockb",
+				"label": "2024.5.a.3 AGNES",
+				"description": "
+- Fixed an Apostle legacy bug that made it impossible to heal followers wounded by an enemy Long - but only if you were playing a localized (non-English) version of the game. No words enough to convey how hard the Devil worked to make this bug possible.
+
+- Some sounds - namely, a card dropping in a slot, and a game speed being changed via a hotkefy - were not playing since god knows when.
+
+- Improved performance in Exile when arriving in a new city with a lot of cash.
+
+- Fixed a rare bug that broke the main menu if you were mashing buttons too eagerly during the splash screen.
+
+- Fixed an erroneous text display in various escaped spirit hauntings.
+
+- There was a missing colon in a substantial Edge commission's label. Could this be the very last typo in the entire game ?! Will you be able, oh dear players, to spot more ?!
+
+- MODDING: IDs of entities are now completely case-insensitive for all purposes (in-game access, modifying, inheriting, localizing etc).
+
+- MODDING: (super nerdy) Console autocomplete suggestions are now only displayed if there's more than 3 characters typed in - this way you aren't presented to choose from every entity in the game that starts with a letter E.
+
+- HOTFIX A.2: Chinese translation is correctly applied to verbs' initial slots once again.
+
+- A.3: Apostle-specific spirits are now correctly killed in a Starlight confrontation.
+				"
+	},
+	{
+			"id": "versionnews.2023.12.s.5", "icon": "memory.liminal",
+			"label": "2023.12.s.5 SARCODES",
+			"description": "- Steam Deck support! A nice excuse to add a QoL/accessibility feature here and there.
+
+- Added 150% UI scale.
+
+- Added a Font Size setting. May lead to stranger looks on higher ends.
+
+- MODDING: 'Sort' property for Elements, a string, the format is 'group.order' - ex. 'a1.z1'. Controls the order of Aspects appearance in card and situation info. Aspects are first sorted by 'group', then by 'order', then, within the same order, by the amount of aspect present, starting with the highest.
+	- Several important Aspects are now sorted.
+
+This leaves us fixing such critical bugs such as:
+
+- A bug with keybinds showing default values until you loaded the tabletop at least once.
+
+- A bug when cancelling a key rebind resulted in keyboard controls not working anymore.
+
+- A bug when using ESC key in the main menu would not close an opened dialog.
+
+- A few typos in mod loading logs.
+
+- 2023.12.s.5: Lore once again isn't consumed on influence upgrade and subversion.
+
+- 2023.12.s.4: Added belts and braces against a very rare infinite saving chain.
+
+- 2023.12.s.3: Contentment now *finally* acts correctly on influence upgrade and subversion.
+
+- 2023.12.s.3: A safenet against infinite saving loop on new game.
+
+- 2023.12.s.3: A rare greedy slot crash is fixed.
+
+- 2023.12.s.2: Mouse wheel functionality restored.
+
+- 2023.12.s.2: Fixed a bug with Options menu tabs not initializing.
+
+- 2023.12.s.2: Several small enhancements in a deck draw preview display.
+
+- MODDING: Following the arabic font support added in the previous patch, a possibility for right-to-left text display is added too. \"rtl\": true in culture JSON to enable."
+},
+{
+		"id": "versionnews.2023.10.r.10", "icon": "memory.joyful",
+		"label": "2023.10.r.10 RANUNCULUS",
+		"description": "- Fade during an autosave is made gentler and more gradual to prevent the feeling of flickering on high saving speeds.
+
+- Dropping cards on other cards while multi-dragging led to unexpected situations.
+
+- Fixed a confusion in German localization of Skills' descriptions, and other minor problems in various locs.
+
+- Fixed empty description in Starvation verb.
+
+- Yet another fix for GOG achievements not unlocking on the storefront side despite being unlocked in the Collection.
+
+- Greedy slots don't bug out on low framerates.
+
+- When a recipe warmup ends, any card-to-slot travel animation aimed at it completes instead of failing.
+
+- Zoom keys (Q/E by default) work sensibly at last - holding results in a continuous zoom instead of having to tap.
+
+- HOTFIX: Verb SFXes work once again.
+
+- P.10 HOTFIX: Ironed out newly-introduced card placement quirks.
+
+- P.10 HOTFIX: '<sprite name=secrethistories>' once again displays correctly in text.
+
+- MODDING: new xtrigger morph effect - 'setmutation' - for non-additive mutations.
+
+- MODDING/HOTFIX: expulsions for instant recipes work correctly once again.
+
+- MODDING: At the request, added Arabic font support (for that, set fontscript to 'arabic' in culture file)."
+},
+{
+	"id": "versionnews.2023.5.p.12", "icon": "memory.unexpected",
+	"label": "2023.5.p.12 PEONY",
+	"description": "- Made it more clear that allies can't kill the Foe in Exile.
+
+- Fixed 'Our Enemy's Indentity' description.
+
+- Fixed an assortment of memory leaks.
+
+- Cards in verb slots and outputs don't play their decay animation if the verb window is closed.
+
+- Small rework of the influences' upgrade and subversion:
+	- Interactions with Contentment are less erratic.
+	- The Lore slot doesn't spoil lore fragments' descriptions.
+
+- Verb windows now display text in a consistent size and use scrollbars if it doesn't fit.
+
+- Experimental changes in the flow of timers.
+
+- Alt recipes correctly display their deck draws (instead of displaying the main recipe's deck draws).
+
+- Fixed an incorrect description in the Russian localization of the Younger Sister.
+
+- Fixed a verb timer sometimes not assuming the correct colour.
+
+- Restored a special audio cue for the Time verb.
+
+- Cards in the Mansus disappear dramatically again.
+
+- Cards in the Mansus are flipped before vanishing - that was an accidental change, sorry!
+
+- Added a description for missing Essential slot requirements.
+
+- Escape button does not close an opened verb window while the settings window is open.
+
+- Exile cities are properly highlighted and faded once again.
+
+- Cards in verbs don't occasionally jump when clicked.
+
+- Streamlined the pause behaviour in the Mansus and settings menu.
+
+- Fixed the Mansus portal window not closing under mysterious circumstances.
+
+- Fix for cards sometimes thinking that they occupy slightly more space than they are in reality, and thus preventing cards to be placed in a space near them, despite it being actually empty.
+
+- At some point, cards that were supposed to be invisible - but only inside verbs - became also invisible on the table - but, like, confusingly invisible. Now visible again, as they always were.
+
+- MODDING: An order in which element's aspects react to xtriggers is now consistent (by id, alphabetical).
+
+- MODDING: Entities now have a '$depends' and '$incompatible' property - a list of mod ids that are required/forbidden for this entity definition to be applied. More specifically, $depends mean 'all listed mods must be enabled', and $incompatible means 'none of listed mods must be enabled'.\nMod id is taken from serapeum_catalogue_number.txt in the mod's folder - it is created automatically on first Workshop upload, but can be created manually for non-Steam users. If no file is present, mod id equals its name.
+
+- MODDING: Custom input settings now work properly.
+
+- MODDING: Aspect xtriggers are significantly reworked - this was an obscure feature and it collected dust for years, but now, hopefully, assumed its final form:
+	- All aspects of a card now react to xtriggering (previously only mutations did).
+	- The 'Transform' morph effect now transforms a card, even when triggered by an aspect. This way, all morph effects work uniformly, regardless of where they are defined.
+
+- MODDING: The new 'xexts' property on the elements. A string-string pair, works in a way similar to xtriggers - whenever a card meets a key-catalyst of an xext, it displays the description of this xext in its current verb.
+
+- MODDING: Fixed a bug when using an expulsion on an instant additional recipe didn't work.
+
+- MODDING: $plus/$minus work again.
+
+- MODDING: Levers now can have default values, and you can change default values of vanilla levers.
+
+- MODDING: Card labels display rich text correctly.",
+},
+		{
+	"id": "versionnews.2023.4.o.2",
+	"label": "2023.4.o.2 ORACHE",
+"description": "- Sometimes Biedde's Blade was inflicting a normal wound instead of an unstanchable one.
+
+- Opening a verb window on low FPS caused it to disappear.
+
+- The options window now scales correctly for various edge-case resolutions.
+
+- Fixed a false-positive log spam on inspecting the credits window. (codename VARLEY)
+
+- The status bar doubled the displayed number of exhausted Passions.
+
+- The volume of the SFX for entering and exiting the Mansus is halved.
+
+- Disabled camera's motions on entering and exiting the Mansus.
+
+- The legacy selection screen won't suggest you to select from two Exiles anymore.
+
+- FEATURE: Multidrag now works properly at last. Select multiple cards while holding the SHIFT key and drag them as a group.
+
+- HOTFIX: Dropzones aren't blocking card interactions once again.
+
+- MODDING: $plus and $minus now correctly parse values without \"\".
+
+- MODDING: $append and $prepend now correctly work on uninitialized lists.
+
+- MODDING: Recipe 'Xpans' property, which runs xtriggers on all cards on the table (as opposed to 'aspects', which applies them inside the current verb only).
+
+- MODDING: Status bar elements can now be defined more flexibly. Consult with Aspirant legacy in JSONs for an example. A brief rundown of properties:
+ 	- 'Ids' specifies elements that are tracked by this status bar entry.
+	- 'Format' allows to specify any additional characters that accompay the value display. '({value})' meants the value is displayed in brackets, ''-{value}' means it's preceded by dash/minu, etc. Keep in mind that you can use TextMeshPro rich text tags, same as everywhere else in the texts.
+	- 'Icon', naturally, defines an icon. If not defined, the first entry in 'Ids' is used instead.
+	- 'Styles' allows to modify value's display at certain numbers. Currently, there are only possible two modes, that look like 'colour_red_0' and 'hide_0'. The first makes the display red when it equals 0, and the second hides it under the same conditions. Note that you can use any value instead of 0, and any colour instead of red - defined as a plain string colour name, or a hex code.
+	A simple string definition is still possible too, of course.",
+	"icon": "memory.endless"
+		},
+		{
+	"id": "versionnews.2022.12.n.2",
+	"label": "2022.12.n.2 NEMESIA",
+"description": "- Ally recruitment action in Exile didn't display its end description properly.\n
+- Wounded cultists turned into Risen lacked Follower aspect.\n
+- Display of verb window is slightly more resilient against lower frame rates.\n
+- Removed secret stray tech text from <sprite name=forge> ascension rite.\n
+- THE INVISIBLE SERAPEUM is renamed into THE SIXTH HISTORY.\n
+- Various enhancements in the mod panel display.\n
+- Debug console now opens on ctrl + ~ (instead of just ~). People are now safe from opening it on accident and ruining their playthrough in all kinds of ways.\n
+- Debug console now can be opened in the main menu, allowing to see the log without starting the game.\n
+- Other various small console improvements.\n
+- HOTFIX: Clear console button now works.\n
+- HOTFIX: achievements.json file had an incorrect path on Linux.\n
+- MODDING: To work, DLL mods now require the GATEKEEPER core mod installed and enabled. The mod can be found in Steam Workshop, or on Cultist Simulator GOG discussions page.\n
+- MODDING: Levers (cards that are transferred between playthroughs) can now be defined and modified by JSONs.\n
+- HOTFIX: 'description_long' in mod synopsis can now be left empty in order to preserve current Workshop mod's description. The game no longer crashes if this property isn't set.\n
+- HOTFIX: To avoid confusion, DLL mods can't be enabled at all without GHIRBI. Disabling GHIRBI automatically disables all enabled DLL mods.",
+	"icon": "memory.horizon"
+		},
+		{
+	"id": "versionnews.2022.11.m.1",
+	"label": "2022.11.m.1 MOTHORCHID",
+"description": "- A quirk in Bureau's logic made it prosecute the player if the player tried to bail out a rival.\n
+- An impossible looping Long bug became more impossible.\n
+- Sometimes cards yearned to connect with their relatives inside verbs and spammed the hover sound.\n
+- Achievement descriptions were invisible with High Contrast setting on.\n
+- The deck details window didn't hide when the element details window is opened, and was hanging there awkwardly.\n
+- Made it very subtly clearer that taunting the Foe is repeatable.\n
+- MODDING: Mutation level can be defined as a reference - <b>{ \"mutate\": \"grail\", \"level\": \"heart\" }</b>\n
+- MODDING: Reference-values can use negatives in appropriate contexts - <b>\"effects\": { \"lantern\": \"-forge\" }</b>\n
+- MODDING: All verb refences (in slots' and recipes' actionIds) can now use wildcards - <b>\"actionId\": \"verb.*\"</b>\n
+- MODDING: Links (and alts, and inductions) IDs can now use wildcards. The game will try to find the first recipe that matches the wildcard and satisfies the requirements. Example - <b>\"linked\": [ {\"id\": \"vault.*\"} ]</b>\n",
+	"icon": "memory.menacing"
+		},
+		{
+	"id": "versionnews.2022.10.l.5",
+	"label": "2022.10.l.3 LONGIFLORUM",
+"description": "- Game no longer crashes when challenged with a corrupted save file. Instead, you are prompted to try restoring a backup.\n
+- Upon crashing on startup, the game will automatically turn off all enabled mods. If don't want this behaviour (for example, when testing your own mod), add \"knock=1\" to config.ini.\n
+- Additional precautions when loading mod-affected saves.\n
+- Mods with empty synopsis no longer crash the game.\n
+- Rites which consume followers will no longer suggest that they can be used to renew Burgeoning or Shattered Risen. Technically they renewed *and* consumed the Risen, which was legitimate but not very helpful.\n
+- HOTFIX: Occasional save incompatibility with the previous version is fixed.\n
+- HOTFIX: Strange and unexpected card presences - seasons, books, and many more - are fixed. For a moment, you've peeked under the veil of the game's inner workings - these were the game decks, and they became visible.\n
+- HOTFIX: Fixed a crash on lore subversion.\n
+- MODDING: Verbs can now have innate aspects (defined as \"aspects\": { \"something\": 1 }).\n
+- MODDING: Verbs can now react to xtriggers - in particular, to transform into a different verb.\n
+Keep in mind that verbs still <b>can't</b> have mutations.\n",
+	"icon": "memory.shameful"
+		},
+		{
+	"id": "versionnews.2022.10.k.6",
+	"label": "2022.10.k.6 KALMIA",
+"description": "- Mrs E. now accepts mavericks in exchange for her support.\n
+- Several minor typos in slot requirements are fixed.\n
+- Blank credits panel in Russian localisation is fixed.\n
+- HOTFIX: The game started to treat some save files as if they were corrupted. They, in fact, weren't, and this all is now behind us.\n
+- HOTFIX: Newly-spawned verbs no longer snatch a single random card from their birthplace.\n
+- HOTFIX: Subverted lore wasn't properly consumed if you didn't own Exile DLC.\n
+- HOTFIX: Fixed a rare deck draw crash.\n
+- MODDING: Greatly increased the vigilance a nd informativeness of JSON import logs.\n",
+"comments": "under the hood, overhaul of the importers",
+	"icon": "memory.wildering"
+			},
+			{
+		"id": "versionnews.2022.9.j.2",
+		"label": "2022.9.j.2 JUNIPER",
+"description": "- MODDING: Mods now can self-define their tags through \"tags\" property in synopsis.json. Consult with MODDING_README.txt in StreamingAssets folder for the details.\n
+- An inability to interact with certain UI elements that occured in windowed mode at widescreen resolutions is fixed.\n
+In addition, due to a hiccup in update releases, several DLC-related fixes were declared, but weren't properly present:\n
+- When devouring a reckoner, Ligeians no longer consume the content of the Reckoner verb slot.\n
+- The game will no longer suggest you to relax or to negotiate when you're trying to start an operation in Exile.\n
+- Buying a profane weapon with another profane weapon does not result in mutual annihilation.\n\n",
+"comments": "under the hood, updated to 2022.1.15f1 - meant to do that in ILEX, but it got buried under a stream of the Hellebore hotfixes",
+		"icon": "memory.profitable"
+			},
+			{
+			"id": "versionnews.2022.9.i.5",
+			"label": "2022.9.i.5 ILEX",
+	"description": "- Improved performance and display of card timers.\n
+- Aspects were counted twice for cards in the Verb output.\n
+- Upgrading lore sometimes destroyed innocent bystander cards.\n
+- Incorrect chance of getting an Exultation when preaching with Passion is fixed.\n
+- Formula: Elixir Zeboim cannot be consumed in a rite.\n
+- MODDING: In-game debug panel now allows to manually xtrigger present cards.\n",
+			"icon": "memory.furious"
+			},
+			{
+			"id": "versionnews.2022.8.h.4",
+			"label": "2022.8.h.4 HELLEBORE",
+	"description": "Yet another round of card-handlery tweaks:\n
+- Cards put more effort into finding a landing zone as close to the hover position as possible.\n
+- Card ghosts sometimes ended up in a wrong position (and generally made no sense).\n
+- Cards save their preferred tabletop location between sessions.\n
+- Cards should no longer completely overlap each other - or, at least, should do this significantly less often.\n
+- Cards correctly replace each other in slots.\n
+- Dropzones are now more proficient (and elegant) in their craft.\n
+- Verbs occupy a more modest space on the grid.\n
+- Verbs go straight to the dropzone when spawned.\n
+- Different kinds of camera movement should feel smoother, and are less interruptive towards each other.\n
+- Dragged cards follow the camera movement.\n
+- When a card is moving into a verb slot, it no longer slows down if said verb's windows opens or closes.\n
+- Initial board setup respects the grid.\n
+- Interactions with the Mansus are slightly oiled up.\n
+- HOTFIX: Rare softlock of the post-Mansus window is fixed.\n
+- HOTFIX: Game over screen didn't respond to the input.\n
+- HOTFIX: More tame camera behaviour when leaving the Mansus.\n\n
+And also:\n
+- Shattered Risen could sometimes lack Follower aspect.\n
+- Buying a profane weapon with another profane weapon does not result in mutual annihilation.\n
+- Rare freeze on \"Collect All\" is fixed.\n
+- MODDING: Deck effects now support aspect references, as in <i>\"deckeffects\": { \"deckeffects\": \"lantern\" }</i>.\n",
+			"icon": "memory.luxurious"
+			},
+			{
+			"id": "versionnews.2022.8.g.7",
+			"label": "2022.8.g.7 GALANTHUS",
+	"description": "- Carpet fix for various errors concerning text display in verbs.\n
+- Cards no longer appear face up where they should appear face down.\n
+- Cards dragged by greedy slots are no longer visible in the Mansus.\n
+- Restored fade out effect on scene transitions.\n
+- Burn images once again are displayed at the start of a recipe, not at the end.\n
+- Navigating the table with WASD shouldn't overwrite your character's name anymore.\n
+- Glimmering and erudition still weren't removed properly on a skill upgrade.\n
+- Small accessibility improvements for cards' quantity display inside of verbs.\n
+- Certain hint-only descriptions - commissions, dances - misleadingly presented themselves as proper startable actions.\n
+- A certain crash - extremely rare, extremely inexplicable - is fixed. We will not provide any futher details.\n
+- Additional - small - decks optimizations.\n
+- Hypothetical Chinese localisation problems hypothetically fixed.\n
+- Priest scars were consumed in certain rites.\n
+- MODDING: aspect inductions now check requirements and can have expulsions.\n
+- HOTFIX: quantities of stacked cards were not taken into account when calculating aspects. To put it simply, lore is researchable once again.\n
+- HOTFIX: greedy slots being too inconsiderate as to which cards they were grabbing.\n
+- HOTFIX: Promotion at Glover & Glover is obtainable once again. HOTFIX 2: This time really obtainable.\n
+- HOTFIX: You can no longer re-start verb actions by pressing S repeatedly.\n
+- HOTFIX: Better backwards compatibility for the save files.\n
+- HOTFIX: For a period, different decks were able to redraw unique cards.\n
+- HOTFIX: If no followers were present at the end of the game, the game could decide that Latin language a follower.\n
+- HOTFIX: A crash on Russian localization is fixed.\n
+- MODDING: linked recipes can now be declared as additionals.\n
+- MODDING: alt-additional recipe spawning now can be done via a dedicated Recipe property - \"Inductions\". All links in it are additional by default.\n
+- MODDING: mod long description is no longer overwritten on mod re-upload. For real this time.",
+			"icon": "memory.honeyed"
+			},
+			{
+				"id": "versionnews.2022.7.f.5",
+				"label": "2022.7.f.5 FRAGRANTOLIVE",
+		"description": "Note: This patch once again stars the enigmatic Chelnoque. \n
+- New modding feature: configurable local achievements. Consult MODDING_README.txt in the game's StreamingAssets folder for more details.\n
+- Verb windows display cards, aspects and deck draws more cleanly and more clearly.\n
+- Influences are properly removed on a skill upgrade.\n
+- Fixed dropzones sometimes blocking interactions with their contents.\n
+- Cards more reliably seek the nearest verb on a double-click (and on a right-click).\n
+- Purging cards in a completed verb  now correctly updates the previewed amount.\n
+- Aspect display in a verb window now updates properly on mutations.\n
+- Various optimizations to make the game  more stable in longer sessions.\n
+- Korean text fixes. \n
+- HOTFIX: EXILE borkage\n
+- HOTFIX: it's again possible to create a seventh-level lore fragment through combination\n
+- HOTFIX: a lamentable surplus space in the log was baking Chel's noodle\n
+- HOTFIX: more optimisations when lots of cards are created at once\n
+- HOTFIX: scrollbar adjustments\n
+- HOTFIX: issue with card expulsion to new situations\n
+- HOTFIX'S HOTFIX: an expulsion issue that was introduced in the previous hotfix is fixed\n
+- HOTFIX'S HOTFIX'S HOTFIX: explulsions are truly really fixed this time\n
+- MODDING: mod long description is no longer overwritten on mod re-upload\n
+- MODDING: expulsion filters now can have negative requirements\n",
+				"icon": "memory.golden"
+				},
+		{
+			"id": "versionnews.2022.7.e.2",
+			"label": "2022.7.e.1 ERYNGO",
+	"description": "NOTE: Fixes and notes in this patch are brought to you by intermittent guest star Chelnoque. Take it away, Mr C.\n
+	- Greedy slots no longer crash the game when grabbing cards from a player's hand.\n
+	- Cards no longer pursue verbs on their own.\n
+	- Fixed incorrect mutations-calculations for card stacks.\n
+	- Fixed a crash in Exile - an incredible coincidence when Reckoner reinforcements appear at the same exact moment as you leave the city.\n
+	- The 'Missing Lore' bug in Exile is fixed.\n
+	- The 'Double Domicile' bug in Exile is fixed.\n
+	- Another go at the MISSING_UI issue (which affected Turkish Windows players particularly). Please, report if you're still having it.\n
+	- The 'Restart' button now spends less time in contemplation.\n
+	- Ending music didn't obey the volume settings. It learned its lesson (as did we).\n
+	- HOTFIX: rare Exile crash.\n
+	- BLARP: ERYNGO not ERYGOS\n",
+			"icon": "memory.liminal"
+			},
+		{
+			"id": "versionnews.2022.6.d.1",
+			"label": "2022.6.d.1 DAHLIA",
+	"description": "	- Hardened against some crashes from less well behaved mods\n
+	- Hardened against corrupted config.ini files\n
+	- If your save is corrupted and there are valid backups, you won't need to rename manually\n
+	- Prisoners can now be freed, murdered, or enlightened.\n
+	- Aspect sprites now appear again in Apostle runs and Dancer\n
+	- Tidied up options panel\n",
+			"icon": "memory.splendid"
+			},
+		{
+			"id": "versionnews.2022.6.c.1",
+			"label": "2022.6.c.1 CROCOSMIA",
+	"description": "- You can now set gridsnap to 'no gridsnap' again. Welcome, children of the Moth
+- Magnet-grabbed cards now return to their original position afterwards (e.g. when the detective gets lost post-suspicion, he won't)
+- Weird dropzone ricochet effect no longer occurs when you put a card into a slot where it doesn't fit
+- Card stacks now place properly
+- Card stacks no longer open information window when dropped on the desktop (don't even)
+- Stack badge shader now uses backface cull so it doesn't appear on reversed cards
+- KEEP SAVE button works again
+- Perf improvements",
+			"icon": "memory.joyful"
+			},
+		{
+			"id": "versionnews.2022.6.b.2",
+			"label": "2022.6.b.2 BRYONY",
+	"description": "- Fixed a gridsnap bias that favoured left/top row. Damn that's better.
+- Fixed a blurry text issue on cards
+- Fixed frequency bug in card shuffle. Particular thanks to Chelnoque and Clocq (no relations) on this.
+- Added workaround for crash bug in latest Unity version. This one was, for once, not my fault, folks.",
+			"icon": "memory.unexpected"
+			},
+		{
+			"id": "versionnews.2022.5.a.2",
+			"label": "2022.5.a.2 ASPHODEL",
+	"description": "	More tweakss to card placement: moved card closer to desk, tidied dropzone grid placement\n
+	Narrowed gridsnap so you can put cards immediately below each other at gridsnap 1. THIS ONLY HAPPENS IN NEW GAMES, so people's card arrangements aren't messed up\n
+	Dropzone now reliably stays out of the way behind cards\n
+	Stack badge and verb timer also now render behind\n
+	Close button on deck details window now works.\n
+	Some poor soul kept trying to use Rite Intercalate to baptise a Chosen Compass. People shouldn't do that, but let's not let them try.\n
+	One more round of jp_loc fixes\n
+	Non-Latin messages no longer display as tofu when returning from the Mansus\n",
+			"icon": "memory.endless"
+			},
+
+		]
+
+}

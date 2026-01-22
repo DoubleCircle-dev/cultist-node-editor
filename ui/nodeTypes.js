@@ -63,7 +63,7 @@ const nodeTypes = {
         fixedProperties: [
             { label: '描述', type: 'text', default: '职业描述', description: 'description: 菜单中选择职业时显示的文本' },
             { label: '初始描述', type: 'text', default: '初始描述', description: 'startdescription: 会显示在开始此职业的新游戏时的弹出窗口。' },
-            { label: '起始行动框', type: 'port', requireType: 'verbs', default:'work', description: 'startingVerbId: 游戏开始时提供给玩家的verb，你可以自创一个，也可以从已有的verb中选择一个' },
+            { label: '起始行动框', type: 'port', requireType: 'verbs', default: 'work', description: 'startingVerbId: 游戏开始时提供给玩家的verb，你可以自创一个，也可以从已有的verb中选择一个' },
         ],
         properties: [
             { label: '前置结局', type: 'port', requireType: 'endings', description: 'fromEnding: 在某结局后必定可选' },
@@ -71,7 +71,7 @@ const nodeTypes = {
             { label: '新开始', type: 'bool', default: true, description: 'newstart: 表示我们是否可以在第六历史菜单中手动选择此职业来开始它（就像其他DLC一样）。' },
             { label: '跟踪元素', type: 'list', description: 'statusbarelements: 此职业中在屏幕底部跟踪的元素列表。需要恰好包含四个内容。如果你要跟踪的项目少于4个，你可以重复其中一些使其达到4个。' },
             { label: '桌面图片', type: 'image', description: 'tablecoverimage: 决定桌面背景，如dlc流亡者中的地中海地图。(请将地图放入images/ui中)（没有该字段则使用默认桌面）' },
-            { label: '禁用后续职业列表', type: 'list', description:'excludesOnEnding: 在此职业之后无法选择的其他职业列表。'}
+            { label: '禁用后续职业列表', type: 'list', description: 'excludesOnEnding: 在此职业之后无法选择的其他职业列表。' }
         ]
     },
     endings: {
@@ -89,7 +89,7 @@ const nodeTypes = {
         fixedProperties: [
             { label: '描述', type: 'text', default: '在达成该结局时，游戏中显示的文本', description: 'description: 在达成该结局时，游戏中显示的文本' },
             { label: '成就', type: 'text', default: '达成该结局时，解锁的成就', description: 'achievement: 达成该结局时，解锁的成就' },
-            { label: '图片', type: 'image' , description: 'image: 达成该结局时，在达成该结局时显示的图片' },
+            { label: '图片', type: 'image', description: 'image: 达成该结局时，在达成该结局时显示的图片' },
             { label: '类型', type: 'select', options: ['坏结局(Melancholy)', '胜利(Grand)', '反面胜利(Vile)'], default: 0, description: 'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。' },
         ],
         properties: [
@@ -104,10 +104,7 @@ const nodeTypes = {
         label: '交互(recipes)',
         color: '#f1912aff',
         inputs: [
-            { type: 'port', requireType:'recipes', label: '前置交互', description: '跳转进本交互界面的入口，craftable为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发' },
-            { type: 'port', requireType:'set', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element;tablereqs检测的是桌面上的element' },
-            { type: 'port', requireType: 'set', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element;tablereqs检测的是桌面上的element' },
-            { type: 'port', requireType: 'set', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element;tablereqs检测的是桌面上的element' }
+            { type: 'port', requireType: 'recipes', label: '前置交互', description: '跳转进本交互界面的入口，craftable为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发' },
 
         ],
         outputs: [
@@ -115,19 +112,56 @@ const nodeTypes = {
             { type: 'port', label: '链接', description: 'linked: 指向在此recipe后会概率生效的recipe，与alt类似，但需要等待当前recipe结束后才会生效。' },
             { type: 'port', label: '引入', description: 'inductions: 效果类似alt中将卡牌弹出并带入新verb中recipe的功能，expulsion是过滤条件，其中包含filter标识需要的性相，limit标识最多转移个数。' },
         ],
-        content: `交互界面(recipes)，是使用行动与卡牌交互的一种过程，可以实现多样化的功能`,
+        content: `交互界面(recipes)，也称配方，是使用行动与卡牌交互的一种过程，可以实现多样化的功能`,
         icon: '📖',
         fixedProperties: [
-            { label: '使用行动', type: 'port', requireType: 'verb', default: 'work', description: 'actionId: 使用的行动的id' },
+            { label: '使用行动', type: 'port', requireType: 'verb', default: 'work', description: 'actionId: 使用的行动的id，如果此处填空则默认使用上一个recipe的verb' },
+            {
+                label: '要求', type: 'port-hub', description: 'requirements: 跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element; tablereqs与requirement类似，区别在于它检测的是桌面上的element。'
+                , innerPort: [
+                    { type: 'port', requireType: 'set', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件。' },
+                    { type: 'port', requireType: 'set', label: '全局要求', description: '跳转进本交互界面的要求: extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element。' },
+                    { type: 'port', requireType: 'set', label: '桌面要求', description: '跳转进本交互界面的要求: tablereqs与requirement类似，区别在于它检测的是桌面上的element。' },
+                ]
+            },
             { label: '起始描述', type: 'text', default: '开始和进行时行动框显示的文本', description: 'startdescription: 开始和进行时行动框显示的文本' },
-            { label: '描述', type: 'text', default: '结束后显示的文本', description: 'description: 结束后显示的文本' }
+            { label: '描述', type: 'text', default: '结束后显示的文本', description: 'description: 结束后显示的文本' },
+            { label: '起始点', type: 'bool', default: false, description: 'craftable: 为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发。' },
+            { label: '仅作提示', type: 'bool', default: false, description: 'hintonly: 为真时该recipe无法被实际执行，只做展示描述作用（多用于提示）' },
         ],
-        properties: [
-            { label: '生成元素', type: 'port', requireType:'set', description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
-            { label: '性相', type: 'port', requireType: 'set', description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。' }
-            
+        exProperties: [
+            { label: '卡槽', type: 'port', requireType: 'slots', description: 'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。' },
+            { label: '生成元素', type: 'port', requireType: 'set', description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
+            { label: '持续时间', type: 'number', default: 0, description: 'warmup: 该recipe的持续时间，单位为秒。' },
+            { label: '最大执行次数', type: 'number', default: 0, description: 'maxexecutions: 该recipe的最大执行次数，0表示无限制。' },
+            { label: '抽取卡牌', type: 'port', requireType: 'deck', valueType: 'number', description: 'deckeffects: 从一个对应卡组中随机抽取一定数量张牌。' },
+            { label: '性相', type: 'port', requireType: 'set', description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。' },
+            { label: '重载属性', type: 'port', requireType: 'set', description: 'mutations: 给特定或具有特定性相的卡牌重载（additive为false时）或增加/减少（additive为true时根据level的正负）指定数量的性相，且过滤条件除了性相也可以是卡牌。mutation对性相的改变可以被继承，即使卡牌经过了xtrigger或decayto的变换，变异后的卡牌无法堆叠。' },
+            { label: '内置卡池', type: 'port', requireType: 'deck', description: 'internaldeck: 在recipe中直接定义一个卡组。' },
+            { label: '特效图片', type: 'image', description: 'burnimage: recipe开始后环绕动作框显示的图片。' },
+            { label: '结局', type: 'port', requireType: 'endings', description: 'ending: recipe结束后，根据条件触发结局。' },
+            { label: '计时效果', type: 'select', options: ['None', 'Grand', 'Melancholy', 'Pale', 'Vile'], default: 0, description: 'signalEndingFlavour: 改变recipe进行时行动框计时圈线的颜色并播放一个音乐，Grand：黄色/Melancholy：红色/Pale：灰白色/Vile：黄绿色。' },
+            // { label: '漫宿效果', type: 'port', requireType: 'mansus', description:'portaleffect: 进入对应的漫宿之路，这会导致配方从与门相关的每个牌组中绘制一张牌，并让您在板上从中进行选择'}
+            { label: '漫宿效果', type: 'select', options: ['None', 'wood', 'whitedoor', 'spiderdoor', 'peacockdoor', 'tricuspidgate'], default: 0, description: 'portaleffect: 进入对应的漫宿之路，这会导致配方从与门相关的每个牌组中绘制一张牌，并让您在板上从中进行选择' },
+            { label: '终止行动', type: 'port', requireType: 'verb', description: 'haltverb: 强行停止一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）' },
+            { label: '删除行动', type: 'port', requireType: 'verb', description: 'deleteverb: 强行删除一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）' },
+            { label: '销毁卡牌', type: 'port', requireType: 'set', description: 'purge: 销毁桌面对应数量的卡牌。若被处理卡牌拥有decayto，则以decay代替销毁。' },
+            { label: '提示音', type: 'bool', default: false, description: 'signalimportantloop: 这将使游戏在该recipe进行时播放一个响亮的声音，以提示有重要事情发生。' },
+            { label: '全局属性', type: 'port', requireType: 'set', description: 'xpans: 扩展全局属性，类似aspects，但是作用于全局，可以触发桌面上的xtriggers。' }
         ]
     },
+    mutations: {
+        title: 'mutation',
+        label: '重载变化(mutations)',
+        color: '#f1ea2aff',
+        inputs: [],
+        outputs: [],
+        content: `重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相`,
+        icon: '🔗',
+        fixedProperties: [],
+        properties: []
+    },
+
     // TODO 根据wiki完善elements
     elements: {
         title: 'element',
@@ -139,31 +173,27 @@ const nodeTypes = {
         ],
         content: `游戏中的卡牌、性相均属于elements`,
         icon: '📇',
-        fixedProperties:[
+        fixedProperties: [
             { label: '类型', type: 'select', options: ['card', 'aspect'], default: 0 },
             { label: '描述', type: 'text', default: '该元素（卡牌或性相）的介绍', description: 'description: 该元素（卡牌或性相）的介绍, 会显示在右上角详情中' },
         ],
         properties: [
             { label: '图标', type: 'image', description: 'icon: 该元素（卡牌或性相）的图标图片，默认为空，此时会寻找和id一致的文件名' },
-            { label: '引发', type: 'port', requireType: 'set', description: 'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建'},
+            { label: '引发', type: 'port', requireType: 'set', description: 'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建' },
 
         ],
-        ex1Properties:[
-            { label: '性相', type: 'port', requireType: 'set', description:'aspects: 该元素（卡牌）所具有的性相，数值代表等级' },
+        ex1Properties: [
+            { label: '性相', type: 'port', requireType: 'set', description: 'aspects: 该元素（卡牌）所具有的性相，数值代表等级' },
             { label: '持续时间', type: 'number', default: 0, description: 'duration: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。' },
-            { label:'卡槽', type: 'port', requireType: 'set', description: 'slots: 该元素（卡牌）所拥有的卡槽，可以在交互(recipes)中额外生成卡槽放入卡牌' },
+            { label: '卡槽', type: 'port', requireType: 'set', description: 'slots: 该元素（卡牌）所拥有的卡槽，可以在交互(recipes)中额外生成卡槽放入卡牌' },
         ],
-        ex2Properties:[
+        ex2Properties: [
 
         ]
     },
-    xtriggers:{
+    xtriggers: {
         title: 'xtrigger',
-        label: '触发器(xtriggers)规定了卡牌在包含指定aspect的recipe中会发生的变化，当xtriggers被定义在aspect上时，该xtriggers会被赋予给包含aspect的卡牌',
-        color: '#f1912aff',
-        inputs: [],
-        outputs:[],
-
+        label: '触变(xtriggers)',
     },
     decks: {
         title: 'deck',
@@ -180,10 +210,16 @@ const nodeTypes = {
                 label: '描述', type: 'text', default: '该卡池的介绍', description: 'description: 该卡池的介绍'
             },
             {
-                label: '牌组', type: 'list-port', description: 'spec: 卡池中随机抽取的卡牌列表',
+                label: '牌组', type: 'port', requireType: 'set', description: 'spec: 卡池中随机抽取的卡牌列表',
             },
             {
                 label: '补充牌组', type: 'bool', default: false, description: 'resetonexhaustion: 是否在卡牌抽完之后重新补充牌组'
+            },
+            {
+                label: '抽取数量', type: 'number', default: 1, description: 'draws: 【仅存在于interaldeck】draws是一次性从卡组中抽取卡牌的数量'
+            },
+            {
+                label: '默认卡牌', type: 'port', requireType: 'elements', default: 'genericrubbishbook', description: '"defaultcard":  卡池里所有卡牌被抽完时默认出现的卡牌'
             }
         ]
     },
@@ -270,10 +306,23 @@ const nodeTypes = {
         outputs: [],
         content: `extends: 特殊的写法，可以修改原游戏的数据，如果你不知道该如何使用，请不要使用本节点`,
         fixedProperties: [
-            { label: '扩充的对象', type: 'text', default: '要扩充的对象的id' }
+            { label: '扩充的对象', type: 'node', default: '' }
         ],
         properties: [,
             { label: '代码', type: 'text', default: '写入新的扩充内容' }
+        ]
+    },
+    copies: {
+        title: '引用复制',
+        color: '#3F51B5',
+        inputs: [],
+        outputs: [],
+        content: ``,
+        fixedProperties: [
+            { label: '模式', type: 'select', default: '简洁', options: ['简洁', '完整', '可编辑'] },
+            { label: '引用的对象', type: 'node', default: '' }
+        ],
+        properties: [
         ]
     },
     text: {
@@ -300,11 +349,22 @@ const nodeTypes = {
         icon: '🎚️',
         properties: []
     },
+    /**
+    * 集合，用于处理表格或者列表
+    * @Type Set
+    * 子类型：
+    * list: [element1, element2, element3]
+    * dict: {elementId1: num, elementId2: num}
+    * 具体应用：
+    * filter: {过滤的条件id： 数值},
+    * xtriggers: [{triggerId: 数值},{triggerId: 数值}],
+    * mutation: [{filter: 过滤的条件id,mutate: 需要改变的性相id,level: 数值,additive: 布尔值},{}] 
+    */
     set: {
         title: '集合',
         color: '#3fb3b5ff',
         inputs: [
-            { type: 'set-port', label: '继承集合', description: '继承之前的集合的元素，扩展成新的集合' },
+            { type: 'port', requireType: 'set', label: '继承集合', description: '继承之前的集合的元素，扩展成新的集合' },
         ],
         outputs: [
             { type: 'port', label: '集合', description: '输出集合格式的变量' }
@@ -312,6 +372,7 @@ const nodeTypes = {
         content: `集合变量，输出参数集合，可以将多个集合链接，不允许成环`,
         icon: '🎚️',
         properties: [
+            { label: '类型', type: 'select', default: '字典', options: ['字典', '列表', 'xtriggers', 'mutaions'] },
             { label: '集合', type: 'table' }
         ]
     },

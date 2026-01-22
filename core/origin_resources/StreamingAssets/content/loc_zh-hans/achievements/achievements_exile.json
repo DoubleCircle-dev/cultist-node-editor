@@ -1,0 +1,38 @@
+{"achievements": [
+
+  { "id": "A_ENDING_FOECAUGHTUP", "label": "就当它是一件圣诞礼物吧",
+  "descriptionunlocked": "我都不觉得它能被称作一具尸体，甚至连纪念品都算不上。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYA", "label": "地球的另一面",
+  "descriptionunlocked": "我不能冒让他们重新发现我踪迹的风险。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYB", "label": "甜美的骨头",
+  "descriptionunlocked": "任何情况下，清算人均不得入内。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYC", "label": "丝绒豪宅",
+  "descriptionunlocked": "我曾贫穷过，也曾富有过，而我发觉我更乐意当个有钱人。"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYA_FOESLAIN", "label": "只要最佳人选",
+  "descriptionunlocked": "我可以推荐一位专业人士接受你的委托……"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYB_FOESLAIN", "label": "就业机会",
+  "descriptionunlocked": "不知怎么，我没法停止思考这件事……"
+  },
+  { "id": "A_ENDING_OBSCURITYVICTORYC_FOESLAIN", "label": "与夕阳作伴",
+  "descriptionunlocked": "世界很大，还有很多没有被地图标记的地方。"
+  },
+  { "id": "A_ENDING_COLONEL", "label": "维系永恒之物",
+  "descriptionunlocked": "纷争正是这个世界的引擎"
+  },
+  { "id": "A_ENDING_LIONSMITH", "label": "其乐无穷",
+  "descriptionunlocked": "斗争的对立面正是死亡。"
+  },
+  { "id": "A_ENDING_WOLF", "label": "火焰最后的功用",
+  "descriptionunlocked": "狼将与所有的漂泊之火共赴饕宴。"
+  },
+  { "id": "A_ENDING_VELVET", "label": "血裔",
+  "descriptionunlocked": "任何研习诸史的学者都知道：存乎中，形乎外。非此即彼。"
+  },
+
+
+]}

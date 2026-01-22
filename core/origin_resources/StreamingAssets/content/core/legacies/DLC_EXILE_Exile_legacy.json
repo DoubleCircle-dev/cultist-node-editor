@@ -1,0 +1,171 @@
+{
+    "legacies": [
+        {
+            "id": "exile",
+            "label": "The Exile",
+			"family": "exile",
+            "description": "No-one steals from a reckoner lord. And yet, I did. I had my reasons.",
+            "startdescription": "Sunset. Time to go.",
+            "image": "exile",
+            "effects": {
+                "trace": 7,
+                "decade.stolen": 7,
+                "year.stolen": 7,
+                "ticket.train": 1
+            },
+            "fromending": "wintersacrifice",
+            "availableWithoutEndingMatch": true,
+            "statusbarelements": [
+                "obscurity",
+                "comfort",
+                "damage.exile",
+                "lifespan.stolen"
+            ],
+            "startingverbid": "use",
+            "newstart": true,
+            "tablecoverimage": "table_leather_exile",
+            "comments": "ending-based variations are identical and inherit mostly everything, except for selection screen text"
+        },
+        {
+            "id": "exile.obscurityvictorya", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, did I reap greater rewards?",
+            "fromending": "obscurityvictorya",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.obscurityvictoryb", "$derives": "exile",
+            "description": "What if it had been different? In another history, did I reap even greater rewards?",
+            "fromending": "obscurityvictoryb",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.obscurityvictoryc", "$derives": "exile",
+            "description": "What if it had been different? In another history, did I rise higher?",
+            "fromending": "obscurityvictoryc",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.obscurityvictoryafoeslain", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, did I reap greater rewards?",
+            "fromending": "obscurityvictoryafoeslain",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.obscurityvictorybfoeslain", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, did I reap even greater rewards?",
+            "fromending": "obscurityvictorybfoeslain",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.obscurityvictorycfoeslain", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, did I rise higher?",
+            "fromending": "obscurityvictorycfoeslain",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.foecaughtup", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, did I survive?",
+            "fromending": "foecaughtup",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.ascensioncolonel", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, did I find something more like freedom?",
+            "fromending": "ascensioncolonel",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.ascensionlionsmith", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, did I find something more like peace?",
+            "fromending": "ascensionlionsmith",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.ascensionwolf", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, was I also a destroyer?",
+            "fromending": "ascensionwolf",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        },
+        {
+            "id": "exile.victoryvelvet", "$derives": "exile",
+            "label": "The Exile",
+            "description": "What if it had been different? In another history, did I meet my maker?",
+            "fromending": "victoryvelvet",
+            "availableWithoutEndingMatch": false, "newstart": false,
+            "excludesOnEnding": [
+                  "exile.obscurityvictorya", "exile.obscurityvictoryb", "exile.obscurityvictoryc",
+                  "exile.obscurityvictoryafoeslain", "exile.obscurityvictorybfoeslain", "exile.obscurityvictorycfoeslain",
+                  "exile.ascensioncolonel", "exile.ascensionlionsmith", "exile.ascensionwolf",
+                  "exile.foecaughtup", "exile.victoryvelvet",
+                                ],
+        }
+    ]
+}

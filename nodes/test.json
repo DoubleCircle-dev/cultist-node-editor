@@ -1,0 +1,25 @@
+{
+  "id": "stagdoor",
+  "icon": "stagdoor",
+  "label": "The Stag Door Opens",
+  "description": "",
+  "otherworldid": "mansus",
+  "egressid": "stagdoor",
+  "consequences": [
+    {
+      "id": "dreamenterstagdoor0",
+      "topath": "/stagdoor0",
+      "deckeffects": { "mansus_stagdoor": 1 }
+    },
+    {
+      "id": "dreamenterstagdoorascent",
+      "topath": "/stagdoor1",
+      "deckeffects": { "mansus_stagdoor1": 1 }
+    },
+    {
+      "id": "dreamenterstagdoorriver",
+      "topath": "/stagdoor2",
+      "deckeffects": { "mansus_stagdoor2": 1 }
+    }
+  ]
+}
