@@ -46,18 +46,20 @@ const nodeTypes = {
             { label: '选项', type: 'select', options: ['选项1', '选项2', '选项3'], default: 0 },
             { label: '端口', type: 'port', requireType: 'test', multiConnect: true, connectNum: 4, description: '测试属性连接端口' },
         ],
-        ex1Properties: [
-            { label: '二择', type: 'bool', default: false },
-            { label: '数值', type: 'range', min: 0, max: 100, default: 50 },
-        ],
-        ex2Properties: [
-            { label: '开关', type: 'checkbox', default: false },
-            { label: '数字', type: 'number', min: 0, max: 100, default: 50 },
-        ],
-        ex3Properties: [
-            { label: '整数输入', type: 'int', default: 0 },
-            { label: '文本输入', type: 'text', default: '测试文本' }
-        ]
+        exProperties:{
+            0: [
+                { label: '二择', type: 'bool', default: false },
+                { label: '数值', type: 'range', min: 0, max: 100, default: 50 },
+            ],
+            1: [
+                { label: '开关', type: 'checkbox', default: false },
+                { label: '数字', type: 'number', min: 0, max: 100, default: 50 },
+            ],
+            2: [
+                { label: '整数输入', type: 'int', default: 0 },
+                { label: '文本输入', type: 'text', default: '测试文本' }
+            ]
+        }
     },
     legacies: {
         title: 'legacy',
@@ -122,16 +124,18 @@ const nodeTypes = {
         properties: [
             { label: '图标', type: 'image', description: 'iconUnlocked: 成就/成就类型解锁后的图标' },
         ],
-        ex2Properties: [
-            { label: '成就类型', type: 'port', requireType: 'categories', multiConnect: false, description: 'category: 成就的类别（同一类成就会放在一个页面）' },
-            { label: '单一描述', type: 'bool', default: true, description: 'singleDescription: 如果为真，则解锁成就前就会显示成就描述。' },
-            { label: '描述', type: 'text', default: '成就描述', description: 'descriptionunlocked: 成就解锁后的描述' },
-            { label: '显示成就信息', type: 'bool', default: true, description: 'validateOnStorefront: 如果为真，则解锁成就时会在游戏内显示成就信息窗口。' },
-            { label: '解锁信息', type: 'text', default: '成就解锁时显示的文本', description: 'unlockMessage: 成就解锁时显示的文本，需要validateOnStorefront为真时显示，默认为空，此时会显示成就描述descriptionunlocked的文本' },
-            { label: '隐藏成就', type: 'bool', default: false, description: 'isHidden: 如果为真，则该成就未解锁前不会显示在成就页面上（会显示剩下若干隐藏成就）。' },
-        ]
-    }
-    ,
+        exProperties:{
+            0:[],
+            1: [
+                { label: '成就类型', type: 'port', requireType: 'categories', multiConnect: false, description: 'category: 成就的类别（同一类成就会放在一个页面）' },
+                { label: '单一描述', type: 'bool', default: true, description: 'singleDescription: 如果为真，则解锁成就前就会显示成就描述。' },
+                { label: '描述', type: 'text', default: '成就描述', description: 'descriptionunlocked: 成就解锁后的描述' },
+                { label: '显示成就信息', type: 'bool', default: true, description: 'validateOnStorefront: 如果为真，则解锁成就时会在游戏内显示成就信息窗口。' },
+                { label: '解锁信息', type: 'text', default: '成就解锁时显示的文本', description: 'unlockMessage: 成就解锁时显示的文本，需要validateOnStorefront为真时显示，默认为空，此时会显示成就描述descriptionunlocked的文本' },
+                { label: '隐藏成就', type: 'bool', default: false, description: 'isHidden: 如果为真，则该成就未解锁前不会显示在成就页面上（会显示剩下若干隐藏成就）。' },
+            ]
+        }
+    },
     recipes: {
         title: 'recipe',
         label: '交互(recipes)',
@@ -167,24 +171,26 @@ const nodeTypes = {
             { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: false, description: 'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。' },
             { label: '生成元素', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: true, description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
         ],
-        exProperties: [
-            { label: '重载属性', type: 'port', requireType: 'mutations', multiConnect: true, description: 'mutations: 给特定或具有特定性相的卡牌重载（additive为false时）或增加/减少（additive为true时根据level的正负）指定数量的性相，且过滤条件除了性相也可以是卡牌。mutation对性相的改变可以被继承，即使卡牌经过了xtrigger或decayto的变换，变异后的卡牌无法堆叠。' },
-            { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。' },
-            { label: '最大执行次数', type: 'int', default: 0, description: 'maxexecutions: 该recipe的最大执行次数，0表示无限制。' },
-            { label: '抽取卡牌', type: 'port', requireType: 'deck', multiConnect: false, valueType: 'number', description: 'deckeffects: 从一个对应卡组中随机抽取一定数量张牌。' },
-            { label: '内置卡池', type: 'port', requireType: 'deck', multiConnect: false, description: 'internaldeck: 在recipe中直接定义一个卡组。' },
-            { label: '特效图片', type: 'image', description: 'burnimage: recipe开始后环绕动作框显示的图片。' },
-            { label: '结局', type: 'port', requireType: 'endings', multiConnect: false, description: 'ending: recipe结束后，根据条件触发结局。' },
-            { label: '计时效果', type: 'select', options: ['None', 'Grand', 'Melancholy', 'Pale', 'Vile'], default: 0, description: 'signalEndingFlavour: 改变recipe进行时行动框计时圈线的颜色并播放一个音乐，Grand：黄色/Melancholy：红色/Pale：灰白色/Vile：黄绿色。' },
-            // { label: '漫宿效果', type: 'port', requireType: 'mansus', description:'portaleffect: 进入对应的漫宿之路，这会导致配方从与门相关的每个牌组中绘制一张牌，并让您在板上从中进行选择'}
-            { label: '漫宿效果', type: 'select', options: ['None', 'wood', 'whitedoor', 'spiderdoor', 'peacockdoor', 'tricuspidgate'], default: 0, description: 'portaleffect: 进入对应的漫宿之路，这会导致配方从与门相关的每个牌组中绘制一张牌，并让您在板上从中进行选择' },
-            { label: '终止行动', type: 'port', requireType: 'verb', multiConnect: true, description: 'haltverb: 强行停止一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）' },
-            { label: '删除行动', type: 'port', requireType: 'verb', multiConnect: true, description: 'deleteverb: 强行删除一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）' },
-            { label: '销毁卡牌', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'purge: 销毁桌面对应数量的卡牌。若被处理卡牌拥有decayto，则以decay代替销毁。' },
-            { label: '提示音', type: 'bool', default: false, description: 'signalimportantloop: 这将使游戏在该recipe进行时播放一个响亮的声音，以提示有重要事情发生。' },
-            { label: '全局属性', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'xpans: 扩展全局属性，类似aspects，但是作用于全局，可以触发桌面上的xtriggers。' },
-            { label: '成就', type: 'port', requireType: 'achievements', multiConnect: true, description: 'achievements: 触发对应成就，成就会显示在主界面成就栏中。' },
-        ]
+        exProperties: {
+            0: [
+                { label: '重载属性', type: 'port', requireType: 'mutations', multiConnect: true, description: 'mutations: 给特定或具有特定性相的卡牌重载（additive为false时）或增加/减少（additive为true时根据level的正负）指定数量的性相，且过滤条件除了性相也可以是卡牌。mutation对性相的改变可以被继承，即使卡牌经过了xtrigger或decayto的变换，变异后的卡牌无法堆叠。' },
+                { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。' },
+                { label: '最大执行次数', type: 'int', default: 0, description: 'maxexecutions: 该recipe的最大执行次数，0表示无限制。' },
+                { label: '抽取卡牌', type: 'port', requireType: 'deck', multiConnect: false, valueType: 'number', description: 'deckeffects: 从一个对应卡组中随机抽取一定数量张牌。' },
+                { label: '内置卡池', type: 'port', requireType: 'deck', multiConnect: false, description: 'internaldeck: 在recipe中直接定义一个卡组。' },
+                { label: '特效图片', type: 'image', description: 'burnimage: recipe开始后环绕动作框显示的图片。' },
+                { label: '结局', type: 'port', requireType: 'endings', multiConnect: false, description: 'ending: recipe结束后，根据条件触发结局。' },
+                { label: '计时效果', type: 'select', options: ['None', 'Grand', 'Melancholy', 'Pale', 'Vile'], default: 0, description: 'signalEndingFlavour: 改变recipe进行时行动框计时圈线的颜色并播放一个音乐，Grand：黄色/Melancholy：红色/Pale：灰白色/Vile：黄绿色。' },
+                // { label: '漫宿效果', type: 'port', requireType: 'mansus', description:'portaleffect: 进入对应的漫宿之路，这会导致配方从与门相关的每个牌组中绘制一张牌，并让您在板上从中进行选择'}
+                { label: '漫宿效果', type: 'select', options: ['None', 'wood', 'whitedoor', 'spiderdoor', 'peacockdoor', 'tricuspidgate'], default: 0, description: 'portaleffect: 进入对应的漫宿之路，这会导致配方从与门相关的每个牌组中绘制一张牌，并让您在板上从中进行选择' },
+                { label: '终止行动', type: 'port', requireType: 'verb', multiConnect: true, description: 'haltverb: 强行停止一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）' },
+                { label: '删除行动', type: 'port', requireType: 'verb', multiConnect: true, description: 'deleteverb: 强行删除一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）' },
+                { label: '销毁卡牌', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'purge: 销毁桌面对应数量的卡牌。若被处理卡牌拥有decayto，则以decay代替销毁。' },
+                { label: '提示音', type: 'bool', default: false, description: 'signalimportantloop: 这将使游戏在该recipe进行时播放一个响亮的声音，以提示有重要事情发生。' },
+                { label: '全局属性', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'xpans: 扩展全局属性，类似aspects，但是作用于全局，可以触发桌面上的xtriggers。' },
+                { label: '成就', type: 'port', requireType: 'achievements', multiConnect: true, description: 'achievements: 触发对应成就，成就会显示在主界面成就栏中。' },
+            ]
+        }
     },
     mutations: {
         title: 'mutation',
@@ -224,24 +230,26 @@ const nodeTypes = {
             { label: '图标', type: 'image', description: 'icon: 该元素（卡牌或性相）的图标图片，默认为空，此时会寻找和id一致的文件名' },
             { label: '引发', type: 'port', requireType: 'recipes', multiConnect: true, NotSetWarning: '该条件需要通过set设置几率以及排序，直接连接元素recipes则默认几率100，排序按给定id排序', description: 'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建' },
         ],
-        ex1Properties: [
-            { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1', description: 'aspects: 该元素（卡牌）所具有的性相，数值代表等级' },
-            { label: '持续时间', type: 'number', default: 0, description: 'duration: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。' },
-            { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: true, description: 'slots: 该元素（卡牌）所拥有的卡槽，可以在交互(recipes)中额外生成卡槽放入卡牌' },
-            { label: '唯一性', type: 'bool', default: false, description: 'unique: 该卡牌是/否同一时间在桌面上至多存在一张（新的卡牌会顶替旧的卡牌），默认为否。' },
-            { label: '唯一性组', type: 'text', description: 'uniquenessgroup: 具有相同uniquenessgroup标签的卡牌同一时间在桌面上只能存在一叠，即一张或者多张可合并的卡牌，需要与unique同时使用才能达到同种只存在一张的效果。（uniquenessgroup是特殊的一个aspect，如果没有定义isHidden就会在aspect中显示出来）默认为空。' },
-            { label: '触发器', type: 'port', requireType: 'xtriggers', multiConnect: true, description: 'xtriggers: 该元素（卡牌）所拥有的触发器，该卡牌在离开具有列出的性相的行动框时会对卡牌进行的转换；默认为空，不会有变动。' },
-            { label: '消逝转化', type: 'port', requireType: 'elements', multiConnect: false, description: 'decayto: 该元素（卡牌）在时间耗尽后或在burnTo未定义时被slot消耗后会变为的卡牌；特别地，如果填了自己的id，作用相当于于重置存在时间；默认为空，消逝后不会出现新的卡牌。' },
-            { label: '消耗转化', type: 'port', requireType: 'elements', multiConnect: false, description: 'burnto: 该元素（卡牌）在被slot消耗后会变为的卡牌；特别地，如果填了自己的id，作用相当于于重置存在时间；默认为空，消逝后不会出现新的卡牌。' },
-            { label: '动画帧数', type: 'int', default: null, description: 'animFrames: 动画帧数，默认为空' },
-            { label: '复彩特效', type: 'bool', default: false, description: 'resaturate: 决定该卡牌在倒计时时是/否会从灰色逐渐变为真实颜色，默认为否。' },
-            { label: '行动图像', type: 'image', description: 'verbicon: 当该卡牌存在时，verb显示的图片。' },
-            { label: '替换性相描述文本', type: 'text', description: 'xexts: 注意：此代码仅作为收录，不建议在游戏中使用。类似于xtriggers，当此卡牌参与的recipe结束时，如果有相应的性相出现，则会增加相应性相在recipe的description中显示对应的描述。不支持中文。特别的，你可以使用富文本标签 "<font=NotoSansCJKsc-Regular>描述<\font>" 来显示中文，实际测试recipe不显示口口口但也没显示正常中文，右上角正常显示。' }
-        ],
-        ex2Properties: [
-            { label: '隐藏性相', type: 'bool', default: false, description: 'isHidden: 是否隐藏该性相，默认为否。' },
-            { label: '无需图片', type: 'bool', default: false, description: 'noartneeded: 该性相是否不需要图片，默认为否。' },
-        ]
+        exProperties:{
+            0: [
+                { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1', description: 'aspects: 该元素（卡牌）所具有的性相，数值代表等级' },
+                { label: '持续时间', type: 'number', default: 0, description: 'duration: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。' },
+                { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: true, description: 'slots: 该元素（卡牌）所拥有的卡槽，可以在交互(recipes)中额外生成卡槽放入卡牌' },
+                { label: '唯一性', type: 'bool', default: false, description: 'unique: 该卡牌是/否同一时间在桌面上至多存在一张（新的卡牌会顶替旧的卡牌），默认为否。' },
+                { label: '唯一性组', type: 'text', description: 'uniquenessgroup: 具有相同uniquenessgroup标签的卡牌同一时间在桌面上只能存在一叠，即一张或者多张可合并的卡牌，需要与unique同时使用才能达到同种只存在一张的效果。（uniquenessgroup是特殊的一个aspect，如果没有定义isHidden就会在aspect中显示出来）默认为空。' },
+                { label: '触发器', type: 'port', requireType: 'xtriggers', multiConnect: true, description: 'xtriggers: 该元素（卡牌）所拥有的触发器，该卡牌在离开具有列出的性相的行动框时会对卡牌进行的转换；默认为空，不会有变动。' },
+                { label: '消逝转化', type: 'port', requireType: 'elements', multiConnect: false, description: 'decayto: 该元素（卡牌）在时间耗尽后或在burnTo未定义时被slot消耗后会变为的卡牌；特别地，如果填了自己的id，作用相当于于重置存在时间；默认为空，消逝后不会出现新的卡牌。' },
+                { label: '消耗转化', type: 'port', requireType: 'elements', multiConnect: false, description: 'burnto: 该元素（卡牌）在被slot消耗后会变为的卡牌；特别地，如果填了自己的id，作用相当于于重置存在时间；默认为空，消逝后不会出现新的卡牌。' },
+                { label: '动画帧数', type: 'int', default: null, description: 'animFrames: 动画帧数，默认为空' },
+                { label: '复彩特效', type: 'bool', default: false, description: 'resaturate: 决定该卡牌在倒计时时是/否会从灰色逐渐变为真实颜色，默认为否。' },
+                { label: '行动图像', type: 'image', description: 'verbicon: 当该卡牌存在时，verb显示的图片。' },
+                { label: '替换性相描述文本', type: 'text', description: 'xexts: 注意：此代码仅作为收录，不建议在游戏中使用。类似于xtriggers，当此卡牌参与的recipe结束时，如果有相应的性相出现，则会增加相应性相在recipe的description中显示对应的描述。不支持中文。特别的，你可以使用富文本标签 "<font=NotoSansCJKsc-Regular>描述<\font>" 来显示中文，实际测试recipe不显示口口口但也没显示正常中文，右上角正常显示。' }
+            ],
+            1: [
+                { label: '隐藏性相', type: 'bool', default: false, description: 'isHidden: 是否隐藏该性相，默认为否。' },
+                { label: '无需图片', type: 'bool', default: false, description: 'noartneeded: 该性相是否不需要图片，默认为否。' },
+            ]
+        }
     },
     xtriggers: {
         title: 'xtrigger',
@@ -261,15 +269,17 @@ const nodeTypes = {
         properties: [
             { label: '条件', type: 'port', requireType: 'elements', description: '离开具有该性相的交互(recipes)时触发' },
         ],
-        ex1Properties: [
-            { label: '转化目标', type: 'port', requireType: 'elements', description: '离开具有条件性相的交互(recipes)时触发，将卡牌转化目标卡牌' }
-        ],
-        ex2Properties: [
-            { label: '操作数', type: 'port', requireType: 'morphEffects', multiConnect: true, description: '同一个条件可以触发多个效果' },
-            { label: '基础目标卡牌', type: 'port', requireType: 'elements', description: 'id: 只有一个效果时使用，离开具有条件性相的交互(recipes)时触发，触发操作数' },
-            { label: '基础操作数', type: 'select', option: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'], description: 'morpheffects: 只有一个效果时使用，不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）' },
-            { label: '基础数量', type: 'number', default: 1, description: 'level: 只有一个效果时使用，数量，默认为1' }
-        ]
+        exProperties:{
+            0: [
+                { label: '转化目标', type: 'port', requireType: 'elements', description: '离开具有条件性相的交互(recipes)时触发，将卡牌转化目标卡牌' }
+            ],
+            1: [
+                { label: '操作数', type: 'port', requireType: 'morphEffects', multiConnect: true, description: '同一个条件可以触发多个效果' },
+                { label: '基础目标卡牌', type: 'port', requireType: 'elements', description: 'id: 只有一个效果时使用，离开具有条件性相的交互(recipes)时触发，触发操作数' },
+                { label: '基础操作数', type: 'select', option: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'], description: 'morpheffects: 只有一个效果时使用，不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）' },
+                { label: '基础数量', type: 'number', default: 1, description: 'level: 只有一个效果时使用，数量，默认为1' }
+            ]
+        }
     },
     morphEffects: {
         title: 'morphEffect',
@@ -380,7 +390,7 @@ const nodeTypes = {
                 label: '行动（容纳卡牌时）', type: 'port', requireType: 'verb', multiConnect: false, default: 'work', description: 'actionId: 使用的行动的id, 当卡槽写在卡牌中时，在该卡牌进入此事件框时会显示; 此属性在slot从属于recipe或verb时被忽略'
             },
             {
-                label: '显示条件', type: 'port',requireType:'elements', multiConnect: true, description: 'ifaspectspresent: 定义元素条件（性相或卡牌），当给出的卡牌符合定义的条件时，将此插槽显示；反之隐藏此插槽。（注意，此代码仅用于element中的slots代码），另外官方没有使用这一条的文件（看来是不好用...）'
+                label: '显示条件', type: 'port', requireType: 'elements', multiConnect: true, description: 'ifaspectspresent: 定义元素条件（性相或卡牌），当给出的卡牌符合定义的条件时，将此插槽显示；反之隐藏此插槽。（注意，此代码仅用于element中的slots代码），另外官方没有使用这一条的文件（看来是不好用...）'
             }
 
         ]
@@ -396,12 +406,12 @@ const nodeTypes = {
         content: `从上一局游戏中继承的事物。如使徒继承的教会与教徒，或是富家子弟所继承的书籍。
                         某种意义上说，这是一张卡牌，你可以通过effects等代码得到它。`,
         icon: '🎚️',
-        properties: [
-            { label:"onGameEnd",type:'bool',default:false,description:'onGameEnd: 未知作用'},
-            { label: '默认卡牌', type: 'port', requireType: 'elements', multiConnect: false, description:'defaultValue: 默认得到的卡牌'},
-            { label: '权重', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置权重，直接连接元素(elements)则默认权重为1',description:'weight: 用于决定继承的性相（或卡牌）的权重，可以为负数。'},
-            { label: '需求权重', type: 'int', default: 1, description:'requiredScore: 需要的权重，只有卡牌满足了权重才会被记录。有多个被记录的卡牌取权重最高者。'},
-            { label: '重定向', type: 'port', requireType: 'set', multiConnect: false, description:'redirects: 当卡牌符合左侧id时，会被记录为右侧的id。如欲望无论是几级，都只会记录为一级'}
+        fixedProperties: [
+            { label: "onGameEnd", type: 'bool', default: false, description: 'onGameEnd: 未知作用' },
+            { label: '默认卡牌', type: 'port', requireType: 'elements', multiConnect: false, description: 'defaultValue: 默认得到的卡牌' },
+            { label: '权重', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置权重，直接连接元素(elements)则默认权重为1', description: 'weight: 用于决定继承的性相（或卡牌）的权重，可以为负数。' },
+            { label: '需求权重', type: 'int', default: 1, description: 'requiredScore: 需要的权重，只有卡牌满足了权重才会被记录。有多个被记录的卡牌取权重最高者。' },
+            { label: '重定向', type: 'port', requireType: 'set', setType: 'dict', multiConnect: false, description: 'redirects: 当卡牌符合左侧id时，会被记录为右侧的id。如欲望无论是几级，都只会记录为一级' }
         ]
     },
     extends: {
@@ -456,32 +466,53 @@ const nodeTypes = {
             { label: '数字', type: 'number', default: 0 }
         ]
     },
-    /**
-    * 集合，用于处理表格或者列表
-    * @Type Set
-    * 子类型：
-    * list: [element1, element2, element3]
-    * dict: {elementId1: num, elementId2: num}
-    * 具体应用：
-    * filter: {过滤的条件id： 数值},
-    * xtriggers: [{triggerId: 数值},{triggerId: 数值}],
-    * mutation: [{filter: 过滤的条件id,mutate: 需要改变的性相id,level: 数值,additive: 布尔值},{}] 
-    */
     set: {
         title: '集合',
         color: '#3fb3b5ff',
         inputs: [
-            { type: 'port', requireType: 'set', label: '继承集合', description: '继承之前的集合的元素，扩展成新的集合' },
+            { type: 'port', requireType: 'set', label: '继承集合', description: '继承之前的集合的元素，扩展成新的集合，注意集合的元素类型必须一致' },
         ],
         outputs: [
             { type: 'port', label: '集合', description: '输出集合格式的变量' }
         ],
         content: `集合变量，输出参数集合，可以将多个集合链接，不允许成环`,
         icon: '🎚️',
-        properties: [
+        fixedProperties: [
             { label: '类型', type: 'select', default: '字典', options: ['字典', '列表', 'xtriggers', 'mutaions'] },
-            { label: '集合', type: 'table' }
-        ]
+        ],
+        properties: [
+        ],
+        exProperties: {
+            0: [{
+                label: '字典', type: 'table', columns: [
+                    { label: '键', field: 'key', type: 'any', width: '50%' },
+                    { label: '值', field: 'value', type: 'any', width: '50%' }
+                ],
+                description: '键值对，项目可以是任何类型，用于'
+            }],
+            1: [{
+                label: '列表', type: 'table', columns: [
+                    { label: '项目', field: 'id', type: 'any', width: '100%' }
+                ],
+                description: '列表，可以用于deck的spec，属性可以重复'
+            }],
+            2: [
+                { label: '版本', type: 'select', options: ['简易', '复杂'], default: 0, description: '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。' },
+                
+                {
+                
+            }],
+            3: [{ 
+                    label: '重载', type: 'table', columns: [
+                    { label: '条件', field: 'filter', type: 'elements', width: '100%' },
+                    { label: '目标', field: 'mutate', type: 'elements', width: '100%' },
+                    { label: '变化数量', field: 'level', type: 'number', width: '100%' },
+                    { label: '增加/减少', field: 'filter', type: 'bool', width: '100%' },
+
+                    ],
+                description: '重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相（仅在recipes内部使用）'
+            }]
+        }
     },
     images: {
         title: '图片',
