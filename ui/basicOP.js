@@ -9,18 +9,56 @@
  * 该类负责处理节点的创建、删除、更新等操作
  * @class NodeManager
  */
+
 class NodeManager {
 
     // 如果点击的是以下元素，则忽略拖拽
     static ignoreDragItem = [
-        '.node-title',// 节点标题
-        '.port-hub-item',// 端口
-        '.property-input',// 属性输入框
-        '.node-action-btn', // 删除按钮
-        'select',// 下拉框
-        'input[type="range"]',// 滑块
-        '.bool-option',// 二择单选开关
-        'input[type="checkbox"]'// 复选框
+        // === 数据输入控件 ===
+        'input',                    // 所有输入框（包括文本、数字、范围等）
+        'select',                   // 下拉框
+        'textarea',                 // 文本域
+        '.property-input',          // 属性输入框（包含各种类型）
+
+        // === 连接端口 ===
+        '.port-dot',                // 端口圆点（用于连接线）
+        '.port-hub-item',           // 端口项整体
+        '.port-connector',          // 属性端口连接器
+        '.property-port-dot',       // 属性端口圆点
+        '.inner-port',              // 内部端口（port-hub内部）
+
+        // === 按钮和可点击元素 ===
+        'button',                   // 所有按钮
+        '.browse-btn',              // 浏览按钮
+        '.node-action-btn',         // 节点操作按钮（如删除）
+        '.bool-option',             // 布尔选项（可点击的标签区域）
+
+        // === 表格交互元素 ===
+        '.table-cell input',        // 表格中的输入框
+        '.table-cell select',       // 表格中的下拉框
+        '.table-cell textarea',     // 表格中的文本域
+        '.table-cell button',       // 表格中的按钮
+
+        // === 复选框和单选按钮 ===
+        'input[type="checkbox"]',
+        'input[type="radio"]',
+
+        // === 特定输入类型（确保覆盖） ===
+        'input[type="text"]',
+        'input[type="number"]',
+        'input[type="range"]',
+        'input[type="email"]',
+        'input[type="password"]',
+        'input[type="search"]',
+        'input[type="tel"]',
+        'input[type="url"]',
+        'input[type="date"]',
+        'input[type="time"]',
+        'input[type="datetime-local"]',
+        'input[type="month"]',
+        'input[type="week"]',
+        'input[type="color"]',
+        'input[type="file"]'
     ];
 
     /**
@@ -83,34 +121,34 @@ class NodeManager {
         this.handleEvent();
     }
 
-    getNode(id) {
+    getNode(uid) {
         // 类型检查
-        if (typeof id !== 'string' && typeof id !== 'number') {
-            throw new Error('节点ID格式不对', typeof id);
+        if (typeof uid !== 'string' && typeof uid !== 'number') {
+            throw new Error('节点UID格式不对', typeof uid);
         }
-        if (typeof id === 'string') {
-            id = parseInt(id, 10);
+        if (typeof uid === 'string') {
+            uid = parseInt(uid, 10);
         }
 
         // 检查节点是否存在
-        if (!this.nodes.has(id)) {
+        if (!this.nodes.has(uid)) {
             throw new Error('节点不存在');
         }
 
-        return this.nodes.get(id);
+        return this.nodes.get(uid);
     }
 
     addNode(type, x, y) {
-        let id = null;
+        let uid = null;
         try {
             // 分配id
-            id = this.idGenerator.generate();
-            if (!id) {
+            uid = this.idGenerator.generate();
+            if (!uid) {
                 throw new Error('节点数量已达到最大值');
             }
 
             // 创建节点实例
-            let node = new Node(id, type, x, y, nodeTypes[type]);
+            let node = new Node(uid, type, x, y, window.nodeTypes[type]);
 
             // 添加键盘事件监听删除快捷键
             node.element.addEventListener('keydown', (e) => {
@@ -120,29 +158,29 @@ class NodeManager {
                     }
                     e.preventDefault();
                     e.stopPropagation();
-                    this.deleteNode(node.id);
+                    this.deleteNode(node.uid);
                 }
             });
 
             // 为整个节点添加选中事件监听（端口和输入框除外）
-            // this.setupNodeSelected(node.element, node.id);
+            // this.setupNodeSelected(node.element, node.uid);
 
             // 为整个节点添加拖拽事件监听（端口和输入框除外）
-            // this.setupNodeDrag(node.element, node.id);
+            // this.setupNodeDrag(node.element, node.uid);
 
-            // this.setupNodePortDrag(node.ports, node.id);
+            // this.setupNodePortDrag(node.ports, node.uid);
 
             this.canvas.appendChild(node.element);
-            this.nodes.set(id, node);
+            this.nodes.set(uid, node);
 
             // this.basicActionManager.addActionToHistory('addNode');
 
-            this.updateStatus('成功添加' + node.type + '节点:#' + node.id);
-            this.bringNodeToFront(id);
+            this.updateStatus('成功添加' + node.type + '节点:#' + node.uid);
+            this.bringNodeToFront(uid);
         } catch (error) {
             console.error('添加节点失败:', error);
-            if (id) {
-                this.idGenerator.release(id);
+            if (uid) {
+                this.idGenerator.release(uid);
             }
             this.updateStatus(`添加节点失败: ${error.message}`);
         }
@@ -164,7 +202,13 @@ class NodeManager {
 
     // 处理画布点击事件
     handleCanvasClick(e) {
+
+        if (this.shouldIgnoreClick(e.target)) {
+            return; // 如果是可交互元素，直接返回，不处理节点选中
+        }
+
         const nodeElement = e.target.closest('.node');
+
         // 如果在节点上点击
         if (nodeElement) {
             // 如果不是多选（ctrl未按下）
@@ -174,7 +218,7 @@ class NodeManager {
 
             // 选中节点
             nodeElement.classList.add('selected');
-            this.bringNodeToFront(nodeElement.id);
+            this.bringNodeToFront(nodeElement.uid);
 
             // 更新连接线样式
             this.updateSelectedNodesConnections();
@@ -201,7 +245,7 @@ class NodeManager {
         const nodeElement = e.target.closest('.node');
         if (nodeElement) {
             e.preventDefault(); // 阻止默认右键菜单
-            const nodeId = parseInt(nodeElement.id);
+            const nodeId = parseInt(nodeElement.uid);
             this.showNodeContextMenu(nodeId, e.clientX, e.clientY);
         } else {
             // 如果点击的是画布空白处，隐藏右键菜单
@@ -298,7 +342,6 @@ class NodeManager {
 
     // 处理鼠标按下事件
     handleCanvasMouseDown(e) {
-        this.handleCanvasClick(e)
         const portDotElement = e.target.closest('.port-dot');
         const portElement = e.target.closest('.port-hub-item');
         const nodeElement = e.target.closest('.node');
@@ -313,13 +356,13 @@ class NodeManager {
 
         if (portDotElement) {
             if (portElement) {
-                this.startPortDrag(e, portElement, nodeElement.id, portElement.portType, portElement.portIndex);
+                this.startPortDrag(e, portElement, nodeElement.uid, portElement.portType, portElement.portIndex);
             } else {
                 throw new Error('端口未正确初始化：portElement为空');
             }
         }
         if (nodeElement) {
-            const nodeId = parseInt(nodeElement.id);
+            const nodeId = parseInt(nodeElement.uid);
             if (!nodeElement.locked) {
                 if (this.shouldIgnoreDrag(e.target)) {
                     return;
@@ -434,7 +477,7 @@ class NodeManager {
         node.element.style.top = newY + 'px';
 
         // 实时更新连接线位置
-        this.updateNodeConnections(node.id);
+        this.updateNodeConnections(node.uid);
 
     }
 
@@ -471,10 +514,10 @@ class NodeManager {
 
     // 更新单个连接线的位置
     updateConnectionPosition(connectionId) {
-        const connection = this.connections.find(conn => conn.id === connectionId);
+        const connection = this.connections.find(conn => conn.uid === connectionId);
         if (!connection) return;
 
-        const path = document.querySelector(`.connection-path[data-connection-id="${connectionId}"]`);
+        const path = document.querySelector(`.connection-path[data-connection-uid="${connectionId}"]`);
         if (!path) return;
 
         const fromNode = this.getNode(connection.from.nodeId);
@@ -631,7 +674,7 @@ class NodeManager {
             conn.from.nodeId === nodeId || conn.to.nodeId === nodeId
         );
         connectionsToRemove.forEach(conn => {
-            this.removeConnection(conn.id);
+            this.removeConnection(conn.uid);
         });
         // 从nodes集合中移除
         this.nodes.delete(nodeId);
@@ -761,7 +804,7 @@ class NodeManager {
 
         // 创建SVG路径
         const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        tempLine.id = 'temp-connection-line';
+        tempLine.uid = 'temp-connection-line';
         tempLine.classList.add('connection-path', 'temp-connection');
 
         // 初始路径
@@ -788,7 +831,7 @@ class NodeManager {
             svg.style.height = '100%';
             svg.style.pointerEvents = 'none';
             svg.style.zIndex = '10';
-            svg.id = 'connections-svg';
+            svg.uid = 'connections-svg';
             this.canvas.appendChild(svg);
         }
         return svg;
@@ -936,7 +979,7 @@ class NodeManager {
 
         // 创建连接对象
         const connection = {
-            id: connectionId,
+            uid: connectionId,
             from: { nodeId: parseInt(fromNodeId), portIndex: fromPortIndex },
             to: { nodeId: parseInt(toNodeId), portIndex: toPortIndex },
             line: null
@@ -1008,7 +1051,7 @@ class NodeManager {
         // 创建SVG路径
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.classList.add('connection-path', 'permanent-connection');
-        path.setAttribute('data-connection-id', connection.id);
+        path.setAttribute('data-connection-uid', connection.uid);
         path.setAttribute('d', this.createCurvedPath(fromPos.x, fromPos.y, toPos.x, toPos.y));
 
         // 添加悬停效果
@@ -1023,7 +1066,7 @@ class NodeManager {
         // 双击断开连接
         path.addEventListener('dblclick', (e) => {
             e.stopPropagation();
-            this.removeConnection(connection.id);
+            this.removeConnection(connection.uid);
         });
 
         svg.appendChild(path);
@@ -1293,7 +1336,7 @@ class NodeManager {
     // 移除连接
     removeConnection(connectionId) {
         // 从connections数组中查找并移除
-        const connectionIndex = this.connections.findIndex(conn => conn.id === connectionId);
+        const connectionIndex = this.connections.findIndex(conn => conn.uid === connectionId);
         if (connectionIndex === -1) return;
 
         const connection = this.connections[connectionIndex];
@@ -1347,7 +1390,7 @@ class NodeManager {
         if (connectionIds.length > 0) {
             let info = `连接信息: `;
             connectionIds.forEach((connId, index) => {
-                const connection = this.connections.find(conn => conn.id === connId);
+                const connection = this.connections.find(conn => conn.uid === connId);
                 if (connection) {
                     const fromNode = this.getNode(connection.from.nodeId);
                     const toNode = this.getNode(connection.to.nodeId);
@@ -1384,7 +1427,7 @@ class NodeManager {
         if (!node || !node.element) return null;
 
         return node.element.querySelector(
-            `.port-hub-item[data-port-id="${nodeId}-${portType}-${portIndex}"] .port-dot`
+            `.port-hub-item[data-port-uid="${nodeId}-${portType}-${portIndex}"] .port-dot`
         );
     }
 
@@ -1433,7 +1476,7 @@ class NodeManager {
 
         // 高亮相关连接线
         relatedConnectionIds.forEach(connectionId => {
-            const path = document.querySelector(`.connection-path[data-connection-id="${connectionId}"]`);
+            const path = document.querySelector(`.connection-path[data-connection-uid="${connectionId}"]`);
             if (path) {
                 // 确保为永久连接线添加高亮样式
                 if (path.classList.contains('permanent-connection')) {
@@ -1456,7 +1499,7 @@ class NodeManager {
     dimOtherConnections(highlightedConnectionIds) {
         const allPaths = document.querySelectorAll('.connection-path.permanent-connection');
         allPaths.forEach(path => {
-            const connectionId = path.getAttribute('data-connection-id');
+            const connectionId = path.getAttribute('data-connection-uid');
             if (connectionId && !highlightedConnectionIds.includes(connectionId)) {
                 path.classList.add('dimmed');
                 path.classList.remove('highlighted');
@@ -1493,7 +1536,7 @@ class NodeManager {
 
         // 遍历每个选中的节点
         selectedNodes.forEach(nodeElement => {
-            const nodeId = parseInt(nodeElement.id);
+            const nodeId = parseInt(nodeElement.uid);
             const node = this.getNode(nodeId);
             if (!node) return;
 
@@ -1529,7 +1572,7 @@ class NodeManager {
 
         // 高亮相关连接线
         relatedConnectionIds.forEach(connectionId => {
-            const path = document.querySelector(`.connection-path[data-connection-id="${connectionId}"]`);
+            const path = document.querySelector(`.connection-path[data-connection-uid="${connectionId}"]`);
             if (path && path.classList.contains('permanent-connection')) {
                 path.classList.add('highlighted');
                 path.classList.remove('dimmed');
@@ -1600,16 +1643,16 @@ class BitmapIdGenerator {
     }
 
     // 释放ID
-    release(id) {
-        if (id < 1 || id > this.maxSize) {
-            throw new Error(`ID ${id} 超出范围 (1-${this.maxSize})`);
+    release(uid) {
+        if (uid < 1 || uid > this.maxSize) {
+            throw new Error(`uid ${uid} 超出范围 (1-${this.maxSize})`);
         }
 
-        if (this._checkBit(id - 1)) {
-            this._clearBit(id - 1);
+        if (this._checkBit(uid - 1)) {
+            this._clearBit(uid - 1);
             // 如果释放的ID比nextId小，更新nextId
-            if (id < this.nextId) {
-                this.nextId = id;
+            if (uid < this.nextId) {
+                this.nextId = uid;
             }
             return true;
         }
@@ -1617,17 +1660,17 @@ class BitmapIdGenerator {
         return false;
     }
 
-    occupy(id) {
-        if (id < 1 || id > this.maxSize) {
-            throw new Error(`ID ${id} 超出范围 (1-${this.maxSize})`);
+    occupy(uid) {
+        if (uid < 1 || uid > this.maxSize) {
+            throw new Error(`uid ${uid} 超出范围 (1-${this.maxSize})`);
         }
 
         // 如果占领的ID已经存在
-        if (this._checkBit(id - 1)) {
+        if (this._checkBit(uid - 1)) {
             return false;
         }
 
-        this._setBit(id - 1);
+        this._setBit(uid - 1);
 
         return true;
 
@@ -1672,8 +1715,8 @@ class BitmapIdGenerator {
  * 包含节点的基本属性如位置、尺寸、端口等信息
  */
 class Node {
-    constructor(id, type, x, y, config) {
-        this.id = id;
+    constructor(uid, type, x, y, config) {
+        this.uid = uid;
         this.type = type;
         this.config = config;
         this.x = x;
@@ -1685,6 +1728,19 @@ class Node {
             outputs: []
         };
 
+        this.currentMode = null; // 当前模式
+        this.activeExProperties = new Map(); // 当前激活的扩展属性
+
+        // 存储动态属性状态
+        this.dynamicProperties = new Map();
+        this.propertyValues = {};
+
+        // 检查是否有 exProperties[999] 并初始化添加按钮
+        this.hasExProperties999 = this.config.exProperties && this.config.exProperties[999];
+
+        // 初始化数据
+        this._initializeData();
+
         this.element = this._createNodeElement();
 
         // 隐藏占位符
@@ -1695,181 +1751,550 @@ class Node {
 
     }
 
+    // 初始化节点数据
+    _initializeData() {
+        // 初始化固定属性
+        if (this.config.fixedProperties) {
+            this.config.fixedProperties.forEach((prop, index) => {
+                const key = prop.label || `fixed_${index}`;
+                this.data[key] = prop.default !== undefined ? prop.default : '';
+                this.propertyValues[key] = prop.default !== undefined ? prop.default : '';
+            });
+        }
+
+        // 初始化常规属性
+        if (this.config.properties) {
+            this.config.properties.forEach((prop, index) => {
+                const key = prop.label || `prop_${index}`;
+                this.data[key] = prop.default !== undefined ? prop.default : '';
+                this.propertyValues[key] = prop.default !== undefined ? prop.default : '';
+            });
+        }
+
+        // 初始化标题
+        this.data.title = this.config.title;
+    }
+
     // 创建节点DOM元素
     _createNodeElement() {
         const element = document.createElement('div');
         element.className = 'node';
-        element.id = this.id;
+        element.uid = this.uid;
         element.dataset.nodeType = this.type;
         element.style.left = this.x + 'px';
         element.style.top = this.y + 'px';
         element.style.borderColor = this.config.color;
         element.locked = false;
 
-        // header设置，包括图标，标题，id
-        element.innerHTML = '';
-        element.innerHTML += `
+        // 构建节点HTML结构
+        let html = this._createHeaderHTML();
+        html += '<div class="node-content">';
+        html += this._createContentHTML();
+        html += this._createPropertiesHTML();
+        html += '</div>';
+
+        element.innerHTML = html;
+        // 创建端口区域
+        this._createPortsSection(element);
+
+        // 聚焦节点使其可接收键盘事件
+        element.tabIndex = 0;
+
+        // 添加事件委托处理模式切换
+        element.addEventListener('change', (e) => {
+            if (e.target.classList.contains('mode-switcher')) {
+                e.stopPropagation();
+                const propKey = e.target.dataset.propKey;
+                const newMode = e.target.value;
+                this._switchNodeMode(propKey, newMode);
+            }
+        });
+
+        return element;
+    }
+
+    // 创建头部HTML
+    _createHeaderHTML() {
+        return `
         <div class="node-header">
-            <div class="node-icon" style="color: ${this.config.color}">${this.config.icon}</div>
+            <div class="node-icon" style="color: ${this.config.color}">
+                ${this.config.icon || '⚡'}
+            </div>
             <div class="node-title">
                 <input type="text" 
                        class="node-title-input" 
                        value="${this.config.title}" 
                        placeholder="节点标题"
-                       onchange="updateNodeTitle('${this.id}', this.value)"
+                       data-node-uid="${this.uid}"
                        onclick="event.stopPropagation()"
                        onkeydown="if(event.key === 'Enter') this.blur()">
-                <span class="node-id">#${this.id}</span>
+                <span class="node-uid">#${this.uid}</span>
+            </div>
+            <div class="node-label">
+                <input type="text" 
+                       class="node-label-input" 
+                       value="${this.config.label || ''}" 
+                       placeholder="标签（可选）"
+                       data-node-uid="${this.uid}"
+                       onclick="event.stopPropagation()"
+                       onkeydown="if(event.key === 'Enter') this.blur()">
             </div>
         </div>
     `;
-
-        // 内容设置
-        element.innerHTML += `
-        <div class="node-content">
-            <div class="node-info">${this.config.content}  </div>
-    `;
-
-        // 属性设置
-        let propertiesHTML = '';
-        if (this.config.properties) {
-            propertiesHTML = this._createPropertiesHTML();
-        }
-
-        element.innerHTML += `
-            ${propertiesHTML ? `<div class="node-properties">${propertiesHTML}</div>` : ''} 
-    `;
-
-        element.innerHTML += `
-        </div>
-    `;
-
-        // 初始化节点数据
-        if (this.config.properties) {
-            this.config.properties.forEach((prop, index) => {
-                this.data[prop.label] = prop.default;
-            });
-        }
-
-        // port-hub设置
-        const portHub = document.createElement('div');
-        portHub.className = 'node-port-hub';
-        const portsContainer = this._createPortHub();
-        portHub.appendChild(portsContainer);
-        element.appendChild(portHub);
-
-
-
-        // 聚焦节点使其可接收键盘事件
-        element.tabIndex = 0;
-
-        return element;
     }
 
+    // 创建内容HTML
+    _createContentHTML() {
+        let content = this.config.content || '';
+        // 替换内容中的变量
+        return `<div class="node-info">${content}</div>`;
+    }
+
+    // 创建属性HTML
     _createPropertiesHTML() {
-        let propertiesHTML = '';
-        this.config.properties.forEach((prop, index) => {
-            let inputHTML = '';
-            switch (prop.type) {
-                case 'range':
-                    inputHTML = `
+        let html = '';
+
+        // 固定属性
+        if (this.config.fixedProperties && this.config.fixedProperties.length > 0) {
+            html += '<div class="node-properties fixed-properties">';
+            this.config.fixedProperties.forEach((prop, index) => {
+                html += this._createPropertyHTML(prop, `fixed_${index}`, true);
+            });
+            html += '</div>';
+        }
+
+        // 常规属性
+        if (this.config.properties && this.config.properties.length > 0) {
+            html += '<div class="node-properties regular-properties">';
+            this.config.properties.forEach((prop, index) => {
+                html += this._createPropertyHTML(prop, `prop_${index}`);
+            });
+            html += '</div>';
+        }
+
+        // 扩展属性容器
+        html += '<div class="node-properties extended-properties"></div>';
+
+        return html;
+    }
+
+    // 创建单个属性HTML
+    _createPropertyHTML(prop, propId, fixed = false) {
+        const value = prop.default !== undefined ? prop.default : '';
+        const key = prop.label || propId;
+        this.propertyValues[key] = value;
+
+        let inputHTML = '';
+        const commonAttrs = `data-node-uid="${this.uid}" data-prop-key="${key}"`;
+
+        switch (prop.type) {
+            case 'text':
+                inputHTML = `
+                    <input type="text" 
+                           class="property-input property-text" 
+                           value="${value}"
+                           placeholder="${prop.placeholder || ''}"
+                           ${commonAttrs}
+                           onchange="updateNodeProperty('${this.uid}', '${key}', this.value)"
+                           onclick="event.stopPropagation()">
+                `;
+                break;
+
+            case 'number':
+            case 'int':
+                inputHTML = `
+                    <input type="number" 
+                           class="property-input property-int" 
+                           value="${value}"
+                           min="${prop.min || ''}"
+                           max="${prop.max || ''}"
+                           step="${prop.type === 'int' ? '1' : 'any'}"
+                           ${commonAttrs}
+                           onchange="updateNodeProperty('${this.uid}', '${key}', ${prop.type === 'int' ? 'parseInt(this.value) || 0' : 'parseFloat(this.value) || 0'})"
+                           onclick="event.stopPropagation()">
+                `;
+                break;
+
+            case 'range':
+                inputHTML = `
+                    <div class="property-range-wrapper">
                         <input type="range" 
-                               class="property-input"
-                               min="${prop.min || 0}" 
-                               max="${prop.max || 100}" 
-                               step="${prop.step || 1}"
-                               value="${prop.default || 50}"
-                               onchange="updateNodeProperty('${this.id}', ${index}, this.value)">
-                    `;
-                    break;
-                case 'select':
-                    const options = prop.options.map((opt, i) =>
-                        `<option value="${i}" ${i === prop.default ? 'selected' : ''}>${opt}</option>`
-                    ).join('');
-                    inputHTML = `
-                        <select class="property-input" 
-                                onchange="updateNodeProperty('${this.id}', ${index}, this.value)">
-                            ${options}
-                        </select>
-                    `;
-                    break;
-                case 'checkbox':
-                    inputHTML = `
-                    <div class="property-checkbox-wrapper">
-                        <input type="checkbox" 
-                                class="property-input property-checkbox"
-                                ${prop.default ? 'checked' : ''}
-                                onchange="updateNodeProperty('${this.id}', ${index}, this.checked)">
+                               class="property-input property-range" 
+                               value="${value}"
+                               min="${prop.min || 0}"
+                               max="${prop.max || 100}"
+                               ${commonAttrs}
+                               oninput="updateNodeProperty('${this.uid}', '${key}', parseFloat(this.value)); 
+                                        this.nextElementSibling.textContent = this.value"
+                               onclick="event.stopPropagation()">
+                        <span class="range-value">${value}</span>
                     </div>
                 `;
-                    break;
-                case 'bool':  // 布尔类型使用单选按钮组
-                    const boolId = `bool-${this.id}-${index}`;
-                    const trueLabel = prop.labels?.true || '是';
-                    const falseLabel = prop.labels?.false || '否';
-                    inputHTML = `
+                break;
+
+            case 'bool':
+                const boolId = `bool-${this.uid}-${propId}`;
+                const trueLabel = prop.labels?.true || '是';
+                const falseLabel = prop.labels?.false || '否';
+                inputHTML = `
                     <div class="bool-radio-group" data-id="${boolId}">
                         <label class="bool-option">
                             <input type="radio" 
                                    name="${boolId}" 
                                    value="true"
-                                   ${prop.default === true ? 'checked' : ''}
-                                   onchange="updateNodeProperty('${this.id}', ${index}, true)">
+                                   ${value === true ? 'checked' : ''}
+                                   ${commonAttrs}
+                                   onchange="updateNodeProperty('${this.uid}', '${key}', true)">
                             <span class="bool-radio-label">${trueLabel}</span>
                         </label>
                         <label class="bool-option">
                             <input type="radio" 
                                    name="${boolId}" 
                                    value="false"
-                                   ${prop.default === false ? 'checked' : ''}
-                                   onchange="updateNodeProperty('${this.id}', ${index}, false)">
+                                   ${value === false ? 'checked' : ''}
+                                   ${commonAttrs}
+                                   onchange="updateNodeProperty('${this.uid}', '${key}', false)">
                             <span class="bool-radio-label">${falseLabel}</span>
                         </label>
                     </div>
                 `;
-                    break;
-                case 'text':  // 文本输入
-                    inputHTML = `
-                        <input type="text" 
-                               class="property-input property-text"
-                               value="${prop.default || ''}"
-                               placeholder="${prop.placeholder || ''}"
-                               onchange="updateNodeProperty('${this.id}', ${index}, this.value)"
-                               onblur="updateNodeProperty('${this.id}', ${index}, this.value)">
-                `;
-                    break;
-                case 'int':  // 整数数值输入
-                    inputHTML = `
-                        <input type="number" 
-                               class="property-input property-int"
-                               min="${prop.min || ''}"
-                               max="${prop.max || ''}"
-                               step="1"
-                               value="${prop.default || 0}"
-                               placeholder="${prop.placeholder || ''}"
-                               onchange="updateNodeProperty('${this.id}', ${index}, parseInt(this.value) || 0)"
-                               onblur="updateNodeProperty('${this.id}', ${index}, parseInt(this.value) || 0)">
-                `;
-                    break;
-                default:
-                    inputHTML = `
-                        <input type="${prop.type}" 
-                               class="property-input"
-                               value="${prop.default || ''}"
-                               onchange="updateNodeProperty('${this.id}', ${index}, this.value)">
-                    `;
-            }
+                break;
 
-            propertiesHTML += `
-                <div class="property-item">
-                    <div class="property-label">${prop.label}:</div>
-                    ${inputHTML}
+            case 'checkbox':
+                inputHTML = `
+                    <div class="property-checkbox-wrapper">
+                        <input type="checkbox" 
+                               class="property-input property-checkbox"
+                               ${value ? 'checked' : ''}
+                               ${commonAttrs}
+                               onchange="updateNodeProperty('${this.uid}', '${key}', this.checked)">
+                    </div>
+                `;
+                break;
+
+            case 'select':
+                // 检查是否为模式切换器
+                const isModeSwitcher = fixed || false;
+
+                if (isModeSwitcher) {
+                    // 模式切换器
+                    const options = prop.options.map((opt, i) =>
+                        `<option value="${i}" ${i === this.currentMode ? 'selected' : ''}>${opt}</option>`
+                    ).join('');
+
+                    inputHTML = `
+                        <select class="property-input property-select mode-switcher" 
+                                data-node-uid="${this.uid}"
+                                data-prop-key="${key}"
+                                onchange="event.stopPropagation();">
+                            ${options}
+                        </select>
+                    `;
+                } else {
+                    // 普通select
+                    const options = prop.options.map((opt, i) =>
+                        `<option value="${i}" ${i === value ? 'selected' : ''}>${opt}</option>`
+                    ).join('');
+
+                    inputHTML = `
+                        <select class="property-input property-select" 
+                                ${commonAttrs}
+                                onchange="updateNodeProperty('${this.uid}', '${key}', this.value)">
+                            ${options}
+                        </select>
+                    `;
+                }
+                break;
+
+            case 'port':
+                inputHTML = `
+                    <div class="property-port" ${commonAttrs}>
+                        <div class="port-connector" 
+                             data-port-type="property"
+                             data-node-uid="${this.uid}"
+                             data-prop-key="${key}"
+                             data-require-type="${prop.requireType || 'any'}"
+                             data-multi-connect="${prop.multiConnect || false}">
+                            <span class="port-label">${prop.label}</span>
+                            <div class="port-dot property-port-dot"></div>
+                        </div>
+                    </div>
+                `;
+                break;
+
+            case 'image':
+                inputHTML = `
+                    <div class="property-image">
+                        <input type="text" 
+                               class="property-input property-text" 
+                               value="${value}"
+                               placeholder="图片文件名"
+                               ${commonAttrs}
+                               onchange="updateNodeProperty('${this.uid}', '${key}', this.value)"
+                               onclick="event.stopPropagation()">
+                        <button class="btn btn-small browse-btn" onclick="browseImage('${this.uid}', '${key}', this)">浏览</button>
+                    </div>
+                `;
+                break;
+
+            case 'port-hub':
+                if (prop.innerPort && Array.isArray(prop.innerPort)) {
+                    let innerPortsHTML = '<div class="port-hub-inner">';
+                    prop.innerPort.forEach((innerPort, innerIndex) => {
+                        innerPortsHTML += `
+                            <div class="inner-port">
+                                <span class="inner-port-label">${innerPort.label}</span>
+                                <div class="port-connector" 
+                                     data-port-type="property"
+                                     data-node-uid="${this.uid}"
+                                     data-prop-key="${key}_${innerIndex}"
+                                     data-require-type="${innerPort.requireType || 'any'}"
+                                     data-multi-connect="${innerPort.multiConnect || false}">
+                                    <div class="port-dot property-port-dot"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    innerPortsHTML += '</div>';
+                    inputHTML = innerPortsHTML;
+                }
+                break;
+
+            default:
+                inputHTML = `
+                    <input type="text" 
+                           class="property-input" 
+                           value="${value}"
+                           ${commonAttrs}
+                           onchange="updateNodeProperty('${this.uid}', '${key}', this.value)"
+                           onclick="event.stopPropagation()">
+                `;
+        }
+
+        // 添加帮助信息
+        let helpHTML = '';
+        if (prop.description) {
+            helpHTML = `<div class="property-help" title="${prop.description}">?</div>`;
+        }
+
+        // 添加警告信息
+        let warningHTML = '';
+        // if (prop.NotSetWarning) {
+        //     warningHTML = `<div class="property-warning">⚠ ${prop.NotSetWarning}</div>`;
+        // }
+
+        return `
+            <div class="property-item" data-prop-key="${key}">
+                <div class="property-label">
+                    ${prop.label}:
+                    ${helpHTML}
                 </div>
-            `;
-        });
-        return propertiesHTML
+                ${inputHTML}
+                ${warningHTML}
+            </div>
+        `;
     }
 
+    // 在Node类中添加
+    _switchNodeMode(propKey, newMode) {
+        // 保存当前模式的属性值
+        if (this.currentMode !== null) {
+            this.saveModeProperties(this.currentMode);
+        }
+
+        // 更新当前模式
+        this.currentMode = parseInt(newMode);
+
+        // 加载新模式的属性
+        this.loadModeProperties(this.currentMode);
+
+        // 更新UI
+        this.updateModePropertiesUI();
+
+        // 通知状态更新
+        if (this.updateStatus) {
+            this.updateStatus(`切换节点模式为: ${this.config.fixedProperties.find(p => p.label === propKey).options[newMode]}`);
+        }
+    }
+
+    // 保存当前模式的属性值
+    _saveModeProperties(mode) {
+        const exProps = this.config.exProperties[mode];
+        if (!exProps) return;
+
+        exProps.forEach((prop, index) => {
+            const key = `ex_${mode}_${index}`;
+            if (this.activeExProperties.has(key)) {
+                this.data[key] = this.activeExProperties.get(key).value;
+            }
+        });
+    }
+
+    // 加载新模式的属性
+    _loadModeProperties(mode) {
+        // 清除当前激活的扩展属性
+        this.activeExProperties.clear();
+
+        // 加载新模式的属性
+        const exProps = this.config.exProperties[mode];
+        if (!exProps) return;
+
+        exProps.forEach((prop, index) => {
+            const key = `ex_${mode}_${index}`;
+            const value = this.data[key] !== undefined ? this.data[key] : (prop.default !== undefined ? prop.default : '');
+
+            this.activeExProperties.set(key, {
+                prop: prop,
+                value: value
+            });
+        });
+    }
+
+    // 更新模式属性UI
+    _updateModePropertiesUI() {
+        const extendedPropsContainer = this.element.querySelector('.extended-properties');
+        if (!extendedPropsContainer) return;
+
+        // 清空容器
+        extendedPropsContainer.innerHTML = '';
+
+        // 添加当前模式的属性
+        this.activeExProperties.forEach((item, key) => {
+            const prop = item.prop;
+            const value = item.value;
+
+            // 创建属性HTML
+            const propHTML = this._createPropertyHTML(prop, key, value);
+
+            // 添加到容器
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = propHTML;
+            const propElement = tempDiv.firstChild;
+            propElement.dataset.mode = this.currentMode;
+            extendedPropsContainer.appendChild(propElement);
+        });
+
+        // 检查是否有编号999的exProperties
+        if (this.config.exProperties[999]) {
+            // 添加"+"按钮
+            const addButton = document.createElement('button');
+            addButton.className = 'add-ex-property-btn';
+            addButton.innerHTML = '+';
+            addButton.style.color = '#9C27B0';
+            addButton.style.backgroundColor = 'transparent';
+            addButton.style.border = '1px solid #9C27B0';
+            addButton.style.borderRadius = '50%';
+            addButton.style.width = '24px';
+            addButton.style.height = '24px';
+            addButton.style.fontSize = '18px';
+            addButton.style.lineHeight = '20px';
+            addButton.style.padding = '0';
+            addButton.style.cursor = 'pointer';
+            addButton.style.marginLeft = 'auto';
+            addButton.style.marginRight = '5px';
+            addButton.style.display = 'inline-flex';
+            addButton.style.justifyContent = 'center';
+            addButton.style.alignItems = 'center';
+            addButton.title = '添加属性';
+
+            // 添加点击事件
+            addButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showExPropertiesMenu(e);
+            });
+
+            extendedPropsContainer.appendChild(addButton);
+        }
+    }
+
+    // 显示exProperties菜单
+    _showExPropertiesMenu(event) {
+        // 创建菜单
+        const menu = document.createElement('div');
+        menu.className = 'ex-properties-menu';
+        menu.style.position = 'absolute';
+        menu.style.left = `${event.clientX}px`;
+        menu.style.top = `${event.clientY}px`;
+        menu.style.backgroundColor = '#fff';
+        menu.style.border = '1px solid #ccc';
+        menu.style.borderRadius = '4px';
+        menu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+        menu.style.zIndex = '1000';
+        menu.style.padding = '5px 0';
+
+        // 添加菜单项
+        const exProps999 = this.config.exProperties[999];
+        if (exProps999 && Array.isArray(exProps999)) {
+            exProps999.forEach((prop, index) => {
+                const menuItem = document.createElement('div');
+                menuItem.className = 'ex-properties-menu-item';
+                menuItem.textContent = prop.label || `属性 ${index}`;
+                menuItem.style.padding = '8px 15px';
+                menuItem.style.cursor = 'pointer';
+
+                // 添加悬停效果
+                menuItem.addEventListener('mouseenter', () => {
+                    menuItem.style.backgroundColor = '#f5f5f5';
+                });
+                menuItem.addEventListener('mouseleave', () => {
+                    menuItem.style.backgroundColor = 'transparent';
+                });
+
+                // 添加点击事件
+                menuItem.addEventListener('click', () => {
+                    this.addExProperty(prop, index);
+                    document.body.removeChild(menu);
+                });
+
+                menu.appendChild(menuItem);
+            });
+        }
+
+        // 添加到文档
+        document.body.appendChild(menu);
+
+        // 点击其他地方关闭菜单
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target)) {
+                document.body.removeChild(menu);
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+
+        // 延迟添加点击事件，避免立即触发
+        setTimeout(() => {
+            document.addEventListener('click', closeMenu);
+        }, 10);
+    }
+
+    // 添加扩展属性
+    _checkBitaddExProperty(prop, index) {
+        // 生成属性键
+        const key = `ex_custom_${Date.now()}_${index}`;
+
+        // 添加到激活的扩展属性
+        this.activeExProperties.set(key, {
+            prop: prop,
+            value: prop.default !== undefined ? prop.default : ''
+        });
+
+        // 更新UI
+        this.updateModePropertiesUI();
+
+        // 通知状态更新
+        if (this.updateStatus) {
+            this.updateStatus(`添加属性: ${prop.label}`);
+        }
+    }
+
+    // 创建端口区域
+    _createPortsSection(element) {
+        const portHub = document.createElement('div');
+        portHub.className = 'node-port-hub';
+        const portsContainer = this._createPortHub();
+        portHub.appendChild(portsContainer);
+        element.appendChild(portHub);
+    }
     // 创建port hub区域存放连接端口
     _createPortHub() {
         const portsContainer = document.createElement('div');
@@ -1914,12 +2339,12 @@ class Node {
 
     // 创建单个端口项
     _createPortHubItem(portType, portIndex, portData) {
-        const portId = `${this.id}-${portType}-${portIndex}`;
+        const portId = `${this.uid}-${portType}-${portIndex}`;
 
         // 创建DOM元素
         const element = document.createElement('div');
         element.className = `port-hub-item`;
-        element.nodeId = this.id;
+        element.nodeId = this.uid;
         element.portId = portId;
         element.portType = portType;
         element.portIndex = portIndex;
@@ -1979,10 +2404,10 @@ class Node {
 
     // 获取端口
     getPort(portIndex, portType) {
-        const portId = `${this.id}-${portType}-${portIndex}`;
+        const portId = `${this.uid}-${portType}-${portIndex}`;
         const port = this.ports.get(portId)
         if (!port) {
-            console.warn(`节点 ${this.id} 没有端口 ${portIndex} (${portType})`);
+            console.warn(`节点 ${this.uid} 没有端口 ${portIndex} (${portType})`);
             return null;
         }
         return port;
@@ -1997,6 +2422,8 @@ class Node {
     }
 
 }
+
+
 
 class BasicActionManager {
 
@@ -2163,7 +2590,7 @@ class BasicActionManager {
 
         // 重新创建节点
         const node = {
-            id: nodeData.id,
+            uid: nodeData.uid,
             type: nodeData.type,
             config: nodeData.config,
             x: nodeData.x,
@@ -2172,7 +2599,7 @@ class BasicActionManager {
             data: JSON.parse(JSON.stringify(nodeData.data))
         };
 
-        this.nodes.set(node.id, node);
+        this.nodes.set(node.uid, node);
 
         // 创建节点DOM元素
         if (window.vscodeAPI && window.vscodeAPI.createNodeElement) {
@@ -2189,7 +2616,7 @@ class BasicActionManager {
 
         // 重新创建节点
         const node = {
-            id: nodeId,
+            uid: nodeId,
             type: nodeData.type,
             config: nodeData.config,
             x: nodeData.x,
@@ -2258,14 +2685,14 @@ class BasicActionManager {
                 if (!Array.isArray(fromNode.connections.outputs[connection.from.portIndex])) {
                     fromNode.connections.outputs[connection.from.portIndex] = [];
                 }
-                fromNode.connections.outputs[connection.from.portIndex].push(connection.id);
+                fromNode.connections.outputs[connection.from.portIndex].push(connection.uid);
             }
 
             if (toNode.connections.inputs[connection.to.portIndex]) {
                 if (!Array.isArray(toNode.connections.inputs[connection.to.portIndex])) {
                     toNode.connections.inputs[connection.to.portIndex] = [];
                 }
-                toNode.connections.inputs[connection.to.portIndex].push(connection.id);
+                toNode.connections.inputs[connection.to.portIndex].push(connection.uid);
             }
 
             // 创建连接线
@@ -2276,7 +2703,7 @@ class BasicActionManager {
                 const svg = this.canvas.querySelector('#connections-svg') || window.vscodeAPI.portDragManager.createConnectionsSvg();
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.classList.add('connection-path', 'permanent-connection');
-                path.setAttribute('data-connection-id', connection.id);
+                path.setAttribute('data-connection-uid', connection.uid);
                 path.setAttribute('d', window.vscodeAPI.portDragManager.createCurvedPath(fromPort.x, fromPort.y, toPort.x, toPort.y));
 
                 svg.appendChild(path);
@@ -2307,14 +2734,14 @@ class BasicActionManager {
                 if (!Array.isArray(fromNode.connections.outputs[connection.from.portIndex])) {
                     fromNode.connections.outputs[connection.from.portIndex] = [];
                 }
-                fromNode.connections.outputs[connection.from.portIndex].push(connection.id);
+                fromNode.connections.outputs[connection.from.portIndex].push(connection.uid);
             }
 
             if (toNode.connections.inputs[connection.to.portIndex]) {
                 if (!Array.isArray(toNode.connections.inputs[connection.to.portIndex])) {
                     toNode.connections.inputs[connection.to.portIndex] = [];
                 }
-                toNode.connections.inputs[connection.to.portIndex].push(connection.id);
+                toNode.connections.inputs[connection.to.portIndex].push(connection.uid);
             }
 
             // 创建连接线
@@ -2325,7 +2752,7 @@ class BasicActionManager {
                 const svg = this.canvas.querySelector('#connections-svg') || window.vscodeAPI.portDragManager.createConnectionsSvg();
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.classList.add('connection-path', 'permanent-connection');
-                path.setAttribute('data-connection-id', connection.id);
+                path.setAttribute('data-connection-uid', connection.uid);
                 path.setAttribute('d', window.vscodeAPI.portDragManager.createCurvedPath(fromPort.x, fromPort.y, toPort.x, toPort.y));
 
                 svg.appendChild(path);
@@ -2446,7 +2873,7 @@ class BasicActionManager {
         // 遍历所有连接，找到与该节点相关的连接
         this.connections.forEach(connection => {
             if (connection.from.nodeId === nodeId || connection.to.nodeId === nodeId) {
-                connectionIdsToRemove.add(connection.id);
+                connectionIdsToRemove.add(connection.uid);
             }
         });
 
@@ -2468,7 +2895,7 @@ class BasicActionManager {
 
     // 移除单个连接
     removeConnection(connectionId) {
-        const connectionIndex = this.connections.findIndex(conn => conn.id === connectionId);
+        const connectionIndex = this.connections.findIndex(conn => conn.uid === connectionId);
         if (connectionIndex === -1) return;
 
         const connection = this.connections[connectionIndex];
@@ -2506,7 +2933,7 @@ class BasicActionManager {
         }
 
         // 移除连接线
-        const path = document.querySelector(`.connection-path[data-connection-id="${connectionId}"]`);
+        const path = document.querySelector(`.connection-path[data-connection-uid="${connectionId}"]`);
         if (path && path.parentNode) {
             path.parentNode.removeChild(path);
         }

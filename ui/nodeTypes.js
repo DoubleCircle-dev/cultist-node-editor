@@ -1,5 +1,3 @@
-import { connect } from "http2";
-
 const nodeTypes = {
     blank: {
         title: '空节点',
@@ -21,10 +19,10 @@ const nodeTypes = {
         outputs: [
             { type: 'port', label: '测试输出' }
         ],
-        content: `这是一个测试节点<br>ID: <br>类型: 通用测试`,
+        content: `这是一个测试节点，类型: 通用测试`,
         icon: '⚡',
         fixedProperties: [
-            { label: '常驻文本输入', type: 'text', default: '测试常驻文本' },
+            { label: '选项', type: 'select', options: ['选项1', '选项2', '选项3'], default: 0 },
             {
                 label: '数据表格',
                 type: 'table',
@@ -43,10 +41,10 @@ const nodeTypes = {
             }
         ],
         properties: [
-            { label: '选项', type: 'select', options: ['选项1', '选项2', '选项3'], default: 0 },
             { label: '端口', type: 'port', requireType: 'test', multiConnect: true, connectNum: 4, description: '测试属性连接端口' },
+            { label: '常驻文本输入', type: 'text', default: '测试常驻文本' }
         ],
-        exProperties:{
+        exProperties: {
             0: [
                 { label: '二择', type: 'bool', default: false },
                 { label: '数值', type: 'range', min: 0, max: 100, default: 50 },
@@ -102,9 +100,9 @@ const nodeTypes = {
             { label: '描述', type: 'text', default: '在达成该结局时，游戏中显示的文本', description: 'description: 在达成该结局时，游戏中显示的文本' },
             { label: '成就', type: 'port', requireType: 'achievements', multiConnect: true, default: '达成该结局时，解锁的成就', description: 'achievement: 达成该结局时，解锁的成就' },
             { label: '图片', type: 'image', description: 'image: 达成该结局时，在达成该结局时显示的图片' },
-            { label: '类型', type: 'select', options: ['坏结局(Melancholy)', '胜利(Grand)', '反面胜利(Vile)'], default: 0, description: 'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。' },
         ],
         properties: [
+            { label: '类型', type: 'select', options: ['坏结局(Melancholy)', '胜利(Grand)', '反面胜利(Vile)'], default: 0, description: 'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。' },
             { label: '动画', type: 'select', options: ['DramaticLight', 'DramaticLightCool', 'DramaticLightEvil'], default: 0, description: 'anim: 从某个recipe进入该结局时，显示的动画类型。“DramaticLight”在任何结局都可用，“DramaticLightCool”是胜利时显示的动画，“DramaticLightEvil”则是在坏结局时显示。' }
         ]
 
@@ -124,8 +122,8 @@ const nodeTypes = {
         properties: [
             { label: '图标', type: 'image', description: 'iconUnlocked: 成就/成就类型解锁后的图标' },
         ],
-        exProperties:{
-            0:[],
+        exProperties: {
+            0: [],
             1: [
                 { label: '成就类型', type: 'port', requireType: 'categories', multiConnect: false, description: 'category: 成就的类别（同一类成就会放在一个页面）' },
                 { label: '单一描述', type: 'bool', default: true, description: 'singleDescription: 如果为真，则解锁成就前就会显示成就描述。' },
@@ -172,7 +170,7 @@ const nodeTypes = {
             { label: '生成元素', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: true, description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
         ],
         exProperties: {
-            0: [
+            999: [
                 { label: '重载属性', type: 'port', requireType: 'mutations', multiConnect: true, description: 'mutations: 给特定或具有特定性相的卡牌重载（additive为false时）或增加/减少（additive为true时根据level的正负）指定数量的性相，且过滤条件除了性相也可以是卡牌。mutation对性相的改变可以被继承，即使卡牌经过了xtrigger或decayto的变换，变异后的卡牌无法堆叠。' },
                 { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。' },
                 { label: '最大执行次数', type: 'int', default: 0, description: 'maxexecutions: 该recipe的最大执行次数，0表示无限制。' },
@@ -230,7 +228,7 @@ const nodeTypes = {
             { label: '图标', type: 'image', description: 'icon: 该元素（卡牌或性相）的图标图片，默认为空，此时会寻找和id一致的文件名' },
             { label: '引发', type: 'port', requireType: 'recipes', multiConnect: true, NotSetWarning: '该条件需要通过set设置几率以及排序，直接连接元素recipes则默认几率100，排序按给定id排序', description: 'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建' },
         ],
-        exProperties:{
+        exProperties: {
             0: [
                 { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1', description: 'aspects: 该元素（卡牌）所具有的性相，数值代表等级' },
                 { label: '持续时间', type: 'number', default: 0, description: 'duration: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。' },
@@ -269,7 +267,7 @@ const nodeTypes = {
         properties: [
             { label: '条件', type: 'port', requireType: 'elements', description: '离开具有该性相的交互(recipes)时触发' },
         ],
-        exProperties:{
+        exProperties: {
             0: [
                 { label: '转化目标', type: 'port', requireType: 'elements', description: '离开具有条件性相的交互(recipes)时触发，将卡牌转化目标卡牌' }
             ],
@@ -292,7 +290,9 @@ const nodeTypes = {
             { label: '操作数', type: 'port', requireType: 'morphEffects', description: '仅在xtriggers复杂版本中生效，同一个条件可以触发多个效果' }
         ],
         fixedProperties: [
-            { label: '目标卡牌', type: 'port', requireType: 'elements', description: 'id: 离开具有条件性相的交互(recipes)时触发，触发操作数' },
+            { label: '目标卡牌', type: 'port', requireType: 'elements', description: 'id: 离开具有条件性相的交互(recipes)时触发，触发操作数' }
+        ],
+        properties: [
             { label: '操作数', type: 'select', option: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'], description: 'morpheffects: 不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）' },
             { label: '数量', type: 'number', default: 1, description: 'level: 数量，默认为1' }
         ]
@@ -438,7 +438,12 @@ const nodeTypes = {
             { label: '引用的对象', type: 'node', default: '' }
         ],
         properties: [
-        ]
+        ],
+        exProperties: {
+            0: [],
+            1: [],
+            2: []
+        }
     },
     text: {
         title: '文本',
@@ -498,18 +503,18 @@ const nodeTypes = {
             }],
             2: [
                 { label: '版本', type: 'select', options: ['简易', '复杂'], default: 0, description: '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。' },
-                
+
                 {
-                
-            }],
-            3: [{ 
-                    label: '重载', type: 'table', columns: [
+
+                }],
+            3: [{
+                label: '重载', type: 'table', columns: [
                     { label: '条件', field: 'filter', type: 'elements', width: '100%' },
                     { label: '目标', field: 'mutate', type: 'elements', width: '100%' },
                     { label: '变化数量', field: 'level', type: 'number', width: '100%' },
                     { label: '增加/减少', field: 'filter', type: 'bool', width: '100%' },
 
-                    ],
+                ],
                 description: '重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相（仅在recipes内部使用）'
             }]
         }

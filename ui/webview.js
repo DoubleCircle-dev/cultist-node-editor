@@ -5,8 +5,6 @@
 
 // 全局变量管理
 const vscode = acquireVsCodeApi();
-const nodes = new Map();
-const connections = [];
 
 // 创建全局管理器实例
 let actionManager = null;

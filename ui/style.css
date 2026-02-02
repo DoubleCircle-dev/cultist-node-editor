@@ -189,6 +189,72 @@ h3 {
     transition: none;
 }
 
+.node-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+}
+
+.node-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.node-title-input {
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    background: transparent;
+    flex: 1;
+    min-width: 0;
+}
+
+.node-title-input:focus {
+    outline: 1px solid #007bff;
+    background: white;
+}
+
+.node-id {
+    font-size: 10px;
+    color: #888;
+    user-select: none;
+}
+
+.node-label {
+    margin-top: 2px;
+}
+
+.node-label-input {
+    font-size: 12px;
+    color: #666;
+    border: none;
+    background: transparent;
+    width: 100%;
+    padding: 2px 4px;
+}
+
+.node-label-input:focus {
+    outline: 1px solid #28a745;
+    background: white;
+}
+
+/* 紧凑布局样式 */
+.node-title-label-container {
+    flex: 1;
+}
+
+.node-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.node-label-row {
+    margin-top: 2px;
+}
+
 /* 端口中心布局 - 双列显示 */
 .node-port-hub {
     margin-top: 15px;
@@ -396,6 +462,7 @@ h3 {
 
 
 /* 属性样式 */
+
 
 /* 基础属性样式 */
 .node-properties {
@@ -661,6 +728,238 @@ h3 {
     margin-bottom: 0;
     flex: 1;
     min-width: 0;
+}
+
+/* 扩展属性样式 */
+.extended-properties-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ff9800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+/* 属性帮助样式 */
+.property-help {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    text-align: center;
+    background: #3e3e42;
+    color: #cccccc;
+    border-radius: 50%;
+    font-size: 9px;
+    cursor: help;
+    margin-left: 4px;
+}
+
+/* 属性警告样式 */
+.property-warning {
+    font-size: 10px;
+    color: #ff9800;
+    margin-top: 4px;
+    padding: 2px 4px;
+    background: rgba(255, 152, 0, 0.1);
+    border-radius: 3px;
+    border-left: 2px solid #ff9800;
+}
+
+/* 属性描述样式 */
+.property-description {
+    font-size: 10px;
+    color: #888888;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* 端口描述样式 */
+.port-description {
+    font-size: 10px;
+    color: #666666;
+    margin-top: 2px;
+    white-space: normal;
+    line-height: 1.2;
+}
+
+/* 端口中心样式 */
+.port-hub-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.inner-port {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    background: rgba(37, 37, 38, 0.5);
+    border-radius: 4px;
+}
+
+.inner-port-label {
+    font-size: 11px;
+    color: #cccccc;
+}
+
+/* 属性端口样式 */
+.property-port {
+    margin: 8px 0;
+}
+
+.port-connector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    background: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.port-connector:hover {
+    border-color: #007acc;
+    background: #2a2a2a;
+}
+
+.property-port-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #9c27b0;
+    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.3);
+}
+
+/* 图片属性样式 */
+.property-image {
+    display: flex;
+    gap: 8px;
+}
+
+.property-image .property-input {
+    flex: 1;
+}
+
+.browse-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    background: #3a3a3a;
+    border: none;
+    border-radius: 3px;
+    color: #cccccc;
+    cursor: pointer;
+}
+
+.browse-btn:hover {
+    background: #454545;
+}
+
+/* 范围滑块值显示 */
+.range-value {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 11px;
+    color: #888888;
+    min-width: 30px;
+}
+
+.property-range-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+/* 模式切换器样式 */
+.mode-switcher {
+    background-color: #2a2a2a;
+    border-color: #007acc;
+    font-weight: 600;
+    color: #007acc;
+}
+
+.mode-switcher:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
+}
+
+/* 扩展属性区域样式 */
+.extended-properties {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #3e3e42;
+    position: relative;
+}
+
+/* 添加按钮样式 */
+.add-ex-property-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid #9C27B0;
+    background: transparent;
+    color: #9C27B0;
+    font-size: 16px;
+    line-height: 18px;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-ex-property-btn:hover {
+    background: #9C27B0;
+    color: white;
+    box-shadow: 0 0 8px rgba(156, 39, 176, 0.5);
+}
+
+.add-ex-property-btn:active {
+    transform: scale(0.95);
+}
+
+/* exProperties菜单样式 */
+.ex-properties-menu {
+    position: absolute;
+    background: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    min-width: 150px;
+    padding: 4px 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.ex-properties-menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #cccccc;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ex-properties-menu-item:hover {
+    background: #094771;
+    color: #ffffff;
+}
+
+.ex-properties-menu-item .menu-icon {
+    color: #9C27B0;
+    font-size: 14px;
 }
 
 /* 连接线样式 */
