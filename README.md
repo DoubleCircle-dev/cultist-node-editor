@@ -1,3 +1,4 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 # cultist-node-editor README
 
 This is the README for your extension "cultist-node-editor". After writing up a brief description, we recommend including the following sections.
