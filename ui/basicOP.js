@@ -61,6 +61,55 @@ class NodeManager {
         'input[type="file"]'
     ];
 
+    // 如果点击的是以下元素，则忽略点击
+    static ignoreClickItem = [
+        // === 数据输入控件 ===
+        'input',                    // 所有输入框（包括文本、数字、范围等）
+        'select',                   // 下拉框
+        'textarea',                 // 文本域
+        '.property-input',          // 属性输入框（包含各种类型）
+
+        // === 连接端口 ===
+        '.port-dot',                // 端口圆点（用于连接线）
+        '.port-hub-item',           // 端口项整体
+        '.port-connector',          // 属性端口连接器
+        '.property-port-dot',       // 属性端口圆点
+        '.inner-port',              // 内部端口（port-hub内部）
+
+        // === 按钮和可点击元素 ===
+        'button',                   // 所有按钮
+        '.browse-btn',              // 浏览按钮
+        '.node-action-btn',         // 节点操作按钮（如删除）
+        '.bool-option',             // 布尔选项（可点击的标签区域）
+
+        // === 表格交互元素 ===
+        '.table-cell input',        // 表格中的输入框
+        '.table-cell select',       // 表格中的下拉框
+        '.table-cell textarea',     // 表格中的文本域
+        '.table-cell button',       // 表格中的按钮
+
+        // === 复选框和单选按钮 ===
+        'input[type="checkbox"]',
+        'input[type="radio"]',
+
+        // === 特定输入类型（确保覆盖） ===
+        'input[type="text"]',
+        'input[type="number"]',
+        'input[type="range"]',
+        'input[type="email"]',
+        'input[type="password"]',
+        'input[type="search"]',
+        'input[type="tel"]',
+        'input[type="url"]',
+        'input[type="date"]',
+        'input[type="time"]',
+        'input[type="datetime-local"]',
+        'input[type="month"]',
+        'input[type="week"]',
+        'input[type="color"]',
+        'input[type="file"]'
+    ];
+
     /**
      * 创建节点管理器实例
      * @param {HTMLCanvasElement} canvas - 画布元素，用于渲染节点
@@ -188,25 +237,50 @@ class NodeManager {
 
     // 检查是否应该忽略拖拽
     shouldIgnoreDrag(target) {
-        return BasicActionManager.ignoreDragItem.some((item) => target.closest(item));
+        return NodeManager.ignoreDragItem.some((item) => target.closest(item));
     }
 
+    shouldIgnoreClick(target) {
+        return NodeManager.ignoreClickItem.some((item) => target.closest(item));
+    }
     // 处理事件
     handleEvent() {
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e)); // 添加点击事件监听器
         this.canvas.addEventListener('contextmenu', (e) => this.handleContextMenu(e)); // 添加contextmenu事件监听
         this.canvas.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e)); // 添加鼠标按下事件监听器
+        this.canvas.addEventListener('change', (e) => this.handleCanvasChange(e)); // 添加鼠标移动事件监听器
         // this.canvas.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));  // 添加鼠标移动事件监听器
         // this.canvas.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));    // 添加鼠标松开事件监听器
+    }
+
+    // 处理画布上的 change 事件
+    handleCanvasChange(e) {
+        const target = e.target;
+
+        // 检查是否是模式切换器
+        if (target.classList.contains('mode-switcher')) {
+            e.stopPropagation();
+
+            const nodeUid = target.dataset.nodeUid;
+            const propKey = target.dataset.propKey;
+            const newMode = parseInt(target.value, 10);
+
+            console.log(`检测到模式切换: 节点 ${nodeUid}, 属性 ${propKey}, 新模式 ${newMode}`);
+
+            // 获取节点实例
+            const node = this.getNode(nodeUid);
+            if (node) {
+                node.switchNodeMode(propKey, newMode);
+            }
+        }
     }
 
     // 处理画布点击事件
     handleCanvasClick(e) {
 
         if (this.shouldIgnoreClick(e.target)) {
-            return; // 如果是可交互元素，直接返回，不处理节点选中
+            return;
         }
-
         const nodeElement = e.target.closest('.node');
 
         // 如果在节点上点击
@@ -1756,6 +1830,10 @@ class Node {
         // 初始化固定属性
         if (this.config.fixedProperties) {
             this.config.fixedProperties.forEach((prop, index) => {
+
+                if (prop.modeSwitcher) {
+                    this.currentMode = prop.default;
+                }
                 const key = prop.label || `fixed_${index}`;
                 this.data[key] = prop.default !== undefined ? prop.default : '';
                 this.propertyValues[key] = prop.default !== undefined ? prop.default : '';
@@ -1769,6 +1847,25 @@ class Node {
                 this.data[key] = prop.default !== undefined ? prop.default : '';
                 this.propertyValues[key] = prop.default !== undefined ? prop.default : '';
             });
+        }
+
+        // 初始化 activeExProperties
+        this.activeExProperties.clear();
+
+        // 检查当前模式是否有对应的exProperties
+        if (this.config.exProperties && this.config.exProperties[this.currentMode]) {
+            const modeExProperties = this.config.exProperties[this.currentMode];
+            if (modeExProperties && Array.isArray(modeExProperties)) {
+                modeExProperties.forEach((prop, index) => {
+                    const key = `ex_${this.currentMode}_${index}`;
+                    this.activeExProperties.set(key, {
+                        prop: prop,
+                        value: prop.default !== undefined ? prop.default : ''
+                    });
+                    // 同时保存到 data 中
+                    this.data[key] = prop.default !== undefined ? prop.default : '';
+                });
+            }
         }
 
         // 初始化标题
@@ -1799,16 +1896,6 @@ class Node {
 
         // 聚焦节点使其可接收键盘事件
         element.tabIndex = 0;
-
-        // 添加事件委托处理模式切换
-        element.addEventListener('change', (e) => {
-            if (e.target.classList.contains('mode-switcher')) {
-                e.stopPropagation();
-                const propKey = e.target.dataset.propKey;
-                const newMode = e.target.value;
-                this._switchNodeMode(propKey, newMode);
-            }
-        });
 
         return element;
     }
@@ -1873,7 +1960,26 @@ class Node {
         }
 
         // 扩展属性容器
-        html += '<div class="node-properties extended-properties"></div>';
+        html += '<div class="node-properties extended-properties">';
+        if (this.activeExProperties && this.activeExProperties.size > 0) {
+            this.activeExProperties.forEach((prop, key) => {
+                html += this._createPropertyHTML(prop.prop, key);
+            })
+        }
+        // 检查是否有编号999的exProperties
+        if (this.hasExProperties999) {
+            // 添加"+"按钮
+            const addButton = document.createElement('button');
+            addButton.className = 'add-ex-property-btn';
+            // 添加点击事件
+            addButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showExPropertiesMenu(e);
+            });
+
+            html += addButton.outerHTML;
+        }
+        html += '</div>';
 
         return html;
     }
@@ -1974,9 +2080,10 @@ class Node {
 
             case 'select':
                 // 检查是否为模式切换器
-                const isModeSwitcher = fixed || false;
+                const isModeSwitcher = prop.modeSwitcher || false;
 
                 if (isModeSwitcher) {
+                    this.currentMode = prop.default || 0;
                     // 模式切换器
                     const options = prop.options.map((opt, i) =>
                         `<option value="${i}" ${i === this.currentMode ? 'selected' : ''}>${opt}</option>`
@@ -1985,8 +2092,7 @@ class Node {
                     inputHTML = `
                         <select class="property-input property-select mode-switcher" 
                                 data-node-uid="${this.uid}"
-                                data-prop-key="${key}"
-                                onchange="event.stopPropagation();">
+                                data-prop-key="${key}">
                             ${options}
                         </select>
                     `;
@@ -2096,25 +2202,20 @@ class Node {
     }
 
     // 在Node类中添加
-    _switchNodeMode(propKey, newMode) {
+    switchNodeMode(propKey, newMode) {
         // 保存当前模式的属性值
         if (this.currentMode !== null) {
-            this.saveModeProperties(this.currentMode);
+            this._saveModeProperties(this.currentMode);
         }
 
         // 更新当前模式
         this.currentMode = parseInt(newMode);
 
         // 加载新模式的属性
-        this.loadModeProperties(this.currentMode);
+        this._loadModeProperties(this.currentMode);
 
         // 更新UI
-        this.updateModePropertiesUI();
-
-        // 通知状态更新
-        if (this.updateStatus) {
-            this.updateStatus(`切换节点模式为: ${this.config.fixedProperties.find(p => p.label === propKey).options[newMode]}`);
-        }
+        this._updateModePropertiesUI();
     }
 
     // 保存当前模式的属性值
@@ -2165,46 +2266,12 @@ class Node {
 
             // 创建属性HTML
             const propHTML = this._createPropertyHTML(prop, key, value);
-
             // 添加到容器
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = propHTML;
-            const propElement = tempDiv.firstChild;
-            propElement.dataset.mode = this.currentMode;
-            extendedPropsContainer.appendChild(propElement);
+            extendedPropsContainer.appendChild(tempDiv);
         });
 
-        // 检查是否有编号999的exProperties
-        if (this.config.exProperties[999]) {
-            // 添加"+"按钮
-            const addButton = document.createElement('button');
-            addButton.className = 'add-ex-property-btn';
-            addButton.innerHTML = '+';
-            addButton.style.color = '#9C27B0';
-            addButton.style.backgroundColor = 'transparent';
-            addButton.style.border = '1px solid #9C27B0';
-            addButton.style.borderRadius = '50%';
-            addButton.style.width = '24px';
-            addButton.style.height = '24px';
-            addButton.style.fontSize = '18px';
-            addButton.style.lineHeight = '20px';
-            addButton.style.padding = '0';
-            addButton.style.cursor = 'pointer';
-            addButton.style.marginLeft = 'auto';
-            addButton.style.marginRight = '5px';
-            addButton.style.display = 'inline-flex';
-            addButton.style.justifyContent = 'center';
-            addButton.style.alignItems = 'center';
-            addButton.title = '添加属性';
-
-            // 添加点击事件
-            addButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showExPropertiesMenu(e);
-            });
-
-            extendedPropsContainer.appendChild(addButton);
-        }
     }
 
     // 显示exProperties菜单
@@ -2212,15 +2279,6 @@ class Node {
         // 创建菜单
         const menu = document.createElement('div');
         menu.className = 'ex-properties-menu';
-        menu.style.position = 'absolute';
-        menu.style.left = `${event.clientX}px`;
-        menu.style.top = `${event.clientY}px`;
-        menu.style.backgroundColor = '#fff';
-        menu.style.border = '1px solid #ccc';
-        menu.style.borderRadius = '4px';
-        menu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-        menu.style.zIndex = '1000';
-        menu.style.padding = '5px 0';
 
         // 添加菜单项
         const exProps999 = this.config.exProperties[999];
@@ -2279,7 +2337,7 @@ class Node {
         });
 
         // 更新UI
-        this.updateModePropertiesUI();
+        this._updateModePropertiesUI();
 
         // 通知状态更新
         if (this.updateStatus) {

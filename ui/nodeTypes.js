@@ -22,7 +22,7 @@ const nodeTypes = {
         content: `这是一个测试节点，类型: 通用测试`,
         icon: '⚡',
         fixedProperties: [
-            { label: '选项', type: 'select', options: ['选项1', '选项2', '选项3'], default: 0 },
+            { label: '选项', type: 'select', modeSwitcher: true, options: ['选项1', '选项2', '选项3'], default: 0 },
             {
                 label: '数据表格',
                 type: 'table',
@@ -117,7 +117,7 @@ const nodeTypes = {
         ],
         content: `成就(achievements)是游戏中解锁的成就/成就类型，可以在成就页面中查看。`,
         fixedProperties: [
-            { label: '类型', type: 'select', options: ['成就类型', '成就'], default: 0, description: 'isCategory: 成就和成就类型都属于achievements,成就类型会在主界面的成就下面新建一个类别用来显示成就' },
+            { label: '类型', type: 'select', modeSwitcher: true, options: ['成就类型', '成就'], default: 0, description: 'isCategory: 成就和成就类型都属于achievements,成就类型会在主界面的成就下面新建一个类别用来显示成就' },
         ],
         properties: [
             { label: '图标', type: 'image', description: 'iconUnlocked: 成就/成就类型解锁后的图标' },
@@ -221,7 +221,7 @@ const nodeTypes = {
         content: `游戏中的卡牌、性相均属于elements`,
         icon: '📇',
         fixedProperties: [
-            { label: '类型', type: 'select', options: ['卡牌', '性相'], default: 0 },
+            { label: '类型', type: 'select', modeSwitcher: true, options: ['卡牌', '性相'], default: 0 },
             { label: '描述', type: 'text', default: '该元素（卡牌或性相）的介绍', description: 'description: 该元素（卡牌或性相）的介绍, 会显示在右上角详情中' },
         ],
         properties: [
@@ -262,7 +262,7 @@ const nodeTypes = {
         content: `触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换（仅在元素(elements)内部使用,如果定义在性相(aspects)内则会继承给具有该性相的卡牌）`,
         icon: '🔗',
         fixedProperties: [
-            { label: '版本', type: 'select', options: ['简易', '复杂'], default: 0, description: '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。' },
+            { label: '版本', type: 'select', modeSwitcher: true, options: ['简易', '复杂'], default: 0, description: '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。' },
         ],
         properties: [
             { label: '条件', type: 'port', requireType: 'elements', description: '离开具有该性相的交互(recipes)时触发' },
@@ -434,7 +434,7 @@ const nodeTypes = {
         outputs: [],
         content: ``,
         fixedProperties: [
-            { label: '模式', type: 'select', default: '简洁', options: ['简洁', '完整', '可编辑'] },
+            { label: '模式', type: 'select', modeSwitcher: true, default: '简洁', options: ['简洁', '完整', '可编辑'] },
             { label: '引用的对象', type: 'node', default: '' }
         ],
         properties: [
