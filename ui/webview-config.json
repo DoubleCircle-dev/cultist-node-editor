@@ -2,8 +2,19 @@
   "name": "节点编辑器",
   "version": "0.1.0",
   "resources": {
-    "styles": ["style.css"],
-    "scripts": ["nodeTypes.js","basicOP.js", "webview.js"]
+    "css": [
+      "variables.css",
+      "layout.css",
+      "utils\\layout_tools.css",
+      "utils\\status.css",
+      "components\\nodes.css",
+      "components\\ports.css",
+      "components\\properties.css",
+      "components\\connections.css",
+      "components\\menus.css",
+      "style.css"
+    ],
+    "scripts": ["nodeTypes.js", "basicOP.js", "webview.js"]
   },
   "features": {
     "undoRedo": true,

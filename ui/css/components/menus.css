@@ -1,0 +1,72 @@
+/* 右键菜单样式 */
+
+/* 节点右键菜单样式 */
+.node-context-menu {
+    position: fixed;
+    display: none;
+    background: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 999999;
+    min-width: 150px;
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #cccccc;
+    font-size: 13px;
+}
+
+.context-menu-item:hover {
+    background: #094771;
+    color: #ffffff;
+}
+
+.menu-icon {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.menu-text {
+    flex: 1;
+}
+
+/* 右键菜单分隔符 */
+.context-menu-separator {
+    height: 1px;
+    background: #3e3e42;
+    margin: 4px 0;
+}
+
+/* 全局右键菜单样式 */
+.global-context-menu {
+    position: fixed;
+    display: none;
+    background: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 999999;
+    min-width: 150px;
+    padding: 4px 0;
+}
+
+/* 撤销按钮样式 */
+.btn-undo {
+    background: #3a3a3a;
+}
+
+.btn-undo:hover {
+    background: #454545;
+}
+
+.btn-undo:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

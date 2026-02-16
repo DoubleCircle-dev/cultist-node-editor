@@ -157,7 +157,7 @@ function getWebviewContent(panel, context) {
         // 获取所有资源文件的Webview URI
         const resources = processResources(panel, uiDir, config.resources);
 
-        // 替换HTML中的资源引用
+        // 资源引用
         htmlContent = replaceResourceReferences(htmlContent, resources);
 
         // 注入配置数据
@@ -173,14 +173,13 @@ function getWebviewContent(panel, context) {
 
 function processResources(panel, uiDir, resourceConfig) {
     const resources = {
-        styles: [],
+        css: [],
         scripts: []
     };
-
     // 处理样式文件
-    if (resourceConfig && resourceConfig.styles) {
-        resources.styles = resourceConfig.styles.map(styleFile => {
-            const stylePath = path.join(uiDir, styleFile);
+    if (resourceConfig && resourceConfig.css) {
+        resources.css = resourceConfig.css.map(styleFile => {
+            const stylePath = path.join(uiDir, 'css',styleFile);
             if (fs.existsSync(stylePath)) {
                 const uri = panel.webview.asWebviewUri(vscode.Uri.file(stylePath));
                 return {
@@ -196,7 +195,7 @@ function processResources(panel, uiDir, resourceConfig) {
     // 处理脚本文件
     if (resourceConfig && resourceConfig.scripts) {
         resources.scripts = resourceConfig.scripts.map(scriptFile => {
-            const scriptPath = path.join(uiDir, scriptFile);
+            const scriptPath = path.join(uiDir, 'scripts', scriptFile);
             if (fs.existsSync(scriptPath)) {
                 const uri = panel.webview.asWebviewUri(vscode.Uri.file(scriptPath));
                 return {
@@ -212,6 +211,32 @@ function processResources(panel, uiDir, resourceConfig) {
     return resources;
 }
 
+function addResourceReferences(htmlContent, resources) {
+    let result = htmlContent;
+    
+    // 添加新的样式引用
+    const styleTags = resources.css.map(style =>
+        `<link rel="stylesheet" href="${style.uri}">`
+    ).join('\n');
+
+    // 添加新的脚本引用
+    const scriptTags = resources.scripts.map(script =>
+        `<script src="${script.uri}"></script>`
+    ).join('\n');
+
+    // 插入到head结束前
+    if (styleTags) {
+        result = result.replace('</head>', `${styleTags}\n</head>`);
+    }
+
+    // 插入到body结束前
+    if (scriptTags) {
+        result = result.replace('</body>', `${scriptTags}\n</body>`);
+    }
+    
+    return result;
+}
+
 function replaceResourceReferences(htmlContent, resources) {
     let result = htmlContent;
 
@@ -220,7 +245,7 @@ function replaceResourceReferences(htmlContent, resources) {
     result = result.replace(/<script\s+src="[^"]*"><\/script>/g, '');
 
     // 添加新的样式引用
-    const styleTags = resources.styles.map(style =>
+    const styleTags = resources.css.map(style =>
         `<link rel="stylesheet" href="${style.uri}">`
     ).join('\n');
 

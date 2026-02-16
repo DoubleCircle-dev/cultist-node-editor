@@ -1,7 +1,25 @@
+
+const nodeColorVars = (function () {
+    const root = document.documentElement;
+
+    const computed = getComputedStyle(root);
+    const colorKeys = [
+        'blank', 'test', 'legacies', 'endings', 'achievements',
+        'recipes', 'mutations', 'elements', 'xtriggers', 'morphEffects',
+        'decks', 'verbs', 'slots', 'levers', 'extends', 'copies',
+        'text', 'number', 'set', 'images'
+    ];
+    const colors = {};
+    colorKeys.forEach(key => {
+        colors[key] = computed.getPropertyValue(`--node-${key}`).trim();
+    });
+    return colors;
+})();
+
 const nodeTypes = {
     blank: {
         title: '空节点',
-        color: '#ffffffff',
+        color: nodeColorVars.blank,
         inputs: [],
         outputs: [],
         content: `这是一个空节点`,
@@ -11,13 +29,13 @@ const nodeTypes = {
     },
     test: {
         title: '测试节点',
-        color: '#6c5ce7',
+        color: nodeColorVars.test,
         inputs: [
-            { type: 'port', label: '测试多输入', multiConnect: true },
-            { type: 'port', label: '测试单输入', multiConnect: false }
+            { type: 'port', label: '测试多输入', requireType: 'test', multiConnect: true },
+            { type: 'port', label: '测试单输入', requireType: 'test', multiConnect: false }
         ],
         outputs: [
-            { type: 'port', label: '测试输出' }
+            { type: 'port', label: '测试输出', multiConnect: true }
         ],
         content: `这是一个测试节点，类型: 通用测试`,
         icon: '⚡',
@@ -62,7 +80,7 @@ const nodeTypes = {
     legacies: {
         title: 'legacy',
         label: '职业(legacies)',
-        color: '#d73141ff',
+        color: nodeColorVars.legacies,
         inputs: [
             { type: 'port', label: '初始verb', multiConnect: false }
         ],
@@ -87,12 +105,12 @@ const nodeTypes = {
     endings: {
         title: 'ending',
         label: '结局(endings)',
-        color: '#ac0000ff',
+        color: nodeColorVars.endings,
         inputs: [
             { type: 'port', label: '前置交互', requireType: 'recipes', multiConnect: true, description: '达成结局的前置交互(recipes)' },
         ],
         outputs: [
-            { type: 'port', label: '结局', description: 'endings: 结局' },
+            { type: 'port', label: '结局', multiConnect: true, description: 'endings: 结局' },
         ],
         content: `endings即游戏中原版或自定义的结局。`,
         icon: '⚡',
@@ -110,10 +128,10 @@ const nodeTypes = {
     achievements: {
         title: 'achievement',
         label: '成就(achievements)',
-        color: '#f1912aff',
+        color: nodeColorVars.achievements,
         inputs: [],
         outputs: [
-            { type: 'port', label: ['成就', '成就类型'], description: ['achievements: 成就（同一类成就会放在一个页面）', 'categories: 成就类型（成就类型会在主界面的成就下面新建一个类别用来显示成就）'] },
+            { type: 'port', label: ['成就', '成就类型'], multiConnect: true, description: ['achievements: 成就（同一类成就会放在一个页面）', 'categories: 成就类型（成就类型会在主界面的成就下面新建一个类别用来显示成就）'] },
         ],
         content: `成就(achievements)是游戏中解锁的成就/成就类型，可以在成就页面中查看。`,
         fixedProperties: [
@@ -137,15 +155,15 @@ const nodeTypes = {
     recipes: {
         title: 'recipe',
         label: '交互(recipes)',
-        color: '#f1912aff',
+        color: nodeColorVars.recipes,
         inputs: [
             { type: 'port', requireType: 'recipes', multiConnect: true, label: '前置交互', description: '跳转进本交互界面的入口，craftable为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发' },
 
         ],
         outputs: [
-            { type: 'port', label: '分支', description: 'alt: 指向满足一定条件后会立刻取代该recipe生效的recipe，如果additional为真值则新的recipe在对应行动框中额外进行且不会立刻取代，要注意这种情况下若该行动框已创建，那么这次转换不会生效。' },
-            { type: 'port', label: '链接', description: 'linked: 指向在此recipe后会概率生效的recipe，与alt类似，但需要等待当前recipe结束后才会生效。' },
-            { type: 'port', label: '引入', description: 'inductions: 效果类似alt中将卡牌弹出并带入新verb中recipe的功能，expulsion是过滤条件，其中包含filter标识需要的性相，limit标识最多转移个数。' },
+            { type: 'port', label: '分支',multiConnect: true, description: 'alt: 指向满足一定条件后会立刻取代该recipe生效的recipe，如果additional为真值则新的recipe在对应行动框中额外进行且不会立刻取代，要注意这种情况下若该行动框已创建，那么这次转换不会生效。' },
+            { type: 'port', label: '链接', multiConnect: true,description: 'linked: 指向在此recipe后会概率生效的recipe，与alt类似，但需要等待当前recipe结束后才会生效。' },
+            { type: 'port', label: '引入', multiConnect: true,description: 'inductions: 效果类似alt中将卡牌弹出并带入新verb中recipe的功能，expulsion是过滤条件，其中包含filter标识需要的性相，limit标识最多转移个数。' },
         ],
         content: `交互界面(recipes)，也称配方，是使用行动与卡牌交互的一种过程，可以实现多样化的功能`,
         icon: '📖',
@@ -193,10 +211,10 @@ const nodeTypes = {
     mutations: {
         title: 'mutation',
         label: '重载变化(mutations)',
-        color: '#f1ea2aff',
+        color: nodeColorVars.mutations,
         inputs: [],
         outputs: [
-            { type: 'port', label: '重载变化', description: 'mutations: 重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相' }
+            { type: 'port', label: '重载变化', multiConnect: true,description: 'mutations: 重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相' }
         ],
         content: `重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相（仅在recipes内部使用）`,
         icon: '🔗',
@@ -211,12 +229,12 @@ const nodeTypes = {
     elements: {
         title: 'element',
         label: '元素(elements)',
-        color: '#2196F3',
+        color: nodeColorVars.elements,
         inputs: [
             { label: '继承', type: 'port', requireType: 'elements', multiConnect: false, description: 'inherits: 该元素（卡牌）所继承的元素，该元素（卡牌）会继承继承元素的属性，但不会继承继承元素的induces, icon等。' }
         ],
         outputs: [
-            { type: 'port', label: '元素', description: 'elements: 游戏中的卡牌、性相均属于elements' }
+            { type: 'port', label: '元素', multiConnect: true,description: 'elements: 游戏中的卡牌、性相均属于elements' }
         ],
         content: `游戏中的卡牌、性相均属于elements`,
         icon: '📇',
@@ -252,12 +270,12 @@ const nodeTypes = {
     xtriggers: {
         title: 'xtrigger',
         label: '触变(xtriggers)',
-        color: '#f1ea2aff',
+        color: nodeColorVars.xtriggers,
         inputs: [
             { label: '继承集合', type: 'port', requireType: 'xtriggers', multiConnect: true, description: '继承之前的xtrigger的元素，扩展成集合' }
         ],
         outputs: [
-            { type: 'port', label: '触变', description: 'xtriggers: 触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换' }
+            { type: 'port', label: '触变', multiConnect: true,description: 'xtriggers: 触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换' }
         ],
         content: `触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换（仅在元素(elements)内部使用,如果定义在性相(aspects)内则会继承给具有该性相的卡牌）`,
         icon: '🔗',
@@ -265,15 +283,15 @@ const nodeTypes = {
             { label: '版本', type: 'select', modeSwitcher: true, options: ['简易', '复杂'], default: 0, description: '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。' },
         ],
         properties: [
-            { label: '条件', type: 'port', requireType: 'elements', description: '离开具有该性相的交互(recipes)时触发' },
+            { label: '条件', type: 'port', multiConnect: false,requireType: 'elements', description: '离开具有该性相的交互(recipes)时触发' },
         ],
         exProperties: {
             0: [
-                { label: '转化目标', type: 'port', requireType: 'elements', description: '离开具有条件性相的交互(recipes)时触发，将卡牌转化目标卡牌' }
+                { label: '转化目标', type: 'port', multiConnect: false,requireType: 'elements', description: '离开具有条件性相的交互(recipes)时触发，将卡牌转化目标卡牌' }
             ],
             1: [
                 { label: '操作数', type: 'port', requireType: 'morphEffects', multiConnect: true, description: '同一个条件可以触发多个效果' },
-                { label: '基础目标卡牌', type: 'port', requireType: 'elements', description: 'id: 只有一个效果时使用，离开具有条件性相的交互(recipes)时触发，触发操作数' },
+                { label: '基础目标卡牌', type: 'port', requireType: 'elements', multiConnect: false,description: 'id: 只有一个效果时使用，离开具有条件性相的交互(recipes)时触发，触发操作数' },
                 { label: '基础操作数', type: 'select', option: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'], description: 'morpheffects: 只有一个效果时使用，不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）' },
                 { label: '基础数量', type: 'number', default: 1, description: 'level: 只有一个效果时使用，数量，默认为1' }
             ]
@@ -282,15 +300,15 @@ const nodeTypes = {
     morphEffects: {
         title: 'morphEffect',
         label: '操作数(morphEffects)',
-        color: '#f1ea2aff',
+        color: nodeColorVars.morphEffects,
         inputs: [
             { label: '继承集合', type: 'port', requireType: 'morphEffects', multiConnect: true, description: '继承之前的morphEffects的元素，扩展成集合' }
         ],
         outputs: [
-            { label: '操作数', type: 'port', requireType: 'morphEffects', description: '仅在xtriggers复杂版本中生效，同一个条件可以触发多个效果' }
+            { label: '操作数', type: 'port', requireType: 'morphEffects', multiConnect: true,description: '仅在xtriggers复杂版本中生效，同一个条件可以触发多个效果' }
         ],
         fixedProperties: [
-            { label: '目标卡牌', type: 'port', requireType: 'elements', description: 'id: 离开具有条件性相的交互(recipes)时触发，触发操作数' }
+            { label: '目标卡牌', type: 'port', requireType: 'elements', multiConnect: false,description: 'id: 离开具有条件性相的交互(recipes)时触发，触发操作数' }
         ],
         properties: [
             { label: '操作数', type: 'select', option: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'], description: 'morpheffects: 不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）' },
@@ -300,10 +318,10 @@ const nodeTypes = {
     decks: {
         title: 'deck',
         label: '卡池(decks)',
-        color: '#23bf30ff',
+        color: nodeColorVars.decks,
         inputs: [],
         outputs: [
-            { type: 'port', label: '卡池', description: 'decks: mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。' }
+            { type: 'port', label: '卡池', multiConnect: true,description: 'decks: mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。' }
         ],
         content: `decks是mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。`,
         icon: '🎛️',
@@ -330,11 +348,11 @@ const nodeTypes = {
     verbs: {
         title: 'verb',
         label: '行动框(verbs)',
-        color: '#9C27B0',
+        color: nodeColorVars.verbs,
         inputs: [
         ],
         outputs: [
-            { type: 'port', label: 'verb', description: 'verbs:' }
+            { type: 'port', label: 'verb', multiConnect: true,description: 'verbs:' }
         ],
         content: `verbs是mod中的动词，将卡牌拖入触发交互界面(recipes)的行动框。`,
         icon: '⚡',
@@ -349,7 +367,7 @@ const nodeTypes = {
     slots: {
         title: 'slot',
         label: '卡槽(slots)',
-        color: '#fdf622ff',
+        color: nodeColorVars.slots,
         inputs: [
             {
                 type: 'port', label: '需求', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
@@ -373,7 +391,7 @@ const nodeTypes = {
             }
         ],
         outputs: [
-            { type: 'port', label: '卡槽', description: 'slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。' }
+            { type: 'port', label: '卡槽', multiConnect: true,description: 'slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。' }
         ],
         content: `slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。`,
         icon: '🎚️',
@@ -397,11 +415,11 @@ const nodeTypes = {
     },
     levers: {
         title: '继承物品',
-        color: '#3F51B5',
+        color: nodeColorVars.levers,
         inputs: [],
         outputs: [
-            { type: 'port', label: '继承物品', description: 'lever: 从上一局游戏继承的物品。' },
-            { type: 'port', label: '继承物品(卡牌实例)', description: '从上一局游戏继承的物品对应的卡牌。' },
+            { type: 'port', label: '继承物品', multiConnect: true,description: 'lever: 从上一局游戏继承的物品。' },
+            { type: 'port', label: '继承物品(卡牌实例)', multiConnect: true,description: '从上一局游戏继承的物品对应的卡牌。' },
         ],
         content: `从上一局游戏中继承的事物。如使徒继承的教会与教徒，或是富家子弟所继承的书籍。
                         某种意义上说，这是一张卡牌，你可以通过effects等代码得到它。`,
@@ -416,7 +434,7 @@ const nodeTypes = {
     },
     extends: {
         title: '扩充对象',
-        color: '#3F51B5',
+        color: nodeColorVars.extends,
         inputs: [],
         outputs: [],
         content: `extends: 特殊的写法，可以修改原游戏的数据，如果你不知道该如何使用，请不要使用本节点`,
@@ -429,7 +447,7 @@ const nodeTypes = {
     },
     copies: {
         title: '引用复制',
-        color: '#3F51B5',
+        color: nodeColorVars.copies,
         inputs: [],
         outputs: [],
         content: ``,
@@ -447,10 +465,10 @@ const nodeTypes = {
     },
     text: {
         title: '文本',
-        color: '#3fb3b5ff',
+        color: nodeColorVars.text,
         inputs: [],
         outputs: [
-            { type: 'port', label: '文本' }
+            { type: 'port', label: '文本', multiConnect: true}
         ],
         content: `文本常量, 输出string格式`,
         icon: '🎚️',
@@ -460,10 +478,10 @@ const nodeTypes = {
     },
     number: {
         title: '数字',
-        color: '#3fb3b5ff',
+        color: nodeColorVars.number,
         inputs: [],
         outputs: [
-            { type: 'port', label: '数字' }
+            { type: 'port', label: '数字',multiConnect: true }
         ],
         content: `数字常量，输出int格式`,
         icon: '🎚️',
@@ -473,12 +491,12 @@ const nodeTypes = {
     },
     set: {
         title: '集合',
-        color: '#3fb3b5ff',
+        color: nodeColorVars.set,
         inputs: [
-            { type: 'port', requireType: 'set', label: '继承集合', description: '继承之前的集合的元素，扩展成新的集合，注意集合的元素类型必须一致' },
+            { type: 'port', requireType: 'set', multiConnect: true, label: '继承集合', description: '继承之前的集合的元素，扩展成新的集合，注意集合的元素类型必须一致' },
         ],
         outputs: [
-            { type: 'port', label: '集合', description: '输出集合格式的变量' }
+            { type: 'port', label: '集合', multiConnect: true, description: '输出集合格式的变量' }
         ],
         content: `集合变量，输出参数集合，可以将多个集合链接，不允许成环`,
         icon: '🎚️',
@@ -521,12 +539,12 @@ const nodeTypes = {
     },
     images: {
         title: '图片',
-        color: '#3fb3b5ff',
+        color: nodeColorVars.images,
         inputs: [],
         outputs: [
-            { type: 'port', label: '文本' }
+            { type: 'port', label: '图片', multiConnect: true}
         ],
-        content: `文本常量, 输出string格式`,
+        content: `图片常量, 用于图标或背景等使用`,
         icon: '🎚️',
         fixedProperties: [
             { label: '图片id', type: 'text', default: '', description: '存放在image路径下的图片文件名' }
@@ -534,4 +552,6 @@ const nodeTypes = {
     }
 };
 
+window.nodeColorVars = nodeColorVars;
 window.nodeTypes = nodeTypes;
+

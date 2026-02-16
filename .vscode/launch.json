@@ -5,6 +5,7 @@
 {
   "version": "0.1.0",
   "configurations": [
+
     {
       "name": "运行扩展",
       "type": "extensionHost",

@@ -1,0 +1,150 @@
+/* 节点样式 */
+.node {
+    position: absolute;
+    width: 300px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    cursor: move;
+    user-select: none;
+    font-family: var(--font-sans);
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 选中节点的样式 */
+.node.selected {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary);
+    z-index: 1001;
+}
+
+/* 拖拽时的样式 */
+.node.dragging {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary), var(--shadow-md);
+    opacity: 0.95;
+    cursor: grabbing !important;
+    z-index: 10000;
+}
+
+/* 固定时的样式 */
+.node.fixed {
+        opacity: 0.7;
+        border-color: var(--text-muted);
+        pointer-events: none;
+        /* 固定节点不可拖拽、选中，但依然显示连接线 */
+    }
+
+.node.fixed .node-header,
+.node.fixed .node-content,
+.node.fixed .port-hub-item {
+    pointer-events: none;
+}
+
+/* 锁定时的样式 */
+.node.locked {
+    opacity: 0.7;
+    border-color: var(--text-muted);
+    pointer-events: none;
+    /* 锁定节点不可更改属性内容，但仍可拖动*/
+}
+
+.node.locked .node-header,
+.node.locked .node-content,
+.node.locked .port-hub-item,
+
+.node-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+}
+
+.node-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.node-title-input {
+    font-size: 14px;
+    font-weight: bold;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+}
+
+.node-title-input:focus {
+    outline: 1px solid var(--accent-primary);
+    background: var(--bg-secondary);
+}
+
+.node-uid {
+    font-size: 10px;
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.node-label {
+    margin-top: 2px;
+}
+
+.node-label-input {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    width: 100%;
+}
+
+.node-label-input:focus {
+    outline: 1px solid #28a745;
+    background: var(--bg-secondary);
+}
+
+/* 端口中心布局 - 双列显示 */
+.node-port-hub {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.node .ports-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    gap: 10px;
+}
+
+.port-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.port-column-title {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
