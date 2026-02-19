@@ -366,3 +366,24 @@
     transform: scale(0.95);
 }
 
+/* 端口占位符样式 */
+.port-placeholder {
+    display: none;
+    width: 20px;
+    /* 与端口圆点所占宽度一致 */
+    height: 16px;
+    visibility: hidden;
+    flex-shrink: 0;
+}
+
+/* 在横向排布的属性项中显示占位符 */
+.property-item:has(.bool-option) .port-placeholder,
+.property-item:has(.property-checkbox) .port-placeholder {
+    display: inline-block;
+}
+
+.property-item:has(.bool-option),
+.property-item:has(.property-checkbox) {
+    padding-right: 16px;
+    box-sizing: border-box;
+}

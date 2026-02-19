@@ -1996,9 +1996,14 @@ class Node {
         const property = document.createElement('div');
         property.className = 'property-item';
         property.dataset.propKey = key;
+
+        const placeholder = document.createElement('span');
+        placeholder.className = 'port-placeholder';
+
         const propertyLabel = document.createElement('div');
         propertyLabel.className = 'property-label';
         propertyLabel.innerText = prop.label + ':';
+
         if (prop.description) {
             const helpInfo = document.createElement('div');
             helpInfo.className = 'property-help';
@@ -2251,7 +2256,7 @@ class Node {
     }
 
     _updateModePortUI() {
-        const selectPorts = this.element.querySelectorAll('.select-port');    
+        const selectPorts = this.element.querySelectorAll('.select-port');
         if (!selectPorts) return;
 
         console.log('selectPorts', selectPorts);
@@ -2403,9 +2408,9 @@ class Node {
         } else {
             console.error(`端口类型 ${portType} 无法统计`);
         }
-        
+
         let label = portData.label;
-        
+
         const portId = `${this.uid}-${portType}-${portIndex}`;
 
         // 创建DOM元素
