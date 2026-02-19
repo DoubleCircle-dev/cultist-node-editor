@@ -15,6 +15,14 @@
     width: 100%;
 }
 
+/* 属性描述样式 */
+.property-description {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-style: italic;
+}
+
 .property-label {
     font-size: 11px;
     color: var(--text-secondary);
@@ -69,7 +77,7 @@
     height: 14px;
 }
 
-/* 布尔输入样式 - 传统单选按钮样式 */
+/* 单选按钮样式 */
 .bool-radio-group {
     display: flex;
     gap: 12px;
@@ -145,6 +153,18 @@
     color: var(--accent-primary);
 }
 
+/* 当属性类型是bool-option时，重新组织布局 */
+.property-item:has(.bool-option) {
+    flex-direction: row;
+    align-items: left;
+    justify-content: start;
+}
+
+.property-item:has(.bool-option) .property-label {
+    margin-bottom: 0;
+    flex: 1;
+}
+
 /* 范围滑块样式 */
 .property-range {
     width: 100%;
@@ -191,7 +211,7 @@
 .property-range-wrapper {
     display: flex;
     align-items: center;
-    width: 100%;
+    width: 90%;
 }
 
 /* 下拉选择框样式 */
@@ -222,24 +242,18 @@
     color: var(--accent-primary);
 }
 
-.mode-switcher:focus {
-    border-color: #007acc;
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
-}
-
 /* 复选框样式 */
 .property-checkbox {
-    accent-color: var(--accent-color);
+    accent-color: var(--accent-primary);
     width: 14px;
     height: 14px;
     cursor: pointer;
     margin: 0;
-    background-color: #252526;
-    border-color: #3e3e42;
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
     margin-top: 2px;
 }
 
-/* 针对复选框类型，调整布局使其更紧凑 */
 .property-checkbox-wrapper {
     display: flex;
     align-items: center;
@@ -258,37 +272,6 @@
     flex: 1;
 }
 
-/* 扩展属性样式 */
-.extended-properties-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: #ff9800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-/* 属性警告样式 */
-.property-warning {
-    font-size: 10px;
-    color: #ff9800;
-    margin-top: 4px;
-    padding: 2px 4px;
-    background: rgba(255, 152, 0, 0.1);
-    border-radius: 3px;
-    border-left: 2px solid #ff9800;
-}
-
-/* 属性描述样式 */
-.property-description {
-    font-size: 10px;
-    color: #888888;
-    margin-top: 4px;
-    font-style: italic;
-}
-
 /* 图片属性样式 */
 .property-image {
     display: flex;
@@ -304,7 +287,7 @@
     display: inline-block;
     margin-left: 8px;
     font-size: 11px;
-    color: #888888;
+    color: var(--text-muted);
     min-width: 30px;
 }
 
@@ -332,13 +315,24 @@
     color: var(--text-secondary);
 }
 
-
 /* 扩展属性区域样式 */
 .extended-properties {
     margin-top: 12px;
     padding-top: 10px;
-    border-top: 1px solid #3e3e42;
+    border-top: 1px solid var(--border-color);
     position: relative;
+}
+
+/* 扩展属性样式 */
+.extended-properties-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-orange);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--accent-orange-shadow);
 }
 
 /* 添加按钮样式 */
@@ -349,9 +343,9 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    border: 1px solid #9C27B0;
+    border: 1px solid var(--accent-purple);
     background: transparent;
-    color: #9C27B0;
+    color: var(--accent-purple);
     font-size: 16px;
     line-height: 18px;
     padding: 0;
@@ -363,46 +357,12 @@
 }
 
 .add-ex-property-btn:hover {
-    background: #9C27B0;
+    background: var(--accent-purple);
     color: white;
-    box-shadow: 0 0 8px rgba(156, 39, 176, 0.5);
+    box-shadow: 0 0 8px var(--accent-purple-shadow);
 }
 
 .add-ex-property-btn:active {
     transform: scale(0.95);
 }
 
-/* exProperties菜单样式 */
-.ex-properties-menu {
-    position: absolute;
-    background: #252526;
-    border: 1px solid #3e3e42;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    z-index: 10000;
-    min-width: 150px;
-    padding: 4px 0;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.ex-properties-menu-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background 0.2s;
-    color: #cccccc;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.ex-properties-menu-item:hover {
-    background: #094771;
-    color: #ffffff;
-}
-
-.ex-properties-menu-item .menu-icon {
-    color: #9C27B0;
-    font-size: 14px;
-}

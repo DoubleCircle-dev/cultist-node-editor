@@ -8,6 +8,7 @@
     font-size: 13px;
     margin: 4px 0;
     width: 100%;
+    transition: background var(--transition-fast);
 }
 
 .btn:hover {
@@ -31,7 +32,7 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     font-size: 13px;
-    transition: background 0.2s;
+    transition: background var(--transition-fast);
     width: 100%;
     text-align: left;
 }
@@ -49,8 +50,15 @@
     color: var(--text-primary);
     cursor: pointer;
     white-space: nowrap;
+    transition: background var(--transition-fast);
 }
 
 .browse-btn:hover {
     background: #454545;
+}
+
+/* 调试按钮组 */
+.debug-buttons {
+    display: flex;
+    gap: 4px;
 }

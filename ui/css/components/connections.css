@@ -59,7 +59,7 @@
     0%,
     100% {
         stroke-width: 3;
-        filter: drop-shadow(0 0 6px rgba(255, 152, 0, 0.8));
+        filter: drop-shadow(0 0 6px rgba(255, 152, 0, 0.5));
     }
 
     50% {
@@ -76,21 +76,6 @@
     opacity: 0.8;
 }
 
-/* 选中节点时的端口高亮 */
-.node.selected .port-dot {
-    transform: scale(1.3);
-    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.5);
-}
-
-.node.selected .port-input-dot {
-    background: #ff9800;
-    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.5);
-}
-
-.node.selected .port-output-dot {
-    background: #ff9800;
-    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.5);
-}
 
 /* 连接线悬停时，如果是淡化状态，也应有基本悬停效果 */
 .connection-path.permanent-connection.dimmed:hover {

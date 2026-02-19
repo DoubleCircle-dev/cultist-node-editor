@@ -1,33 +1,5 @@
 /* 右键菜单样式 */
 
-/* 节点右键菜单样式 */
-.node-context-menu {
-    position: fixed;
-    display: none;
-    background: #252526;
-    border: 1px solid #3e3e42;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    z-index: 999999;
-    min-width: 150px;
-    padding: 4px 0;
-}
-
-.context-menu-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background 0.2s;
-    color: #cccccc;
-    font-size: 13px;
-}
-
-.context-menu-item:hover {
-    background: #094771;
-    color: #ffffff;
-}
-
 .menu-icon {
     margin-right: 8px;
     font-size: 14px;
@@ -35,26 +7,6 @@
 
 .menu-text {
     flex: 1;
-}
-
-/* 右键菜单分隔符 */
-.context-menu-separator {
-    height: 1px;
-    background: #3e3e42;
-    margin: 4px 0;
-}
-
-/* 全局右键菜单样式 */
-.global-context-menu {
-    position: fixed;
-    display: none;
-    background: #252526;
-    border: 1px solid #3e3e42;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    z-index: 999999;
-    min-width: 150px;
-    padding: 4px 0;
 }
 
 /* 撤销按钮样式 */
@@ -70,3 +22,76 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* 节点右键菜单样式 */
+.node-context-menu,
+.global-context-menu {
+    position: fixed;
+    display: none;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: var(--z-context-menu);
+    min-width: 150px;
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.context-menu-item:hover {
+    background: var(--menu-highlight);
+    color: white;
+}
+
+/* 右键菜单分隔符 */
+.context-menu-separator {
+    height: 1px;
+    background: var(--border-color);
+    margin: 4px 0;
+}
+
+/* exProperties菜单样式 */
+.ex-properties-menu {
+    position: absolute;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: var(--z-context-menu);
+    min-width: 150px;
+    padding: 4px 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.ex-properties-menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: var(--text-primary);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ex-properties-menu-item:hover {
+    background: var(--menu-highlight);
+    color: white;
+}
+
+.ex-properties-menu-item .menu-icon {
+    color: var(--accent-purple);
+    font-size: 14px;
+}
+
+

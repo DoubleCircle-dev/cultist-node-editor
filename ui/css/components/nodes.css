@@ -1,4 +1,3 @@
-/* 节点样式 */
 .node {
     position: absolute;
     width: 300px;
@@ -10,50 +9,31 @@
     user-select: none;
     font-family: var(--font-sans);
     box-shadow: var(--shadow-sm);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    z-index: var(--z-node);
 }
 
-/* 选中节点的样式 */
 .node.selected {
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 2px var(--accent-primary);
-    z-index: 1001;
+    z-index: var(--z-node-selected);
 }
 
-/* 拖拽时的样式 */
 .node.dragging {
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 2px var(--accent-primary), var(--shadow-md);
     opacity: 0.95;
-    cursor: grabbing !important;
-    z-index: 10000;
+    cursor: grabbing;
+    z-index: var(--z-node-dragging);
 }
 
-/* 固定时的样式 */
-.node.fixed {
-        opacity: 0.7;
-        border-color: var(--text-muted);
-        pointer-events: none;
-        /* 固定节点不可拖拽、选中，但依然显示连接线 */
-    }
-
-.node.fixed .node-header,
-.node.fixed .node-content,
-.node.fixed .port-hub-item {
-    pointer-events: none;
-}
-
-/* 锁定时的样式 */
+.node.fixed,
 .node.locked {
     opacity: 0.7;
     border-color: var(--text-muted);
     pointer-events: none;
-    /* 锁定节点不可更改属性内容，但仍可拖动*/
+    /* 固定节点完全不可交互；锁定节点若需保留拖动，需单独处理 */
 }
-
-.node.locked .node-header,
-.node.locked .node-content,
-.node.locked .port-hub-item,
 
 .node-header {
     display: flex;
@@ -110,7 +90,6 @@
     background: var(--bg-secondary);
 }
 
-/* 端口中心布局 - 双列显示 */
 .node-port-hub {
     margin-top: 15px;
     padding-top: 10px;
@@ -119,7 +98,7 @@
     box-sizing: border-box;
 }
 
-.node .ports-container {
+.ports-container {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
