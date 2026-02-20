@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -64,12 +64,50 @@
           <button class="btn btn-secondary" onclick="loadGraph()">
             📂 加载 JSON
           </button>
-          <button id="btn-readMod" class="btn btn-secondary" onclick="readMod()">
+          <button
+            id="btn-readMod"
+            class="btn btn-secondary"
+            onclick="readMod()"
+          >
             🔧 读取mod
           </button>
-          <button class="btn" onclick="clearCanvas()">
-            🗑️ 清空画布
-          </button>
+          <button class="btn" onclick="clearCanvas()">🗑️ 清空画布</button>
+        </div>
+
+        <!-- 调试生成任意节点 -->
+        <div
+          style="
+            margin-top: 12px;
+            border-top: 1px solid #444;
+            padding-top: 10px;
+          "
+        >
+          <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #ffaa00">
+            🪲 调试
+          </h4>
+          <div style="display: flex; gap: 5px">
+            <select
+              id="debugNodeSelect"
+              style="
+                flex: 1;
+                padding: 6px;
+                background: #2a2a2a;
+                color: #eee;
+                border: 1px solid #555;
+                border-radius: 4px;
+                width: 50%;
+              "
+            >
+              <!-- 选项由JavaScript动态生成，包含nodeTypes.js中所有节点 -->
+            </select>
+            <button
+              class="btn btn-secondary"
+              style="width: auto"
+              onclick="addSelectedDebugNode()"
+            >
+              添加
+            </button>
+          </div>
         </div>
 
         <div class="node-palette">
@@ -80,32 +118,16 @@
 
       <div class="editor-area">
         <div class="toolbar">
-          <button
-            class="btn"
-            style="width: auto"
-            onclick="addTestNode()"
-          >
+          <button class="btn" style="width: auto" onclick="addTestNode()">
             添加测试节点
           </button>
-          <button
-            class="btn"
-            style="width: auto"
-            onclick="addBlankNode()"
-          >
+          <button class="btn" style="width: auto" onclick="addBlankNode()">
             引入json文件
           </button>
-          <button
-            class="btn"
-            style="width: auto"
-            onclick="addTestNode()"
-          >
+          <button class="btn" style="width: auto" onclick="addTestNode()">
             引入素材文件
           </button>
-          <button
-            class="btn"
-            style="width: auto"
-            onclick="addTestNode()"
-          >
+          <button class="btn" style="width: auto" onclick="addTestNode()">
             原版游戏文件（！如果修改过请引用修改后的文件）
           </button>
           <span style="margin-left: auto; font-size: 12px; color: #888"
@@ -145,6 +167,5 @@
     <script src="nodeTypes.js"></script>
     <script src="basicOP.js"></script>
     <script src="webview.js"></script>
-
   </body>
 </html>

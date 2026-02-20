@@ -22,8 +22,6 @@ class NodeManager {
         // === 连接端口 ===
         '.port-dot',                // 端口圆点（用于连接线）
         '.port-item',           // 端口项整体
-        '.port-connector',          // 属性端口连接器
-        '.property-port-dot',       // 属性端口圆点
         '.inner-port',              // 内部端口（port-hub内部）
 
         // === 按钮和可点击元素 ===
@@ -71,8 +69,6 @@ class NodeManager {
         // === 连接端口 ===
         '.port-dot',                // 端口圆点（用于连接线）
         '.port-item',           // 端口项整体
-        '.port-connector',          // 属性端口连接器
-        '.property-port-dot',       // 属性端口圆点
         '.inner-port',              // 内部端口（port-hub内部）
 
         // === 按钮和可点击元素 ===
@@ -2000,9 +1996,14 @@ class Node {
         const property = document.createElement('div');
         property.className = 'property-item';
         property.dataset.propKey = key;
+
+        const placeholder = document.createElement('span');
+        placeholder.className = 'port-placeholder';
+
         const propertyLabel = document.createElement('div');
         propertyLabel.className = 'property-label';
         propertyLabel.innerText = prop.label + ':';
+
         if (prop.description) {
             const helpInfo = document.createElement('div');
             helpInfo.className = 'property-help';
@@ -2138,26 +2139,12 @@ class Node {
                 `
                 break;
             case 'port':
-                const portItem = this._createPortItem('prop', prop);
+            case 'selectPort':
+                const portItem = this._createPortItem('prop', prop.type, prop, 'in');
                 const item = document.createElement('div');
                 item.className = 'property-port';
                 item.appendChild(portItem);
                 propertyInput.appendChild(item);
-                // inputHTML = item.outerHTML;
-                // inputHTML =
-                //  `
-                //     <div class="property-port" ${commonAttrs}>
-                //         <div class="port-connector" 
-                //              data-port-type="property"
-                //              data-node-uid="${this.uid}"
-                //              data-prop-key="${key}"
-                //              data-require-type="${prop.requireType || 'any'}"
-                //              data-multi-connect="${prop.multiConnect || false}">
-                //             <span class="port-label">${prop.label}</span>
-                //             <div class="port-dot property-port-dot"></div>
-                //         </div>
-                //     </div>
-                // `;
                 break;
 
             case 'image':
@@ -2177,24 +2164,13 @@ class Node {
 
             case 'port-hub':
                 if (prop.innerPort && Array.isArray(prop.innerPort)) {
-                    let innerPortsHTML = '<div class="port-hub-inner">';
+                    const portHub = document.createElement('div');
+                    portHub.className = 'property-port-hub';
                     prop.innerPort.forEach((innerPort, innerIndex) => {
-                        innerPortsHTML += `
-                            <div class="inner-port">
-                                <span class="inner-port-label">${innerPort.label}</span>
-                                <div class="port-connector" 
-                                     data-port-type="property"
-                                     data-node-uid="${this.uid}"
-                                     data-prop-key="${key}_${innerIndex}"
-                                     data-require-type="${innerPort.requireType || 'any'}"
-                                     data-multi-connect="${innerPort.multiConnect || false}">
-                                    <div class="port-dot property-port-dot"></div>
-                                </div>
-                            </div>
-                        `;
+                        const portItem = this._createPortItem('prop', innerPort.type, innerPort, 'in');
+                        portHub.appendChild(portItem);
                     });
-                    innerPortsHTML += '</div>';
-                    propertyInput.innerHTML = innerPortsHTML;
+                    propertyInput.appendChild(portHub);
                 }
                 break;
 
@@ -2272,9 +2248,22 @@ class Node {
 
         // 添加当前模式的属性
         this.activeExProperties.forEach((prop, key) => {
-            console.log('属性', prop);
             extendedPropsContainer.appendChild(this._createProperty(prop, key));
         });
+
+        this._updateModePortUI();
+
+    }
+
+    _updateModePortUI() {
+        const selectPorts = this.element.querySelectorAll('.select-port');
+        if (!selectPorts) return;
+
+        console.log('selectPorts', selectPorts);
+
+        selectPorts.forEach((select, index) => {
+            select.querySelector('.port-label').textContent = select.label[this.currentMode];
+        })
 
     }
 
@@ -2332,7 +2321,7 @@ class Node {
     // 添加扩展属性
     _checkBitaddExProperty(prop, index) {
         // 生成属性键
-        const key = `ex_custom_${Date.now()}_${index}`;
+        const key = `ex-custom-${Date.now()}-${index}`;
 
         // 添加到激活的扩展属性
         this.activeExProperties.set(key, {
@@ -2373,7 +2362,7 @@ class Node {
             inputColumn.appendChild(title);
 
             this.config.inputs.forEach((input, index) => {
-                const portElement = this._createPortItem('input', input);
+                const portElement = this._createPortItem('input', input.type, input, 'in');
                 inputColumn.appendChild(portElement);
             });
         }
@@ -2390,7 +2379,7 @@ class Node {
             outputColumn.appendChild(title);
 
             this.config.outputs.forEach((output, index) => {
-                const portElement = this._createPortItem('output', output);
+                const portElement = this._createPortItem('output', output.type, output, 'out');
                 outputColumn.appendChild(portElement);
             });
         }
@@ -2412,13 +2401,15 @@ class Node {
     }
 
     // 创建单个端口项
-    _createPortItem(portType, portData) {
+    _createPortItem(portType, portSubType, portData, portDirect) {
         let portIndex;
         if (this._nextPortIndex[portType] !== undefined) {
             portIndex = this._nextPortIndex[portType]++;
         } else {
             console.error(`端口类型 ${portType} 无法统计`);
         }
+
+        let label = portData.label;
 
         const portId = `${this.uid}-${portType}-${portIndex}`;
 
@@ -2433,29 +2424,34 @@ class Node {
         element.multiConnect = portData.multiConnect === null ? true : portData.multiConnect;
         element.portIndex = portIndex;
 
+        element.label = portData.label;
+
         const portDot = this._createPortDot(element.multiConnect, element.requireType);
 
-        // 根据端口类型分配左右侧
-        switch (portType) {
-            case 'prop':
-            case 'input':
+        if (portSubType === 'selectPort') {
+            label = portData.label[this.currentMode];
+            element.classList.add('select-port');
+        }
+
+        // 根据端口方向分配左右侧
+        switch (portDirect) {
+            case 'in':
                 element.appendChild(portDot);
 
                 const inputLabel = document.createElement('span');
                 inputLabel.className = 'port-label';
-                inputLabel.textContent = portData.label;
+                inputLabel.textContent = label;
                 element.appendChild(inputLabel);
                 break;
-
-            case 'output':
+            case 'out':
                 const outputLabel = document.createElement('span');
                 outputLabel.className = 'port-label';
-                outputLabel.textContent = portData.label;
+                outputLabel.textContent = label;
                 element.appendChild(outputLabel);
 
                 element.appendChild(portDot);
                 break;
-
+            case 'bi':
             default:
                 console.warn(`未知的端口类型: ${portType}`);
                 // 默认情况下创建一个基础端口
@@ -2465,7 +2461,7 @@ class Node {
 
                 const defaultLabel = document.createElement('span');
                 defaultLabel.className = 'port-label';
-                defaultLabel.textContent = portData.label || '未命名端口';
+                defaultLabel.textContent = label || '未命名端口';
                 element.appendChild(defaultLabel);
                 break;
         }

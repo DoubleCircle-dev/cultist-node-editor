@@ -2,17 +2,17 @@
     position: absolute;
     width: 120px;
     padding: 12px;
-    background: #252526;
-    border: 1px solid #3e3e42;
-    border-radius: 6px;
-    color: #cccccc;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
     cursor: move;
     user-select: none;
 }
 
 .test-node.selected {
-    border-color: #007acc;
-    box-shadow: 0 0 0 1px #007acc;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 1px var(--accent-primary);
 }
 
 /* 调试按钮组容器 */
