@@ -95,6 +95,100 @@ function addBlankNode() {
     addNode('blank');
 }
 
+// 撤销上一次操作
+function undoLastAction() {
+    if (actionManager) {
+        actionManager.undoLastAction();
+    }
+}
+
+// 重做上一次撤销的操作
+function redoLastAction() {
+    if (actionManager) {
+        actionManager.redoLastAction();
+    }
+}
+
+function testCommunication() {
+    vscode.postMessage({
+        command: "test",
+        message: "测试通信",
+    });
+}
+
+function generateTest() {
+    for (let index = 0; index < 1000; index++) {
+        addTestNode();
+    }
+
+    vscode.postMessage({
+        command: "generateTest",
+        message: "生成测试",
+    });
+
+}
+
+function toggleConsole() {
+    vscode.postMessage({
+        command: "openConsole",
+        message: "打开控制台",
+    });
+}
+
+function customCheck() {
+    vscode.postMessage({
+        command: "customCheck",
+        message: "自定义检查",
+    });
+}
+
+function toggleConnections() {
+    const hidden = actionManager.toggleConnections();
+    document.getElementById('toggle-connections').textContent = hidden ? '显示连接' : '隐藏连接';
+}
+
+function changeMode(mode) {
+    const btns = document.querySelectorAll('.view-btn');
+    let found = false;
+    let currentMode = actionManager.getMode();
+    let currentModeButton = null;
+
+    btns.forEach(btn => {
+        updateStatus(btn.dataset);
+
+        if (btn.dataset.mode === currentMode) {
+            currentModeButton = btn;
+        }
+        if (btn.dataset.mode === mode) {
+            found = true;
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    })
+
+    if (!found) {
+        console.warn('❌ 未找到模式按钮');
+
+        if (!currentModeButton) {
+            console.error('❌ 未找到当前模式按钮');
+            return;
+        }
+        currentModeButton.classList.add('active');
+    }
+
+
+    actionManager.setMode(mode);
+    // updateStatus("模式已切换为" + mode);
+}
+
+function fitView() {
+    actionManager.fitView();
+}
+
+function setScale(scale) {
+    actionManager.setZoom(scale);
+}
 
 // 初始化函数
 function initWebview() {
@@ -165,62 +259,8 @@ function initWebview() {
                 break;
         }
     });
-}
 
-// 撤销上一次操作
-function undoLastAction() {
-    if (actionManager) {
-        actionManager.undoLastAction();
-    }
-}
-
-// 重做上一次撤销的操作
-function redoLastAction() {
-    if (actionManager) {
-        actionManager.redoLastAction();
-    }
-}
-
-function testCommunication() {
-    vscode.postMessage({
-        command: "test",
-        message: "测试通信",
-    });
-}
-
-function generateTest() {
-    for (let index = 0; index < 1000; index++) {
-        addTestNode();
-    }
-
-    vscode.postMessage({
-        command: "generateTest",
-        message: "生成测试",
-    });
-
-}
-
-function toggleConsole() {
-    vscode.postMessage({
-        command: "openConsole",
-        message: "打开控制台",
-    });
-}
-
-function customCheck() {
-    vscode.postMessage({
-        command: "customCheck",
-        message: "自定义检查",
-    });
-}
-
-
-function viewportToCanvas(canvas, x, y, transform) {
-    const rect = canvas.getBoundingClientRect();
-    return {
-        x: (x - rect.left - transform.x) / transform.scale,
-        y: (y - rect.top - transform.y) / transform.scale,
-    };
+    changeMode('select');
 }
 
 // 自动初始化
@@ -228,4 +268,12 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initWebview);
 } else {
     initWebview();
+}
+
+function viewportToCanvas(canvas, x, y, transform) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: (x - rect.left - transform.x) / transform.scale,
+        y: (y - rect.top - transform.y) / transform.scale,
+    };
 }

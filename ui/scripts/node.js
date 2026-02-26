@@ -792,4 +792,4 @@ class Node {
     }
 
 }
-// window.Node = Node;
+window.Node = Node;

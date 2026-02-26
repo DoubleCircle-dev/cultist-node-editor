@@ -13,6 +13,7 @@
     <!-- 工具类 CSS -->
     <link rel="stylesheet" href="css/utils/status.css" />
     <link rel="stylesheet" href="css/utils/layout_tools.css" />
+    <link rel="stylesheet" href="css/utils/viewControl.css" />
 
     <!-- 组件 CSS（按需调整顺序） -->
     <link rel="stylesheet" href="css/components/connections.css" />
@@ -186,13 +187,45 @@
             (0,0) | (0,0)
           </span>
         </div>
+
+        <div class="view-controls">
+          <div class="control-row">
+            <button class="view-btn" data-mode="select" title="选择模式 (H)" onclick="changeMode('select')">
+              选择
+            </button>
+            <button class="view-btn" data-mode="drag" title="拖拽视图 (G)" onclick="changeMode('drag')">
+              拖拽
+            </button>
+            <button class="view-btn" data-mode="focus" title="专注模式 (F)" onclick="changeMode('focus')">
+              专注
+            </button>
+          </div>
+          <div class="control-row">
+            <button id="toggle-connections" title="隐藏连接线" onclick="toggleConnections()">隐藏连接</button>
+            <button id="fit-view" title="适应视图" onclick="fitView()">适应视图</button>
+          </div>
+          <div class="control-row" style="align-items: center">
+            <span style="color: #eee">缩放</span>
+            <input
+              type="range"
+              id="zoom-slider"
+              min="0.1"
+              max="5"
+              step="0.01"
+              value="1"
+              oninput="setScale(this.value)"
+            />
+            <span id="zoom-percent">100%</span>
+          </div>
+        </div>
       </div>
     </div>
   </body>
+  <script src="scripts/index.js"></script>
   <script src="scripts/basicManager.js"></script>
   <script src="scripts/nodeTypes.js"></script>
   <script src="scripts/node.js"></script>
   <script src="scripts/nodeManager.js"></script>
-  <script src="scripts/index.js"></script>
-  <script src="scripts/webview.js"></script>
+  <script src="scripts/debug.js"></script>
+  <!-- <script src="scripts/webview.js"></script> -->
 </html>

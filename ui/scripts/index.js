@@ -1,8 +1,11 @@
+/* eslint-env browser */
 // 浏览器中使用的兼容版本
+
 
 // 创建全局管理器实例
 let actionManager = null;
 let nodeManager = null;
+
 
 // 更新状态显示
 function updateStatus(text) {
@@ -61,7 +64,7 @@ function clearCanvas() {
 
 // 添加测试节点（直接在Webview中）
 function addTestNode() {
-    addNode('test', Math.random() * (canvas.clientWidth - 150), Math.random() * (canvas.clientHeight - 100));
+    addNode('test');
 }
 
 // 添加节点
@@ -81,36 +84,56 @@ function addBlankNode() {
 }
 
 
-// 初始化函数
-function initWebview() {
-    updateStatus("已连接");
+function toggleConnections() {
+    const hidden = actionManager.toggleConnections();
+    document.getElementById('toggle-connections').textContent = hidden ? '显示连接' : '隐藏连接';
+}
 
-    const canvas = document.getElementById('canvas');
-    if (!canvas) {
-        console.error('❌ Canvas 元素未找到');
-        setTimeout(initWebview, 100);
-        return;
-    }
+function changeMode(mode){
+    const btns = document.querySelectorAll('.view-btn');
+    let found = false;
+    let currentMode = actionManager.getMode();
+    let currentModeButton = null;
 
-    if (!nodeManager) {
-        nodeManager = new NodeManager(canvas, updateStatus); // 节点管理器实例
-        console.log('nodeManager 加载中');
-        setTimeout(initWebview, 100);
-        return;
-    }
+    btns.forEach(btn => {
+        updateStatus(btn.dataset);
 
-    if (!actionManager) {
-        if (!nodeManager) {
-            console.error('❌ nodeManager 未初始化');
+        if (btn.dataset.mode === currentMode) {
+            currentModeButton = btn;
+        }
+        if (btn.dataset.mode === mode) {
+            found = true;
+            btn.classList.add('active');
+        }else {
+            btn.classList.remove('active');
+        }
+    })
+
+    if (!found) {
+        console.warn('❌ 未找到模式按钮');
+
+        if (!currentModeButton) {
+            console.error('❌ 未找到当前模式按钮');
             return;
         }
-        actionManager = new BasicActionManager(canvas, updateStatus, nodeManager); // 操作管理器实例
-        console.log('actionManager 加载中');
-        setTimeout(initWebview, 100);
-        return;
+        currentModeButton.classList.add('active');
     }
 
+
+    actionManager.setMode(mode);
+    // updateStatus("模式已切换为" + mode);
 }
+
+function fitView() {
+    actionManager.fitView();
+}
+
+function setScale(scale) {
+    updateStatus("缩放比例已设置为" + scale);
+    actionManager.setZoom(scale);
+}
+
+
 
 // 撤销上一次操作
 function undoLastAction() {
@@ -134,9 +157,6 @@ function generateTest() {
     for (let index = 0; index < 1000; index++) {
         addTestNode();
     }
-
-
-
 }
 
 function toggleConsole() {
@@ -147,18 +167,58 @@ function customCheck() {
 
 }
 
+
+// 初始化函数
+function initWebview() {
+    // updateStatus("已连接");
+
+    const canvas = document.getElementById('canvas');
+    const viewport = document.getElementById('canvas-container');
+    if (!canvas) {
+        console.error('❌ Canvas 元素未找到');
+        setTimeout(initWebview, 100);
+        return;
+    }
+
+    if (!nodeManager) {
+        nodeManager = new NodeManager(viewport, canvas, updateStatus); // 节点管理器实例
+        console.log('nodeManager 加载中');
+        setTimeout(initWebview, 100);
+        return;
+    }
+
+    if (!actionManager) {
+        if (!nodeManager) {
+            console.error('❌ nodeManager 未初始化');
+            return;
+        }
+        actionManager = new BasicActionManager(viewport, canvas, updateStatus, nodeManager); // 操作管理器实例
+        console.log('actionManager 加载中');
+        setTimeout(initWebview, 100);
+        return;
+    }
+
+    changeMode('select');
+}
+
+// 自动初始化
+if (document.readyState === 'loading') {
+    updateStatus("正在初始化...");
+    document.addEventListener('DOMContentLoaded', () => {
+        initWebview();
+        updateStatus("初始化完成");
+    });
+} else {
+    initWebview();
+    updateStatus("初始化完成");
+}
+
+// 计算工具
+
 function viewportToCanvas(canvas, x, y, transform) {
     const rect = canvas.getBoundingClientRect();
     return {
         x: (x - rect.left - transform.x) / transform.scale,
         y: (y - rect.top - transform.y) / transform.scale,
     };
-}
-
-
-// 自动初始化
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initWebview);
-} else {
-    initWebview();
 }
