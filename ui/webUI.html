@@ -4,7 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>节点编辑器</title>
-    <link rel="stylesheet" href="style.css" />
+
+    <!-- 根目录 CSS：变量、基础样式、布局 -->
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+
+    <!-- 工具类 CSS -->
+    <link rel="stylesheet" href="css/utils/status.css" />
+    <link rel="stylesheet" href="css/utils/layout_tools.css" />
+
+    <!-- 组件 CSS（按需调整顺序） -->
+    <link rel="stylesheet" href="css/components/connections.css" />
+    <link rel="stylesheet" href="css/components/menus.css" />
+    <link rel="stylesheet" href="css/components/nodes.css" />
+    <link rel="stylesheet" href="css/components/other.css" />
+    <link rel="stylesheet" href="css/components/ports.css" />
+    <link rel="stylesheet" href="css/components/properties.css" />
   </head>
   <body>
     <div class="container">
@@ -83,7 +99,7 @@
           "
         >
           <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #ffaa00">
-            🪲 调试
+            调试
           </h4>
           <div style="display: flex; gap: 5px">
             <select
@@ -113,6 +129,7 @@
         <div class="node-palette">
           <h3>状态</h3>
           <div id="status">等待命令...</div>
+          <span id="canvas-scale-display" style="margin-left: auto">100%</span>
         </div>
       </div>
 
@@ -135,37 +152,47 @@
           >
         </div>
 
-        <div class="canvas" id="canvas">
-          <!-- 这里将显示节点 -->
-          <div
-            id="placeholder"
-            style="
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              text-align: center;
-              color: #666;
-            "
-          >
-            <div style="font-size: 48px; margin-bottom: 16px">🧩</div>
-            <div style="font-size: 16px; margin-bottom: 8px">
-              节点编辑器已就绪
-            </div>
-            <div style="font-size: 12px">
-              从左侧面板添加节点，或点击上方按钮添加测试节点
+        <div class="canvas-viewport" id="canvas-container">
+          <div class="canvas-world" id="canvas">
+            <!-- 这里将显示节点 -->
+            <div
+              id="placeholder"
+              style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                color: #666;
+              "
+            >
+              <div style="font-size: 48px; margin-bottom: 16px">🧩</div>
+              <div style="font-size: 16px; margin-bottom: 8px">
+                节点编辑器已就绪
+              </div>
+              <div style="font-size: 12px">
+                从左侧面板添加节点，或点击上方按钮添加测试节点
+              </div>
             </div>
           </div>
         </div>
 
         <div class="status-bar">
           <span id="status-text">就绪</span>
+          <span
+            id="mouse-coords"
+            style="margin-left: auto; font-family: monospace"
+          >
+            (0,0) | (0,0)
+          </span>
         </div>
       </div>
     </div>
-
-    <script src="nodeTypes.js"></script>
-    <script src="basicOP.js"></script>
-    <script src="webview.js"></script>
   </body>
+  <script src="scripts/basicManager.js"></script>
+  <script src="scripts/nodeTypes.js"></script>
+  <script src="scripts/node.js"></script>
+  <script src="scripts/nodeManager.js"></script>
+  <script src="scripts/index.js"></script>
+  <script src="scripts/webview.js"></script>
 </html>

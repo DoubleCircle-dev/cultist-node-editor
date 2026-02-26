@@ -14,7 +14,14 @@
       "components\\menus.css",
       "style.css"
     ],
-    "scripts": ["nodeTypes.js", "basicOP.js", "webview.js", "debug.js"]
+    "scripts": [
+      "nodeTypes.js",
+      "node.js",
+      "nodeManager.js",
+      "basicManager.js",
+      "webview.js",
+      "debug.js"
+    ]
   },
   "features": {
     "undoRedo": true,
