@@ -154,7 +154,6 @@ function changeMode(mode) {
     let currentModeButton = null;
 
     btns.forEach(btn => {
-        updateStatus(btn.dataset);
 
         if (btn.dataset.mode === currentMode) {
             currentModeButton = btn;

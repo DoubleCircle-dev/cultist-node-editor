@@ -195,9 +195,23 @@ class BasicActionManager {
         return this.mode;
     }
 
+    
+
     fitView() {
         const nodes = Array.from(this.nodesManager.nodes.values());
-        if (nodes.length === 0) return;
+        // 没有节点就恢复初始化
+        if (nodes.length === 0){
+            this.transform = {
+                x: 0,
+                y: 0,
+                scale: 1
+            };
+            this.updateTransform();
+            this.updateZoomDisplay();
+            this.updateStatus('没有节点，请添加节点')
+            return;
+        } 
+            
 
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         nodes.forEach(node => {
@@ -214,8 +228,8 @@ class BasicActionManager {
         const padding = 50;
         const scaleX = (viewportW - padding * 2) / (maxX - minX);
         const scaleY = (viewportH - padding * 2) / (maxY - minY);
-        let newScale = Math.min(scaleX, scaleY, 2);
-        newScale = Math.max(0.2, Math.min(newScale, 5));
+        let newScale = Math.min(scaleX, scaleY);
+        newScale = Math.max(0, newScale);
 
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
