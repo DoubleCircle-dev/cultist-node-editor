@@ -136,6 +136,28 @@ function toggleConsole() {
 }
 
 function customCheck() {
+    const testgenerator = new PropertiesGenerator();
+    const uid = 999999999;
+    const canvas = document.getElementById('canvas');
+
+    const testNode = new Node(999999999, 'blank', 300, 300);
+    canvas.appendChild(testNode.element);
+
+    prop = {
+        label: '要求', type: 'port-hub', inputsDescription: 'requirements: 跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element; tablereqs与requirement类似，区别在于它检测的是桌面上的element。'
+        ,inputsLabel:'要求', inputs: [
+            { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件。' },
+            { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '全局要求', description: '跳转进本交互界面的要求: extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element。' },
+            { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '桌面要求', description: '跳转进本交互界面的要求: tablereqs与requirement类似，区别在于它检测的是桌面上的element。' },
+        ]
+    }
+
+    const hub = testgenerator.createProperty(prop, 0, 999999999);
+
+    testNode.element.appendChild(hub)
+
+    nodeManager.nodes.set(uid, testNode);
+
     vscode.postMessage({
         command: "customCheck",
         message: "自定义检查",

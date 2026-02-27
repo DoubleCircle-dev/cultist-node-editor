@@ -249,7 +249,7 @@ class NodeManager {
         this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e)); // 添加点击事件监听器
         this.canvas.addEventListener('contextmenu', (e) => this.handleContextMenu(e)); // 添加contextmenu事件监听
         this.canvas.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e)); // 添加鼠标按下事件监听器
-        this.canvas.addEventListener('change', (e) => this.handleCanvasChange(e)); // 添加鼠标移动事件监听器
+        this.canvas.addEventListener('change', (e) => this.handleCanvasChange(e)); // 添加属性change监听器 
         // this.canvas.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));  // 添加鼠标移动事件监听器
         // this.canvas.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));    // 添加鼠标松开事件监听器
         // this.canvas.addEventListener('wheel', (e) => this.handleCanvasWheel(e)); // 添加滚轮事件监听器

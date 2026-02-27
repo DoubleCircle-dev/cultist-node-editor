@@ -1,18 +1,589 @@
 /* eslint-disable no-undef */
 // @ts-nocheck
 
+class PropertiesGenerator {
+    constructor() {
+        this.varStack = [];
+    }
+
+    getStackPeek() {
+        return this.varStack[this.varStack.length - 1];
+    }
+
+    // ================== 配置常量 ==================
+
+    static PROPERTY_TYPES = {
+        text: {
+            hasPort: true,
+            style: ['property-input', 'text'],
+            layout: 'full',
+            description: '普通文本输入框，支持 placeholder'
+        },
+        'text-Editor': {
+            hasPort: true,
+            style: ['property-input', 'text'],
+            layout: 'super',
+            description: '文本输入框，样式更为宽松，可以输入大量文本'
+        },
+        number: {
+            hasPort: true,
+            style: ['property-input'],
+            layout: 'dot',
+            description: '数字输入框（浮点），step="any"'
+        },
+        int: {
+            hasPort: true,
+            style: ['property-input', 'int'],
+            layout: 'dot',
+            description: '整数输入框，step="1"，显示数字箭头'
+        },
+        range: {
+            hasPort: false,
+            style: ['range-wrapper', 'property-input', 'range', 'range-value'],
+            layout: 'full',
+            description: '滑块控件，包含实时数值显示'
+        },
+        bool: {
+            hasPort: false,
+            style: ['bool-radio-group', 'bool-option', 'bool-radio-label'],
+            layout: 'half',
+            description: '单选按钮（是/否），支持自定义标签'
+        },
+        checkbox: {
+            hasPort: false,
+            style: ['checkbox-wrapper', 'property-input', 'checkbox'],
+            layout: 'half',
+            description: '复选框，自动调整布局'
+        },
+        select: {
+            hasPort: false,
+            style: ['property-input', 'select'],
+            layout: 'full',
+            description: '下拉选择框，选项值从0开始索引'
+        },
+        'mode-switcher': {
+            hasPort: false,
+            style: ['property-input', 'select', 'mode-switcher'],
+            layout: 'full',
+            description: '特殊下拉框，用于切换模式，高亮显示'
+        },
+        image: {
+            hasPort: true,
+            style: ['image', 'property-input', 'text'],
+            layout: 'dot',
+            description: '图片路径输入，附带浏览按钮'
+        },
+        'image-container': {
+            hasPort: false,
+            style: ['image-container'],
+            layout: 'super',
+            description: '图片容器，用于显示图片'
+        },
+        port: {
+            hasPort: true,
+            style: ['port-item', 'port-dot', 'port-label'],
+            layout: 'full',
+            description: '单个端口项，支持方向、布局、多连接样式'
+        },
+        selectPort: {
+            hasPort: true,
+            style: ['port-item', 'port-dot', 'port-label'],
+            layout: 'full',
+            description: '同 port，仅为类型别名'
+        },
+        'port-hub': {
+            hasPort: false,
+            style: ['property-port-hub', 'ports-container', 'port-column'],
+            layout: 'super',
+            description: '端口集容器，自动将输入/输出端口分列显示'
+        },
+        table: {
+            hasPort: true,
+            style: ['property-table'],
+            layout: 'super',
+            description: '表格控件，支持自定义列'
+        },
+        set: {
+            hasPort: true,
+            style: ['property-set'],
+            layout: 'super',
+            description: '属性集容器'
+        }
+    };
+
+    // 补充样式类名常量（与 Node 类中使用的保持一致）
+    static CLASSES = {
+        PROPERTY: 'property-item',
+        LABEL: 'property-label',
+        HELP: 'property-help',
+        INPUT: 'property-input'
+    };
+
+    // ================== 主入口 ==================
+    createProperty(prop, propId, uid) {
+        const key = prop.label || propId;
+        const value = prop.default !== undefined ? prop.default : '';
+        const propType = PropertiesGenerator.PROPERTY_TYPES[prop.type];
+
+        if (!propType) {
+            console.error(`未知的属性类型：${prop.type}`);
+            return;
+        }
+
+        this.varStack.push({ uid, prop, key, value, propType });
+
+        let result = null;
+        switch (prop.type) {
+            case 'port':
+            case 'selectPort':
+                result = this._createPortItem();
+                break;
+            case 'port-hub':
+                result = this._createPortHub();
+                break;
+            default:
+                result = this._createStandardProperty();
+                break;
+        }
+
+        this.varStack.pop();
+        return result;
+    }
+
+    // ================== 端口项创建 ==================
+    _createPortItem() {
+        if (!this.getStackPeek()) return null;
+        const { prop, key, value, propType } = this.getStackPeek();
+        const direction = prop.direction || 'in';
+        const layout = propType.layout || 'full';
+
+        const portItem = document.createElement('div');
+        portItem.classList.add('port-item');
+
+        // 如果有描述，整个端口区域显示帮助提示
+        if (prop.description) {
+            portItem.title = prop.description;
+        } else if (layout === 'dot') {
+            // dot 模式且无描述时，用标签作为提示
+            portItem.title = prop.label;
+        }
+
+        portItem.dataset.portType = 'prop';
+        portItem.dataset.requireType = prop.requireType || 'any';
+
+        // 创建端口圆点
+        const dot = this._createPortDot(prop.multiConnect !== false, portItem.dataset.requireType);
+
+        // 创建内容区域（标签 + 控件）
+        const contentArea = document.createElement('div');
+        contentArea.className = 'port-label';
+
+        if (layout !== 'dot') {
+            // 标签文本
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = `${prop.label}`;
+            contentArea.appendChild(labelSpan);
+
+            // 输入控件（如果类型需要控件）
+            if (prop.type !== 'port' && prop.type !== 'selectPort') {
+                const control = this._createControl(); // 不再传参
+                if (control) contentArea.appendChild(control);
+            }
+        } else {
+            // dot 模式：已通过 portItem.title 提示
+        }
+
+        // 根据方向组装
+        if (direction === 'out') {
+            portItem.appendChild(contentArea);
+            portItem.appendChild(dot);
+            portItem.classList.add('port-outputs');
+        } else {
+            portItem.appendChild(dot);
+            portItem.appendChild(contentArea);
+            portItem.classList.add('port-inputs');
+        }
+
+        return portItem;
+    }
+
+    _createPortDot(multi, requireType) {
+        const dot = document.createElement('div');
+        dot.className = 'port-dot';
+        dot.classList.add(multi ? 'multi' : 'single');
+
+        // 设置端口颜色（安全获取全局变量）
+        let color = 'var(--node-blank)';
+        if (typeof nodeColorVars !== 'undefined' && nodeColorVars[requireType]) {
+            color = nodeColorVars[requireType];
+        }
+        // dot.style.setProperty('--port-color', color);
+        // 同时设置背景色或边框色（根据 single/multi 不同样式）
+        if (multi) {
+            dot.style.backgroundColor = `${color}`;
+        } else {
+            dot.style.borderBottomColor = `${color}`;
+        }
+
+        return dot;
+    }
+
+    // ================== 端口集创建 ==================
+    _createPortHub() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop, uid } = stack;
+
+        const portHub = document.createElement('div');
+        portHub.className = 'node-port-hub';
+
+        const portsContainer = document.createElement('div');
+        portsContainer.className = 'ports-container';
+
+        // 输入端口列
+        if (prop.inputs && Array.isArray(prop.inputs) && prop.inputs.length > 0) {
+            const inputColumn = document.createElement('div');
+            inputColumn.className = 'port-column port-inputs';
+
+            const title = document.createElement('div');
+            title.className = 'port-column-title';
+            title.textContent = prop.inputsLabel || '输入端口';
+            inputColumn.appendChild(title);
+
+
+            prop.inputs.forEach((inputPort, idx) => {
+                // 为每个输入端口构建临时属性并压栈
+                const tempProp = {
+                    ...inputPort,
+                    label: inputPort.label || `输入${idx}`,
+                    type: inputPort.type || 'port',
+                    direction: 'in'
+                };
+                this.varStack.push({
+                    uid,
+                    prop: tempProp,
+                    key: `input-${idx}`,
+                    value: '',
+                    propType: PropertiesGenerator.PROPERTY_TYPES[tempProp.type] || PropertiesGenerator.PROPERTY_TYPES.port
+                });
+                const portItem = this._createPortItem();
+                if (portItem) inputColumn.appendChild(portItem);
+                this.varStack.pop();
+            });
+
+            portsContainer.appendChild(inputColumn);
+        }
+
+        // 输出端口列
+        if (prop.outputs && Array.isArray(prop.outputs) && prop.outputs.length > 0) {
+            const outputColumn = document.createElement('div');
+            outputColumn.className = 'port-column port-outputs';
+
+            const title = document.createElement('div');
+            title.className = 'port-column-title';
+            title.textContent = prop.outputsLabel || '输出端口';
+            outputColumn.appendChild(title);
+
+            prop.outputs.forEach((outputPort, idx) => {
+                const tempProp = {
+                    ...outputPort,
+                    label: outputPort.label || `输出${idx}`,
+                    type: outputPort.type || 'port',
+                    direction: 'out'
+                };
+                this.varStack.push({
+                    uid,
+                    prop: tempProp,
+                    key: `output-${idx}`,
+                    value: '',
+                    propType: PropertiesGenerator.PROPERTY_TYPES[tempProp.type] || PropertiesGenerator.PROPERTY_TYPES.port
+                });
+                const portItem = this._createPortItem();
+                if (portItem) outputColumn.appendChild(portItem);
+                this.varStack.pop();
+            });
+
+            portsContainer.appendChild(outputColumn);
+        }
+
+        if (portsContainer.children.length === 0) {
+            return null; // 没有端口时返回空
+        }
+
+        portHub.appendChild(portsContainer);
+        return portHub;
+    }
+
+    // ================== 标准属性项创建 ==================
+    _createStandardProperty() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop, key, value } = stack;
+        const C = PropertiesGenerator.CLASSES;
+
+        const container = document.createElement('div');
+        container.className = C.PROPERTY;
+
+        // 标签
+        const label = document.createElement('div');
+        label.className = C.LABEL;
+        label.appendChild(document.createTextNode(`${prop.label}:`));
+
+        if (prop.description) {
+            const help = document.createElement('span');
+            help.className = C.HELP;
+            help.title = prop.description;
+            help.textContent = '?';
+            label.appendChild(help);
+        }
+
+        // 控件（不再传参）
+        const control = this._createControl();
+        container.appendChild(label);
+        if (control) container.appendChild(control);
+
+        return container;
+    }
+
+    // ================== 统一控件工厂 ==================
+    _createControl() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop } = stack;
+        const type = prop.type;
+        const strategies = {
+            text: () => this._createBasicInput(),
+            'text-Editor': () => this._createBasicInput(), // 可扩展为 textarea
+            number: () => this._createBasicInput(),
+            int: () => {
+                const input = this._createBasicInput();
+                input.classList.add('int');
+                input.step = '1';
+                return input;
+            },
+            range: () => this._createRangeInput(),
+            bool: () => this._createBoolInput(),
+            checkbox: () => this._createCheckboxInput(),
+            select: () => this._createSelectInput(),
+            'mode-switcher': () => this._createSelectInput(),
+            image: () => this._createImageInput(),
+            // 其他类型可继续扩展
+        };
+
+        const handler = strategies[type];
+        return handler ? handler() : this._createBasicInput(); // 默认回退
+    }
+
+    // ================== 具体控件实现 ==================
+    _createBasicInput() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop, key, value } = stack;
+        // 根据 prop.type 决定 input 的 type 属性
+        let inputType = 'text';
+        if (prop.type === 'number' || prop.type === 'int') {
+            inputType = 'number';
+        }
+        const input = document.createElement('input');
+        input.type = inputType;
+        input.className = PropertiesGenerator.CLASSES.INPUT;
+        input.value = value;
+        if (prop.placeholder) input.placeholder = prop.placeholder;
+        this._setCommonAttributes(input);
+        input.addEventListener('change', (e) => this._updateProperty(key, e.target.value));
+        // 对于数字类型，确保数值类型
+        if (inputType === 'number') {
+            input.addEventListener('input', (e) => {
+                // 可以实时更新，但 change 已足够
+            });
+        }
+        return input;
+    }
+
+    _createRangeInput() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop, key, value } = stack;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'range-wrapper';
+
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.className = `${PropertiesGenerator.CLASSES.INPUT} range`;
+        input.min = prop.min || 0;
+        input.max = prop.max || 100;
+        input.value = value;
+        this._setCommonAttributes(input);
+
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'range-value';
+        valueSpan.textContent = value;
+
+        input.addEventListener('input', (e) => {
+            valueSpan.textContent = e.target.value;
+            this._updateProperty(key, parseFloat(e.target.value));
+        });
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(valueSpan);
+        return wrapper;
+    }
+
+    _createBoolInput() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop, key, value, uid } = stack;
+
+        const group = document.createElement('div');
+        group.className = 'bool-radio-group';
+        const groupId = `bool-${uid}-${key}`;
+
+        const createRadio = (boolVal, labelText) => {
+            const label = document.createElement('label');
+            label.className = 'bool-option';
+
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = groupId;
+            radio.value = String(boolVal);
+            radio.checked = (value === boolVal);
+            this._setCommonAttributes(radio);
+            radio.addEventListener('change', () => this._updateProperty(key, boolVal));
+
+            const span = document.createElement('span');
+            span.className = 'bool-radio-label';
+            span.textContent = labelText;
+
+            label.appendChild(radio);
+            label.appendChild(span);
+            return label;
+        };
+
+        group.appendChild(createRadio(true, prop.labels?.true || '是'));
+        group.appendChild(createRadio(false, prop.labels?.false || '否'));
+        return group;
+    }
+
+    _createCheckboxInput() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop, key, value } = stack;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'checkbox-wrapper';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = `${PropertiesGenerator.CLASSES.INPUT} checkbox`;
+        checkbox.checked = !!value;
+        this._setCommonAttributes(checkbox);
+        checkbox.addEventListener('change', (e) => this._updateProperty(key, e.target.checked));
+
+        wrapper.appendChild(checkbox);
+        return wrapper;
+    }
+
+    _createSelectInput() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop, key, value } = stack;
+        const isModeSwitcher = prop.isModeSwitcher;
+
+        if (!Array.isArray(prop.options)) {
+            console.warn('select 类型需要 options 数组');
+            return document.createElement('div');
+        }
+
+        const select = document.createElement('select');
+        select.className = `${PropertiesGenerator.CLASSES.INPUT} select`;
+        if (isModeSwitcher) {
+            select.classList.add('mode-switcher');
+        }
+        this._setCommonAttributes(select);
+
+        prop.options.forEach((opt, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = opt;
+            if (isModeSwitcher) {
+                if (index === (prop.default || 0)) {
+                    option.selected = true;
+                }
+            } else {
+                if (index === value) option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        return select;
+    }
+
+    _createImageInput() {
+        const stack = this.getStackPeek();
+        if (!stack) return null;
+        const { prop, key, value, uid } = stack;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = `${PropertiesGenerator.CLASSES.INPUT} text`;
+        input.value = value;
+        input.placeholder = '图片文件名';
+        this._setCommonAttributes(input);
+        input.addEventListener('change', (e) => this._updateProperty(key, e.target.value));
+
+        const browseBtn = document.createElement('button');
+        browseBtn.className = 'btn btn-small browse-btn';
+        browseBtn.textContent = '浏览';
+        // 捕获当前 uid 和 key 供回调使用
+        browseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (typeof window.browseImage === 'function') {
+                window.browseImage(uid, key, input);
+            }
+        });
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(browseBtn);
+        return wrapper;
+    }
+
+    // ================== 通用辅助方法 ==================
+    _setCommonAttributes(el) {
+        const stack = this.getStackPeek();
+        if (!stack) return;
+        const { uid, key } = stack;
+        el.dataset.nodeUid = uid;
+        el.dataset.propKey = key;
+        el.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+}
+
 /**
  * 节点类(Node)
  * 用于表示图形界面中的基本元素节点
  * 包含节点的基本属性如位置、尺寸、端口等信息
  */
 class Node {
+
+    static PROPERTY_GENERATOR = new PropertiesGenerator();
+
     constructor(uid, type, x, y, config) {
         this.uid = uid;
         this.type = type;
         this.config = config;
         this.x = x;
         this.y = y;
+
+        if (!config) {
+            this.element = this._createBlankNodeElement();
+            return;
+        }
+
         this.ports = new Map();
         this.data = {};
         this._nextPortIndex = {
@@ -93,16 +664,16 @@ class Node {
         this.data.title = this.config.title;
     }
 
-    // 创建节点DOM元素
-    _createNodeElement() {
+    _createBlankNodeElement() {
         const element = document.createElement('div');
         element.className = 'node';
         element.uid = this.uid;
         element.dataset.nodeType = this.type;
         element.style.left = this.x + 'px';
         element.style.top = this.y + 'px';
-        element.style.borderColor = this.config.color;
+        element.style.borderColor = nodeColorVars['blank'];
         element.locked = false;
+        this.config = window.nodeTypes['blank'];
 
         element.appendChild(this._createHeader());
         // 构建节点HTML结构
@@ -116,8 +687,29 @@ class Node {
 
         element.appendChild(this._createProperties());
 
+
+        element.tabIndex = 0;
+
+        return element;
+    }
+
+    // 创建节点DOM元素
+    _createNodeElement() {
+        const element = document.createElement('div');
+        element.className = 'node';
+        element.uid = this.uid;
+        element.dataset.nodeType = this.type;
+        element.style.left = this.x + 'px';
+        element.style.top = this.y + 'px';
+        element.style.borderColor = this.config.color;
+        element.locked = false;
+
+        element.appendChild(this._createHeader());
+
+        element.appendChild(this._createProperties());
+
         // 创建端口区域
-        element.appendChild(this._createPortsSection());
+        element.appendChild(this._createPortHub());
 
         // 聚焦节点使其可接收键盘事件
         element.tabIndex = 0;
@@ -168,14 +760,14 @@ class Node {
     // 创建属性
     _createProperties() {
         const properties = document.createElement('div');
-        properties.className = 'node-properties';
+        properties.className = 'properties-container';
 
         // 固定属性
         if (this.config.fixedProperties && this.config.fixedProperties.length > 0) {
             const fixedProperties = document.createElement('div');
-            fixedProperties.className = 'node-properties fixed-properties';
+            fixedProperties.className = 'properties-container';
             this.config.fixedProperties.forEach((prop, index) => {
-                fixedProperties.appendChild(this._createProperty(prop, `fixed-${index}`, true));
+                fixedProperties.appendChild(Node.PROPERTY_GENERATOR.createProperty(prop, `fixed-${index}`, this.uid));
             });
             properties.appendChild(fixedProperties);
         }
@@ -183,20 +775,20 @@ class Node {
         // 常规属性
         if (this.config.properties && this.config.properties.length > 0) {
             const regularProperties = document.createElement('div');
-            regularProperties.className = 'node-properties regular-properties';
+            regularProperties.className = 'properties-container';
             this.config.properties.forEach((prop, index) => {
-                regularProperties.appendChild(this._createProperty(prop, `prop-${index}`));
+                regularProperties.appendChild(Node.PROPERTY_GENERATOR.createProperty(prop, `prop-${index}`, this.uid));
             });
             properties.appendChild(regularProperties);
         }
 
         // 扩展属性容器
         const exProperties = document.createElement('div');
-        exProperties.className = 'node-properties extended-properties';
+        exProperties.className = 'properties-container extended-properties-container';
 
         if (this.activeExProperties && this.activeExProperties.size > 0) {
             this.activeExProperties.forEach((prop, key) => {
-                exProperties.appendChild(this._createProperty(prop, key));
+                exProperties.appendChild(Node.PROPERTY_GENERATOR.createProperty(prop, key, this.uid));
             })
         }
         // 检查是否有编号999的exProperties
@@ -217,211 +809,6 @@ class Node {
 
 
         return properties;
-    }
-
-    // 创建单个属性HTML
-    _createProperty(prop, propId) {
-        const value = prop.default !== undefined ? prop.default : '';
-        const key = prop.label || propId;
-        this.propertyValues[key] = value;
-
-        const property = document.createElement('div');
-        property.className = 'property-item';
-        property.dataset.propKey = key;
-
-        const placeholder = document.createElement('span');
-        placeholder.className = 'port-placeholder';
-
-        const propertyLabel = document.createElement('div');
-        propertyLabel.className = 'property-label';
-        propertyLabel.innerText = prop.label + ':';
-
-        if (prop.description) {
-            const helpInfo = document.createElement('div');
-            helpInfo.className = 'property-help';
-            helpInfo.title = prop.description;
-            helpInfo.innerHTML = '?';
-            propertyLabel.appendChild(helpInfo);
-        }
-
-        property.appendChild(propertyLabel);
-
-        const commonAttrs = `data-node-uid="${this.uid}" data-prop-key="${key}"`;
-
-        const propertyInput = document.createElement('div');
-        switch (prop.type) {
-            case 'text':
-                propertyInput.innerHTML = `
-                    <input type="text" 
-                           class="property-input property-text" 
-                           value="${value}"
-                           placeholder="${prop.placeholder || ''}"
-                           ${commonAttrs}
-                           onchange="updateNodeProperty('${this.uid}', '${key}', this.value)"
-                           onclick="event.stopPropagation()">
-                `;
-                break;
-            case 'number':
-            case 'int':
-                propertyInput.innerHTML = `
-                    <input type="number" 
-                           class="property-input property-int" 
-                           value="${value}"
-                           min="${prop.min || ''}"
-                           max="${prop.max || ''}"
-                           step="${prop.type === 'int' ? '1' : 'any'}"
-                           ${commonAttrs}
-                           onchange="updateNodeProperty('${this.uid}', '${key}', ${prop.type === 'int' ? 'parseInt(this.value) || 0' : 'parseFloat(this.value) || 0'})"
-                           onclick="event.stopPropagation()">
-                `;
-                break;
-            case 'range':
-                propertyInput.innerHTML = `
-                    <div class="property-range-wrapper">
-                        <input type="range" 
-                               class="property-input property-range" 
-                               value="${value}"
-                               min="${prop.min || 0}"
-                               max="${prop.max || 100}"
-                               ${commonAttrs}
-                               oninput="updateNodeProperty('${this.uid}', '${key}', parseFloat(this.value)); 
-                                        this.nextElementSibling.textContent = this.value"
-                               onclick="event.stopPropagation()">
-                        <span class="range-value">${value}</span>
-                    </div>
-                `;
-                break;
-            case 'bool':
-                const boolId = `bool-${this.uid}-${propId}`;
-                const trueLabel = prop.labels?.true || '是';
-                const falseLabel = prop.labels?.false || '否';
-                propertyInput.innerHTML = `
-                    <div class="bool-radio-group" data-id="${boolId}">
-                        <label class="bool-option">
-                            <input type="radio" 
-                                   name="${boolId}" 
-                                   value="true"
-                                   ${value === true ? 'checked' : ''}
-                                   ${commonAttrs}
-                                   onchange="updateNodeProperty('${this.uid}', '${key}', true)">
-                            <span class="bool-radio-label">${trueLabel}</span>
-                        </label>
-                        <label class="bool-option">
-                            <input type="radio" 
-                                   name="${boolId}" 
-                                   value="false"
-                                   ${value === false ? 'checked' : ''}
-                                   ${commonAttrs}
-                                   onchange="updateNodeProperty('${this.uid}', '${key}', false)">
-                            <span class="bool-radio-label">${falseLabel}</span>
-                        </label>
-                    </div>
-                `;
-                break;
-
-            case 'checkbox':
-                propertyInput.innerHTML = `
-                    <div class="property-checkbox-wrapper">
-                        <input type="checkbox" 
-                               class="property-input property-checkbox"
-                               ${value ? 'checked' : ''}
-                               ${commonAttrs}
-                               onchange="updateNodeProperty('${this.uid}', '${key}', this.checked)">
-                    </div>
-                `;
-                break;
-            case 'select':
-                // 检查是否为模式切换器
-                const isModeSwitcher = prop.modeSwitcher || false;
-
-                if (isModeSwitcher) {
-                    this.currentMode = prop.default || 0;
-                    // 模式切换器
-                    const options = prop.options.map((opt, i) =>
-                        `<option value="${i}" ${i === this.currentMode ? 'selected' : ''}>${opt}</option>`
-                    ).join('');
-
-                    propertyInput.innerHTML = `
-                        <select class="property-input property-select mode-switcher" 
-                                data-node-uid="${this.uid}"
-                                data-prop-key="${key}">
-                            ${options}
-                        </select>
-                    `;
-                } else {
-                    // 普通select
-                    const options = prop.options.map((opt, i) =>
-                        `<option value="${i}" ${i === value ? 'selected' : ''}>${opt}</option>`
-                    ).join('');
-
-                    propertyInput.innerHTML = `
-                        <select class="property-input property-select" 
-                                ${commonAttrs}
-                                onchange="updateNodeProperty('${this.uid}', '${key}', this.value)">
-                            ${options}
-                        </select>
-                    `;
-                }
-                break;
-            case 'table':
-                propertyInput.innerHTML = `
-                    <div class="property-table" ${commonAttrs}>
-                         
-                    </div>
-                `
-                break;
-            case 'port':
-            case 'selectPort':
-                const portItem = this._createPortItem('prop', prop.type, prop, 'in');
-                const item = document.createElement('div');
-                item.className = 'property-port';
-                item.appendChild(portItem);
-                propertyInput.appendChild(item);
-                break;
-
-            case 'image':
-                propertyInput.innerHTML = `
-                    <div class="property-image">
-                        <input type="text" 
-                               class="property-input property-text" 
-                               value="${value}"
-                               placeholder="图片文件名"
-                               ${commonAttrs}
-                               onchange="updateNodeProperty('${this.uid}', '${key}', this.value)"
-                               onclick="event.stopPropagation()">
-                        <button class="btn btn-small browse-btn" onclick="browseImage('${this.uid}', '${key}', this)">浏览</button>
-                    </div>
-                `;
-                break;
-
-            case 'port-hub':
-                if (prop.innerPort && Array.isArray(prop.innerPort)) {
-                    const portHub = document.createElement('div');
-                    portHub.className = 'property-port-hub';
-                    prop.innerPort.forEach((innerPort, innerIndex) => {
-                        const portItem = this._createPortItem('prop', innerPort.type, innerPort, 'in');
-                        portHub.appendChild(portItem);
-                    });
-                    propertyInput.appendChild(portHub);
-                }
-                break;
-
-            default:
-                console.warn(`未知的属性类型: ${prop.type}`);
-                propertyInput.innerHTML = `
-                    <input type="text" 
-                           class="property-input" 
-                           value="${value}"
-                           ${commonAttrs}
-                           onchange="updateNodeProperty('${this.uid}', '${key}', this.value)"
-                           onclick="event.stopPropagation()">
-                `;
-        }
-
-        property.appendChild(propertyInput);
-
-        return property;
-
     }
 
     // 在Node类中添加
@@ -465,14 +852,13 @@ class Node {
 
         exProps.forEach((prop, index) => {
             const key = `ex-${mode}-${index}`;
-
             this.activeExProperties.set(key, prop);
         });
     }
 
     // 更新模式属性UI
     _updateModePropertiesUI() {
-        const extendedPropsContainer = this.element.querySelector('.extended-properties');
+        const extendedPropsContainer = this.element.querySelector('.extended-properties-container ');
         if (!extendedPropsContainer) return;
 
         // 清空容器
@@ -480,7 +866,9 @@ class Node {
 
         // 添加当前模式的属性
         this.activeExProperties.forEach((prop, key) => {
-            extendedPropsContainer.appendChild(this._createProperty(prop, key));
+            extendedPropsContainer.appendChild(
+                Node.PROPERTY_GENERATOR.createProperty(prop, key, this.uid)
+            );
         });
 
         this._updateModePortUI();
@@ -570,54 +958,16 @@ class Node {
         }
     }
 
-    // 创建端口区域
-    _createPortsSection() {
-        const portHub = document.createElement('div');
-        portHub.className = 'node-port-hub';
-        const portsContainer = this._createPortHub();
-        portHub.appendChild(portsContainer);
-        return portHub;
-    }
     // 创建port hub区域存放连接端口
     _createPortHub() {
-        const portsContainer = document.createElement('div');
-        portsContainer.className = 'ports-container';
 
-        // 左侧输入端口区域
-        const inputColumn = document.createElement('div');
-        inputColumn.className = 'port-column port-inputs';
-
-        if (this.config.inputs && this.config.inputs.length > 0) {
-            const title = document.createElement('div');
-            title.className = 'port-column-title';
-            title.textContent = '输入端口';
-            inputColumn.appendChild(title);
-
-            this.config.inputs.forEach((input, index) => {
-                const portElement = this._createPortItem('input', input.type, input, 'in');
-                inputColumn.appendChild(portElement);
-            });
+        const prop = {
+            label: '属性', type: 'port-hub',
+            inputs: this.config.inputs,
+            outputs: this.config.outputs
         }
-        portsContainer.appendChild(inputColumn);
 
-        // 右侧输出端口区域
-        const outputColumn = document.createElement('div');
-        outputColumn.className = 'port-column port-outputs';
-
-        if (this.config.outputs && this.config.outputs.length > 0) {
-            const title = document.createElement('div');
-            title.className = 'port-column-title';
-            title.textContent = '输出端口';
-            outputColumn.appendChild(title);
-
-            this.config.outputs.forEach((output, index) => {
-                const portElement = this._createPortItem('output', output.type, output, 'out');
-                outputColumn.appendChild(portElement);
-            });
-        }
-        portsContainer.appendChild(outputColumn);
-
-        return portsContainer;
+        return Node.PROPERTY_GENERATOR.createProperty(prop, 'fixed-port-hub', this.uid)
     }
 
     _getPortDirect(portType) {
@@ -792,4 +1142,8 @@ class Node {
     }
 
 }
+
+
+
+
 window.Node = Node;

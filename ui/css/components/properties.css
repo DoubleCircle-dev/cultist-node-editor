@@ -1,18 +1,10 @@
 /* 属性样式 */
 
 /* 基础属性样式 */
-.node-properties {
+.properties-container {
     margin-top: 12px;
     padding-top: 10px;
     border-top: 1px solid var(--border-color);
-}
-
-.property-item {
-    margin: 8px 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
 }
 
 /* 属性描述样式 */
@@ -65,41 +57,49 @@
     box-shadow: 0 0 0 1px var(--accent-primary-shadow);
 }
 
+.property {
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
 /* 文本输入样式 */
-.property-text {
+.property .text {
     font-family: inherit;
 }
 
 /* 限制数字输入框的上下箭头样式 */
-.property-int::-webkit-inner-spin-button,
-.property-int::-webkit-outer-spin-button {
+.property .int::-webkit-inner-spin-button,
+.property .int::-webkit-outer-spin-button {
     opacity: 0.6;
     height: 14px;
 }
 
 /* 单选按钮样式 */
-.bool-radio-group {
+.property .bool-radio-group {
     display: flex;
     gap: 12px;
     width: 100%;
     align-items: center;
 }
 
-.bool-option {
+.property .bool-option {
     display: flex;
     align-items: center;
     cursor: pointer;
     position: relative;
 }
 
-.bool-option input[type="radio"] {
+.property .bool-option input[type="radio"] {
     position: absolute;
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-.bool-radio-label {
+.property .bool-radio-label {
     display: flex;
     align-items: center;
     color: var(--text-primary);
@@ -110,7 +110,7 @@
     line-height: 18px;
 }
 
-.bool-radio-label::before {
+.property .bool-radio-label::before {
     content: '';
     position: absolute;
     left: 0;
@@ -124,7 +124,7 @@
     transition: all 0.2s;
 }
 
-.bool-radio-label::after {
+.property .bool-radio-label::after {
     content: '';
     position: absolute;
     left: 4px;
@@ -137,36 +137,36 @@
     transition: all 0.2s;
 }
 
-.bool-option input[type="radio"]:checked+.bool-radio-label::before {
+.property .bool-option input[type="radio"]:checked+.bool-radio-label::before {
     border-color: var(--accent-primary);
 }
 
-.bool-option input[type="radio"]:checked+.bool-radio-label::after {
+.property .bool-option input[type="radio"]:checked+.bool-radio-label::after {
     transform: translateY(-50%) scale(1);
 }
 
-.bool-option input[type="radio"]:focus+.bool-radio-label::before {
+.property .bool-option input[type="radio"]:focus+.bool-radio-label::before {
     box-shadow: 0 0 0 2px var(--accent-primary-shadow);
 }
 
-.bool-option:hover .bool-radio-label {
+.property .bool-option:hover .bool-radio-label {
     color: var(--accent-primary);
 }
 
 /* 当属性类型是bool-option时，重新组织布局 */
-.property-item:has(.bool-option) {
+.property:has(.bool-option) {
     flex-direction: row;
     align-items: left;
     justify-content: start;
 }
 
-.property-item:has(.bool-option) .property-label {
+.property:has(.bool-option) .label {
     margin-bottom: 0;
     flex: 1;
 }
 
 /* 范围滑块样式 */
-.property-range {
+.property .range {
     width: 100%;
     cursor: pointer;
     height: 4px;
@@ -176,7 +176,7 @@
     margin: 2px 0;
 }
 
-.property-range::-webkit-slider-thumb {
+.property .range::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 12px;
     height: 12px;
@@ -185,7 +185,7 @@
     cursor: pointer;
 }
 
-.property-range::-moz-range-thumb {
+.property .range::-moz-range-thumb {
     width: 12px;
     height: 12px;
     background: var(--accent-primary);
@@ -194,13 +194,13 @@
     border: none;
 }
 
-.property-range::-moz-range-track {
+.property .range::-moz-range-track {
     height: 4px;
     background: var(--border-color);
     border-radius: 2px;
 }
 
-.range-value {
+.property .range-value {
     display: inline-block;
     margin-left: 8px;
     font-size: 11px;
@@ -208,14 +208,14 @@
     min-width: 30px;
 }
 
-.property-range-wrapper {
+.property .range-wrapper {
     display: flex;
     align-items: center;
     width: 90%;
 }
 
 /* 下拉选择框样式 */
-.property-select {
+.property .select {
     cursor: pointer;
     background-color: var(--bg-secondary);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23cccccc' d='M4 6L1 2h6z'/%3E%3C/svg%3E");
@@ -229,13 +229,13 @@
     font-size: 11px;
 }
 
-.property-select option {
+.property .select option {
     background: var(--bg-primary);
     color: var(--text-primary);
 }
 
 /* 模式切换器样式 */
-.mode-switcher {
+.property .mode-switcher {
     background-color: var(--bg-secondary);
     border-color: var(--accent-primary);
     font-weight: 600;
@@ -243,7 +243,7 @@
 }
 
 /* 复选框样式 */
-.property-checkbox {
+.property .checkbox {
     accent-color: var(--accent-primary);
     width: 14px;
     height: 14px;
@@ -254,36 +254,32 @@
     margin-top: 2px;
 }
 
-.property-checkbox-wrapper {
+.property .checkbox-wrapper {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 /* 当属性类型是checkbox时，重新组织布局 */
-.property-item:has(.property-checkbox) {
+.property:has(.checkbox) {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
 }
 
-.property-item:has(.property-checkbox) .property-label {
+.property:has(.checkbox) .label {
     margin-bottom: 0;
     flex: 1;
 }
 
 /* 图片属性样式 */
-.property-image {
+.property .image {
     display: flex;
     gap: 8px;
 }
 
-.property-image .property-input {
-    flex: 1;
-}
-
 /* 范围滑块值显示 */
-.range-value {
+.property .range-value {
     display: inline-block;
     margin-left: 8px;
     font-size: 11px;
@@ -291,32 +287,32 @@
     min-width: 30px;
 }
 
-.property-range-wrapper {
+.property .range-wrapper {
     display: flex;
     align-items: center;
 }
 
 /* 表格属性 */
-.property-table {
+.property .table {
     width: 100%;
     border-collapse: collapse;
     font-size: 11px;
 }
 
-.property-table th,
-.property-table td {
+.property .table th,
+.property .table td {
     border: 1px solid var(--border-color);
     padding: 4px 6px;
     text-align: left;
 }
 
-.property-table th {
+.property .table th {
     background: var(--bg-secondary);
     color: var(--text-secondary);
 }
 
 /* 扩展属性区域样式 */
-.extended-properties {
+.extended-properties-container {
     margin-top: 12px;
     padding-top: 10px;
     border-top: 1px solid var(--border-color);
@@ -374,16 +370,4 @@
     height: 16px;
     visibility: hidden;
     flex-shrink: 0;
-}
-
-/* 在横向排布的属性项中显示占位符 */
-.property-item:has(.bool-option) .port-placeholder,
-.property-item:has(.property-checkbox) .port-placeholder {
-    display: inline-block;
-}
-
-.property-item:has(.bool-option),
-.property-item:has(.property-checkbox) {
-    padding-right: 16px;
-    box-sizing: border-box;
 }
