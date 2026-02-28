@@ -82,7 +82,6 @@ const nodeTypes = {
         label: '职业(legacies)',
         color: nodeColorVars.legacies,
         inputs: [
-            { type: 'port', label: '初始verb', multiConnect: false }
         ],
         outputs: [
         ],
@@ -182,7 +181,7 @@ const nodeTypes = {
             { label: '起始点', type: 'bool', default: false, description: 'craftable: 为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发。' },
             { label: '仅作提示', type: 'bool', default: false, description: 'hintonly: 为真时该recipe无法被实际执行，只做展示描述作用（多用于提示）' }
         ],
-        Properties: [
+        properties: [
             { label: '持续时间', type: 'number', default: 0, description: 'warmup: 该recipe的持续时间，单位为秒。' },
             { label: '描述', type: 'text', default: '结束后显示的文本', description: 'description: 结束后显示的文本' },
             { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: false, description: 'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。' },

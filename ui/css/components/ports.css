@@ -1,7 +1,7 @@
 .port-item {
     display: flex;
     align-items: center;
-    min-height: 28px;
+    min-height: 24px;
     border-radius: var(--radius-lg);
     user-select: none;
     transition: all var(--transition-fast);
@@ -11,8 +11,15 @@
     border: 1px solid var(--border-light);
     padding: 0 10px;
     z-index: 1;
-    overflow: visible;
+    overflow: none;
     position: relative;
+}
+
+.port-item.port-dot-only {
+    width: 20px;
+    height: 24px;
+    padding: 0 0;
+    justify-content: center;
 }
 
 .port-inputs .port-item {
@@ -41,13 +48,16 @@
 
 /* 扩大点击区域 */
 .port-dot::after {
+
+    width: 20px;
+    height: 20px;
+    cursor: crosshair;
+
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 28px;
-    height: 28px;
     border-radius: 50%;
     background: transparent;
     pointer-events: auto;
@@ -58,13 +68,31 @@
 /* 端口容量样式：单连接用三角形，多连接用圆形 */
 .port-dot.single {
     border-radius: 0;
+    top: -5%;
     width: 0;
     height: 0;
     background: none;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
     border-bottom: 12px solid currentColor;
-    /* 颜色继承自父级或单独设置 */
+}
+
+.port-dot.single::after {
+
+    width: 20px;
+    height: 20px;
+    cursor: crosshair;
+
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: transparent;
+    pointer-events: auto;
+    cursor: crosshair;
+    z-index: 3;
 }
 
 .port-dot.multi {

@@ -130,7 +130,10 @@ class PropertiesGenerator {
             return;
         }
 
-        this.varStack.push({ uid, prop, key, value, propType });
+        const layout = propType.layout || 'full';
+        const hasPort = propType.hasPort;
+
+        this.varStack.push({ uid, prop, key, value, layout, hasPort});
 
         let result = null;
         switch (prop.type) {
@@ -153,9 +156,8 @@ class PropertiesGenerator {
     // ================== 端口项创建 ==================
     _createPortItem() {
         if (!this.getStackPeek()) return null;
-        const { prop, key, value, propType } = this.getStackPeek();
+        const {uid, prop, key, value, layout } = this.getStackPeek();
         const direction = prop.direction || 'in';
-        const layout = propType.layout || 'full';
 
         const portItem = document.createElement('div');
         portItem.classList.add('port-item');
@@ -168,8 +170,12 @@ class PropertiesGenerator {
             portItem.title = prop.label;
         }
 
-        portItem.dataset.portType = 'prop';
+        portItem.dataset.nodeId = uid;
+        portItem.dataset.portId = key;
         portItem.dataset.requireType = prop.requireType || 'any';
+        portItem.dataset.portDirect = direction;
+        portItem.dataset.portConnected = false;
+        portItem.dataset.portMulti = prop.multiConnect !== false;
 
         // 创建端口圆点
         const dot = this._createPortDot(prop.multiConnect !== false, portItem.dataset.requireType);
@@ -190,19 +196,24 @@ class PropertiesGenerator {
                 if (control) contentArea.appendChild(control);
             }
         } else {
-            // dot 模式：已通过 portItem.title 提示
+            portItem.append(dot);
+            portItem.classList.add('port-dot-only');
+            portItem.dataset.portDirect = 'in';
+            return portItem;
         }
 
         // 根据方向组装
         if (direction === 'out') {
             portItem.appendChild(contentArea);
             portItem.appendChild(dot);
-            portItem.classList.add('port-outputs');
+            // portItem.classList.add('port-outputs');
         } else {
             portItem.appendChild(dot);
             portItem.appendChild(contentArea);
-            portItem.classList.add('port-inputs');
+            // portItem.classList.add('port-inputs');
         }
+
+        
 
         return portItem;
     }
@@ -232,7 +243,7 @@ class PropertiesGenerator {
     _createPortHub() {
         const stack = this.getStackPeek();
         if (!stack) return null;
-        const { prop, uid } = stack;
+        const { prop, key, uid } = stack;
 
         const portHub = document.createElement('div');
         portHub.className = 'node-port-hub';
@@ -255,16 +266,17 @@ class PropertiesGenerator {
                 // 为每个输入端口构建临时属性并压栈
                 const tempProp = {
                     ...inputPort,
-                    label: inputPort.label || `输入${idx}`,
+                    label: inputPort.label || `${idx}`,
                     type: inputPort.type || 'port',
                     direction: 'in'
                 };
                 this.varStack.push({
                     uid,
                     prop: tempProp,
-                    key: `input-${idx}`,
+                    key: `${key}-input-${idx}`,
                     value: '',
-                    propType: PropertiesGenerator.PROPERTY_TYPES[tempProp.type] || PropertiesGenerator.PROPERTY_TYPES.port
+                    layout: 'full',
+                    hasPort: false,
                 });
                 const portItem = this._createPortItem();
                 if (portItem) inputColumn.appendChild(portItem);
@@ -294,9 +306,10 @@ class PropertiesGenerator {
                 this.varStack.push({
                     uid,
                     prop: tempProp,
-                    key: `output-${idx}`,
+                    key: `${key}-output-${idx}`,
                     value: '',
-                    propType: PropertiesGenerator.PROPERTY_TYPES[tempProp.type] || PropertiesGenerator.PROPERTY_TYPES.port
+                    layout: 'full',
+                    hasPort: false,
                 });
                 const portItem = this._createPortItem();
                 if (portItem) outputColumn.appendChild(portItem);
@@ -311,6 +324,8 @@ class PropertiesGenerator {
         }
 
         portHub.appendChild(portsContainer);
+
+        portHub.dataset.propId = key;
         return portHub;
     }
 
@@ -318,7 +333,7 @@ class PropertiesGenerator {
     _createStandardProperty() {
         const stack = this.getStackPeek();
         if (!stack) return null;
-        const { prop, key, value } = stack;
+        const {uid, prop, key, value, layout, hasPort } = stack;
         const C = PropertiesGenerator.CLASSES;
 
         const container = document.createElement('div');
@@ -336,12 +351,34 @@ class PropertiesGenerator {
             help.textContent = '?';
             label.appendChild(help);
         }
-
         // 控件（不再传参）
         const control = this._createControl();
         container.appendChild(label);
+        if (hasPort) {
+            const tempProp = {
+                label: '',
+                type: 'port',
+                multiConnect: false,
+                direction: 'in',
+                requireType: prop.type || 'text',
+            };
+            this.varStack.push({
+                uid,
+                prop: tempProp,
+                key: `${key}-port`,
+                value: '',
+                layout: 'dot',
+                hasPort: false,
+            });
+
+            const portItem = this._createPortItem();
+            if (portItem) container.appendChild(portItem);
+            this.varStack.pop();
+        }
+
         if (control) container.appendChild(control);
 
+        container.dataset.propId = key;
         return container;
     }
 
@@ -563,6 +600,32 @@ class PropertiesGenerator {
 
 }
 
+class Connection {
+    constructor(id, fromNodeId, fromPortId, toNodeId, toPortId) {
+        this.id = id;
+        this.fromNodeId = fromNodeId;
+        this.fromPortId = fromPortId;
+        this.toNodeId = toNodeId;
+        this.toPortId = toPortId;
+        this.line = null;
+    }
+
+    equals(other) {
+        if (this === other) return true;
+        if (!(other instanceof Connection)) return false;
+
+        return this.fromNodeId === other.fromNodeId &&
+            this.fromPortId === other.fromPortId &&
+            this.toNodeId === other.toNodeId &&
+            this.toPortId === other.toPortId;
+    }
+
+    strictEquals(other) {
+        return this.id === other.id && this.equals(other);
+    }
+}
+
+
 /**
  * 节点类(Node)
  * 用于表示图形界面中的基本元素节点
@@ -584,16 +647,10 @@ class Node {
             return;
         }
 
-        this.ports = new Map();
         this.data = {};
-        this._nextPortIndex = {
-            input: 0,
-            prop: 0,
-            output: 0
-        }
+
         this.connections = {
             inputs: [],
-            props: [],
             outputs: []
         };
 
@@ -605,12 +662,20 @@ class Node {
         this.propertyValues = {};
 
         // 检查是否有 exProperties[999] 并初始化添加按钮
-        this.hasExProperties999 = this.config.exProperties && this.config.exProperties[999];
+        this.hasExProperties999 = false;
+        if (this.exProperties) {
+            if (this.exProperties[999]) {
+                this.hasExProperties999 = true;
+            }
+        }
 
         // 初始化数据
         this._initializeData();
 
         this.element = this._createNodeElement();
+
+        this.ports = new Map();
+        this._initPorts();
 
         // 隐藏占位符
         const placeholder = document.getElementById('placeholder');
@@ -662,6 +727,13 @@ class Node {
 
         // 初始化标题
         this.data.title = this.config.title;
+    }
+
+    _initPorts() {
+        Array.from(this.element.getElementsByClassName('port-item')).forEach(port => {
+            const portId = port.dataset.portId;
+            this.ports.set(portId, port);
+        })
     }
 
     _createBlankNodeElement() {
@@ -813,6 +885,12 @@ class Node {
 
     // 在Node类中添加
     switchNodeMode(propKey, newMode) {
+
+        if (this.connections.length > 0) {
+            alert('节点有连接，无法切换模式');
+            return;
+        }
+
         // 保存当前模式的属性值
         if (this.currentMode !== null) {
             this._saveModeProperties(this.currentMode);
@@ -826,6 +904,8 @@ class Node {
 
         // 更新UI
         this._updateModePropertiesUI();
+
+        this._initPorts();
     }
 
     // 保存当前模式的属性值
@@ -962,112 +1042,12 @@ class Node {
     _createPortHub() {
 
         const prop = {
-            label: '属性', type: 'port-hub',
+            label: 'portHub', type: 'port-hub',
             inputs: this.config.inputs,
             outputs: this.config.outputs
         }
 
         return Node.PROPERTY_GENERATOR.createProperty(prop, 'fixed-port-hub', this.uid)
-    }
-
-    _getPortDirect(portType) {
-        switch (portType) {
-            case 'input':
-            case 'prop':
-                return 'in'
-            case 'output':
-                return 'out'
-            default:
-                return 'bi' // bidirectional
-        }
-    }
-
-    // 创建单个端口项
-    _createPortItem(portType, portSubType, portData, portDirect) {
-        let portIndex;
-        if (this._nextPortIndex[portType] !== undefined) {
-            portIndex = this._nextPortIndex[portType]++;
-        } else {
-            console.error(`端口类型 ${portType} 无法统计`);
-        }
-
-        let label = portData.label;
-
-        const portId = `${this.uid}-${portType}-${portIndex}`;
-
-        // 创建DOM元素
-        const element = document.createElement('div');
-        element.className = `port-item`;
-        element.nodeId = this.uid;
-        element.portId = portId;
-        element.portDirect = this._getPortDirect(portType);
-        element.portType = portType;
-        element.requireType = portData.requireType || this.type;
-        element.multiConnect = portData.multiConnect === null ? true : portData.multiConnect;
-        element.portIndex = portIndex;
-
-        element.label = portData.label;
-
-        const portDot = this._createPortDot(element.multiConnect, element.requireType);
-
-        if (portSubType === 'selectPort') {
-            label = portData.label[this.currentMode];
-            element.classList.add('select-port');
-        }
-
-        // 根据端口方向分配左右侧
-        switch (portDirect) {
-            case 'in':
-                element.appendChild(portDot);
-
-                const inputLabel = document.createElement('span');
-                inputLabel.className = 'port-label';
-                inputLabel.textContent = label;
-                element.appendChild(inputLabel);
-                break;
-            case 'out':
-                const outputLabel = document.createElement('span');
-                outputLabel.className = 'port-label';
-                outputLabel.textContent = label;
-                element.appendChild(outputLabel);
-
-                element.appendChild(portDot);
-                break;
-            case 'bi':
-            default:
-                console.warn(`未知的端口类型: ${portType}`);
-                // 默认情况下创建一个基础端口
-                const defaultDot = document.createElement('div');
-                defaultDot.className = 'port-dot';
-                element.appendChild(defaultDot);
-
-                const defaultLabel = document.createElement('span');
-                defaultLabel.className = 'port-label';
-                defaultLabel.textContent = label || '未命名端口';
-                element.appendChild(defaultLabel);
-                break;
-        }
-
-        this.ports.set(portId, element);
-
-        return element;
-    }
-
-    _createPortDot(multi, requireType) {
-        const dot = document.createElement('div');
-
-        dot.className = 'port-dot';
-
-        if (multi) {
-            dot.classList.add('multi');
-            dot.style.backgroundColor = nodeColorVars[requireType] || '#000000';
-        } else {
-            dot.classList.add('single');
-            dot.style.backgroundColor = 'none';
-            dot.style.borderBottomColor = nodeColorVars[requireType] || '#000000';
-        }
-
-        return dot;
     }
 
     // 锁定节点
@@ -1081,25 +1061,22 @@ class Node {
     }
 
     // 获取端口
-    getPort(portIndex, portType) {
-        const portId = `${this.uid}-${portType}-${portIndex}`;
+    getPort(portId) {
         const port = this.ports.get(portId)
         if (!port) {
-            console.error(`节点 ${this.uid} 没有端口 ${portIndex} (${portType})`);
-            console.warn(`节点端口列表:`, this.ports);
-            return null;
+            throw new Error(`节点 ${this.uid} 没有端口 ${portId}，请检查端口`, {
+                cause: this.ports
+            });
         }
         return port;
     }
 
     // 获取连接
-    getConnections(portId, portType) {
-        switch (portType) {
-            case 'input':
+    getConnections(portId, portDirect) {
+        switch (portDirect) {
+            case 'in':
                 return this.connections.inputs.get(portId) || [];
-            case 'prop':
-                return this.connections.props.get(portId) || [];
-            case 'output':
+            case 'out':
                 return this.connections.outputs.get(portId) || [];
             default:
                 console.error(`未知的端口类型: ${portType}`);
@@ -1110,17 +1087,14 @@ class Node {
 
     getAllConnections() {
         return [...this.connections.inputs.values(),
-        ...this.connections.props.values(),
         ...this.connections.outputs.values()].flatMap(connections => connections);
     }
 
-    _getConnectionsSet(portType) {
-        switch (portType) {
-            case 'input':
+    _getConnectionsSet(portDirect) {
+        switch (portDirect) {
+            case 'in':
                 return this.connections.inputs;
-            case 'prop':
-                return this.connections.props;
-            case 'output':
+            case 'out':
                 return this.connections.outputs;
             default:
                 console.error(`未知的端口类型: ${portType}`);
@@ -1128,12 +1102,19 @@ class Node {
     }
 
     // 添加连接
-    addConnection(connection, portType, portIndex) {
-        const connections = this._getConnectionsSet(portType);
-        if (!connections[portIndex]) {
-            connections[portIndex] = [];
+    addConnection(connection) {
+        if (parseInt(connection.toNodeId) === parseInt(this.uid)) {
+            this.connections.inputs.push(connection);
+            return true;
         }
-        connections[portIndex].push(connection);
+
+        if (parseInt(connection.fromNodeId) === parseInt(this.uid)) {
+            this.connections.outputs.push(connection);
+            return true;
+        }
+
+        console.error(`连接 ${connection.id} 与本节点 ${this.uid} 无关`);
+        return false
     }
 
     scale(scale) {
