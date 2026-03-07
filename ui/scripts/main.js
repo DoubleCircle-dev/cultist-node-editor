@@ -1,0 +1,297 @@
+import import { NodeManager } from './managers/nodeManager.js';
+
+// 全局变量管理
+const vscode = acquireVsCodeApi();
+
+// 创建全局管理器实例
+let actionManager = null;
+let nodeManager = null;
+
+// 更新状态显示
+function updateStatus(text) {
+    const statusElement = document.getElementById("status");
+    const statusTextElement = document.getElementById("status-text");
+
+    if (statusElement) {
+        statusElement.innerHTML = text;
+    }
+    if (statusTextElement) {
+        statusTextElement.textContent = text;
+    }
+
+    console.log(`状态更新---${text}`);
+}
+
+// todo 读取mod生成节点图
+function readMod() {
+    updateStatus("读取mod中，请选择synopsis.json，如果mod文件夹内项目过多，读取时间可能较长");
+    vscode.postMessage({
+        command: "readMod",
+        message: "读取mod文件",
+    });
+}
+
+// todo 保存图表
+function saveGraph() {
+    const graphData = {
+        nodes: [],
+        connections: [],
+        metadata: {
+            created: new Date().toISOString(),
+            version: "1.0",
+        },
+    };
+
+    updateStatus("保存图表...");
+    vscode.postMessage({
+        command: "saveGraph",
+        data: graphData,
+    });
+}
+
+// todo 加载图表
+function loadGraph() {
+    updateStatus("加载图表...");
+    vscode.postMessage({
+        command: "loadGraph",
+    });
+}
+
+// todo 清空画布
+function clearCanvas() {
+
+    nodeManager.clear();
+
+    // 显示占位符
+    const placeholder = document.getElementById("placeholder");
+    if (placeholder) {
+        placeholder.style.display = "block";
+    }
+
+    updateStatus("画布已清空");
+}
+
+// 添加测试节点（直接在Webview中）
+function addTestNode() {
+    addNode('test', Math.random() * (canvas.clientWidth - 150), Math.random() * (canvas.clientHeight - 100));
+}
+
+// 添加节点
+function addNode(type) {
+    try {
+        let x = Math.random() * (canvas.clientWidth - 220);
+        let y = Math.random() * (canvas.clientHeight - 120);
+        nodeManager.addNode(type, x, y);
+    } catch (error) {
+        console.error('❌ 添加节点时出错:' + error);
+        updateStatus('添加节点时出错' + error.message);
+    }
+}
+
+function addBlankNode() {
+    addNode('blank');
+}
+
+// 撤销上一次操作
+function undoLastAction() {
+    if (actionManager) {
+        actionManager.undoLastAction();
+    }
+}
+
+// 重做上一次撤销的操作
+function redoLastAction() {
+    if (actionManager) {
+        actionManager.redoLastAction();
+    }
+}
+
+function testCommunication() {
+    vscode.postMessage({
+        command: "test",
+        message: "测试通信",
+    });
+}
+
+function generateTest() {
+    for (let index = 0; index < 1000; index++) {
+        addTestNode();
+    }
+
+    vscode.postMessage({
+        command: "generateTest",
+        message: "生成测试",
+    });
+
+}
+
+function toggleConsole() {
+    vscode.postMessage({
+        command: "openConsole",
+        message: "打开控制台",
+    });
+}
+
+function customCheck() {
+    const testgenerator = new PropertiesGenerator();
+    const uid = 999999999;
+    const canvas = document.getElementById('canvas');
+
+    const testNode = new Node(999999999, 'blank', 300, 300);
+    canvas.appendChild(testNode.element);
+
+    prop = {
+        label: '要求', type: 'port-hub', inputsDescription: 'requirements: 跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element; tablereqs与requirement类似，区别在于它检测的是桌面上的element。'
+        , inputsLabel: '要求', inputs: [
+            { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件。' },
+            { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '全局要求', description: '跳转进本交互界面的要求: extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element。' },
+            { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '桌面要求', description: '跳转进本交互界面的要求: tablereqs与requirement类似，区别在于它检测的是桌面上的element。' },
+        ]
+    }
+
+    const hub = testgenerator.createProperty(prop, 0, 999999999);
+
+    testNode.element.appendChild(hub)
+
+    nodeManager.nodes.set(uid, testNode);
+
+    vscode.postMessage({
+        command: "customCheck",
+        message: "自定义检查",
+    });
+}
+
+function toggleConnections() {
+    const hidden = actionManager.toggleConnections();
+    document.getElementById('toggle-connections').textContent = hidden ? '显示连接' : '隐藏连接';
+}
+
+function changeMode(mode) {
+    const btns = document.querySelectorAll('.view-btn');
+    let found = false;
+    let currentMode = actionManager.getMode();
+    let currentModeButton = null;
+
+    btns.forEach(btn => {
+
+        if (btn.dataset.mode === currentMode) {
+            currentModeButton = btn;
+        }
+        if (btn.dataset.mode === mode) {
+            found = true;
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    })
+
+    if (!found) {
+        console.warn('❌ 未找到模式按钮');
+
+        if (!currentModeButton) {
+            console.error('❌ 未找到当前模式按钮');
+            return;
+        }
+        currentModeButton.classList.add('active');
+    }
+
+
+    actionManager.setMode(mode);
+    // updateStatus("模式已切换为" + mode);
+}
+
+function fitView() {
+    actionManager.fitView();
+}
+
+function setScale(scale) {
+    actionManager.setZoom(scale);
+}
+
+// 初始化函数
+function initWebview() {
+    updateStatus("已连接");
+
+    const canvas = document.getElementById('canvas');
+    if (!canvas) {
+        console.error('❌ Canvas 元素未找到');
+        setTimeout(initWebview, 100);
+        return;
+    }
+
+    const viewport = document.getElementById('canvas-container');
+
+    if (!nodeManager) {
+        nodeManager = new NodeManager(viewport, canvas, updateStatus); // 节点管理器实例
+        console.log('nodeManager 加载中');
+        setTimeout(initWebview, 100);
+        return;
+    }
+
+    if (!actionManager) {
+        if (!nodeManager) {
+            console.error('❌ nodeManager 未初始化');
+            return;
+        }
+        actionManager = new BasicActionManager(viewport, canvas, updateStatus, nodeManager); // 操作管理器实例
+        console.log('actionManager 加载中');
+        setTimeout(initWebview, 100);
+        return;
+    }
+
+    // 页面加载完成后发送就绪消息
+    window.addEventListener("load", () => {
+        setTimeout(() => {
+            vscode.postMessage({
+                command: "ready",
+                message: "Webview已加载完成",
+            });
+            updateStatus("Webview 就绪");
+        }, 100);
+    });
+
+    // 监听来自扩展的消息
+    window.addEventListener("message", (event) => {
+        const message = event.data;
+        console.log("收到扩展消息:", message);
+
+        switch (message.command) {
+            case "init":
+                updateStatus("初始化完成: " + message.message);
+                break;
+            case "addNodeResult":
+                updateStatus("添加节点成功: " + message.nodeType);
+                break;
+            case "graphLoaded":
+                updateStatus("图表加载完成");
+                // 可以在这里处理加载的图表数据
+                if (message.data) {
+                    console.log("图表数据:", message.data);
+                }
+                break;
+            case "saveConfirmed":
+                updateStatus("图表已保存: " + message.path);
+                break;
+            case "error":
+                updateStatus("错误: " + message.message);
+                break;
+        }
+    });
+
+    changeMode('select');
+}
+
+// 自动初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWebview);
+} else {
+    initWebview();
+}
+
+function viewportToCanvas(canvas, x, y, transform) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: (x - rect.left - transform.x) / transform.scale,
+        y: (y - rect.top - transform.y) / transform.scale,
+    };
+}

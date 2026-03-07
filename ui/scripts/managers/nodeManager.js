@@ -6,7 +6,7 @@
  * @class NodeManager
  */
 
-class NodeManager {
+export class NodeManager {
     // 如果点击的是以下元素，则忽略拖拽
     static ignoreDragItem = [
         // === 数据输入控件 ===
@@ -103,7 +103,7 @@ class NodeManager {
 
     /**
      * 创建节点管理器实例
-     * @param {HTMLCanvasElement} canvas - 画布元素，用于渲染节点
+     * @param {HTMLElement} canvas - 画布元素，用于渲染节点
      * @param {Function} updateStatus - 状态更新函数，用于更新界面显示的状态信息
      */
     constructor(viewport, canvas, updateStatus) {

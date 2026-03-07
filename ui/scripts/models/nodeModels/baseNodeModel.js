@@ -1,0 +1,92 @@
+export class BaseNodeModel extends EventTarget {
+    constructor({ id, type, x, y, properties = {} }) {
+        super();
+
+        // 基础属性
+        this.id = id;
+        this.type = type; 
+
+        // 显示属性
+        this.properties = properties; 
+        this.color = '#ffffff';
+        this.title = 'Base Node';
+        this.icon = '⚡';
+        
+        // 连接管理
+        this.connections = { inputs: [], outputs: [] };
+
+        // UI状态
+        this.selected = false;
+        this.collapsed = false;
+        this.x = x;
+        this.y = y;
+
+    }
+
+    /**
+     * 更新位置并通知监听者
+     * @param {number} x
+     * @param {number} y
+     */
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+        this.emit('change:position', { x, y });
+    }
+
+    /**
+     * 更新属性值
+     * @param {string} key 属性名
+     * @param {any} value 属性值
+     */
+    setProperty(key, value) {
+        this.properties[key] = value;
+        this.emit('change:property', { key, value });
+    }
+
+    /**
+     * 设置选中状态并触发变更事件
+     * @param {boolean} isSelected - 要设置的选中状态值
+     */
+    setSelected(isSelected) {
+        this.selected = isSelected;  // 更新当前选中状态
+        this.emit('change:select', { isSelected });  // 触发选中状态变更事件，传递新的选中状态
+    }
+
+    /**
+     * 简单的事件分发辅助函数
+     * @param {string} type - 事件类型
+     * @param {any} detail - 事件详细信息
+     */
+    emit(type, detail) {
+        this.dispatchEvent(new CustomEvent(type, { detail }));
+    }
+
+    /**
+     * 序列化：用于保存到 JSON 或发送给 VSCode 后端
+     */
+    toJSON() {
+        return {
+            id: this.id,
+            type: this.type,
+            position: { x: this.x, y: this.y },
+            properties: { ...this.properties },
+            connections: { inputs: this.connections.inputs, outputs: this.connections.outputs },
+            ui: { collapsed: this.collapsed }
+        };
+    }
+
+    /**
+     * 反序列化：从保存的数据恢复
+     */
+    static fromJSON(json) {
+        return new BaseNodeModel({
+            id: json.id,
+            type: json.type,
+            x: json.position.x,
+            y: json.position.y,
+            properties: json.properties
+        });
+    }
+    
+}

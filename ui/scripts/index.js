@@ -1,14 +1,19 @@
-/* eslint-env browser */
-// 浏览器中使用的兼容版本
-
+import { NodeManager } from './managers/nodeManager.js';
+import { BasicActionManager } from './managers/actionManager.js';
+import { BaseNodeModel } from './models/nodeModels/baseNodeModel.js'
+import { NodeModel } from './models/nodeModels/nodeModel.js'
+import { NodeView } from './views/nodeView.js';
+import { BaseProp } from './models/propModels/baseProps.js';
+import { PortProp } from './models/propModels/baseProps.js';
+import { PropView } from './views/propView.js';
 
 // 创建全局管理器实例
 let actionManager = null;
 let nodeManager = null;
-
+let canvas = null;
 
 // 更新状态显示
-function updateStatus(text) {
+export function updateStatus(text) {
     const statusElement = document.getElementById("status");
     const statusTextElement = document.getElementById("status-text");
 
@@ -22,13 +27,13 @@ function updateStatus(text) {
     console.log(`状态更新---${text}`);
 }
 
-function readMod() {
+export function readMod() {
     updateStatus("读取mod中，请选择synopsis.json，如果mod文件夹内项目过多，读取时间可能较长");
 
 }
 
 // todo 保存图表
-function saveGraph() {
+export function saveGraph() {
     const graphData = {
         nodes: [],
         connections: [],
@@ -43,13 +48,13 @@ function saveGraph() {
 }
 
 // todo 加载图表
-function loadGraph() {
+export function loadGraph() {
     updateStatus("加载图表...");
 
 }
 
 // todo 清空画布
-function clearCanvas() {
+export function clearCanvas() {
 
     nodeManager.clear();
 
@@ -63,12 +68,12 @@ function clearCanvas() {
 }
 
 // 添加测试节点（直接在Webview中）
-function addTestNode() {
+export function addTestNode() {
     addNode('test');
 }
 
 // 添加节点
-function addNode(type) {
+export function addNode(type) {
     try {
         let x = Math.random() * (canvas.clientWidth - 220);
         let y = Math.random() * (canvas.clientHeight - 120);
@@ -79,17 +84,17 @@ function addNode(type) {
     }
 }
 
-function addBlankNode() {
+export function addBlankNode() {
     addNode('blank');
 }
 
 
-function toggleConnections() {
+export function toggleConnections() {
     const hidden = actionManager.toggleConnections();
     document.getElementById('toggle-connections').textContent = hidden ? '显示连接' : '隐藏连接';
 }
 
-function changeMode(mode){
+export function changeMode(mode){
     const btns = document.querySelectorAll('.view-btn');
     let found = false;
     let currentMode = actionManager.getMode();
@@ -122,46 +127,82 @@ function changeMode(mode){
     // updateStatus("模式已切换为" + mode);
 }
 
-function fitView() {
+export function fitView() {
     actionManager.fitView();
 }
 
-function setScale(scale) {
+export function setScale(scale) {
     updateStatus("缩放比例已设置为" + scale);
     actionManager.setZoom(scale);
 }
 
-
-
 // 撤销上一次操作
-function undoLastAction() {
+export function undoLastAction() {
     if (actionManager) {
         actionManager.undoLastAction();
     }
 }
 
 // 重做上一次撤销的操作
-function redoLastAction() {
+export function redoLastAction() {
     if (actionManager) {
         actionManager.redoLastAction();
     }
 }
 
-function testCommunication() {
+export function testCommunication() {
 
 }
 
-function generateTest() {
+export function generateTest() {
     for (let index = 0; index < 1000; index++) {
         addTestNode();
     }
 }
 
-function toggleConsole() {
+export function toggleConsole() {
 
 }
 
-function customCheck() {
+export function customCheck() {
+    const canvas = document.getElementById('canvas');
+
+    // const model = new NodeModel(12, {id:0, type:'test', x:0, y:0, properties:{}});
+    // const node = new NodeView(model);
+
+    // model.setPosition(0, 100*Math.random());
+    // model.setSelected(true);
+
+    // nodeManager.nodes.set(0, node);
+    // canvas.appendChild(node.element);
+
+    const viewHub = document.createElement('div');
+    viewHub.style.border = '1px solid red';
+    viewHub.style.position = 'absolute';
+    viewHub.style.left = '200px';
+    viewHub.style.top = '200px';
+    viewHub.style.width = '300px';
+    viewHub.style.height = '800px';
+    canvas.appendChild(viewHub);
+
+
+    const tG = p => {
+        const prop = new BaseProp(p.name, p.label, p.type, p.value);
+        if (p.extra) {
+            prop.extra = p.extra;
+        }
+        const propView = PropView.createRow(prop);
+        propView.style.border = '1px solid green';
+        return propView;
+    }
+    
+    viewHub.appendChild(tG({name:'test', label:'测试', type:'text', value:'test'}));
+    viewHub.appendChild(tG({name:'test2', label:'测试2', type:'integer', value:'10'}));
+    viewHub.appendChild(tG({name:'test3', label:'测试3', type:'slider', value:'0'}));
+    viewHub.appendChild(tG({name:'test4', label:'测试4', type:'radio', value:'0', extra:{opts:['选项1', '选项2', '选项3'], default:'选项1'}}));
+    viewHub.appendChild(tG({name:'test5', label:'测试5', type:'bool-radio', value:true}));
+    viewHub.appendChild(tG({name:'test6', label:'测试6', type:'select', value:'0', extra:{opts:['选项1', '选项2', '选项3'], default:'选项1'}}));
+
 
 }
 
@@ -170,12 +211,16 @@ function customCheck() {
 function initWebview() {
     // updateStatus("已连接");
 
-    const canvas = document.getElementById('canvas');
+    console.log('初始化Webview');
+
+    canvas = document.getElementById('canvas');
     const viewport = document.getElementById('canvas-container');
     if (!canvas) {
         console.error('❌ Canvas 元素未找到');
         setTimeout(initWebview, 100);
         return;
+    }else {
+        console.log('Canvas 加载中');
     }
 
     if (!nodeManager) {
@@ -202,21 +247,27 @@ function initWebview() {
 // 自动初始化
 if (document.readyState === 'loading') {
     updateStatus("正在初始化...");
+    console.log('正在初始化...');
     document.addEventListener('DOMContentLoaded', () => {
         initWebview();
-        updateStatus("初始化完成");
     });
 } else {
     initWebview();
     updateStatus("初始化完成");
 }
 
+
 // 计算工具
 
-function viewportToCanvas(canvas, x, y, transform) {
+export function viewportToCanvas(canvas, x, y, transform) {
     const rect = canvas.getBoundingClientRect();
     return {
         x: (x - rect.left - transform.x) / transform.scale,
         y: (y - rect.top - transform.y) / transform.scale,
     };
 }
+
+/** @type {any} */
+const win = window;
+win.customCheck = customCheck;
+win.clearCanvas = clearCanvas;

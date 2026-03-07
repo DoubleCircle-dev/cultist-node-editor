@@ -12,6 +12,10 @@ export default [{
         ecmaVersion: 2022,
         sourceType: "module",
     },
+    env: {
+        "browser": true,
+        "node": true,
+    },
 
     rules: {
         "no-const-assign": "warn",
