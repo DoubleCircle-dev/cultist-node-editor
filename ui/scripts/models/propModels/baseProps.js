@@ -14,11 +14,16 @@ export class BaseProp {
         this.value = value;
 
         this.port = null;
-        this.extra = {};
+        this.config = {};
     }
 
-
-    toJSON() { return { id: this.id, value: this.value }; }
+    toJSON() {
+        return {
+            id: this.id,
+            value: this.value,
+            config: this.config
+        };
+    }
 }
 
 export class PortProp extends BaseProp {
@@ -35,7 +40,19 @@ export class PortProp extends BaseProp {
         this.port = {
             visible: portConfig.type || 'implicit',
             pos: portConfig.pos || 'left',
+
+            hasLeftPort: false,
+            leftPortDirect: portConfig.leftPortDirect || 'input',
+            leftRequiredType: portConfig.leftRequiredType || null,
+            leftExportType: portConfig.leftExportType || null,
+
+            hasRightPort: false,
+            rightPortDirect: portConfig.rightPortDirect || 'output',
+            rightRequiredType: portConfig.rightRequiredType || null,
+            rightExportType: portConfig.rightExportType || null,
+
             multiConnect: portConfig.multiConnect ?? true,
+
             isConnected: false
         };
     }
@@ -48,24 +65,50 @@ export class PortProp extends BaseProp {
 }
 
 export class NumericProp extends PortProp {
+    /**
+     * @param {string} id
+     * @param {string} label
+     * @param {string} type
+     * @param {any} value
+     * @param {any} min
+     * @param {any} max
+     */
     constructor(id, label, type, value, min, max) {
         super(id, label, type, value);
-        this.min = min;
-        this.max = max;
+        this.config.min = min;
+        this.config.max = max;
     }
+    /**
+     * 设置值的方法，确保值在最小值和最大值之间
+     * @param {number} v - 要设置的值
+     */
     setValue(v) {
-        this.value = Math.max(this.min, Math.min(this.max, v));
+        // 使用Math.max和Math.min确保值在this.min和this.max之间
+        // 如果v小于this.min，则取this.min；如果v大于this.max，则取this.max；否则取v本身
+        this.value = Math.max(this.config.min, Math.min(this.config.max, v));
     }
 }
 
-export class OptionsProp extends PortProp {
+export class OptionsProp extends BaseProp {
+    /**
+     * @param {string} id
+     * @param {string} label
+     * @param {string} type
+     * @param {any} value
+     */
     constructor(id, label, type, value, options = []) {
         super(id, label, type, value);
-        this.options = options;
+        this.config.opts = options;
     }
 }
 
 export class ViewProp extends PortProp {
+    /**
+     * @param {string} id
+     * @param {string} label
+     * @param {string} type
+     * @param {any} value
+     */
     constructor(id, label, type, value) {
         super(id, label, type, value, { pos: 'top-left' });
     }

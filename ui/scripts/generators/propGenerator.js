@@ -22,15 +22,15 @@ function createRadio(p) {
     const container = document.createElement('div');
     container.className = 'prop-radio-group';
     // 遍历配置中的选项，为每个选项创建一个单选按钮
-    p.extra.opts.forEach((/** @type {any} */ opt) => {
+    p.config.opts.forEach((/** @type {any} */ opt) => {
         const label = document.createElement('label');
         label.className = 'radio-option';
         // 创建input元素作为单选按钮
         const input = createInput('radio', opt)
-        input.checked = opt === p.extra.default;
+        input.checked = opt === p.config.default;
         input.name = String(p.id);  // 设置单选按钮组的名称
         label.appendChild(input);  // 将单选按钮添加到容器中
-        
+
         const span = document.createElement('span');
         span.className = 'radio-option-label';
         span.textContent = opt;
@@ -43,12 +43,11 @@ function createRadio(p) {
 }
 
 function createBoolRadio(p) {
-    
     return createRadio({
         id: p.id,
-        extra: {
+        config: {
             opts: ['是', '否'],
-            default: p.value? '是' : '否'
+            default: p.value ? '是' : '否'
         }
     })
 }
@@ -56,10 +55,50 @@ function createBoolRadio(p) {
 function createSelect(p) {
     const s = document.createElement('select');
     s.className = 'select';
-    p.extra.opts.forEach((/** @type {any} */ o) => {
+    p.config.opts.forEach((/** @type {any} */ o) => {
         s.innerHTML += `<option>${o}</option>`;
     })
     return s;
+}
+
+function createPreView(type, val) {
+    const preView = document.createElement('div');
+    preView.className = 'prop-card'
+    if (type === 'textarea') {
+        const textInput = document.createElement('textarea');
+        textInput.value = val || ''
+        textInput.placeholder = 'Text Area...';
+        preView.appendChild(textInput);
+    }
+
+    if (type === 'image') {
+        const img = document.createElement('img');
+        // preView.classList.add('icon');
+        img.src = val || '../../../test/img/placeholder.png';
+        preView.appendChild(img);
+    }
+
+    if (type === 'table') {
+        const table = document.createElement('table');
+        table.className= 'prop-table';
+
+        const thead = document.createElement('thead');
+
+        const headerRow = document.createElement('tr');
+
+        val.forEach(text => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            headerRow.appendChild(th);
+        });
+
+        table.appendChild(thead);
+        thead.appendChild(headerRow);
+
+        preView.appendChild(table);
+    }
+
+    return preView;
 }
 
 export const PropRenderMap = {
@@ -67,34 +106,36 @@ export const PropRenderMap = {
         createInput('text', p.value),
     'integer': (/** @type {{ value: any; }} */ p) =>
         createInput('number', p.value),
-    'slider': (/** @type {{ value: any; extra: { min: Number; max: Number; }; }} */ p) => {
+    'slider': (/** @type {{ value: any; config: { min: Number; max: Number; }; }} */ p) => {
         const i = createInput('range', p.value);
-        i.min = String(p.extra.min || '0'); i.max = String(p.extra.max || '100');
+        i.min = String(p.config.min || '0'); i.max = String(p.config.max || '100');
         return i;
     },
-    'radio': (/** @type {{ extra: { opts: any[]; }}} */ p) =>
+    'radio': (/** @type {{ config: { opts: any[]; }}} */ p) =>
         createRadio(p),
     'bool-radio': (/** @type {{ value: any; }} */ p) =>
         createBoolRadio(p),
-    'select': (/** @type {{ extra: { opts: any[]; }; }} */ p) => 
+    'select': (/** @type {{ config: { opts: any[]; }; }} */ p) =>
         createSelect(p),
     'image-path': (/** @type {{ value: any; }} */ p) => {
         const el = createInput('text', p.value);
         el.placeholder = "Image Path...";
         return el;
     },
-    'image-preview': () => {
-        const div = document.createElement('div');
-        div.className = 'preview-box image';
-        div.innerText = 'IMAGE';
-        return div;
-    },
-    'table': () => {
+    'image-preview': (/** @type {{ value: any; }} */ p) =>
+        createPreView('image', p.value),
+    'table-button': () => {
         const div = document.createElement('div');
         div.className = 'preview-box table';
         div.innerText = 'DATA TABLE';
         return div;
-    }
+    },
+    'table-preview': (/** @type {{ value: any; }} */ p) =>
+        createPreView('table', p.value),
+    'textarea-preview': (/** @type {{ value: any; }} */ p) =>
+        createPreView('textarea', p.value)
+
+
 };
 
 

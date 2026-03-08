@@ -94,7 +94,7 @@ export function toggleConnections() {
     document.getElementById('toggle-connections').textContent = hidden ? '显示连接' : '隐藏连接';
 }
 
-export function changeMode(mode){
+export function changeMode(mode) {
     const btns = document.querySelectorAll('.view-btn');
     let found = false;
     let currentMode = actionManager.getMode();
@@ -107,7 +107,7 @@ export function changeMode(mode){
         if (btn.dataset.mode === mode) {
             found = true;
             btn.classList.add('active');
-        }else {
+        } else {
             btn.classList.remove('active');
         }
     })
@@ -180,9 +180,9 @@ export function customCheck() {
     viewHub.style.border = '1px solid red';
     viewHub.style.position = 'absolute';
     viewHub.style.left = '200px';
-    viewHub.style.top = '200px';
+    viewHub.style.top = '0';
     viewHub.style.width = '300px';
-    viewHub.style.height = '800px';
+    viewHub.style.height = '1000px';
     canvas.appendChild(viewHub);
 
 
@@ -195,15 +195,18 @@ export function customCheck() {
         propView.style.border = '1px solid green';
         return propView;
     }
-    
-    viewHub.appendChild(tG({name:'test', label:'测试', type:'text', value:'test'}));
-    viewHub.appendChild(tG({name:'test2', label:'测试2', type:'integer', value:'10'}));
-    viewHub.appendChild(tG({name:'test3', label:'测试3', type:'slider', value:'0'}));
-    viewHub.appendChild(tG({name:'test4', label:'测试4', type:'radio', value:'0', extra:{opts:['选项1', '选项2', '选项3'], default:'选项1'}}));
-    viewHub.appendChild(tG({name:'test5', label:'测试5', type:'bool-radio', value:true}));
-    viewHub.appendChild(tG({name:'test6', label:'测试6', type:'select', value:'0', extra:{opts:['选项1', '选项2', '选项3'], default:'选项1'}}));
 
-
+    viewHub.appendChild(tG({ name: 'test', label: '测试', type: 'text', value: 'test' }));
+    viewHub.appendChild(tG({ name: 'test2', label: '测试2', type: 'integer', value: '10' }));
+    viewHub.appendChild(tG({ name: 'test3', label: '测试3', type: 'slider', value: '0' }));
+    viewHub.appendChild(tG({ name: 'test4', label: '测试4', type: 'radio', value: '0', extra: { opts: ['选项1', '选项2', '选项3'], default: '选项1' } }));
+    viewHub.appendChild(tG({ name: 'test5', label: '测试5', type: 'bool-radio', value: true }));
+    viewHub.appendChild(tG({ name: 'test6', label: '测试6', type: 'select', value: '0', extra: { opts: ['选项1', '选项2', '选项3'], default: '选项1' } }));
+    viewHub.appendChild(tG({ name: 'test7', label: '测试7', type: 'image-path', value: '../../../test/img/placeholder.png' }));
+    viewHub.appendChild(tG({ name: 'test8', label: '测试8', type: 'image-preview', value: '../../../test/img/placeholder.png' }));
+    viewHub.appendChild(tG({ name: 'test9', label: '测试9', type: 'table-button', value: [] }));
+    viewHub.appendChild(tG({ name: 'test10', label: '测试10', type: 'table-preview', value: ['行标1', '行标2', '行标3'] }));
+    viewHub.appendChild(tG({ name: 'test11', label: '测试11', type: 'textarea-preview', value: '测试文本' }));
 }
 
 
@@ -219,7 +222,7 @@ function initWebview() {
         console.error('❌ Canvas 元素未找到');
         setTimeout(initWebview, 100);
         return;
-    }else {
+    } else {
         console.log('Canvas 加载中');
     }
 
