@@ -1,5 +1,4 @@
 import { BaseNodeModel } from './baseNodeModel.js';
-import { NodeTypeRegistry } from './nodeTypes.js';
 
 /**
  * NodeModel.js
@@ -13,26 +12,15 @@ export class NodeModel extends BaseNodeModel {
      */
     constructor(uid, config) {
         super(config); // 调用父类的构造函数，传入配置参数
-        // 从全局 nodeTypes 获取类型定义（只读）
-        this.typeDef = NodeTypeRegistry.getType(this.type);
 
-        this._getInitialSetup(); // 初始化节点设置
         this.uid = uid; // 设置节点的唯一标识符
 
-        this.currentMode = this._getInitialMode(); // 初始化节点的当前模式
-    }
-
-    _getInitialSetup() {
-        this.color = this.typeDef.color;
-        this.icon = this.typeDef.icon;
-        this.title = this.typeDef.title;
+        // this.currentMode = this._getInitialMode(); // 初始化节点的当前模式
     }
 
 
     _getInitialMode() {
         // 根据 fixedProperties 中的模式切换器确定
-        const modeSwitcher = this.typeDef.fixedProperties?.find((/** @type {{ isModeSwitcher: any; }} */ p) => p.isModeSwitcher);
-        return modeSwitcher ? modeSwitcher.default : null;
     }
 
     // 模式切换逻辑（带连接检查）

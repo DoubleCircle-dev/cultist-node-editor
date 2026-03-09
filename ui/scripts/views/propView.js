@@ -49,6 +49,7 @@ export class PropView {
     }
 
     static createContent(type, param) {
+        console.log(param);
         return PropRenderMap[type](param);
     }
 

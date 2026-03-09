@@ -41,7 +41,7 @@ export class NodeTypeRegistry {
             content: `这是一个测试节点，类型: 通用测试`,
             icon: '⚡',
             fixedProperties: [
-                { label: '选项', type: 'select', isModeSwitcher: true, options: ['选项1', '选项2', '选项3'], default: 0 },
+                { label: '选项', type: 'select', isModeSwitcher: true, options: ['选项1', '选项2', '选项3'], default: '选项1'},
                 {
                     label: '数据表格',
                     type: 'table',

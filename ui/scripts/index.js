@@ -96,36 +96,36 @@ export function toggleConnections() {
 }
 
 export function changeMode(mode) {
-    const btns = document.querySelectorAll('.view-btn');
-    let found = false;
-    let currentMode = actionManager.getMode();
-    let currentModeButton = null;
+    // const btns = document.querySelectorAll('.view-btn');
+    // let found = false;
+    // let currentMode = actionManager.getMode();
+    // let currentModeButton = null;
 
-    btns.forEach(btn => {
-        if (btn.dataset.mode === currentMode) {
-            currentModeButton = btn;
-        }
-        if (btn.dataset.mode === mode) {
-            found = true;
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    })
+    // btns.forEach(btn => {
+    //     if (btn.dataset.mode === currentMode) {
+    //         currentModeButton = btn;
+    //     }
+    //     if (btn.dataset.mode === mode) {
+    //         found = true;
+    //         btn.classList.add('active');
+    //     } else {
+    //         btn.classList.remove('active');
+    //     }
+    // })
 
-    if (!found) {
-        console.warn('❌ 未找到模式按钮');
+    // if (!found) {
+    //     console.warn('❌ 未找到模式按钮');
 
-        if (!currentModeButton) {
-            console.error('❌ 未找到当前模式按钮');
-            return;
-        }
-        currentModeButton.classList.add('active');
-    }
+    //     if (!currentModeButton) {
+    //         console.error('❌ 未找到当前模式按钮');
+    //         return;
+    //     }
+    //     currentModeButton.classList.add('active');
+    // }
 
 
-    actionManager.setMode(mode);
-    // updateStatus("模式已切换为" + mode);
+    // actionManager.setMode(mode);
+    // // updateStatus("模式已切换为" + mode);
 }
 
 export function fitView() {

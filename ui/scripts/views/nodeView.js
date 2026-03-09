@@ -1,5 +1,7 @@
 import { NodeModel } from '../models/nodeModels/nodeModel.js';
 import { BaseNodeModel } from '../models/nodeModels/baseNodeModel.js';
+import { PropView } from './propView.js';
+
 export class NodeView {
     /**
      * 构造函数，初始化节点模型和DOM元素，并设置模型变化的监听器
@@ -46,7 +48,7 @@ export class NodeView {
 
         element.appendChild(this._createHeader());
 
-        // element.appendChild(this._createProperties());
+        element.appendChild(this._createProperties());
 
         // element.appendChild(this._createPortHub());
 
@@ -91,6 +93,12 @@ export class NodeView {
     // TODO
     _createProperties() {
         const properties = document.createElement('div');
+        properties.className = 'node-properties';
+
+        this.model.properties.forEach((prop) => {
+            const propView = PropView.createRow(prop);
+            properties.appendChild(propView);
+        })
 
         return properties;
     }

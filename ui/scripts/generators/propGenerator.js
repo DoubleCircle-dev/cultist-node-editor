@@ -1,3 +1,36 @@
+import { BaseProp } from "../models/propModels/baseProp.js";
+import { NumericProp } from "../models/propModels/numericProp.js";
+import { OptionsProp } from "../models/propModels/optionsProp.js";
+import { PortProp } from "../models/propModels/portProp.js";
+import { ViewProp } from "../models/propModels/viewProp.js";
+
+export class PropGenerator {
+    static createProp(id, type, prop) {
+        switch (type) {
+            case 'integer':
+            case 'slider':
+                return new NumericProp(id, prop.label, prop.type, prop.default, prop.min, prop.max);
+            case 'text':
+            case 'image-path':
+            case 'port':
+                return new PortProp(id, prop.label, prop.type, prop.default);
+            case 'radio':
+            case 'bool-radio':
+            case 'select':
+                return new OptionsProp(id, prop.label, prop.type, prop.default, prop.options);
+            case 'image-preview':
+            case 'table-preview':
+            case 'textarea-preview':
+                return new ViewProp(id, prop.label, prop.type, prop.default);
+            case 'blank':
+                return new BaseProp(null, null, null, null);
+            default:
+                console.error(`未知的属性类型 ${type}`);
+                return new BaseProp(null, null, null, null);;
+        }
+    }
+}
+
 /**
  * 辅助工具：创建 DOM 元素并分配属性
  * @param {string} tagName
@@ -157,5 +190,5 @@ export const PropRenderMap = {
 
     'textarea-preview': (/** @type {{ value: any; }} */ p) => createPreView('textarea', p.value),
 
-    'test': (/** @type {{ value: any; }} */ p) => createInput('text', p.value)
+    'port': (/** @type {{ value: any; }} */ p) => createInput('text', p.value)
 };

@@ -1,4 +1,4 @@
-import { BaseNodeModel } from "./baseNodeModel";
+import { BaseNodeModel } from "./baseNodeModel.js";
 
 export class VariableModel extends BaseNodeModel {
     

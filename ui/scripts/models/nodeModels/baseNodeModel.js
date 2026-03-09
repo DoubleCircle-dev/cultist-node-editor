@@ -1,5 +1,7 @@
+import { PropGenerator } from '../../generators/propGenerator.js'
+
 export class BaseNodeModel extends EventTarget {
-    constructor({ id, type, x, y, properties = {} }) {
+    constructor({ id, type, x, y, config, properties = [] }) {
         super();
 
         // 基础属性
@@ -7,10 +9,11 @@ export class BaseNodeModel extends EventTarget {
         this.type = type; 
 
         // 显示属性
-        this.properties = properties; 
-        this.color = '#ffffff';
-        this.title = 'Base Node';
-        this.icon = '⚡';
+        this.properties = this._createProperties(properties) || []; 
+
+        this.color = config.color || '#ffffff';
+        this.title = config.title || 'Base Node';
+        this.icon = config.icon || '⚡';
         
         // 连接管理
         this.connections = { inputs: [], outputs: [] };
@@ -21,6 +24,14 @@ export class BaseNodeModel extends EventTarget {
         this.x = x;
         this.y = y;
 
+    }
+
+    _createProperties(properties) {
+        const result = [];
+        properties.forEach((prop, index) => {
+           result.push(PropGenerator.createProp(`${this.id}:prop-${index}`, prop.type, prop));
+        })
+        return result;
     }
 
     /**
@@ -80,13 +91,7 @@ export class BaseNodeModel extends EventTarget {
      * 反序列化：从保存的数据恢复
      */
     static fromJSON(json) {
-        return new BaseNodeModel({
-            id: json.id,
-            type: json.type,
-            x: json.position.x,
-            y: json.position.y,
-            properties: json.properties
-        });
+
     }
     
 }
