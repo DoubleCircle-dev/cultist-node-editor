@@ -3,8 +3,9 @@ import { BasicActionManager } from './managers/actionManager.js';
 import { BaseNodeModel } from './models/nodeModels/baseNodeModel.js'
 import { NodeModel } from './models/nodeModels/nodeModel.js'
 import { NodeView } from './views/nodeView.js';
-import { BaseProp } from './models/propModels/baseProps.js';
-import { PortProp } from './models/propModels/baseProps.js';
+import { BaseProp } from './models/propModels/baseProp.js';
+import { PortProp } from './models/propModels/portProp.js';
+import { PortModel } from './models/portModel.js';
 import { PropView } from './views/propView.js';
 
 // 创建全局管理器实例
@@ -167,46 +168,20 @@ export function toggleConsole() {
 export function customCheck() {
     const canvas = document.getElementById('canvas');
 
-    // const model = new NodeModel(12, {id:0, type:'test', x:0, y:0, properties:{}});
-    // const node = new NodeView(model);
+    const model = new NodeModel(12, { id: 0, type: 'test', x: 0, y: 0, properties: {} });
+    const node = new NodeView(model);
 
-    // model.setPosition(0, 100*Math.random());
+    model.setPosition(200, 100);
     // model.setSelected(true);
 
     // nodeManager.nodes.set(0, node);
-    // canvas.appendChild(node.element);
+    canvas.appendChild(node.element);
 
-    const viewHub = document.createElement('div');
-    viewHub.style.border = '1px solid red';
-    viewHub.style.position = 'absolute';
-    viewHub.style.left = '200px';
-    viewHub.style.top = '0';
-    viewHub.style.width = '300px';
-    viewHub.style.height = '1000px';
-    canvas.appendChild(viewHub);
+    const propModel = new PortProp('0', '测试属性1', 'test', '测试值1', { inputPort: { id: 0, type: 'input' }, outputPort: { id: 0, type: 'output', portType: 'implicit' } });
+    const port = PropView.createRow(propModel);
 
+    node.element.appendChild(port);
 
-    const tG = p => {
-        const prop = new BaseProp(p.name, p.label, p.type, p.value);
-        if (p.extra) {
-            prop.extra = p.extra;
-        }
-        const propView = PropView.createRow(prop);
-        propView.style.border = '1px solid green';
-        return propView;
-    }
-
-    viewHub.appendChild(tG({ name: 'test', label: '测试', type: 'text', value: 'test' }));
-    viewHub.appendChild(tG({ name: 'test2', label: '测试2', type: 'integer', value: '10' }));
-    viewHub.appendChild(tG({ name: 'test3', label: '测试3', type: 'slider', value: '0' }));
-    viewHub.appendChild(tG({ name: 'test4', label: '测试4', type: 'radio', value: '0', extra: { opts: ['选项1', '选项2', '选项3'], default: '选项1' } }));
-    viewHub.appendChild(tG({ name: 'test5', label: '测试5', type: 'bool-radio', value: true }));
-    viewHub.appendChild(tG({ name: 'test6', label: '测试6', type: 'select', value: '0', extra: { opts: ['选项1', '选项2', '选项3'], default: '选项1' } }));
-    viewHub.appendChild(tG({ name: 'test7', label: '测试7', type: 'image-path', value: '../../../test/img/placeholder.png' }));
-    viewHub.appendChild(tG({ name: 'test8', label: '测试8', type: 'image-preview', value: '../../../test/img/placeholder.png' }));
-    viewHub.appendChild(tG({ name: 'test9', label: '测试9', type: 'table-button', value: [] }));
-    viewHub.appendChild(tG({ name: 'test10', label: '测试10', type: 'table-preview', value: ['行标1', '行标2', '行标3'] }));
-    viewHub.appendChild(tG({ name: 'test11', label: '测试11', type: 'textarea-preview', value: '测试文本' }));
 }
 
 
@@ -274,3 +249,6 @@ export function viewportToCanvas(canvas, x, y, transform) {
 const win = window;
 win.customCheck = customCheck;
 win.clearCanvas = clearCanvas;
+win.addNode = addNode;
+win.addBlankNode = addBlankNode;
+win.addTestNode = addTestNode;
