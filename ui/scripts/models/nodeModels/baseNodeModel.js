@@ -1,4 +1,5 @@
 import { PropGenerator } from '../../generators/propGenerator.js'
+import { BaseProp } from '../propModels/baseProp.js';
 
 export class BaseNodeModel extends EventTarget {
     constructor({ id, type, x, y, config, properties = [] }) {
@@ -6,15 +7,15 @@ export class BaseNodeModel extends EventTarget {
 
         // 基础属性
         this.id = id;
-        this.type = type; 
+        this.type = type;
 
         // 显示属性
-        this.properties = this._createProperties(properties) || []; 
+        this.properties = this._createProperties(properties) || [];
 
         this.color = config.color || '#ffffff';
         this.title = config.title || 'Base Node';
         this.icon = config.icon || '⚡';
-        
+
         // 连接管理
         this.connections = { inputs: [], outputs: [] };
 
@@ -26,10 +27,16 @@ export class BaseNodeModel extends EventTarget {
 
     }
 
+    /**
+     * 
+     * @param {*} properties 
+     * @returns {BaseProp[]} result
+     */
+
     _createProperties(properties) {
         const result = [];
         properties.forEach((prop, index) => {
-           result.push(PropGenerator.createProp(`${this.id}:prop-${index}`, prop.type, prop));
+            result.push(PropGenerator.createProp(`${this.id}:prop-${index}`, prop.type, prop));
         })
         return result;
     }
@@ -93,5 +100,5 @@ export class BaseNodeModel extends EventTarget {
     static fromJSON(json) {
 
     }
-    
+
 }

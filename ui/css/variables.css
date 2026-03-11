@@ -24,10 +24,10 @@
     --menu-background: #094771;
 
     /* 颜色 - 节点 */
-    --node-blank: #ffffff;
+    --node-blank: #000000;
     --node-test: #7d1ff8;
     --node-legacies: #ff8a80;
-    --node-endings: #ff6b6b;
+    --node-endings: #ff31b0;
     --node-achievements: #fcf80e;
     --node-recipes: #ff5719;
     --node-mutations: #ffaa33;
@@ -35,12 +35,12 @@
     --node-xtriggers: #8fff33;
     --node-morphEffects: #f3fc76;
     --node-decks: #f853f8;
-    --node-verbs: #ffcc33;
-    --node-slots: #ff31b0;
+    --node-verbs: #ff66aa;
+    --node-slots: #ffcc33;
     --node-levers: #6fc1b0;
-    --node-extends: #ff3b3b;
+    --node-extends: #ff6b6b;
     --node-copies: #ff7043;
-    --node-text: #ff66aa;
+    --node-text: #ffffff;
     --node-number: #2ecc71;
     --node-set: #bb8fce;
     --node-images: #ff9f4b;

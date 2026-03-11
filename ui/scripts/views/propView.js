@@ -1,23 +1,47 @@
 import { BaseProp } from "../models/propModels/baseProp.js";
 import { PortProp } from "../models/propModels/portProp.js";
 import { PortModel } from "../models/portModel.js";
-import { PropRenderMap } from "../generators/propGenerator.js";
+import { PropRenderer } from "../generators/propGenerator.js";
+import { NodeTypeRegistry } from "../generators/nodeTypes.js";
 
 export class PropView {
     /**
      * @param {BaseProp | PortProp} prop
      */
-    static renderRow(prop) {
-        const row = document.createElement('div');
-        row.className = `prop-row type-${prop.type}`;
+    static renderProp(prop) {
+        if (!prop) {
+            console.error('属性不存在', prop);
+            return PropRenderer.createErrorDom();
+        }
 
-        return row;
+        if (!prop.type) {
+            console.error('属性类型未定义', prop);
+            return PropRenderer.createErrorDom();
+        }
+
+        if (prop.type === 'hub') {
+            return this.createHub(prop);
+        }
+
+        return this.createRow(prop);
+    }
+
+    static createHub(propModel) {
+        const hub = PropRenderer.createHub('hub');
+
+        propModel.properties.forEach(prop => {
+            hub.appendChild(this.renderProp(prop));
+        })
+
+
+        return hub;
     }
 
     /**
      * @param {BaseProp | PortProp} propModel
      */
     static createRow(propModel) {
+
         const row = document.createElement('div');
         row.className = `prop-row type-${propModel.type}`;
 
@@ -49,8 +73,13 @@ export class PropView {
     }
 
     static createContent(type, param) {
-        console.log(param);
-        return PropRenderMap[type](param);
+        try {
+            return PropRenderer.RenderMap[type](param);
+        } catch (e) {
+            console.error(e, type, param);
+            return PropRenderer.createErrorDom();
+
+        }
     }
 
     /**
@@ -59,6 +88,7 @@ export class PropView {
     static createPortDom(portModel) {
         const dom = document.createElement('div');
         dom.className = `port-dot ${portModel.portType} ${portModel.pos}`;
+        dom.style.backgroundColor = NodeTypeRegistry.getColor(portModel.dataType);
         return dom;
     }
 }

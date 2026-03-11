@@ -1,6 +1,8 @@
 :root {
     --port-slot-width: 24px;
     /* 端点占用的总宽度 */
+
+    --padding-text: 6px 8px;
 }
 
 .prop-row {
@@ -46,6 +48,28 @@
     font-size: 11px;
     color: var(--text-primary);
     transition: all 0.2s;
+}
+
+@keyframes breathe {
+    0% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    }
+
+    35% {
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-primary) 90%, transparent);
+    }
+
+    65% {
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-primary) 90%, transparent);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    }
+}
+
+.prop-input:hover {
+    animation: breathe 1.5s ease-in-out infinite;
 }
 
 .prop-input:focus {
@@ -286,7 +310,7 @@
     padding: 10px;
     text-align: left;
     white-space: nowrap;
-    overflow: hidden; 
+    overflow: hidden;
     text-overflow: ellipsis;
     /* 文字过多显示省略号 */
 }
@@ -295,7 +319,7 @@
 .prop-card textarea {
     width: 100%;
     height: 100%;
-    padding: 6px 8px;
+    padding: var(--padding-text);
     /* 比小输入框略大一点的内边距 */
     background: transparent;
     /* 继承父级背景 */
@@ -304,4 +328,54 @@
     resize: none;
     line-height: 1.4;
     font-family: inherit;
+}
+
+/* 属性面板按钮样式 */
+.prop-content .button {
+    display: inline-flex;
+    align-items: left;
+    justify-content: left;
+    width: 100%;
+    min-height: 24px;
+    padding: var(--padding-text);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    line-height: 1;
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* 悬停状态 */
+.prop-content .button:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-primary);
+}
+
+/* 聚焦状态 */
+.prop-content .button:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-shadow);
+}
+
+/* 按下状态 */
+.prop-content .button:active {
+    background-color: var(--bg-tertiary);
+    transform: translateY(1px);
+}
+
+/* 禁用状态 */
+.prop-content .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }

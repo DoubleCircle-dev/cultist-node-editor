@@ -96,7 +96,7 @@ export class NodeView {
         properties.className = 'node-properties';
 
         this.model.properties.forEach((prop) => {
-            const propView = PropView.createRow(prop);
+            const propView = PropView.renderProp(prop);
             properties.appendChild(propView);
         })
 

@@ -1,3 +1,5 @@
+import { HubProp } from '../propModels/hubProp.js';
+import { PropGenerator } from '../../generators/propGenerator.js';
 import { BaseNodeModel } from './baseNodeModel.js';
 
 /**
@@ -13,11 +15,40 @@ export class NodeModel extends BaseNodeModel {
     constructor(uid, config) {
         super(config); // 调用父类的构造函数，传入配置参数
 
+        this.inputs = config.config.inputs;
+        this.inputs.forEach(input => {
+            input.direction = 'input';
+        })
+        this.outputs = config.config.outputs;
+        this.outputs.forEach(output => {
+            output.direction = 'output';
+        })
+
         this.uid = uid; // 设置节点的唯一标识符
+
+        this._createPortHub();
 
         // this.currentMode = this._getInitialMode(); // 初始化节点的当前模式
     }
 
+    _createPortHub() {
+        const inputHub = PropGenerator.createProp(this.id, 'hub',
+            {
+                label: '输入端口',
+                properties: this.inputs
+            }
+        );
+
+        const outputHub = PropGenerator.createProp(this.id, 'hub',
+            {
+                label: '输出端口',
+                properties: this.outputs
+            }
+        )
+        const hub = new HubProp(this.id,'端口', [inputHub, outputHub]);
+
+        this.properties.push(hub);
+    }
 
     _getInitialMode() {
         // 根据 fixedProperties 中的模式切换器确定

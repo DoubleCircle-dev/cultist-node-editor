@@ -36,11 +36,11 @@ export class NodeTypeRegistry {
                 { type: 'port', label: '测试单输入', requireType: 'test', multiConnect: false }
             ],
             outputs: [
-                { type: 'port', label: '测试输出', requireType: 'test', multiConnect: true }
+                { type: 'port', label: '测试输出', returnType: 'test', multiConnect: true }
             ],
             content: `这是一个测试节点，类型: 通用测试`,
             icon: '⚡',
-            fixedProperties: [
+            properties: [
                 { label: '选项', type: 'select', isModeSwitcher: true, options: ['选项1', '选项2', '选项3'], default: '选项1'},
                 {
                     label: '数据表格',
@@ -57,11 +57,14 @@ export class NodeTypeRegistry {
                     ],
                     showInNode: false,
                     hasPort: false
+                },
+                {label:'属性hub', type:'hub',
+                    properties: [
+                        { label: '端口', type: 'port', requireType: 'test', multiConnect: true, connectNum: 4, description: '测试属性连接端口' },
+                        { label: '常驻文本输入', type: 'text', default: '测试常驻文本' }
+                    ],
                 }
-            ],
-            properties: [
-                { label: '端口', type: 'port', requireType: 'test', multiConnect: true, connectNum: 4, description: '测试属性连接端口' },
-                { label: '常驻文本输入', type: 'text', default: '测试常驻文本' }
+
             ],
             exProperties: {
                 0: [

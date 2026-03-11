@@ -10,8 +10,9 @@ export class PortModel {
         this.direction = direction;
 
         // 核心设置
-        this.dataType = options.dataType || 'any'; // 对应 --node-number, --node-text 等
         this.portType = options.portType || 'explicit'; // explicit, implicit
+        // input时当作requiredType, output时当作returnType
+        this.dataType = options.dataType || 'any'; // 对应 --node-number, --node-text 等
 
         // 位置管理
         this.pos = options.pos || 'left'; // left, right, left-top, right-top, left-bottom, right-bottom
@@ -47,10 +48,14 @@ export class PortModel {
      * 连接到目标端口的方法
      * @param {PortModel} targetPort - 要连接的目标端口对象
      */
+    /**
+     * 连接到目标端口的方法
+     * @param {Object} targetPort - 要连接的目标端口对象
+     */
     ConnectTo(targetPort) {
-        // 将目标端口添加到当前对象的链接数组中
+        // 将目标端口添加到当前对象的链接数组中，建立从当前对象到目标端口的连接
         this.links.push(targetPort);
-        // 同时将当前对象添加到目标端口的链接数组中，实现双向连接
+        // 同时将当前对象添加到目标端口的链接数组中，实现双向连接，确保两个端口互相连接
         targetPort.links.push(this);
     }
 
