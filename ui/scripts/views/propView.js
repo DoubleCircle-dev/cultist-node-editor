@@ -27,12 +27,11 @@ export class PropView {
     }
 
     static createHub(propModel) {
-        const hub = PropRenderer.createHub('hub');
+        const hub = PropRenderer.createHub('hub', propModel.layout);
 
         propModel.properties.forEach(prop => {
             hub.appendChild(this.renderProp(prop));
         })
-
 
         return hub;
     }

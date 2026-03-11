@@ -5,6 +5,19 @@
     --padding-text: 6px 8px;
 }
 
+.prop-hub {
+    display: grid;
+    align-items: start;
+}
+
+.prop-hub.single {
+    grid-template-columns: 1fr;
+}
+
+.prop-hub.double {
+    grid-template-columns: 1fr 1fr;
+}
+
 .prop-row {
     display: grid;
     /* 定义三列：左槽位、中间内容、右槽位 */

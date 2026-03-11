@@ -4,7 +4,6 @@ import { OptionsProp } from "../models/propModels/optionsProp.js";
 import { PortProp } from "../models/propModels/portProp.js";
 import { ViewProp } from "../models/propModels/viewProp.js";
 import { HubProp } from "../models/propModels/hubProp.js";
-import { PropView } from "../views/propView.js";
 
 export class PropGenerator {
 
@@ -47,12 +46,12 @@ export class PropGenerator {
                 args = [id, prop.label, prop.type, prop.default, {
                     inputPort: { id: `${id}-input`, portType: 'implicit', dataType: 'text' }
                 }];
-                propClass = ViewProp;
+                propClass = PortProp;
                 break;
             case 'table':
             case 'table-preview':
                 args = [id, prop.label, 'table-preview', prop.default, prop.columns, prop.rows];
-                propClass = PortProp;
+                propClass = ViewProp;
                 break;
             case 'bool':
                 args = [id, prop.label, 'bool-radio', prop.default,]
@@ -67,7 +66,6 @@ export class PropGenerator {
                     inputPort: null,
                     outputPort: null
                 }
-                console.log(prop)
                 if (!prop.direction || prop.direction === 'input') {
                     portConfig.inputPort = {
                         id: `${id}-input`,
@@ -159,8 +157,8 @@ export class PropRenderer {
         'port': (/** @type {{label:'string'; value: any; }} */ p) =>
             this.createButton('port', p.label, p.value),
 
-        'hub': (/** @type {{value: []; }} */ p) =>
-            this.createHub('hub', p.value)
+        'hub': (/** @type {{layout: 'string'; }} */ p) =>
+            this.createHub('hub', p.layout)
     };
 
     /**
@@ -299,7 +297,8 @@ export class PropRenderer {
 
     static createHub(type, layout = 'single') {
         const hub = document.createElement('div');
-        hub.className = type;
+        hub.className = 'prop-hub';
+        hub.classList.add(layout);
 
         return hub;
     }

@@ -112,7 +112,7 @@ export class NodeTypeRegistry {
             inputs: [
             ],
             outputs: [
-                { type: 'port', requireType: 'endings', label: '结局', multiConnect: true, description: 'endings: 结局' },
+                { type: 'port', returnType: 'endings', label: '结局', multiConnect: true, description: 'endings: 结局' },
             ],
             content: `endings即游戏中原版或自定义的结局。`,
             icon: '⚡',
@@ -133,7 +133,7 @@ export class NodeTypeRegistry {
             color: this.nodeColorVars.achievements,
             inputs: [],
             outputs: [
-                { type: 'selectPort', requireType: 'achievements', label: ['成就类型', '成就'], multiConnect: true, description: ['categories: 成就类型（成就类型会在主界面的成就下面新建一个类别用来显示成就）', 'achievements: 成就（同一类成就会放在一个页面）'] },
+                { type: 'selectPort', returnType: 'achievements', label: ['成就类型', '成就'], multiConnect: true, description: ['categories: 成就类型（成就类型会在主界面的成就下面新建一个类别用来显示成就）', 'achievements: 成就（同一类成就会放在一个页面）'] },
             ],
             content: `成就(achievements)是游戏中解锁的成就/成就类型，可以在成就页面中查看。`,
             fixedProperties: [
@@ -163,9 +163,9 @@ export class NodeTypeRegistry {
 
             ],
             outputs: [
-                { type: 'port', requireType: 'recipes', label: '分支', multiConnect: true, description: 'alt: 指向满足一定条件后会立刻取代该recipe生效的recipe，如果additional为真值则新的recipe在对应行动框中额外进行且不会立刻取代，要注意这种情况下若该行动框已创建，那么这次转换不会生效。' },
-                { type: 'port', requireType: 'recipes', label: '链接', multiConnect: true, description: 'linked: 指向在此recipe后会概率生效的recipe，与alt类似，但需要等待当前recipe结束后才会生效。' },
-                { type: 'port', requireType: 'recipes', label: '引入', multiConnect: true, description: 'inductions: 效果类似alt中将卡牌弹出并带入新verb中recipe的功能，expulsion是过滤条件，其中包含filter标识需要的性相，limit标识最多转移个数。' },
+                { type: 'port', returnType: 'recipes', label: '分支', multiConnect: true, description: 'alt: 指向满足一定条件后会立刻取代该recipe生效的recipe，如果additional为真值则新的recipe在对应行动框中额外进行且不会立刻取代，要注意这种情况下若该行动框已创建，那么这次转换不会生效。' },
+                { type: 'port', returnType: 'recipes', label: '链接', multiConnect: true, description: 'linked: 指向在此recipe后会概率生效的recipe，与alt类似，但需要等待当前recipe结束后才会生效。' },
+                { type: 'port', returnType: 'recipes', label: '引入', multiConnect: true, description: 'inductions: 效果类似alt中将卡牌弹出并带入新verb中recipe的功能，expulsion是过滤条件，其中包含filter标识需要的性相，limit标识最多转移个数。' },
             ],
             content: `交互界面(recipes)，也称配方，是使用行动与卡牌交互的一种过程，可以实现多样化的功能`,
             icon: '📖',
@@ -218,7 +218,7 @@ export class NodeTypeRegistry {
             color: this.nodeColorVars.mutations,
             inputs: [],
             outputs: [
-                { type: 'port', requireType: 'mutations', label: '重载变化', multiConnect: true, description: 'mutations: 重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相' }
+                { type: 'port', returnType: 'mutations', label: '重载变化', multiConnect: true, description: 'mutations: 重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相' }
             ],
             content: `重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相（仅在recipes内部使用）`,
             icon: '🔗',
@@ -238,7 +238,7 @@ export class NodeTypeRegistry {
                 { label: '继承', type: 'port', requireType: 'elements', multiConnect: false, description: 'inherits: 该元素（卡牌）所继承的元素，该元素（卡牌）会继承继承元素的属性，但不会继承继承元素的induces, icon等。' }
             ],
             outputs: [
-                { type: 'port', requireType: 'elements', label: '元素', multiConnect: true, description: 'elements: 游戏中的卡牌、性相均属于elements' }
+                { type: 'port', returnType: 'elements', label: '元素', multiConnect: true, description: 'elements: 游戏中的卡牌、性相均属于elements' }
             ],
             content: `游戏中的卡牌、性相均属于elements`,
             icon: '📇',
@@ -279,7 +279,7 @@ export class NodeTypeRegistry {
                 { label: '继承集合', type: 'port', requireType: 'xtriggers', multiConnect: true, description: '继承之前的xtrigger的元素，扩展成集合' }
             ],
             outputs: [
-                { type: 'port', requireType: 'xtriggers', label: '触变', multiConnect: true, description: 'xtriggers: 触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换' }
+                { type: 'port', returnType: 'xtriggers', label: '触变', multiConnect: true, description: 'xtriggers: 触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换' }
             ],
             content: `触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换（仅在元素(elements)内部使用,如果定义在性相(aspects)内则会继承给具有该性相的卡牌）`,
             icon: '🔗',
@@ -309,7 +309,7 @@ export class NodeTypeRegistry {
                 { label: '继承集合', type: 'port', requireType: 'morphEffects', multiConnect: true, description: '继承之前的morphEffects的元素，扩展成集合' }
             ],
             outputs: [
-                { label: '操作数', type: 'port', requireType: 'morphEffects', multiConnect: true, description: '仅在xtriggers复杂版本中生效，同一个条件可以触发多个效果' }
+                { label: '操作数', type: 'port', returnType: 'morphEffects', multiConnect: true, description: '仅在xtriggers复杂版本中生效，同一个条件可以触发多个效果' }
             ],
             fixedProperties: [
                 { label: '目标卡牌', type: 'port', requireType: 'elements', multiConnect: false, description: 'id: 离开具有条件性相的交互(recipes)时触发，触发操作数' }
@@ -325,7 +325,7 @@ export class NodeTypeRegistry {
             color: this.nodeColorVars.decks,
             inputs: [],
             outputs: [
-                { type: 'port', requireType: 'decks', label: '卡池', multiConnect: true, description: 'decks: mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。' }
+                { type: 'port', returnType: 'decks', label: '卡池', multiConnect: true, description: 'decks: mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。' }
             ],
             content: `decks是mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。`,
             icon: '🎛️',
@@ -356,7 +356,7 @@ export class NodeTypeRegistry {
             inputs: [
             ],
             outputs: [
-                { type: 'port', requireType: 'verbs', label: 'verb', multiConnect: true, description: 'verbs:' }
+                { type: 'port', returnType: 'verbs', label: 'verb', multiConnect: true, description: 'verbs:' }
             ],
             content: `verbs是mod中的动词，将卡牌拖入触发交互界面(recipes)的行动框。`,
             icon: '⚡',
@@ -395,7 +395,7 @@ export class NodeTypeRegistry {
                 }
             ],
             outputs: [
-                { type: 'port', requireType: 'slots', label: '卡槽', multiConnect: true, description: 'slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。' }
+                { type: 'port', returnType: 'slots', label: '卡槽', multiConnect: true, description: 'slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。' }
             ],
             content: `slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。`,
             icon: '🎚️',
@@ -422,8 +422,8 @@ export class NodeTypeRegistry {
             color: this.nodeColorVars.levers,
             inputs: [],
             outputs: [
-                { type: 'port', requireType: 'levers', label: '继承物品', multiConnect: true, description: 'lever: 从上一局游戏继承的物品。' },
-                { type: 'port', requireType: 'elements', label: '继承物品(卡牌实例)', multiConnect: true, description: '从上一局游戏继承的物品对应的卡牌。' },
+                { type: 'port', returnType: 'levers', label: '继承物品', multiConnect: true, description: 'lever: 从上一局游戏继承的物品。' },
+                { type: 'port', returnType: 'elements', label: '继承物品(卡牌实例)', multiConnect: true, description: '从上一局游戏继承的物品对应的卡牌。' },
             ],
             content: `从上一局游戏中继承的事物。如使徒继承的教会与教徒，或是富家子弟所继承的书籍。
                         某种意义上说，这是一张卡牌，你可以通过effects等代码得到它。`,
@@ -472,7 +472,7 @@ export class NodeTypeRegistry {
             color: this.nodeColorVars.text,
             inputs: [],
             outputs: [
-                { type: 'port', requireType: 'text', label: '文本', multiConnect: true }
+                { type: 'port', returnType: 'text', label: '文本', multiConnect: true }
             ],
             content: `文本常量, 输出string格式`,
             icon: '🎚️',
@@ -485,7 +485,7 @@ export class NodeTypeRegistry {
             color: this.nodeColorVars.number,
             inputs: [],
             outputs: [
-                { type: 'port', requireType: 'number', label: '数字', multiConnect: true }
+                { type: 'port', returnType: 'number', label: '数字', multiConnect: true }
             ],
             content: `数字常量，输出int格式`,
             icon: '🎚️',
@@ -500,7 +500,7 @@ export class NodeTypeRegistry {
                 { type: 'port', requireType: 'set', multiConnect: true, label: '继承集合', description: '继承之前的集合的元素，扩展成新的集合，注意集合的元素类型必须一致' },
             ],
             outputs: [
-                { type: 'port', requireType: 'set', label: '集合', multiConnect: true, description: '输出集合格式的变量' }
+                { type: 'port', returnType: 'set', label: '集合', multiConnect: true, description: '输出集合格式的变量' }
             ],
             content: `集合变量，输出参数集合，可以将多个集合链接，不允许成环`,
             icon: '🎚️',
@@ -546,7 +546,7 @@ export class NodeTypeRegistry {
             color: this.nodeColorVars.images,
             inputs: [],
             outputs: [
-                { type: 'port', label: '图片', requireType: 'images', multiConnect: true }
+                { type: 'port', label: '图片', returnType: 'images', multiConnect: true }
             ],
             content: `图片常量, 用于图标或背景等使用`,
             icon: '🎚️',

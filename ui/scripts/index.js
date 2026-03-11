@@ -1,5 +1,5 @@
-import { NodeManager } from './managers/nodeManager.js';
-import { BasicActionManager } from './managers/actionManager.js';
+import { NodeManager } from './controllers/nodeManager.js';
+import { BasicActionManager } from './controllers/actionManager.js';
 import { BaseNodeModel } from './models/nodeModels/baseNodeModel.js'
 import { NodeModel } from './models/nodeModels/nodeModel.js'
 import { NodeView } from './views/nodeView.js';

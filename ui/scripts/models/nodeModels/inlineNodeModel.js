@@ -9,7 +9,7 @@ export class InlineNodeModel extends BaseNodeModel {
             x: 0,
             y: 0,
             config: {},
-            properties: {}
+            properties: []
         }
         super(config);
 

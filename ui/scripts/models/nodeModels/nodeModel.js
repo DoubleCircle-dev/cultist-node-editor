@@ -32,20 +32,20 @@ export class NodeModel extends BaseNodeModel {
     }
 
     _createPortHub() {
-        const inputHub = PropGenerator.createProp(this.id, 'hub',
+        const inputHub = PropGenerator.createProp(`${this.id}:inputHub`, 'hub',
             {
                 label: '输入端口',
                 properties: this.inputs
             }
         );
 
-        const outputHub = PropGenerator.createProp(this.id, 'hub',
+        const outputHub = PropGenerator.createProp(`${this.id}:outputHub`, 'hub',
             {
                 label: '输出端口',
                 properties: this.outputs
             }
         )
-        const hub = new HubProp(this.id,'端口', [inputHub, outputHub]);
+        const hub = new HubProp(`${this.id}:portHub`,'端口', [inputHub, outputHub], 'double');
 
         this.properties.push(hub);
     }

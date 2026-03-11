@@ -1,4 +1,4 @@
-import import { NodeManager } from './managers/nodeManager.js';
+import import { NodeManager } from './controllers/nodeManager.js';
 
 // 全局变量管理
 const vscode = acquireVsCodeApi();
