@@ -2,7 +2,7 @@ import { BaseProp } from "../models/propModels/baseProp.js";
 import { PortProp } from "../models/propModels/portProp.js";
 import { PortModel } from "../models/portModel.js";
 import { PropRenderer } from "../generators/propGenerator.js";
-import { NodeTypeRegistry } from "../generators/nodeTypes.js";
+import { NodeTypeRegistry } from "../types/nodeTypes.js";
 
 export class PropView {
     /**

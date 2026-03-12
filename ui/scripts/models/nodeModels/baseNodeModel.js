@@ -1,8 +1,21 @@
 import { PropGenerator } from '../../generators/propGenerator.js'
 import { BaseProp } from '../propModels/baseProp.js';
+import {INodeType} from '../../types/nodeTypes.js';
 
 export class BaseNodeModel extends EventTarget {
-    constructor({ id, type, x, y, config, properties = [] }) {
+
+
+    /**
+     * 
+     * @param {String | number} id 
+     * @param {String} type 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {INodeType} config 
+     * @param {BaseProp[]} properties 
+     */
+
+    constructor(id, type, x, y, config, properties = [] ) {
         super();
 
         // 基础属性
@@ -101,4 +114,16 @@ export class BaseNodeModel extends EventTarget {
 
     }
 
+}
+
+/** 
+ * @interface
+ */
+
+export const IBaseNodeModel = {
+    id: String,
+    type: String,
+    x: Number,
+    y: Number,
+    properties: BaseProp[],
 }

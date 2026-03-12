@@ -1,4 +1,4 @@
-import { NodeTypeRegistry } from "./generators/nodeTypes.js";
+import { NodeTypeRegistry } from "./types/nodeTypes.js";
 import { addNode } from "./index.js";
 
 // 填充调试下拉选择框

@@ -1,3 +1,4 @@
+
 export class NodeTypeRegistry {
 
     static nodeColorVars = (function () {
@@ -41,7 +42,7 @@ export class NodeTypeRegistry {
             content: `这是一个测试节点，类型: 通用测试`,
             icon: '⚡',
             properties: [
-                { label: '选项', type: 'select', isModeSwitcher: true, options: ['选项1', '选项2', '选项3'], default: '选项1'},
+                { label: '选项', type: 'select', isModeSwitcher: true, options: ['选项1', '选项2', '选项3'], default: '选项1' },
                 {
                     label: '数据表格',
                     type: 'table',
@@ -58,7 +59,8 @@ export class NodeTypeRegistry {
                     showInNode: false,
                     hasPort: false
                 },
-                {label:'属性hub', type:'hub',
+                {
+                    label: '属性hub', type: 'hub',
                     properties: [
                         { label: '端口', type: 'port', requireType: 'test', multiConnect: true, connectNum: 4, description: '测试属性连接端口' },
                         { label: '常驻文本输入', type: 'text', default: '测试常驻文本' }
@@ -91,19 +93,22 @@ export class NodeTypeRegistry {
             ],
             content: `添加独立的职业`,
             icon: '⚡',
-            fixedProperties: [
+            properties: [
                 { label: '描述', type: 'text', default: '职业描述', description: 'description: 菜单中选择职业时显示的文本' },
                 { label: '初始描述', type: 'text', default: '初始描述', description: 'startdescription: 会显示在开始此职业的新游戏时的弹出窗口。' },
                 { label: '起始行动框', type: 'port', requireType: 'verbs', multiConnect: false, default: 'work', description: 'startingVerbId: 游戏开始时提供给玩家的verb，你可以自创一个，也可以从已有的verb中选择一个' },
             ],
-            properties: [
-                { label: '前置结局', type: 'port', requireType: 'endings', multiConnect: false, description: 'fromEnding: 在某结局后必定可选' },
-                { label: '非特定结局后续', type: 'bool', default: true, description: 'availableWithoutEndingMatch: 表示游戏是否可以在任何其他职业的任何结束后将此职业视为有效的新开始' },
-                { label: '新开始', type: 'bool', default: true, description: 'newstart: 表示我们是否可以在第六历史菜单中手动选择此职业来开始它（就像其他DLC一样）。' },
-                { label: '跟踪元素', type: 'port', requireType: 'elements', multiConnect: true, connectNum: 4, description: 'statusbarelements: 此职业中在屏幕底部跟踪的元素列表。需要恰好包含四个内容。如果你要跟踪的项目少于4个，你可以重复其中一些使其达到4个,默认重复列表的最后一个。' },
-                { label: '桌面图片', type: 'image', description: 'tablecoverimage: 决定桌面背景，如dlc流亡者中的地中海地图。(请将地图放入images/ui中)（没有该字段则使用默认桌面）' },
-                { label: '禁用后续职业列表', type: 'port', requireType: 'legacies', multiConnect: true, description: 'excludesOnEnding: 在此职业之后无法选择的其他职业列表。' }
-            ]
+            exProperties: {
+                0: [
+                    { label: '前置结局', type: 'port', requireType: 'endings', multiConnect: false, description: 'fromEnding: 在某结局后必定可选' },
+                    { label: '非特定结局后续', type: 'bool', default: true, description: 'availableWithoutEndingMatch: 表示游戏是否可以在任何其他职业的任何结束后将此职业视为有效的新开始' },
+                    { label: '新开始', type: 'bool', default: true, description: 'newstart: 表示我们是否可以在第六历史菜单中手动选择此职业来开始它（就像其他DLC一样）。' },
+                    { label: '跟踪元素', type: 'port', requireType: 'elements', multiConnect: true, connectNum: 4, description: 'statusbarelements: 此职业中在屏幕底部跟踪的元素列表。需要恰好包含四个内容。如果你要跟踪的项目少于4个，你可以重复其中一些使其达到4个,默认重复列表的最后一个。' },
+                    { label: '桌面图片', type: 'image', description: 'tablecoverimage: 决定桌面背景，如dlc流亡者中的地中海地图。(请将地图放入images/ui中)（没有该字段则使用默认桌面）' },
+                    { label: '禁用后续职业列表', type: 'port', requireType: 'legacies', multiConnect: true, description: 'excludesOnEnding: 在此职业之后无法选择的其他职业列表。' }
+                ]
+            }
+
         },
         endings: {
             title: 'ending',
@@ -116,15 +121,17 @@ export class NodeTypeRegistry {
             ],
             content: `endings即游戏中原版或自定义的结局。`,
             icon: '⚡',
-            fixedProperties: [
+            properties: [
                 { label: '描述', type: 'text', default: '在达成该结局时，游戏中显示的文本', description: 'description: 在达成该结局时，游戏中显示的文本' },
                 { label: '成就', type: 'port', requireType: 'achievements', multiConnect: true, default: '达成该结局时，解锁的成就', description: 'achievement: 达成该结局时，解锁的成就' },
                 { label: '图片', type: 'image', description: 'image: 达成该结局时，在达成该结局时显示的图片' },
             ],
-            properties: [
-                { label: '类型', type: 'select', options: ['坏结局(Melancholy)', '胜利(Grand)', '反面胜利(Vile)'], default: 0, description: 'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。' },
-                { label: '动画', type: 'select', options: ['DramaticLight', 'DramaticLightCool', 'DramaticLightEvil'], default: 0, description: 'anim: 从某个recipe进入该结局时，显示的动画类型。“DramaticLight”在任何结局都可用，“DramaticLightCool”是胜利时显示的动画，“DramaticLightEvil”则是在坏结局时显示。' }
-            ]
+            exProperties: {
+                0: [
+                    { label: '类型', type: 'select', options: ['坏结局(Melancholy)', '胜利(Grand)', '反面胜利(Vile)'], default: 0, description: 'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。' },
+                    { label: '动画', type: 'select', options: ['DramaticLight', 'DramaticLightCool', 'DramaticLightEvil'], default: 0, description: 'anim: 从某个recipe进入该结局时，显示的动画类型。“DramaticLight”在任何结局都可用，“DramaticLightCool”是胜利时显示的动画，“DramaticLightEvil”则是在坏结局时显示。' }
+                ]
+            }
 
         },
         achievements: {
@@ -169,7 +176,7 @@ export class NodeTypeRegistry {
             ],
             content: `交互界面(recipes)，也称配方，是使用行动与卡牌交互的一种过程，可以实现多样化的功能`,
             icon: '📖',
-            fixedProperties: [
+            properties: [
                 { label: '使用行动', type: 'port', requireType: 'verbs', multiConnect: false, description: 'actionId: 使用的行动的id，如果此处填空则默认使用上一个recipe的verb' },
                 { label: '起始描述', type: 'text', default: '开始和进行时行动框显示的文本', description: 'startdescription: 开始和进行时行动框显示的文本' },
                 {
@@ -185,13 +192,13 @@ export class NodeTypeRegistry {
                 { label: '起始点', type: 'bool', default: false, description: 'craftable: 为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发。' },
                 { label: '仅作提示', type: 'bool', default: false, description: 'hintonly: 为真时该recipe无法被实际执行，只做展示描述作用（多用于提示）' }
             ],
-            properties: [
-                { label: '持续时间', type: 'number', default: 0, description: 'warmup: 该recipe的持续时间，单位为秒。' },
-                { label: '描述', type: 'text', default: '结束后显示的文本', description: 'description: 结束后显示的文本' },
-                { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: false, description: 'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。' },
-                { label: '生成元素', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: true, description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
-            ],
             exProperties: {
+                0: [
+                    { label: '持续时间', type: 'number', default: 0, description: 'warmup: 该recipe的持续时间，单位为秒。' },
+                    { label: '描述', type: 'text', default: '结束后显示的文本', description: 'description: 结束后显示的文本' },
+                    { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: false, description: 'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。' },
+                    { label: '生成元素', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: true, description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
+                ],
                 999: [
                     { label: '重载属性', type: 'port', requireType: 'mutations', multiConnect: true, description: 'mutations: 给特定或具有特定性相的卡牌重载（additive为false时）或增加/减少（additive为true时根据level的正负）指定数量的性相，且过滤条件除了性相也可以是卡牌。mutation对性相的改变可以被继承，即使卡牌经过了xtrigger或decayto的变换，变异后的卡牌无法堆叠。' },
                     { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。' },
@@ -222,13 +229,12 @@ export class NodeTypeRegistry {
             ],
             content: `重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相（仅在recipes内部使用）`,
             icon: '🔗',
-            fixedProperties: [
+            properties: [
                 { label: '条件', type: 'port', requireType: 'elements', multiconnect: false, description: 'filter: 过滤的条件id' },
                 { label: '目标', type: 'port', requireType: 'elements', multiconnect: false, description: 'mutate: 需要改变的性相id' },
                 { label: '变化数量', type: 'number', default: 0, description: 'level: 需要增加/减少的数量。' },
                 { label: '增加/减少', type: 'bool', default: true, description: 'additive: 增加/减少性相。' }
-            ],
-            properties: []
+            ]
         },
         elements: {
             title: 'element',
@@ -242,11 +248,9 @@ export class NodeTypeRegistry {
             ],
             content: `游戏中的卡牌、性相均属于elements`,
             icon: '📇',
-            fixedProperties: [
+            properties: [
                 { label: '类型', type: 'select', isModeSwitcher: true, options: ['卡牌', '性相'], default: 0 },
                 { label: '描述', type: 'text', default: '该元素（卡牌或性相）的介绍', description: 'description: 该元素（卡牌或性相）的介绍, 会显示在右上角详情中' },
-            ],
-            properties: [
                 { label: '图标', type: 'image', description: 'icon: 该元素（卡牌或性相）的图标图片，默认为空，此时会寻找和id一致的文件名' },
                 { label: '引发', type: 'port', requireType: 'recipes', multiConnect: true, NotSetWarning: '该条件需要通过set设置几率以及排序，直接连接元素recipes则默认几率100，排序按给定id排序', description: 'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建' },
             ],
@@ -561,7 +565,7 @@ export class NodeTypeRegistry {
      * @param {string} key - 节点类型的键值
      * @returns {any} 返回对应键的节点类型，如果不存在则返回默认的'blank'类型
      */
-    static getType(key){
+    static getType(key) {
         return this.nodeTypes[key] || this.nodeTypes['blank'];
     }
 
@@ -570,8 +574,8 @@ export class NodeTypeRegistry {
      * @param {string} key - 颜色的标识键
      * @returns {string} 返回对应的颜色值
      */
-    static getColor(key){
-       return this.nodeColorVars[key] || this.nodeColorVars['blank'];
+    static getColor(key) {
+        return this.nodeColorVars[key] || this.nodeColorVars['blank'];
     }
 
 }

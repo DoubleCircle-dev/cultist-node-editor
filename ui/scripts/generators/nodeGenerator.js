@@ -3,13 +3,13 @@ import { BaseNodeModel } from "../models/nodeModels/baseNodeModel.js";
 import { NodeModel } from "../models/nodeModels/nodeModel.js";
 import { VariableModel } from "../models/nodeModels/variableModel.js";
 import { InlineNodeModel } from "../models/nodeModels/inlineNodeModel.js";
-import { NodeTypeRegistry } from "./nodeTypes.js";
+import { NodeTypeRegistry } from "../types/nodeTypes.js";
 
 export class NodeGenerator {
 
     /**
-     * @param {string} id
-     * @param {string} uid
+     * @param {NodeID} id
+     * @param {number} uid
      * @param {string} type
      * @param {number} x
      * @param {number} y
@@ -18,7 +18,7 @@ export class NodeGenerator {
     static createNode(id, uid, type, x, y) {
         const nodeTypeConfig = NodeTypeRegistry.getType(type);
 
-        const nodeModel = this.createModel(id, 'Node', uid, x, y, nodeTypeConfig, nodeTypeConfig.properties);
+        const nodeModel = new NodeModel(uid, { id, type, x, y, config:nodeTypeConfig, properties: nodeTypeConfig.properties });
 
         const nodeView = new NodeView(nodeModel);
 

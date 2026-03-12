@@ -7,99 +7,10 @@ import {NodeGenerator} from "../generators/nodeGenerator.js";
  */
 
 export class NodeManager {
-    // 如果点击的是以下元素，则忽略拖拽
-    static ignoreDragItem = [
-        // === 数据输入控件 ===
-        'input',                    // 所有输入框（包括文本、数字、范围等）
-        'select',                   // 下拉框
-        'textarea',                 // 文本域
-        '.property-input',          // 属性输入框（包含各种类型）
-
-        // === 连接端口 ===
-        '.port-dot',                // 端口圆点（用于连接线）
-        '.port-item',           // 端口项整体
-        '.inner-port',              // 内部端口（port-hub内部）
-
-        // === 按钮和可点击元素 ===
-        'button',                   // 所有按钮
-        '.browse-btn',              // 浏览按钮
-        '.node-action-btn',         // 节点操作按钮（如删除）
-        '.bool-option',             // 布尔选项（可点击的标签区域）
-
-        // === 表格交互元素 ===
-        '.table-cell input',        // 表格中的输入框
-        '.table-cell select',       // 表格中的下拉框
-        '.table-cell textarea',     // 表格中的文本域
-        '.table-cell button',       // 表格中的按钮
-
-        // === 复选框和单选按钮 ===
-        'input[type="checkbox"]',
-        'input[type="radio"]',
-
-        // === 特定输入类型（确保覆盖） ===
-        'input[type="text"]',
-        'input[type="number"]',
-        'input[type="range"]',
-        'input[type="email"]',
-        'input[type="password"]',
-        'input[type="search"]',
-        'input[type="tel"]',
-        'input[type="url"]',
-        'input[type="date"]',
-        'input[type="time"]',
-        'input[type="datetime-local"]',
-        'input[type="month"]',
-        'input[type="week"]',
-        'input[type="color"]',
-        'input[type="file"]'
-    ];
-
-    // 如果点击的是以下元素，则忽略点击
-    static ignoreClickItem = [
-        // === 数据输入控件 ===
-        'input',                    // 所有输入框（包括文本、数字、范围等）
-        'select',                   // 下拉框
-        'textarea',                 // 文本域
-        '.property-input',          // 属性输入框（包含各种类型）
-
-        // === 连接端口 ===
-        '.port-dot',                // 端口圆点（用于连接线）
-        '.port-item',           // 端口项整体
-        '.inner-port',              // 内部端口（port-hub内部）
-
-        // === 按钮和可点击元素 ===
-        'button',                   // 所有按钮
-        '.browse-btn',              // 浏览按钮
-        '.node-action-btn',         // 节点操作按钮（如删除）
-        '.bool-option',             // 布尔选项（可点击的标签区域）
-
-        // === 表格交互元素 ===
-        '.table-cell input',        // 表格中的输入框
-        '.table-cell select',       // 表格中的下拉框
-        '.table-cell textarea',     // 表格中的文本域
-        '.table-cell button',       // 表格中的按钮
-
-        // === 复选框和单选按钮 ===
-        'input[type="checkbox"]',
-        'input[type="radio"]',
-
-        // === 特定输入类型（确保覆盖） ===
-        'input[type="text"]',
-        'input[type="number"]',
-        'input[type="range"]',
-        'input[type="email"]',
-        'input[type="password"]',
-        'input[type="search"]',
-        'input[type="tel"]',
-        'input[type="url"]',
-        'input[type="date"]',
-        'input[type="time"]',
-        'input[type="datetime-local"]',
-        'input[type="month"]',
-        'input[type="week"]',
-        'input[type="color"]',
-        'input[type="file"]'
-    ];
+    static ignoreItem =[
+        '.prop-hub',
+        '.prop-row'
+    ]
 
     /**
      * 创建节点管理器实例
@@ -225,48 +136,16 @@ export class NodeManager {
         }
     }
 
-    // // 检查是否应该忽略拖拽
-    // shouldIgnoreDrag(target) {
-    //     return NodeManager.ignoreDragItem.some((item) => target.closest(item));
-    // }
-
-    // shouldIgnoreClick(target) {
-    //     return NodeManager.ignoreClickItem.some((item) => target.closest(item));
-    // }
-    // // 处理事件
     // handleEvent() {
-
     //     this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
     //     this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this));
     //     this.canvas.addEventListener('mousedown', this.handleCanvasMouseDown.bind(this));
     //     this.canvas.addEventListener('change', this.handleCanvasChange.bind(this));
 
-
-    //     // this.canvas.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));  // 添加鼠标移动事件监听器
-    //     // this.canvas.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));    // 添加鼠标松开事件监听器
-    //     // this.canvas.addEventListener('wheel', (e) => this.handleCanvasWheel(e)); // 添加滚轮事件监听器
     // }
 
-    // // 处理画布上的 change 事件
-    // handleCanvasChange(e) {
-    //     const target = e.target;
-
-    //     // 检查是否是模式切换器
-    //     if (target.classList.contains('mode-switcher')) {
-    //         e.stopPropagation();
-
-    //         const nodeUid = target.dataset.nodeUid;
-    //         const propKey = target.dataset.propKey;
-    //         const newMode = parseInt(target.value, 10);
-
-    //         console.log(`检测到模式切换: 节点 ${nodeUid}, 属性 ${propKey}, 新模式 ${newMode}`);
-
-    //         // 获取节点实例
-    //         const node = this.getNode(nodeUid);
-    //         if (node) {
-    //             node.switchNodeMode(propKey, newMode);
-    //         }
-    //     }
+    // shouldIgnoreClick(target) {
+    //     return NodeManager.ignoreItem.some((item) => target.closest(item));
     // }
 
     // // 处理画布点击事件

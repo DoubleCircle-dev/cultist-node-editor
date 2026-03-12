@@ -1,3 +1,4 @@
+import { BaseProp } from '../propModels/baseProp.js';
 import { HubProp } from '../propModels/hubProp.js';
 import { PropGenerator } from '../../generators/propGenerator.js';
 import { BaseNodeModel } from './baseNodeModel.js';
@@ -10,21 +11,25 @@ export class NodeModel extends BaseNodeModel {
     /**
      * 构造函数，用于创建节点实例
      * @param {number} uid - 节点的避免重复的标识符
-     * @param {object} config - 节点的配置对象
-     */
-    constructor(uid, config) {
-        super(config); // 调用父类的构造函数，传入配置参数
+     * @param {string | number} id - 节点的唯一标识符
+     * @param {string} type - 节点的类型
+     * @param {number} x - 节点在画布上的x坐标
+     * @param {number} y - 节点在画布上的y坐标
+     * @param {NodeConfig} config - 节点的配置信息
+     * @param {BaseProp[]} properties - 节点的属性列表
+    */
+    constructor(uid, id, type, x, y, config, properties = []) {
+        super(id, type, x, y, config, properties); // 调用父类的构造函数，传入配置参数
+        this.uid = uid; // 设置节点的唯一标识符
 
-        this.inputs = config.config.inputs;
+        this.inputs = config.inputs;
         this.inputs.forEach(input => {
             input.direction = 'input';
         })
-        this.outputs = config.config.outputs;
+        this.outputs = config.outputs;
         this.outputs.forEach(output => {
             output.direction = 'output';
         })
-
-        this.uid = uid; // 设置节点的唯一标识符
 
         this._createPortHub();
 
@@ -45,7 +50,7 @@ export class NodeModel extends BaseNodeModel {
                 properties: this.outputs
             }
         )
-        const hub = new HubProp(`${this.id}:portHub`,'端口', [inputHub, outputHub], 'double');
+        const hub = new HubProp(`${this.id}:portHub`, '端口', [inputHub, outputHub], 'double');
 
         this.properties.push(hub);
     }
@@ -66,6 +71,8 @@ export class NodeModel extends BaseNodeModel {
         this.emit('modeChange', newMode);
     }
 
+
+
     toJSON() {
         const base = super.toJSON();
         return {
@@ -75,26 +82,13 @@ export class NodeModel extends BaseNodeModel {
         };
     }
 
-    /**
-     * 从JSON对象中解析数据并设置到当前对象
-     * @param {Object} json - 包含对象数据的JSON对象
-     */
-    static fromJSON(json) {
-        const model = new NodeModel(json.uid,
-            {
-                id: json.id,
-                type: json.type,
-                x: json.position.x,
-                y: json.position.y,
-                properties: json.properties
-            }
-        );
-
-        model.currentMode = json.currentMode;
-        model.connections = json.connections;
-
-        return model;
-    }
 }
 
 
+/** 
+ * @interface
+ */
+export const INodeModel = {
+    uid: Number,
+    id: 
+}
