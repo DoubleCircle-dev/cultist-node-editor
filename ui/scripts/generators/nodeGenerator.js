@@ -4,6 +4,8 @@ import { NodeModel } from "../models/nodeModels/nodeModel.js";
 import { VariableModel } from "../models/nodeModels/variableModel.js";
 import { InlineNodeModel } from "../models/nodeModels/inlineNodeModel.js";
 import { NodeTypeRegistry } from "../types/nodeTypes.js";
+import { PropGenerator } from "./propGenerator.js";
+import { BaseProp } from "../models/propModels/baseProp.js";
 
 export class NodeGenerator {
 
@@ -18,25 +20,28 @@ export class NodeGenerator {
     static createNode(id, uid, type, x, y) {
         const nodeTypeConfig = NodeTypeRegistry.getType(type);
 
-        const nodeModel = new NodeModel(uid, { id, type, x, y, config:nodeTypeConfig, properties: nodeTypeConfig.properties });
+        const nodeModel = new NodeModel(uid, id, type, x, y, nodeTypeConfig, this.createProps(id, nodeTypeConfig.properties));
 
         const nodeView = new NodeView(nodeModel);
 
         return { nodeView, nodeModel };
-
     }
 
-    static createModel(id, type, uid, x, y,config={}, properties = []) {
-        switch (type) {
-            case "Node":
-                return new NodeModel(uid, { id, type, x, y,config, properties });
-            case "Variable":
-                return new VariableModel({ id, uid, type, x, y,config, properties });
-            case "InlineNode":
-                return new InlineNodeModel();
-            default:
-                console.error(`Unknown node type: ${type}`);
-                return new BaseNodeModel({ id, type, x, y,config, properties});
-        }
+    /**
+     * @param {NodeID} nodeID
+     * @param {PropConfig[]} properties
+     * @returns {BaseProp[]}
+    */
+    static createProps(nodeID, properties) {
+        const result = [];
+
+        properties.forEach((prop,index) => {
+            const id = `${nodeID}_${prop.type}-${index}`
+            result.push(PropGenerator.createProp(id, prop.type, prop));
+        })
+
+        return result;
     }
+
+
 }

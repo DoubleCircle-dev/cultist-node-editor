@@ -99,7 +99,7 @@ export class NodeTypeRegistry {
                 { label: '起始行动框', type: 'port', requireType: 'verbs', multiConnect: false, default: 'work', description: 'startingVerbId: 游戏开始时提供给玩家的verb，你可以自创一个，也可以从已有的verb中选择一个' },
             ],
             exProperties: {
-                0: [
+                999: [
                     { label: '前置结局', type: 'port', requireType: 'endings', multiConnect: false, description: 'fromEnding: 在某结局后必定可选' },
                     { label: '非特定结局后续', type: 'bool', default: true, description: 'availableWithoutEndingMatch: 表示游戏是否可以在任何其他职业的任何结束后将此职业视为有效的新开始' },
                     { label: '新开始', type: 'bool', default: true, description: 'newstart: 表示我们是否可以在第六历史菜单中手动选择此职业来开始它（就像其他DLC一样）。' },
@@ -180,13 +180,12 @@ export class NodeTypeRegistry {
                 { label: '使用行动', type: 'port', requireType: 'verbs', multiConnect: false, description: 'actionId: 使用的行动的id，如果此处填空则默认使用上一个recipe的verb' },
                 { label: '起始描述', type: 'text', default: '开始和进行时行动框显示的文本', description: 'startdescription: 开始和进行时行动框显示的文本' },
                 {
-                    label: '要求', type: 'port-hub',
-                    inputsLabel: '要求',
-                    inputsDescription: 'requirements: 跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件; extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element; tablereqs与requirement类似，区别在于它检测的是桌面上的element。',
-                    inputs: [
+                    label: '要求', type: 'hub',
+                    properties:[
                         { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '前置要求', description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件。' },
                         { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '全局要求', description: '跳转进本交互界面的要求: extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element。' },
                         { type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', label: '桌面要求', description: '跳转进本交互界面的要求: tablereqs与requirement类似，区别在于它检测的是桌面上的element。' },
+
                     ]
                 },
                 { label: '起始点', type: 'bool', default: false, description: 'craftable: 为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发。' },
@@ -563,7 +562,7 @@ export class NodeTypeRegistry {
     /**
      * 根据键获取对应的节点类型
      * @param {string} key - 节点类型的键值
-     * @returns {any} 返回对应键的节点类型，如果不存在则返回默认的'blank'类型
+     * @returns {NodeConfig} 返回对应键的节点类型，如果不存在则返回默认的'blank'类型
      */
     static getType(key) {
         return this.nodeTypes[key] || this.nodeTypes['blank'];

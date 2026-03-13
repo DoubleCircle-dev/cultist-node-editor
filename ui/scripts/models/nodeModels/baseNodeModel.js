@@ -1,6 +1,5 @@
 import { PropGenerator } from '../../generators/propGenerator.js'
 import { BaseProp } from '../propModels/baseProp.js';
-import {INodeType} from '../../types/nodeTypes.js';
 
 export class BaseNodeModel extends EventTarget {
 
@@ -11,8 +10,8 @@ export class BaseNodeModel extends EventTarget {
      * @param {String} type 
      * @param {number} x 
      * @param {number} y 
-     * @param {INodeType} config 
-     * @param {BaseProp[]} properties 
+     * @param {NodeConfig} config 
+     * @param {PropType[]} properties 
      */
 
     constructor(id, type, x, y, config, properties = [] ) {
@@ -23,7 +22,7 @@ export class BaseNodeModel extends EventTarget {
         this.type = type;
 
         // 显示属性
-        this.properties = this._createProperties(properties) || [];
+        this.properties = properties;
 
         this.color = config.color || '#ffffff';
         this.title = config.title || 'Base Node';
@@ -38,20 +37,6 @@ export class BaseNodeModel extends EventTarget {
         this.x = x;
         this.y = y;
 
-    }
-
-    /**
-     * 
-     * @param {*} properties 
-     * @returns {BaseProp[]} result
-     */
-
-    _createProperties(properties) {
-        const result = [];
-        properties.forEach((prop, index) => {
-            result.push(PropGenerator.createProp(`${this.id}:prop-${index}`, prop.type, prop));
-        })
-        return result;
     }
 
     /**
@@ -116,14 +101,3 @@ export class BaseNodeModel extends EventTarget {
 
 }
 
-/** 
- * @interface
- */
-
-export const IBaseNodeModel = {
-    id: String,
-    type: String,
-    x: Number,
-    y: Number,
-    properties: BaseProp[],
-}

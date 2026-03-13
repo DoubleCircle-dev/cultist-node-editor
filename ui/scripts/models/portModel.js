@@ -13,7 +13,6 @@ export class PortModel {
         this.portType = options.portType || 'explicit'; // explicit, implicit
         // input时当作requiredType, output时当作returnType
         this.dataType = options.dataType || 'any'; // 对应 --node-number, --node-text 等
-
         // 位置管理
         this.pos = options.pos || 'left'; // left, right, left-top, right-top, left-bottom, right-bottom
 

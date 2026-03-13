@@ -7,13 +7,15 @@ export class ViewProp extends PortProp {
      * @param {string} type
      * @param {any} value
      */
-    constructor(id, label, type, value) {
+    constructor(id, label, type, value, columns=[], rows=[]) {
         const inputPortConfig ={
             id: `${id}-input`,
             dataType: type,
             pos: 'top-left'
         }
         super(id, label, type, value, { inputPort: inputPortConfig });
+        this.columns = columns;
+        this.rows = rows;
     }
 }
 

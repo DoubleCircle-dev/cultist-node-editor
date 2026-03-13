@@ -40,6 +40,7 @@
     flex-direction: column;
     gap: 4px;
     padding: 8px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .node-title {
@@ -88,42 +89,4 @@
 .node-label-input:focus {
     outline: 1px solid #28a745;
     background: var(--bg-secondary);
-}
-
-.node-port-hub {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.ports-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-    width: 100%;
-    gap: 10px;
-}
-
-.port-column {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.port-column-title {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 6px;
-    padding-bottom: 2px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }

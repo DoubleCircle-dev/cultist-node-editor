@@ -22,10 +22,10 @@ export class PropGenerator {
         switch (type) {
             case 'hub':
                 const hubProps = [];
-                prop.properties.forEach(prop => {
-                    hubProps.push(PropGenerator.createProp(`${id}-${prop.id}`, prop.type, prop))
+                prop.properties.forEach((/** @type {PropConfig} */ p, /** @type {number} */ index) => {
+                    hubProps.push(PropGenerator.createProp(`${id}_hub:${prop.label}-${index}`, p.type, p))
                 });
-                args = [id, prop.label, hubProps];
+                args = [id, prop.label, hubProps, prop.layout];
                 propClass = HubProp;
                 break;
             case 'number':
@@ -148,8 +148,8 @@ export class PropRenderer {
         'table-button': () =>
             this.createButton('table', 'DATA TABLE', { innerText: 'DATA TABLE' }),
 
-        'table-preview': (/** @type {{ value: any; }} */ p) =>
-            this.createPreView('table', p.value),
+        'table-preview': (/** @type {{ value: any; columns: string[]; }} */ p) =>
+            this.createPreView('table', p.value, p.columns),
 
         'textarea-preview': (/** @type {{ value: any; }} */ p) =>
             this.createPreView('textarea', p.value),
@@ -247,7 +247,7 @@ export class PropRenderer {
      * @param {string} type
      * @param {any} val
      */
-    static createPreView(type, val) {
+    static createPreView(type, val, columns = []) {
         const preView = this.createElement('div', {}, 'prop-card');
 
         switch (type) {
@@ -267,17 +267,37 @@ export class PropRenderer {
                 break;
 
             case 'table':
+                const tableWrapper = this.createElement('div', {}, 'table-wrapper');
+
                 const table = this.createElement('table', {}, 'prop-table');
                 const thead = this.createElement('thead');
                 const headerRow = this.createElement('tr');
 
-                (Array.isArray(val) ? val : []).forEach(text => {
-                    headerRow.appendChild(this.createElement('th', { textContent: text }));
+                columns.forEach(col => {
+                    headerRow.appendChild(this.createElement('th', { textContent: col.label }));
+                })
+
+                const tbody = this.createElement('tbody');
+                (Array.isArray(val) ? val : []).forEach(rowItem => {
+                    const tr = this.createElement('tr');
+                    columns.forEach(col => {
+                        const td = this.createElement('td');
+
+                        const value = rowItem[col.field];
+
+                        td.textContent = value ?? '';
+
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
                 });
 
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
-                preView.appendChild(table);
+                table.appendChild(tbody);
+
+                tableWrapper.appendChild(table);
+                preView.appendChild(tableWrapper);
                 break;
         }
 
@@ -285,6 +305,11 @@ export class PropRenderer {
     }
 
 
+    /**
+     * @param {string} type
+     * @param {string} label
+     * @param {{ innerText: string; }} val
+     */
     static createButton(type, label, val) {
         const button = document.createElement('button');
 
@@ -295,6 +320,9 @@ export class PropRenderer {
 
     }
 
+    /**
+     * @param {string} type
+     */
     static createHub(type, layout = 'single') {
         const hub = document.createElement('div');
         hub.className = 'prop-hub';

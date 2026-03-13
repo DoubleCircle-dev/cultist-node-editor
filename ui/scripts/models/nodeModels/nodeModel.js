@@ -22,14 +22,27 @@ export class NodeModel extends BaseNodeModel {
         super(id, type, x, y, config, properties); // 调用父类的构造函数，传入配置参数
         this.uid = uid; // 设置节点的唯一标识符
 
-        this.inputs = config.inputs;
-        this.inputs.forEach(input => {
+        config.inputs.forEach((input) => {
             input.direction = 'input';
         })
-        this.outputs = config.outputs;
-        this.outputs.forEach(output => {
+
+        config.outputs.forEach((output) => {
             output.direction = 'output';
         })
+
+        this.inputs = PropGenerator.createProp(`${this.id}:inputHub`, 'hub',
+            {
+                label: '输入端口',
+                properties: config.inputs
+            }
+        );
+
+        this.outputs = PropGenerator.createProp(`${this.id}:outputHub`, 'hub',
+            {
+                label: '输出端口',
+                properties: config.outputs
+            }
+        );
 
         this._createPortHub();
 
@@ -37,20 +50,8 @@ export class NodeModel extends BaseNodeModel {
     }
 
     _createPortHub() {
-        const inputHub = PropGenerator.createProp(`${this.id}:inputHub`, 'hub',
-            {
-                label: '输入端口',
-                properties: this.inputs
-            }
-        );
 
-        const outputHub = PropGenerator.createProp(`${this.id}:outputHub`, 'hub',
-            {
-                label: '输出端口',
-                properties: this.outputs
-            }
-        )
-        const hub = new HubProp(`${this.id}:portHub`, '端口', [inputHub, outputHub], 'double');
+        const hub = new HubProp(`${this.id}:portHub`, '端口', [this.inputs, this.outputs], 'double');
 
         this.properties.push(hub);
     }
@@ -85,10 +86,4 @@ export class NodeModel extends BaseNodeModel {
 }
 
 
-/** 
- * @interface
- */
-export const INodeModel = {
-    uid: Number,
-    id: 
-}
+

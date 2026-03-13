@@ -12,7 +12,10 @@ interface PropConfig {
 }
 
 interface PortPropConfig extends PropConfig {
+  type: 'port';
   direction?: "input" | "output";
+  requireType?: string;
+  returnType?: string;
 }
 
 /** 属性配置接口 */
@@ -28,6 +31,13 @@ interface PropType {
 
 interface PortPropType extends PropType {
   direction?: "input" | "output";
+  requireType?: string;
+  returnType?: string;
+}
+
+interface HubPropType extends PropType {
+  properties?: PropType[];
+  layout?: "single" | "double" | "mix";
 }
 
 interface NodeConfig {
@@ -43,10 +53,13 @@ interface NodeConfig {
 }
 
 /** 节点类型定义 */
-interface NodeType {
+interface NodeType extends EventTarget {
+  id: NodeID;
   title: string;
   color: string;
   icon: string;
+  x: number;
+  y: number;
   content?: string;
   modelType?: "Node" | "Variable" | "InlineNode"; //基本逻辑节点 | 变量节点 | 内联节点
   inputs?: PortPropType[];

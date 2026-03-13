@@ -3,10 +3,11 @@ import { PortProp } from "../models/propModels/portProp.js";
 import { PortModel } from "../models/portModel.js";
 import { PropRenderer } from "../generators/propGenerator.js";
 import { NodeTypeRegistry } from "../types/nodeTypes.js";
+import { HubProp } from "../models/propModels/hubProp.js";
 
 export class PropView {
     /**
-     * @param {BaseProp | PortProp} prop
+     * @param {PropType} prop
      */
     static renderProp(prop) {
         if (!prop) {
@@ -26,10 +27,13 @@ export class PropView {
         return this.createRow(prop);
     }
 
+    /**
+     * @param {HubPropType} propModel
+     */
     static createHub(propModel) {
         const hub = PropRenderer.createHub('hub', propModel.layout);
 
-        propModel.properties.forEach(prop => {
+        propModel.properties.forEach((/** @type {PropType} */ prop) => {
             hub.appendChild(this.renderProp(prop));
         })
 
@@ -37,7 +41,7 @@ export class PropView {
     }
 
     /**
-     * @param {BaseProp | PortProp} propModel
+     * @param {PropType} propModel
      */
     static createRow(propModel) {
 
@@ -71,6 +75,10 @@ export class PropView {
         return row;
     }
 
+    /**
+     * @param {string} type
+     * @param {PropType} param
+     */
     static createContent(type, param) {
         try {
             return PropRenderer.RenderMap[type](param);

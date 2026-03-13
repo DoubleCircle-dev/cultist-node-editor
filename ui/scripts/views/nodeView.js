@@ -1,13 +1,11 @@
-import { NodeModel } from '../models/nodeModels/nodeModel.js';
-import { BaseNodeModel } from '../models/nodeModels/baseNodeModel.js';
 import { PropView } from './propView.js';
 
 export class NodeView {
     /**
      * 构造函数，初始化节点模型和DOM元素，并设置模型变化的监听器
-     * @param {BaseNodeModel} model - 节点模型实例，默认为新的BaseNodeModel对象
+     * @param {NodeType} model - 节点模型实例，默认为新的BaseNodeModel对象
      */
-    constructor(model=new BaseNodeModel()) {
+    constructor(model) {
         // 初始化节点模型
         this.model = model;
         // 创建DOM元素并赋值给实例属性
@@ -70,17 +68,17 @@ export class NodeView {
                        class="node-title-input" 
                        value="${this.model.title}" 
                        placeholder="节点标题"
-                       data-node-uid="${this.model.uid || this.model.id}"
+                       data-node-id="${this.model.id}"
                        onclick="event.stopPropagation()"
                        onkeydown="if(event.key === 'Enter') this.blur()">
-                <span class="node-uid">#${this.model.uid || this.model.id}</span>
+                <span class="node-id">#${this.model.id}</span>
             </div>
             <div class="node-label">
                 <input type="text" 
                        class="node-label-input" 
                        value="${''}" 
                        placeholder="标签（label:游戏内显示的名称）"
-                       data-node-uid="${this.model.uid || this.model.id}"
+                       data-node-id="${this.model.id}"
                        onclick="event.stopPropagation()"
                        onkeydown="if(event.key === 'Enter') this.blur()">
             </div>
@@ -95,12 +93,36 @@ export class NodeView {
         const properties = document.createElement('div');
         properties.className = 'node-properties';
 
+        let separateFlag = false;
         this.model.properties.forEach((prop) => {
+            if (prop.type === 'hub') {
+                if (!separateFlag) {
+                    properties.appendChild(this._createSeparator());
+                }
+            } else {
+                separateFlag = false;
+            }
             const propView = PropView.renderProp(prop);
             properties.appendChild(propView);
+
+            if (prop.type === 'hub') {
+                properties.appendChild(this._createSeparator());
+                separateFlag = true;
+            }
+
         })
 
+        if (separateFlag) {
+            properties.removeChild(properties.lastChild);
+        }
+
         return properties;
+    }
+
+    _createSeparator() {
+        const separator = document.createElement('hr');
+        separator.className = 'prop-separator';
+        return separator;
     }
 
     _createPortHub() {

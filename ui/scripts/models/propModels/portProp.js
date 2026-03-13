@@ -14,7 +14,7 @@ export class PortProp extends BaseProp {
     constructor(id, label, type, value, portConfig = {}) {
         super(id, label, type, value);
         this.inputPort = portConfig.inputPort ? new PortModel(portConfig.inputPort.id, 'input', portConfig.inputPort) : null;
-        this.outputPort = portConfig.outputPort ? new PortModel(portConfig.outputPort.id, 'input', portConfig.outputPort) : null;
+        this.outputPort = portConfig.outputPort ? new PortModel(portConfig.outputPort.id, 'output', portConfig.outputPort) : null;
     }
 
     toJSON() {
