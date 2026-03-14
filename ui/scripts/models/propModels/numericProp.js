@@ -1,5 +1,4 @@
 import { PortProp } from "./portProp.js";
-import { PortModel } from "../portModel.js";
 export class NumericProp extends PortProp {
     /**
      * @param {string} id
@@ -12,8 +11,8 @@ export class NumericProp extends PortProp {
     constructor(id, label, type, value, min, max) {
         const inputPortConfig  = {
             id: `${id}-input`,
-            requiredType: 'number'
-
+            direction: 'input',
+            dataType: 'number'
         }
         super(id, label, type, value, { inputPort: inputPortConfig});
         this.config.min = min;

@@ -1,9 +1,10 @@
+import { NodeModel } from '../models/nodeModels/nodeModel.js';
 import { PropView } from './propView.js';
 
 export class NodeView {
     /**
      * 构造函数，初始化节点模型和DOM元素，并设置模型变化的监听器
-     * @param {NodeType} model - 节点模型实例，默认为新的BaseNodeModel对象
+     * @param {NodeType | NodeModel} model - 节点模型实例，默认为新的BaseNodeModel对象
      */
     constructor(model) {
         // 初始化节点模型

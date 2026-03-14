@@ -28,14 +28,11 @@ export class PropGenerator {
                 args = [id, prop.label, hubProps, prop.layout];
                 propClass = HubProp;
                 break;
-            case 'number':
-                args = [id, prop.label, 'integer', prop.default, prop.min, prop.max];
-                propClass = NumericProp;
-                break;
             case 'range':
                 args = [id, prop.label, 'slider', prop.default, prop.min, prop.max];
                 propClass = NumericProp;
                 break;
+            case 'number':
             case 'integer':
             case 'slider':
                 args = [id, prop.label, prop.type, prop.default, prop.min, prop.max];
@@ -51,6 +48,18 @@ export class PropGenerator {
             case 'table':
             case 'table-preview':
                 args = [id, prop.label, 'table-preview', prop.default, prop.columns, prop.rows];
+                propClass = ViewProp;
+                break;
+            case 'image-preview':
+                args = [id, prop.label, 'image-preview', prop.default];
+                propClass = ViewProp;
+                break;
+            case 'textarea-preview':
+                args = [id, prop.label, 'textarea-preview', prop.default];
+                propClass = ViewProp;
+                break;
+            case 'image-icon':
+                args = [id, prop.label, 'image-icon', prop.default];
                 propClass = ViewProp;
                 break;
             case 'bool':
@@ -118,6 +127,9 @@ export class PropRenderer {
         'integer': (/** @type {{ value: any; }} */ p) =>
             this.createInput('number', p.value),
 
+        'number': (/** @type {{ value: any; }} */ p) =>
+            this.createInput('number', p.value),
+
         'slider': (/** @type {{ value: any; config: { min: any; max: any; step: any; }; }} */ p) =>
             this.createInput('range', p.value, {
                 min: String(p.config?.min ?? 0),
@@ -128,9 +140,10 @@ export class PropRenderer {
         'radio': (/** @type {any} */ p) =>
             this.createRadio(p),
 
-        'bool-radio': (/** @type {{ id: any; value: any; }} */ p) =>
+        'bool-radio': (/** @type {{ id: any; label:String; value: any; }} */ p) =>
             this.createRadio({
                 id: p.id,
+                label: p.label,
                 value: p.value ? '是' : '否',
                 config: { opts: ['是', '否'] }
             }),
@@ -144,6 +157,9 @@ export class PropRenderer {
         'image-preview': (/** @type {{ value: any; }} */ p) =>
             this.createPreView('image', p.value),
 
+        'image-icon': (/** @type {{ value: any; }} */ p) =>
+            this.createPreView('icon', p.value),
+
         //TODO 创建table界面
         'table-button': () =>
             this.createButton('table', 'DATA TABLE', { innerText: 'DATA TABLE' }),
@@ -156,6 +172,9 @@ export class PropRenderer {
 
         'port': (/** @type {{label:'string'; value: any; }} */ p) =>
             this.createButton('port', p.label, p.value),
+
+        'selectPort': (/** @type {{default: any; opts: Object; }} */ p) =>
+            this.createButton('selectPort', p.default, p.opts),
 
         'hub': (/** @type {{layout: 'string'; }} */ p) =>
             this.createHub('hub', p.layout)
@@ -195,6 +214,12 @@ export class PropRenderer {
     static createRadio(p) {
         // 创建一个div容器，类名为'prop-radio-group'
         const container = this.createElement('div', {}, 'prop-radio-group');
+
+        // 创建一个label元素，类名为'radio-label'，并设置文本内容为p.label
+        const label = this.createElement('label', { textContent: p.label }, 'radio-group-label');
+        // 将label添加到容器中
+        container.appendChild(label);
+
         // 从配置中解构出选项数组和默认值
         const { opts = [], default: def } = p.config || {};
 
@@ -258,6 +283,13 @@ export class PropRenderer {
                 });
                 preView.appendChild(textInput);
                 break;
+            case 'icon':
+                const icon = this.createElement('img', {
+                    src: val || '../../../test/img/placeholder.png'
+                })
+                preView.appendChild(icon);
+                preView.classList.add('icon');
+                break;
 
             case 'image':
                 const img = this.createElement('img', {
@@ -308,7 +340,7 @@ export class PropRenderer {
     /**
      * @param {string} type
      * @param {string} label
-     * @param {{ innerText: string; }} val
+     * @param {any} val
      */
     static createButton(type, label, val) {
         const button = document.createElement('button');
