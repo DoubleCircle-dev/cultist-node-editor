@@ -1,5 +1,4 @@
 import { PortProp } from "./portProp.js";
-import { PortModel } from "../portModel.js";
 export class ViewProp extends PortProp {
     /**
      * @param {string} id

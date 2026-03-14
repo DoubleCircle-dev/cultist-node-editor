@@ -4,10 +4,12 @@ import { PortModel } from "../models/portModel.js";
 import { PropRenderer } from "../generators/propGenerator.js";
 import { NodeTypeRegistry } from "../types/nodeTypes.js";
 import { HubProp } from "../models/propModels/hubProp.js";
+import { ViewProp } from "../models/propModels/viewProp.js";
 
 export class PropView {
     /**
      * @param {PropType} prop
+     * @returns {HTMLElement}
      */
     static renderProp(prop) {
         if (!prop) {
@@ -20,15 +22,19 @@ export class PropView {
             return PropRenderer.createErrorDom();
         }
 
-        if (prop.type === 'hub') {
+        if (prop instanceof HubProp) {
             return this.createHub(prop);
+        }
+
+        if(prop instanceof ViewProp) {
+            return this.createView(prop);
         }
 
         return this.createRow(prop);
     }
 
     /**
-     * @param {HubPropType} propModel
+     * @param {HubPropType| HubProp} propModel
      */
     static createHub(propModel) {
         const hub = PropRenderer.createHub('hub', propModel.layout);
@@ -38,6 +44,15 @@ export class PropView {
         })
 
         return hub;
+    }
+
+    /**
+     * 创建视图的方法
+     * @param {PropType} propModel - 属性模型对象，包含要渲染的属性信息
+     */
+    static createView(propModel) {
+        const view = PropRenderer.RenderMap[propModel.type](propModel);
+        return view;
     }
 
     /**

@@ -156,6 +156,16 @@
     align-items: center;
 }
 
+.prop-content .radio-group-label {
+    font-size: 14px;
+    margin-right: 4px;
+    margin-left: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0 0 2px;
+    /* 防止被压缩 */
+}
+
 .prop-content .radio-option {
     display: flex;
     align-items: center;
@@ -297,8 +307,10 @@
     border-color: var(--border-light);
 }
 
-.prop-content .prop-card {
-    width: 100%;
+.prop-card {
+    grid-column: 2;
+    margin: 6px calc(var(--port-slot-width) / 2);
+
     aspect-ratio: 16 / 9;
     border: 1px solid #ddd;
     border-radius: var(--radius-sm);
@@ -306,11 +318,15 @@
     /* 确保子元素不溢出圆角 */
     display: flex;
     flex-direction: column;
+    padding: 0;
 }
 
-.prop-card .table-wrapper {
-    overflow: auto;
+.prop-content .prop-card {
+    grid-column: 1;
+    margin: 0;
+    width: 100%;
 }
+
 
 .prop-card img {
     width: 100%;
@@ -319,11 +335,14 @@
 }
 
 .prop-card.icon {
-    width: 100%;
     aspect-ratio: 1 / 1;
     border-radius: 24px;
 }
 
+.prop-card .table-wrapper {
+    overflow: auto;
+    padding: 0;
+}
 
 .prop-card table {
     width: 100%;
@@ -336,7 +355,7 @@
     position: sticky;
     top: 0;
     background-color: var(--bg-secondary);
-    z-index: 1;
+
 }
 
 .prop-table th,
@@ -355,13 +374,17 @@
     height: 100%;
     padding: var(--padding-text);
     /* 比小输入框略大一点的内边距 */
-    background: transparent;
-    /* 继承父级背景 */
     border: none;
     outline: none;
     resize: none;
     line-height: 1.4;
     font-family: inherit;
+
+    font-size: 12px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    flex: 1;
+
 }
 
 /* 属性面板按钮样式 */

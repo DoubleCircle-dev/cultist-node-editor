@@ -14,6 +14,7 @@ export class NodeManager {
 
     /**
      * 创建节点管理器实例
+     * @param {HTMLElement} viewport - 视口元素，用于容纳节点
      * @param {HTMLElement} canvas - 画布元素，用于渲染节点
      * @param {Function} updateStatus - 状态更新函数，用于更新界面显示的状态信息
      */
@@ -118,10 +119,10 @@ export class NodeManager {
             uid = this.uidGenerator.generate();
 
             // 创建节点视图
-            const {nodeView, nodeModel} = NodeGenerator.createNode(String(id), String(uid), type, x, y);
+            const {nodeView, nodeModel} = NodeGenerator.createNode(String(id), uid, type, x, y);
 
             this.canvas.appendChild(nodeView.element);
-            this.nodes.set(uid, nodeView);
+            this.nodes.set(uid, nodeModel);
 
             // this.basicActionManager.addActionToHistory('addNode');
 
@@ -531,25 +532,25 @@ export class NodeManager {
     //     this.updateStatus(`已删除节点: ${node.config.title} #${nodeId}`);
     // }
 
-    // // 删除所有节点
-    // clear() {
-    //     this.nodes.clear();
-    //     this.connections = [];
-    //     this.idGenerator.reset();
-    //     this.highlightCache = {
-    //         highlightedNodes: new Set(),
-    //         dimmedConnections: new Set()
-    //     };
+    // 删除所有节点
+    clear() {
+        this.nodes.clear();
+        this.connections = [];
+        this.idGenerator.reset();
+        this.highlightCache = {
+            highlightedNodes: new Set(),
+            dimmedConnections: new Set()
+        };
 
-    //     const test_nodes = this.canvas.querySelectorAll(".test-node");
-    //     test_nodes.forEach((node) => node.remove());
-    //     const nodes = this.canvas.querySelectorAll(".node");
-    //     nodes.forEach((node) => node.remove());
-    //     const connections = this.canvas.querySelectorAll(".connection-path");
-    //     connections.forEach((connection) => connection.remove());
+        const test_nodes = this.canvas.querySelectorAll(".test-node");
+        test_nodes.forEach((node) => node.remove());
+        const nodes = this.canvas.querySelectorAll(".node");
+        nodes.forEach((node) => node.remove());
+        const connections = this.canvas.querySelectorAll(".connection-path");
+        connections.forEach((connection) => connection.remove());
 
-    //     this.updateStatus(`已清空所有节点及连接线`);
-    // }
+        this.updateStatus(`已清空所有节点及连接线`);
+    }
 
     // // === 连接线功能实现 ===
 

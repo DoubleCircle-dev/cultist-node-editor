@@ -59,6 +59,9 @@ export function clearCanvas() {
 
     nodeManager.clear();
 
+    canvas.innerHTML = '';
+    canvas.style.width = '100%';
+
     // 显示占位符
     const placeholder = document.getElementById("placeholder");
     if (placeholder) {
@@ -166,21 +169,6 @@ export function toggleConsole() {
 }
 
 export function customCheck() {
-    const canvas = document.getElementById('canvas');
-
-    const model = new NodeModel(12, { id: 0, type: 'test', x: 0, y: 0, properties: {} });
-    const node = new NodeView(model);
-
-    model.setPosition(200, 100);
-    // model.setSelected(true);
-
-    // nodeManager.nodes.set(0, node);
-    canvas.appendChild(node.element);
-
-    const propModel = new PortProp('0', '测试属性1', 'test', '测试值1', { inputPort: { id: 0, type: 'input' }, outputPort: { id: 0, type: 'output', portType: 'implicit' } });
-    const port = PropView.createRow(propModel);
-
-    node.element.appendChild(port);
 
 }
 
