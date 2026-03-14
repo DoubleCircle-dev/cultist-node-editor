@@ -68,7 +68,7 @@ class BasicActionManager {
     }
 
     /**
-     * 处理平移：鼠标中键 或 空格+左键
+     * 处理平移：鼠标中键 或 alt+左键
      */
     handleMouseDown(e) {
         if (this.panState.panning) {
@@ -195,8 +195,6 @@ class BasicActionManager {
         return this.mode;
     }
 
-    
-
     fitView() {
         const nodes = Array.from(this.nodesManager.nodes.values());
         // 没有节点就恢复初始化
@@ -244,6 +242,37 @@ class BasicActionManager {
     }
 
     setZoom(value, keepCenter = true, clientX = 0, clientY = 0) {
+
+        const rect = this.viewport.getBoundingClientRect();
+        let centerX = rect.width / 2;
+        let centerY = rect.height / 2;
+
+        if (!keepCenter) {
+            // 修改视口中心点为鼠标位置
+            centerX = clientX - rect.left;
+            centerY = clientY - rect.top;
+        }
+
+        // 计算偏移量修正
+        this.transform.x = centerX - (centerX - this.transform.x) * (value / this.transform.scale);
+        this.transform.y = centerY - (centerY - this.transform.y) * (value / this.transform.scale);
+
+        this.transform.scale = value;
+
+        if (this.panState.panning) {
+            this.panState = {
+                panning: true,
+                startX: clientX,
+                startY: clientY,
+                startTransX: this.transform.x,
+                startTransY: this.transform.y,
+                panBtn: this.panState.panBtn
+            }
+        }
+
+        this.updateTransform();
+        this.updateZoomDisplay();
+    }    setZoom(value, keepCenter = true, clientX = 0, clientY = 0) {
 
         const rect = this.viewport.getBoundingClientRect();
         let centerX = rect.width / 2;

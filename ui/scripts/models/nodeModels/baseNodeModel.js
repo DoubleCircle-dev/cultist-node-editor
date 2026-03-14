@@ -36,7 +36,9 @@ export class BaseNodeModel extends EventTarget {
         this.collapsed = false;
         this.x = x;
         this.y = y;
-
+        this.width = config.width || 300;
+        this.height = config.height || 0;
+        
     }
 
     /**
@@ -48,6 +50,23 @@ export class BaseNodeModel extends EventTarget {
         this.x = x;
         this.y = y;
         this.emit('change:position', { x, y });
+    }
+
+    /**
+     * 通过差值更新位置并通知监听者
+     */
+    moveBy(dx, dy) {
+        this.x += dx;
+        this.y += dy;
+        this.emit('change:position', { x: this.x, y: this.y });
+    }
+
+
+    
+    setRect(width, height){
+        this.width = width;
+        this.height = height;
+        this.emit('change:rect', { width, height });
     }
 
     /**

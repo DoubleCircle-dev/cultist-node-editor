@@ -1,4 +1,7 @@
-import {NodeGenerator} from "../generators/nodeGenerator.js";
+import { NodeGenerator } from "../generators/nodeGenerator.js";
+import { NodeModel } from "../models/nodeModels/nodeModel.js";
+import { ControllerCore } from "./controllerCore.js";
+import { EventBus } from "./eventBus.js";
 
 /**
  * 节点管理器类，用于管理画布上的节点
@@ -7,7 +10,7 @@ import {NodeGenerator} from "../generators/nodeGenerator.js";
  */
 
 export class NodeManager {
-    static ignoreItem =[
+    static ignoreItem = [
         '.prop-hub',
         '.prop-row'
     ]
@@ -15,34 +18,30 @@ export class NodeManager {
     /**
      * 创建节点管理器实例
      * @param {HTMLElement} viewport - 视口元素，用于容纳节点
-     * @param {HTMLElement} canvas - 画布元素，用于渲染节点
-     * @param {Function} updateStatus - 状态更新函数，用于更新界面显示的状态信息
+     * @param {HTMLElement} world - 画布元素，用于渲染节点
+     * @param {EventBus} bus - 事件总线，用于管理器间的通信
+     * @param {ControllerCore} coreSpace
      */
-    constructor(viewport, canvas, updateStatus) {
+    constructor(bus, viewport, world, coreSpace) {
         this.idGenerator = new BitmapIdGenerator();
         this.uidGenerator = new BitmapIdGenerator();
         this.id = 'node-manager-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 
         // 构造函数中可以初始化节点的属性和管理器所需的状态
         this.viewport = viewport;
-        this.canvas = canvas;
-        this.updateStatus = updateStatus;
+        this.world = world;
+        this.bus = bus;
+        this.coreSpace = coreSpace;
 
         // 节点列表
-        this.nodes = new Map();
+        this.nodes = /**@type {map<nodeID, NodeModel>} */ new Map();
 
         // 连接列表
         this.connections = [];
 
-        //创建svg容器
-        // if (!this.canvas.querySelector('svg')) {
-        //     this.createConnectionsSvg()
-        // }
-
-        // this.svg = this.canvas.querySelector('svg');
-
         // 当前选中的节点
         this.selectedNode = null;
+
 
         // 当前选中的连接
         this.selectedConnection = null;
@@ -53,17 +52,6 @@ export class NodeManager {
             y: 0,
             scale: 1
         }
-
-        // 拖拽相关变量
-        this.dragState = {
-            isDragging: false,
-            nodeId: null,
-            offsetX: 0,
-            offsetY: 0,
-            initialX: 0,
-            initialY: 0,
-            draggedNode: null
-        };
 
         // 连接线相关变量
         this.connectionState = {
@@ -87,29 +75,65 @@ export class NodeManager {
         // this.basicActionManager = new BasicActionManager(this.nodes, this.connections, this.canvas, this.updateStatus);
 
         // this.handleEvent();
+
+        this._initListeners();
+
+        this._onEvent();
     }
 
-    getNode(uid) {
+    _initListeners() {
+        // document.addEventListener('mousedown', this.handleClick.bind(this));
+    }
+
+    _onEvent() {
+        this.bus.on('canvas:click', this.clearNodeSelected.bind(this))
+    }
+
+    get SelectedNodes() {
+        const result = [];
+
+        this.nodes.forEach((node) => {
+            if (node.selected) {
+                result.push(node);
+            }
+        })
+
+        return result;
+    }
+
+    /**
+     * @param {NodeID} id
+     * @returns {NodeModel}
+     */
+    getNode(id) {
         // 类型检查
-        if (typeof uid !== 'string' && typeof uid !== 'number') {
-            console.error('节点UID格式不对', typeof uid, uid);
+        if (typeof id !== 'string' && typeof id !== 'number') {
+            console.error('节点UID格式不对', typeof id, id);
             return;
         }
-        if (typeof uid === 'string') {
-            uid = parseInt(uid, 10);
+        if (typeof id === 'string') {
+            id = parseInt(id, 10);
         }
 
         // 检查节点是否存在
-        if (!this.nodes.has(uid)) {
-            throw new Error(`节点 ${uid} 不存在`);
+        if (!this.nodes.has(id)) {
+            throw new Error(`节点 ${id} 不存在`);
         }
 
-        return this.nodes.get(uid);
+        return this.nodes.get(id);
     }
 
-    addNode(type, x, y) {
+    addNode(type, Px, Py) {
         let id = null;
         let uid = null;
+        let x = Px;
+        let y = Py;
+        if (!Px || !Py) {
+            ({ x, y } = this.coreSpace.ViewCenter);
+            x = x + Math.random() * 300 - 150;
+            y = y + Math.random() * 100 - 100;
+
+        }
         try {
             // 分配id
             id = this.idGenerator.generate();
@@ -119,21 +143,80 @@ export class NodeManager {
             uid = this.uidGenerator.generate();
 
             // 创建节点视图
-            const {nodeView, nodeModel} = NodeGenerator.createNode(String(id), uid, type, x, y);
+            const { nodeView, nodeModel } = NodeGenerator.createNode(String(id), uid, type, x, y);
 
-            this.canvas.appendChild(nodeView.element);
-            this.nodes.set(uid, nodeModel);
+            this.world.appendChild(nodeView.element);
+            nodeView.onMounted();
+
+            this._bindModelListenrs(nodeModel);
+
+            this.nodes.set(id, nodeModel);
 
             // this.basicActionManager.addActionToHistory('addNode');
+            this.bus.emit('nodeAdded', nodeModel);
 
-            this.updateStatus('成功添加' + nodeModel.type + '节点:#' + nodeModel.uid||nodeModel.id);
             // this.bringNodeToFront(uid);
         } catch (error) {
             console.error('添加节点失败:', error);
             if (uid) {
                 this.idGenerator.release(uid);
             }
-            this.updateStatus(`添加节点失败: ${error.message}`);
+            this.bus.emit('nodeAddFailed', error);
+        }
+    }
+
+    _bindModelListenrs(nodeModel) {
+        nodeModel.addEventListener('click', this._handleNodeClick.bind(this));
+        nodeModel.addEventListener('mousedown', (e) => {
+            this.bus.emit('drag-start:node', { event: e.detail.event }); 
+        });
+        // nodeModel.addEventListener('delete', this._handleNodeDelete.bind(this));
+    }
+
+    _handleNodeClick(e) {
+        const nodeId = e.target.id;
+
+        // 监听鼠标选中事件
+        if (e.detail.ctrlKey || e.detail.metaKey) {
+            // 多选模式：切换当前节点的选中状态，不改变其他
+            this.toggleNodeSelected(nodeId);
+        } else {
+            // 单选模式：选中当前节点，清除其他
+            this.setNodeSelected(nodeId, true)
+        }
+    }
+
+    clearNodeSelected() {
+        Array.from(this.nodes.values()).forEach(node => {
+            if (node.selected) node.setSelected(false);
+        });
+    }
+
+    setNodeSelected(nodeId, clearOthers = true) {
+        const node = this.getNode(nodeId);
+        const isNodeSelected = node.selected;
+        if (!node) return;
+
+        if (clearOthers) {
+            this.clearNodeSelected();
+        }
+
+
+        if (!isNodeSelected) {
+            node.setSelected(true);
+        } else {
+            node.setSelected(false);
+        }
+    }
+
+    toggleNodeSelected(nodeId) {
+        const node = this.getNode(nodeId);
+        if (!node) return;
+
+        if (node.selected) {
+            node.setSelected(false);
+        } else {
+            node.setSelected(true);
         }
     }
 
@@ -542,14 +625,15 @@ export class NodeManager {
             dimmedConnections: new Set()
         };
 
-        const test_nodes = this.canvas.querySelectorAll(".test-node");
+        const test_nodes = this.world.querySelectorAll(".test-node");
         test_nodes.forEach((node) => node.remove());
-        const nodes = this.canvas.querySelectorAll(".node");
+        const nodes = this.world.querySelectorAll(".node");
         nodes.forEach((node) => node.remove());
-        const connections = this.canvas.querySelectorAll(".connection-path");
+        const connections = this.world.querySelectorAll(".connection-path");
         connections.forEach((connection) => connection.remove());
 
-        this.updateStatus(`已清空所有节点及连接线`);
+        this.bus.emit('清理完毕');
+
     }
 
     // // === 连接线功能实现 ===

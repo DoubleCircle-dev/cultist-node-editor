@@ -71,6 +71,8 @@ interface NodeConfig {
   label?: string;
   color: string;
   icon: string;
+  width?: number;
+  height?: number;
   content?: string;
   modelType?: "Node" | "Variable" | "InlineNode"; //基本逻辑节点 | 变量节点 | 内联节点
   inputs?: PortPropConfig[];
@@ -88,6 +90,8 @@ interface NodeType extends EventTarget {
   icon: string;
   x: number;
   y: number;
+  width?: number;
+  height?: number;
   content?: string;
   modelType?: "Node" | "Variable" | "InlineNode"; //基本逻辑节点 | 变量节点 | 内联节点
   inputs?: PortPropType[];

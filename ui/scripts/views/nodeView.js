@@ -4,21 +4,22 @@ import { PropView } from './propView.js';
 export class NodeView {
     /**
      * 构造函数，初始化节点模型和DOM元素，并设置模型变化的监听器
-     * @param {NodeType | NodeModel} model - 节点模型实例，默认为新的BaseNodeModel对象
+     * @param {NodeModel} model - 节点模型实例，默认为新的BaseNodeModel对象
      */
     constructor(model) {
         // 初始化节点模型
         this.model = model;
         // 创建DOM元素并赋值给实例属性
-        this.element = this._createDOM(); 
+        this.element = this._createDOM();
 
         // 核心：监听 Model 的变化
         // 监听位置变化事件，当模型位置改变时更新DOM元素的位置
         this.model.addEventListener('change:position', (/** @type {CustomEvent} */ e) => {
             // 从事件详情中获取x和y坐标
             const { x, y } = (e).detail;
-            // 使用transform属性更新元素位置
-            this.element.style.transform = `translate(${x}px, ${y}px)`;
+
+            this.element.style.left = x + 'px';
+            this.element.style.top = y + 'px';
         });
 
         // 监听属性变化事件
@@ -29,12 +30,35 @@ export class NodeView {
 
         // 监听UI变化事件
         this.model.addEventListener('change:select', (/** @type {CustomEvent} */ e) => {
-            if (e.detail) {
+            if (e.detail.isSelected) {
                 this.element.classList.add('selected');
-            }else {
+            } else {
                 this.element.classList.remove('selected');
             }
         })
+
+        // 防止触发画布鼠标按下
+        this.element.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+
+            this.model.setSelected(true)
+
+            
+
+            this.model.emit('mousedown', {
+                event: e
+            })
+
+
+        })
+
+        // 传递点击监听
+        this.element.addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止冒泡触发画布点击
+
+
+        });
+
     }
 
     // 创建节点DOM元素
@@ -48,8 +72,6 @@ export class NodeView {
         element.appendChild(this._createHeader());
 
         element.appendChild(this._createProperties());
-
-        // element.appendChild(this._createPortHub());
 
         // 聚焦节点使其可接收键盘事件
         element.tabIndex = 0;
@@ -130,12 +152,12 @@ export class NodeView {
         const portHub = document.createElement('div');
 
 
-        return portHub;        
+        return portHub;
     }
 
 
     _updateInputDisplay(key, value) {
-        
+
     }
 
     redraw() {
@@ -143,5 +165,16 @@ export class NodeView {
         this.element = this._createDOM();
     }
 
+    onMounted() {
+
+        if (!this.model.x || !this.model.y) {
+            this.model.setPosition(this.element.offsetLeft, this.element.offsetTop);
+        }
+
+        // View 测量物理尺寸，同步给 Model
+        // 这样后续的 fitView 就能直接读取 model.width 而不触发重排
+        this.model.width = this.element.offsetWidth;
+        this.model.height = this.element.offsetHeight;
+    }
 
 }
