@@ -12,6 +12,10 @@ export class NodeView {
         // 创建DOM元素并赋值给实例属性
         this.element = this._createDOM();
 
+        this._initListeners();
+    }
+
+    _initListeners() {
         // 核心：监听 Model 的变化
         // 监听位置变化事件，当模型位置改变时更新DOM元素的位置
         this.model.addEventListener('change:position', (/** @type {CustomEvent} */ e) => {
@@ -35,29 +39,23 @@ export class NodeView {
             } else {
                 this.element.classList.remove('selected');
             }
-        })
+        });
+
+        this.model.addEventListener('change:rect', (/** @type {CustomEvent} */ e) => {
+            this.element.style.width = e.detail.width + 'px';
+            this.element.style.height = e.detail.height + 'px';
+        }
+        );
 
         // 防止触发画布鼠标按下
         this.element.addEventListener('mousedown', (e) => {
             e.stopPropagation();
 
-            this.model.setSelected(true)
-
-            
-
-            this.model.emit('mousedown', {
-                event: e
-            })
-
+                // 将原生事件传递给对应的 NodeModel
+            this.model.handleMouseDown(e);
 
         })
 
-        // 传递点击监听
-        this.element.addEventListener('click', (e) => {
-            e.stopPropagation(); // 防止冒泡触发画布点击
-
-
-        });
 
     }
 
@@ -92,7 +90,7 @@ export class NodeView {
                        value="${this.model.title}" 
                        placeholder="节点标题"
                        data-node-id="${this.model.id}"
-                       onclick="event.stopPropagation()"
+                       onmousedown="event.stopPropagation()"
                        onkeydown="if(event.key === 'Enter') this.blur()">
                 <span class="node-id">#${this.model.id}</span>
             </div>
@@ -102,7 +100,7 @@ export class NodeView {
                        value="${''}" 
                        placeholder="标签（label:游戏内显示的名称）"
                        data-node-id="${this.model.id}"
-                       onclick="event.stopPropagation()"
+                       onmousedown="event.stopPropagation()"
                        onkeydown="if(event.key === 'Enter') this.blur()">
             </div>
         </div>

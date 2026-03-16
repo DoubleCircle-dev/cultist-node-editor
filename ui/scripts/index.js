@@ -1,10 +1,9 @@
-import { NodeManager } from './controllers/nodeManager.js';
-import { CanvasManager } from './controllers/canvasManager.js';
-import { EventBus } from './controllers/eventBus.js';
 import { ControllerCore } from './controllers/controllerCore.js';
 
 // 创建全局管理器实例
 let core = null;
+
+console.log(navigator.userAgent)
 
 // 更新状态显示
 export function updateStatus(text) {

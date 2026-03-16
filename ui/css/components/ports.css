@@ -49,15 +49,14 @@
 /* 扩大点击区域 */
 .port-dot::after {
 
-    width: 20px;
-    height: 20px;
-    cursor: crosshair;
+    /* width: 20px; */
+    /* height: 20px; */
 
     content: '';
-    position: absolute;
+    /* position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%); */
     border-radius: 50%;
     background: transparent;
     pointer-events: auto;

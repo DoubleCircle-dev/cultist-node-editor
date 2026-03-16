@@ -14,7 +14,7 @@ export class BaseNodeModel extends EventTarget {
      * @param {PropType[]} properties 
      */
 
-    constructor(id, type, x, y, config, properties = [] ) {
+    constructor(id, type, x, y, config, properties = []) {
         super();
 
         // 基础属性
@@ -38,7 +38,7 @@ export class BaseNodeModel extends EventTarget {
         this.y = y;
         this.width = config.width || 300;
         this.height = config.height || 0;
-        
+
     }
 
     /**
@@ -54,6 +54,8 @@ export class BaseNodeModel extends EventTarget {
 
     /**
      * 通过差值更新位置并通知监听者
+     * @param {number} dx
+     * @param {number} dy
      */
     moveBy(dx, dy) {
         this.x += dx;
@@ -61,9 +63,12 @@ export class BaseNodeModel extends EventTarget {
         this.emit('change:position', { x: this.x, y: this.y });
     }
 
-
-    
-    setRect(width, height){
+    /**
+     * 重设大小并通知监听者
+     * @param {number} width
+     * @param {number} height
+     */
+    setRect(width, height) {
         this.width = width;
         this.height = height;
         this.emit('change:rect', { width, height });
@@ -95,6 +100,12 @@ export class BaseNodeModel extends EventTarget {
      */
     emit(type, detail) {
         this.dispatchEvent(new CustomEvent(type, { detail }));
+    }
+    
+    handleMouseDown(originalEvent) {
+        this.dispatchEvent(new CustomEvent('mousedown', {
+            detail: { originalEvent, node: this }
+        }));
     }
 
     /**

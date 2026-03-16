@@ -1,5 +1,6 @@
 import { NodeGenerator } from "../generators/nodeGenerator.js";
 import { NodeModel } from "../models/nodeModels/nodeModel.js";
+import { BaseNodeModel } from "../models/nodeModels/baseNodeModel.js";
 import { ControllerCore } from "./controllerCore.js";
 import { EventBus } from "./eventBus.js";
 
@@ -10,10 +11,7 @@ import { EventBus } from "./eventBus.js";
  */
 
 export class NodeManager {
-    static ignoreItem = [
-        '.prop-hub',
-        '.prop-row'
-    ]
+
 
     /**
      * 创建节点管理器实例
@@ -148,7 +146,7 @@ export class NodeManager {
             this.world.appendChild(nodeView.element);
             nodeView.onMounted();
 
-            this._bindModelListenrs(nodeModel);
+            this._bindModelListeners(nodeModel);
 
             this.nodes.set(id, nodeModel);
 
@@ -165,24 +163,33 @@ export class NodeManager {
         }
     }
 
-    _bindModelListenrs(nodeModel) {
-        nodeModel.addEventListener('click', this._handleNodeClick.bind(this));
-        nodeModel.addEventListener('mousedown', (e) => {
-            this.bus.emit('drag-start:node', { event: e.detail.event }); 
+    /**
+     * @param {BaseNodeModel} nodeModel
+     */
+    _bindModelListeners(nodeModel) {
+
+        nodeModel.addEventListener('mousedown', (/**@type {CustomEvent} */e) => {
+            const originalEvent = e.detail.originalEvent;
+            // 立即触发点击处理（鼠标按下时）
+            this._handleNodeClick(originalEvent, nodeModel);
+
+            // 取消选择时忽略拖动
+            if (!nodeModel.selected) return;
+
+            // 开始潜在的拖动监听
+            this.bus.emit('drag-start:node', {originalEvent});
         });
-        // nodeModel.addEventListener('delete', this._handleNodeDelete.bind(this));
+
     }
 
-    _handleNodeClick(e) {
-        const nodeId = e.target.id;
-
+    _handleNodeClick(e, model) {
         // 监听鼠标选中事件
-        if (e.detail.ctrlKey || e.detail.metaKey) {
+        if (e.ctrlKey || e.metaKey) {
             // 多选模式：切换当前节点的选中状态，不改变其他
-            this.toggleNodeSelected(nodeId);
+            this.toggleNodeSelected(model);
         } else {
             // 单选模式：选中当前节点，清除其他
-            this.setNodeSelected(nodeId, true)
+            this.setNodeSelected(model, true)
         }
     }
 
@@ -192,31 +199,27 @@ export class NodeManager {
         });
     }
 
-    setNodeSelected(nodeId, clearOthers = true) {
-        const node = this.getNode(nodeId);
-        const isNodeSelected = node.selected;
-        if (!node) return;
+    setNodeSelected(node, clearOthers = true) {
 
         if (clearOthers) {
             this.clearNodeSelected();
         }
 
-
-        if (!isNodeSelected) {
+        if (!node.selected) {
             node.setSelected(true);
         } else {
             node.setSelected(false);
         }
     }
 
-    toggleNodeSelected(nodeId) {
-        const node = this.getNode(nodeId);
+    toggleNodeSelected(node) {
         if (!node) return;
 
         if (node.selected) {
             node.setSelected(false);
         } else {
             node.setSelected(true);
+            
         }
     }
 

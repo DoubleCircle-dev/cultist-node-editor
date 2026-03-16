@@ -52,6 +52,7 @@ export class PropView {
      */
     static createView(propModel) {
         const view = PropRenderer.RenderMap[propModel.type](propModel);
+        view.addEventListener('mousedown', (e) => e.stopPropagation());
         return view;
     }
 
@@ -74,6 +75,8 @@ export class PropView {
         // 2. 中间内容区 (Label + Control)
         const content = document.createElement('div');
         content.className = 'prop-content';
+        // content.style.border = '1px solid white';
+        content.addEventListener('mousedown', (e) => e.stopPropagation());
 
         content.appendChild(this.createContent(propModel.type, propModel));
 
@@ -111,6 +114,8 @@ export class PropView {
         const dom = document.createElement('div');
         dom.className = `port-dot ${portModel.portType} ${portModel.pos}`;
         dom.style.backgroundColor = NodeTypeRegistry.getColor(portModel.dataType);
+
+        dom.addEventListener('mousedown', (e) => {e.stopPropagation();});
         return dom;
     }
 }

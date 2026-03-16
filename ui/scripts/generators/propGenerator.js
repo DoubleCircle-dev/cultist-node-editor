@@ -198,12 +198,14 @@ export class PropRenderer {
      * 
      */
     static createInput(type, val, config = {}) {
-        return this.createElement('input', {
+        const input = this.createElement('input', {
             type,
             value: val ?? '',
             className: `prop-input ${type}`,
             ...config
         });
+
+        return input;
     }
 
     /**

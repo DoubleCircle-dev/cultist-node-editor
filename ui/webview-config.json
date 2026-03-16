@@ -16,12 +16,7 @@
       "style.css"
     ],
     "scripts": [
-      "nodeTypes.js",
-      "node.js",
-      "nodeManager.js",
-      "basicManager.js",
-      "webview.js",
-      "debug.js"
+
     ]
   },
   "features": {

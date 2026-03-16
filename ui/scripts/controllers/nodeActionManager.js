@@ -33,9 +33,15 @@ export class NodeActionManager {
         this.bus.on('drag-start:node', this._onNodeDragStart.bind(this));
     }
 
-    _onNodeDragStart(e) {
+    _shouldIgnore(e) {
+        const target = e.target;
+        return NodeActionManager.ignoreItem.some(item => target.matches(item));
+    }
 
-        const { clientX, clientY, offsetX, offsetY } = e.detail.event;
+    _onNodeDragStart(e) {
+        // if(this._shouldIgnore(e.detail.originalEvent)) return;
+
+        const { clientX, clientY, offsetX, offsetY } = e.detail.originalEvent;
         if (this.coreSpace.SelectedNodes.length === 0) return;
 
         if (this.dragState.isDragging) return;
