@@ -1,0 +1,4317 @@
+﻿文件夹 PATH 列表
+卷序列号为 000000E3 FA68:669E
+E:\CODE\JS\CULTIST-NODE-EDITOR\CORE\ORIGIN_RESOURCES\IMAGES
+|   aspects.meta
+|   burns.meta
+|   cardbacks.meta
+|   elements.meta
+|   endings.meta
+|   legacies.meta
+|   statusbaricons.meta
+|   ui.meta
+|   verbs.meta
+|   
++---aspects
+|       ability.png
+|       ability.png.meta
+|       accursed.png
+|       accursed.png.meta
+|       acquaintance.png
+|       acquaintance.png.meta
+|       advancement.png
+|       advancement.png.meta
+|       annoyance.png
+|       annoyance.png.meta
+|       apostleforge.pillar4.dormant.png
+|       apostleforge.pillar4.dormant.png.meta
+|       apostleforge.pillar4.png
+|       apostleforge.pillar4.png.meta
+|       approval.png
+|       approval.png.meta
+|       article.png
+|       article.png.meta
+|       ascension.remembrance.offering.png
+|       ascension.remembrance.offering.png.meta
+|       asset.packed.png
+|       asset.packed.png.meta
+|       asset.png
+|       asset.png.meta
+|       associate.png
+|       associate.png.meta
+|       auctionable.png
+|       auctionable.png.meta
+|       autographed.png
+|       autographed.png.meta
+|       benefactor.png
+|       benefactor.png.meta
+|       benefactor_proposal.png
+|       benefactor_proposal.png.meta
+|       benign.png
+|       benign.png.meta
+|       besotment.png
+|       besotment.png.meta
+|       boredom.png
+|       boredom.png.meta
+|       cash.sent.png
+|       cash.sent.png.meta
+|       challenge.grim.png
+|       challenge.grim.png.meta
+|       challenge.illumination.png
+|       challenge.illumination.png.meta
+|       challenge.intuition.png
+|       challenge.intuition.png.meta
+|       challenge.knowledge.png
+|       challenge.knowledge.png.meta
+|       challenge.obsessive.png
+|       challenge.obsessive.png.meta
+|       challenge.paradox.png
+|       challenge.paradox.png.meta
+|       challenge.practical.png
+|       challenge.practical.png.meta
+|       changemarks.png
+|       changemarks.png.meta
+|       colours.endless.png
+|       colours.endless.png.meta
+|       colours.furious.png
+|       colours.furious.png.meta
+|       colours.golden.png
+|       colours.golden.png.meta
+|       colours.honeyed.png
+|       colours.honeyed.png.meta
+|       colours.horizon.png
+|       colours.horizon.png.meta
+|       colours.liminal.png
+|       colours.liminal.png.meta
+|       colours.luxurious.png
+|       colours.luxurious.png.meta
+|       colours.splendid.png
+|       colours.splendid.png.meta
+|       colours.wildering.png
+|       colours.wildering.png.meta
+|       comfort.png
+|       comfort.png.meta
+|       commission.png
+|       commission.png.meta
+|       compensationvalue.png
+|       compensationvalue.png.meta
+|       connection.png
+|       connection.png.meta
+|       corpse_scar.png
+|       corpse_scar.png.meta
+|       curse.png
+|       curse.png.meta
+|       dance.png
+|       dance.png.meta
+|       deceiver.png
+|       deceiver.png.meta
+|       deception.png
+|       deception.png.meta
+|       defiance.consecration.colonel.png
+|       defiance.consecration.colonel.png.meta
+|       defiance.consecration.lionsmith.png
+|       defiance.consecration.lionsmith.png.meta
+|       defiancemarks.png
+|       defiancemarks.png.meta
+|       delirium.png
+|       delirium.png.meta
+|       demotion.png
+|       demotion.png.meta
+|       desire.png
+|       desire.png.meta
+|       desireheart_track.png
+|       desireheart_track.png.meta
+|       desiremoth_track.png
+|       desiremoth_track.png.meta
+|       destination.png
+|       destination.png.meta
+|       devotee.png
+|       devotee.png.meta
+|       devourer.png
+|       devourer.png.meta
+|       disciple.png
+|       disciple.png.meta
+|       domicile.png
+|       domicile.png.meta
+|       downtime.png
+|       downtime.png.meta
+|       ecdysijob.png
+|       ecdysijob.png.meta
+|       edge.png
+|       edge.png.meta
+|       end.png
+|       end.png.meta
+|       enlightenmentmarks.png
+|       enlightenmentmarks.png.meta
+|       erratic.png
+|       erratic.png.meta
+|       evidencelevel.png
+|       evidencelevel.png.meta
+|       exalted.png
+|       exalted.png.meta
+|       exhausted.png
+|       exhausted.png.meta
+|       experience.exile.ally.png
+|       experience.exile.ally.png.meta
+|       follower.png
+|       follower.png.meta
+|       follower_honoured.png
+|       follower_honoured.png.meta
+|       follower_scar_edge.png
+|       follower_scar_edge.png.meta
+|       follower_scar_knock.png
+|       follower_scar_knock.png.meta
+|       follower_scar_winter.png
+|       follower_scar_winter.png.meta
+|       follower_wound.png
+|       follower_wound.png.meta
+|       forge.png
+|       forge.png.meta
+|       ghoul.hunger.png
+|       ghoul.hunger.png.meta
+|       grail.png
+|       grail.png.meta
+|       grailflavour.png
+|       grailflavour.png.meta
+|       greatwork.png
+|       greatwork.png.meta
+|       greatwork.sabotaged.png
+|       greatwork.sabotaged.png.meta
+|       grim.png
+|       grim.png.meta
+|       guardian.png
+|       guardian.png.meta
+|       healthskill.png
+|       healthskill.png.meta
+|       heart.png
+|       heart.png.meta
+|       heartflavour.png
+|       heartflavour.png.meta
+|       hireling.png
+|       hireling.png.meta
+|       hq.png
+|       hq.png.meta
+|       hunter.png
+|       hunter.png.meta
+|       idealist.png
+|       idealist.png.meta
+|       illhealth.png
+|       illhealth.png.meta
+|       independent.png
+|       independent.png.meta
+|       inducesdespair.png
+|       inducesdespair.png.meta
+|       inducesvisions.png
+|       inducesvisions.png.meta
+|       influence.png
+|       influence.png.meta
+|       ingredient.png
+|       ingredient.png.meta
+|       job.png
+|       job.png.meta
+|       knock.png
+|       knock.png.meta
+|       language.png
+|       language.png.meta
+|       lantern.png
+|       lantern.png.meta
+|       library.png
+|       library.png.meta
+|       lifespan.stolen.png
+|       lifespan.stolen.png.meta
+|       location.png
+|       location.png.meta
+|       lockscar.png
+|       lockscar.png.meta
+|       long.connections.png
+|       long.connections.png.meta
+|       long.dreamwork.png
+|       long.dreamwork.png.meta
+|       long.might.png
+|       long.might.png.meta
+|       long_wound.png
+|       long_wound.png.meta
+|       lore.png
+|       lore.png.meta
+|       malign.png
+|       malign.png.meta
+|       manifesting.png
+|       manifesting.png.meta
+|       memory.png
+|       memory.png.meta
+|       mentor.png
+|       mentor.png.meta
+|       meticulous.png
+|       meticulous.png.meta
+|       minedge.png
+|       minedge.png.meta
+|       minforge.png
+|       minforge.png.meta
+|       mingrail.png
+|       mingrail.png.meta
+|       minheart.png
+|       minheart.png.meta
+|       minknock.png
+|       minknock.png.meta
+|       minlantern.png
+|       minlantern.png.meta
+|       minmoth.png
+|       minmoth.png.meta
+|       minsecrethistories.png
+|       minsecrethistories.png.meta
+|       minwinter.png
+|       minwinter.png.meta
+|       mirror.png
+|       mirror.png.meta
+|       mortal.png
+|       mortal.png.meta
+|       moth.png
+|       moth.png.meta
+|       mothflavour.png
+|       mothflavour.png.meta
+|       murderskill.png
+|       murderskill.png.meta
+|       mystic.png
+|       mystic.png.meta
+|       op.png
+|       op.png.meta
+|       openedlockscar.png
+|       openedlockscar.png.meta
+|       passionskill.png
+|       passionskill.png.meta
+|       patron.png
+|       patron.png.meta
+|       pentiment.png
+|       pentiment.png.meta
+|       peril.png
+|       peril.png.meta
+|       pigment.png
+|       pigment.png.meta
+|       pit.png
+|       pit.png.meta
+|       poison.dread.longlesson.png
+|       poison.dread.longlesson.png.meta
+|       poison.fascination.longlesson.png
+|       poison.fascination.longlesson.png.meta
+|       poison.health.dread.png
+|       poison.health.dread.png.meta
+|       poison.notoriety.png
+|       poison.notoriety.png.meta
+|       poison.passion.dread.png
+|       poison.passion.dread.png.meta
+|       poison.png
+|       poison.png.meta
+|       poison.reason.fascination.png
+|       poison.reason.fascination.png.meta
+|       poison.way.long.png
+|       poison.way.long.png.meta
+|       portable.png
+|       portable.png.meta
+|       potential.png
+|       potential.png.meta
+|       potentialbenefactorf.png
+|       potentialbenefactorf.png.meta
+|       potentialbenefactorm.png
+|       potentialbenefactorm.png.meta
+|       potentialecdysiast.png
+|       potentialecdysiast.png.meta
+|       powermarks.png
+|       powermarks.png.meta
+|       price.connection.png
+|       price.connection.png.meta
+|       price.lifespan.stolen.png
+|       price.lifespan.stolen.png.meta
+|       price.png
+|       price.png.meta
+|       prisoner.png
+|       prisoner.png.meta
+|       promise.png
+|       promise.png.meta
+|       reasonskill.png
+|       reasonskill.png.meta
+|       rededicable.png
+|       rededicable.png.meta
+|       remembrancemarks.png
+|       remembrancemarks.png.meta
+|       remnant.png
+|       remnant.png.meta
+|       remote.png
+|       remote.png.meta
+|       reputation.png
+|       reputation.png.meta
+|       resentment.png
+|       resentment.png.meta
+|       riddle.png
+|       riddle.png.meta
+|       ritual.png
+|       ritual.png.meta
+|       rivalmarks.png
+|       rivalmarks.png.meta
+|       rkx.infected.png
+|       rkx.infected.png.meta
+|       rkx.rank.png
+|       rkx.rank.png.meta
+|       romanticinterest.png
+|       romanticinterest.png.meta
+|       sanctuary.png
+|       sanctuary.png.meta
+|       scar.png
+|       scar.png.meta
+|       seal.png
+|       seal.png.meta
+|       sealed.png
+|       sealed.png.meta
+|       season.png
+|       season.png.meta
+|       secret.png
+|       secret.png.meta
+|       secrethistories.png
+|       secrethistories.png.meta
+|       sending.png
+|       sending.png.meta
+|       sensationmarks.png
+|       sensationmarks.png.meta
+|       shrine.colonel.png
+|       shrine.colonel.png.meta
+|       shrine.lionsmith.png
+|       shrine.lionsmith.png.meta
+|       snarelevel.png
+|       snarelevel.png.meta
+|       society.png
+|       society.png.meta
+|       space.png
+|       space.png.meta
+|       spiriteatspassion.png
+|       spiriteatspassion.png.meta
+|       spiriteatsreason.png
+|       spiriteatsreason.png.meta
+|       spiritsicknessprotector.png
+|       spiritsicknessprotector.png.meta
+|       spirittutorfucine.png
+|       spirittutorfucine.png.meta
+|       spirittutormandaic.png
+|       spirittutormandaic.png.meta
+|       spirittutorphrygian.png
+|       spirittutorphrygian.png.meta
+|       summoned.png
+|       summoned.png.meta
+|       suspicious.png
+|       suspicious.png.meta
+|       tenacious.png
+|       tenacious.png.meta
+|       text.png
+|       text.png.meta
+|       textaramaic.png
+|       textaramaic.png.meta
+|       textfucine.png
+|       textfucine.png.meta
+|       textgreek.png
+|       textgreek.png.meta
+|       textlatin.png
+|       textlatin.png.meta
+|       textmandaic.png
+|       textmandaic.png.meta
+|       textphrygian.png
+|       textphrygian.png.meta
+|       textsanskrit.png
+|       textsanskrit.png.meta
+|       textvak.png
+|       textvak.png.meta
+|       tool.png
+|       tool.png.meta
+|       tutor.png
+|       tutor.png.meta
+|       tutoraramaic.png
+|       tutoraramaic.png.meta
+|       tutorgreek.png
+|       tutorgreek.png.meta
+|       tutorlatin.png
+|       tutorlatin.png.meta
+|       tutorsanskrit.png
+|       tutorsanskrit.png.meta
+|       unreason.png
+|       unreason.png.meta
+|       uses.remaining.png
+|       uses.remaining.png.meta
+|       vault.png
+|       vault.png.meta
+|       vaultcapital.png
+|       vaultcapital.png.meta
+|       vaultcontinent.png
+|       vaultcontinent.png.meta
+|       vaulteveningisles.png
+|       vaulteveningisles.png.meta
+|       vaultlandbeyondforest.png
+|       vaultlandbeyondforest.png.meta
+|       vaultloneandlevelsands.png
+|       vaultloneandlevelsands.png.meta
+|       vaultrendingmountains.png
+|       vaultrendingmountains.png.meta
+|       vaultshires.png
+|       vaultshires.png.meta
+|       venerates.colonel.png
+|       venerates.colonel.png.meta
+|       venerates.lionsmith.png
+|       venerates.lionsmith.png.meta
+|       venerationedge.png
+|       venerationedge.png.meta
+|       venerationforge.png
+|       venerationforge.png.meta
+|       venerationgrail.png
+|       venerationgrail.png.meta
+|       venerationheart.png
+|       venerationheart.png.meta
+|       venerationknock.png
+|       venerationknock.png.meta
+|       venerationlantern.png
+|       venerationlantern.png.meta
+|       venerationmoth.png
+|       venerationmoth.png.meta
+|       venerationwinter.png
+|       venerationwinter.png.meta
+|       wary.png
+|       wary.png.meta
+|       watched.png
+|       watched.png.meta
+|       watcher.png
+|       watcher.png.meta
+|       way.png
+|       way.png.meta
+|       weapon.png
+|       weapon.png.meta
+|       winter.png
+|       winter.png.meta
+|       xe.png
+|       xe.png.meta
+|       xf.png
+|       xf.png.meta
+|       xg.png
+|       xg.png.meta
+|       xh.png
+|       xh.png.meta
+|       xk.png
+|       xk.png.meta
+|       xl.png
+|       xl.png.meta
+|       xm.png
+|       xm.png.meta
+|       xw.png
+|       xw.png.meta
+|       _x.png
+|       _x.png.meta
+|       
++---burns
+|       beforetrial.png
+|       beforetrial.png.meta
+|       caper.complete.png
+|       caper.complete.png.meta
+|       consecration.colonel.png
+|       consecration.colonel.png.meta
+|       consecration.lionsmith.png
+|       consecration.lionsmith.png.meta
+|       death ending - my body is dead smol.png
+|       death ending - my body is dead smol.png.meta
+|       departure.png
+|       departure.png.meta
+|       despair.png
+|       despair.png.meta
+|       flammarion.png
+|       flammarion.png.meta
+|       foe.slain.png
+|       foe.slain.png.meta
+|       forgededication.png
+|       forgededication.png.meta
+|       freemasons.png
+|       freemasons.png.meta
+|       graildedication.png
+|       graildedication.png.meta
+|       lanterndedication.png
+|       lanterndedication.png.meta
+|       moon.png
+|       moon.png.meta
+|       office.png
+|       office.png.meta
+|       operation.complete.png
+|       operation.complete.png.meta
+|       pentiment.png
+|       pentiment.png.meta
+|       reckoner.slain.png
+|       reckoner.slain.png.meta
+|       retirement.png
+|       retirement.png.meta
+|       visions.png
+|       visions.png.meta
+|       winter ending - going quietly smol.png
+|       winter ending - going quietly smol.png.meta
+|       
++---cardbacks
+|       books.png
+|       books.png.meta
+|       default.png
+|       default.png.meta
+|       eye.png
+|       eye.png.meta
+|       _x.png
+|       _x.png.meta
+|       
++---elements
+|   |   accountkanishkspidersdoor.png
+|   |   accountkanishkspidersdoor.png.meta
+|   |   accountkanishkspidersdooraramaic.png
+|   |   accountkanishkspidersdooraramaic.png.meta
+|   |   affliction.png
+|   |   affliction.png.meta
+|   |   againstsisterhoodknot.png
+|   |   againstsisterhoodknot.png.meta
+|   |   againstsisterhoodknotgreek.png
+|   |   againstsisterhoodknotgreek.png.meta
+|   |   aladim.png
+|   |   aladim.png.meta
+|   |   aladimaway.png
+|   |   aladimaway.png.meta
+|   |   aladimready.png
+|   |   aladimready.png.meta
+|   |   alzabo.png
+|   |   alzabo.png.meta
+|   |   anim.meta
+|   |   apolloandmarsyas.png
+|   |   apolloandmarsyas.png.meta
+|   |   apostleforge.mentor.png
+|   |   apostleforge.mentor.png.meta
+|   |   apostleforge.pillar1.png
+|   |   apostleforge.pillar1.png.meta
+|   |   apostleforge.pillar2.dormant.png
+|   |   apostleforge.pillar2.dormant.png.meta
+|   |   apostleforge.pillar2.dormant.sabotaged.png
+|   |   apostleforge.pillar2.dormant.sabotaged.png.meta
+|   |   apostleforge.pillar2.png
+|   |   apostleforge.pillar2.png.meta
+|   |   apostleforge.pillar2.sabotaged.png
+|   |   apostleforge.pillar2.sabotaged.png.meta
+|   |   apostleforge.pillar3.png
+|   |   apostleforge.pillar3.png.meta
+|   |   apostleforge.pillar3.sabotaged.png
+|   |   apostleforge.pillar3.sabotaged.png.meta
+|   |   apostleforge.pillar5.png
+|   |   apostleforge.pillar5.png.meta
+|   |   apostlegrail.mentor.png
+|   |   apostlegrail.mentor.png.meta
+|   |   apostlegrail.pillar1.png
+|   |   apostlegrail.pillar1.png.meta
+|   |   apostlegrail.pillar2.dormant.png
+|   |   apostlegrail.pillar2.dormant.png.meta
+|   |   apostlegrail.pillar2.png
+|   |   apostlegrail.pillar2.png.meta
+|   |   apostlegrail.pillar3.png
+|   |   apostlegrail.pillar3.png.meta
+|   |   apostlegrail.pillar4.inprogress1.png
+|   |   apostlegrail.pillar4.inprogress1.png.meta
+|   |   apostlegrail.pillar4.inprogress2.png
+|   |   apostlegrail.pillar4.inprogress2.png.meta
+|   |   apostlegrail.pillar4.inprogress3.png
+|   |   apostlegrail.pillar4.inprogress3.png.meta
+|   |   apostlegrail.pillar4.inprogress4.png
+|   |   apostlegrail.pillar4.inprogress4.png.meta
+|   |   apostlegrail.pillar4.inprogress5.png
+|   |   apostlegrail.pillar4.inprogress5.png.meta
+|   |   apostlegrail.pillar4.inprogress6.png
+|   |   apostlegrail.pillar4.inprogress6.png.meta
+|   |   apostlegrail.pillar4.inprogress7.png
+|   |   apostlegrail.pillar4.inprogress7.png.meta
+|   |   apostlegrail.pillar4.png
+|   |   apostlegrail.pillar4.png.meta
+|   |   apostlelantern.mentor.png
+|   |   apostlelantern.mentor.png.meta
+|   |   apostlelantern.pillar1.png
+|   |   apostlelantern.pillar1.png.meta
+|   |   apostlelantern.pillar2.png
+|   |   apostlelantern.pillar2.png.meta
+|   |   apostlelantern.pillar3.png
+|   |   apostlelantern.pillar3.png.meta
+|   |   apostlelantern.pillar4.inprogress1.png
+|   |   apostlelantern.pillar4.inprogress1.png.meta
+|   |   apostlelantern.pillar4.inprogress2.png
+|   |   apostlelantern.pillar4.inprogress2.png.meta
+|   |   apostlelantern.pillar4.inprogress3.png
+|   |   apostlelantern.pillar4.inprogress3.png.meta
+|   |   apostlelantern.pillar4.inprogress4.png
+|   |   apostlelantern.pillar4.inprogress4.png.meta
+|   |   apostlelantern.pillar4.inprogress5.png
+|   |   apostlelantern.pillar4.inprogress5.png.meta
+|   |   apostlelantern.pillar4.inprogress6.png
+|   |   apostlelantern.pillar4.inprogress6.png.meta
+|   |   apostlelantern.pillar4.png
+|   |   apostlelantern.pillar4.png.meta
+|   |   articleedgea.png
+|   |   articleedgea.png.meta
+|   |   articleedgeb.png
+|   |   articleedgeb.png.meta
+|   |   articleedgec.png
+|   |   articleedgec.png.meta
+|   |   articleforgea.png
+|   |   articleforgea.png.meta
+|   |   articleforgeb.png
+|   |   articleforgeb.png.meta
+|   |   articleforgec.png
+|   |   articleforgec.png.meta
+|   |   articlegraila.png
+|   |   articlegraila.png.meta
+|   |   articlegrailb.png
+|   |   articlegrailb.png.meta
+|   |   articlegrailc.png
+|   |   articlegrailc.png.meta
+|   |   articlehearta.png
+|   |   articlehearta.png.meta
+|   |   articleheartb.png
+|   |   articleheartb.png.meta
+|   |   articleheartc.png
+|   |   articleheartc.png.meta
+|   |   articleknocka.png
+|   |   articleknocka.png.meta
+|   |   articleknockb.png
+|   |   articleknockb.png.meta
+|   |   articleknockc.png
+|   |   articleknockc.png.meta
+|   |   articlelanterna.png
+|   |   articlelanterna.png.meta
+|   |   articlelanternb.png
+|   |   articlelanternb.png.meta
+|   |   articlelanternc.png
+|   |   articlelanternc.png.meta
+|   |   articlemotha.png
+|   |   articlemotha.png.meta
+|   |   articlemothb.png
+|   |   articlemothb.png.meta
+|   |   articlemothc.png
+|   |   articlemothc.png.meta
+|   |   articlesecrethistoriesa.png
+|   |   articlesecrethistoriesa.png.meta
+|   |   articlesecrethistoriesb.png
+|   |   articlesecrethistoriesb.png.meta
+|   |   articlesecrethistoriesc.png
+|   |   articlesecrethistoriesc.png.meta
+|   |   articlewintera.png
+|   |   articlewintera.png.meta
+|   |   articlewinterb.png
+|   |   articlewinterb.png.meta
+|   |   articlewinterc.png
+|   |   articlewinterc.png.meta
+|   |   ascensionchangea.png
+|   |   ascensionchangea.png.meta
+|   |   ascensionchangeb.png
+|   |   ascensionchangeb.png.meta
+|   |   ascensionchangec.png
+|   |   ascensionchangec.png.meta
+|   |   ascensionchanged.png
+|   |   ascensionchanged.png.meta
+|   |   ascensionchangee.png
+|   |   ascensionchangee.png.meta
+|   |   ascensionchangef.png
+|   |   ascensionchangef.png.meta
+|   |   ascensionchangeg.png
+|   |   ascensionchangeg.png.meta
+|   |   ascensionenlightenmenta.png
+|   |   ascensionenlightenmenta.png.meta
+|   |   ascensionenlightenmentb.png
+|   |   ascensionenlightenmentb.png.meta
+|   |   ascensionenlightenmentc.png
+|   |   ascensionenlightenmentc.png.meta
+|   |   ascensionenlightenmentd.png
+|   |   ascensionenlightenmentd.png.meta
+|   |   ascensionenlightenmente.png
+|   |   ascensionenlightenmente.png.meta
+|   |   ascensionenlightenmentf.png
+|   |   ascensionenlightenmentf.png.meta
+|   |   ascensionlessonhearta.png
+|   |   ascensionlessonhearta.png.meta
+|   |   ascensionlessonheartb.png
+|   |   ascensionlessonheartb.png.meta
+|   |   ascensionlessonheartc.png
+|   |   ascensionlessonheartc.png.meta
+|   |   ascensionlessonheartd.png
+|   |   ascensionlessonheartd.png.meta
+|   |   ascensionlessonhearte.png
+|   |   ascensionlessonhearte.png.meta
+|   |   ascensionlessonheartf.png
+|   |   ascensionlessonheartf.png.meta
+|   |   ascensionlessonmotha.png
+|   |   ascensionlessonmotha.png.meta
+|   |   ascensionlessonmothb.png
+|   |   ascensionlessonmothb.png.meta
+|   |   ascensionlessonmothc.png
+|   |   ascensionlessonmothc.png.meta
+|   |   ascensionlessonmothd.png
+|   |   ascensionlessonmothd.png.meta
+|   |   ascensionlessonmothe.png
+|   |   ascensionlessonmothe.png.meta
+|   |   ascensionlessonmothf.png
+|   |   ascensionlessonmothf.png.meta
+|   |   ascensionpowera.png
+|   |   ascensionpowera.png.meta
+|   |   ascensionpowerb.png
+|   |   ascensionpowerb.png.meta
+|   |   ascensionpowerc.png
+|   |   ascensionpowerc.png.meta
+|   |   ascensionpowerd.png
+|   |   ascensionpowerd.png.meta
+|   |   ascensionpowere.png
+|   |   ascensionpowere.png.meta
+|   |   ascensionpowerf.png
+|   |   ascensionpowerf.png.meta
+|   |   ascensionsensationa.png
+|   |   ascensionsensationa.png.meta
+|   |   ascensionsensationbf.png
+|   |   ascensionsensationbf.png.meta
+|   |   ascensionsensationbm.png
+|   |   ascensionsensationbm.png.meta
+|   |   ascensionsensationc.png
+|   |   ascensionsensationc.png.meta
+|   |   ascensionsensationd.png
+|   |   ascensionsensationd.png.meta
+|   |   ascensionsensatione.png
+|   |   ascensionsensatione.png.meta
+|   |   ascensionsensationf.png
+|   |   ascensionsensationf.png.meta
+|   |   asthesunhiscourse.png
+|   |   asthesunhiscourse.png.meta
+|   |   asthesunhiscoursearamaic.png
+|   |   asthesunhiscoursearamaic.png.meta
+|   |   auclair_a.png
+|   |   auclair_a.png.meta
+|   |   auclair_b.png
+|   |   auclair_b.png.meta
+|   |   auclair_c.png
+|   |   auclair_c.png.meta
+|   |   auclair_d.png
+|   |   auclair_d.png.meta
+|   |   auclair_p.png
+|   |   auclair_p.png.meta
+|   |   auclair_r.png
+|   |   auclair_r.png.meta
+|   |   bechet.png
+|   |   bechet.png.meta
+|   |   bechetaway.png
+|   |   bechetaway.png.meta
+|   |   bechetready.png
+|   |   bechetready.png.meta
+|   |   benefactorf.png
+|   |   benefactorf.png.meta
+|   |   benefactorm.png
+|   |   benefactorm.png.meta
+|   |   bequestintro.png
+|   |   bequestintro.png.meta
+|   |   bid.png
+|   |   bid.png.meta
+|   |   bighuff.png
+|   |   bighuff.png.meta
+|   |   bighufffucine.png
+|   |   bighufffucine.png.meta
+|   |   birdsong.png
+|   |   birdsong.png.meta
+|   |   birdsongphrygian.png
+|   |   birdsongphrygian.png.meta
+|   |   bloodshed.png
+|   |   bloodshed.png.meta
+|   |   bookextinguishedheart.png
+|   |   bookextinguishedheart.png.meta
+|   |   bookextinguishedheartmandaic.png
+|   |   bookextinguishedheartmandaic.png.meta
+|   |   bookofcentipede.png
+|   |   bookofcentipede.png.meta
+|   |   bookofcentipedegreek.png
+|   |   bookofcentipedegreek.png.meta
+|   |   bookofdissolution.png
+|   |   bookofdissolution.png.meta
+|   |   bookofdissolutionmandaic.png
+|   |   bookofdissolutionmandaic.png.meta
+|   |   bookofmasks.png
+|   |   bookofmasks.png.meta
+|   |   bookofmasksphrygian.png
+|   |   bookofmasksphrygian.png.meta
+|   |   bookofthrones.png
+|   |   bookofthrones.png.meta
+|   |   bookofthronesphrygian.png
+|   |   bookofthronesphrygian.png.meta
+|   |   bookoftrueblood.png
+|   |   bookoftrueblood.png.meta
+|   |   bookoftruebloodlatin.png
+|   |   bookoftruebloodlatin.png.meta
+|   |   bookwhitecat.png
+|   |   bookwhitecat.png.meta
+|   |   bookwhitecatphrygian.png
+|   |   bookwhitecatphrygian.png.meta
+|   |   burningofunburntgod.png
+|   |   burningofunburntgod.png.meta
+|   |   burningwoman.png
+|   |   burningwoman.png.meta
+|   |   burningwomanphrygian.png
+|   |   burningwomanphrygian.png.meta
+|   |   bytflavour.png
+|   |   bytflavour.png.meta
+|   |   canvas.pale.png
+|   |   canvas.pale.png.meta
+|   |   cash.png
+|   |   cash.png.meta
+|   |   catalogueofunchartedpleasures.png
+|   |   catalogueofunchartedpleasures.png.meta
+|   |   catalogueofunchartedpleasuresphrygian.png
+|   |   catalogueofunchartedpleasuresphrygian.png.meta
+|   |   cat_a.png
+|   |   cat_a.png.meta
+|   |   cat_b.png
+|   |   cat_b.png.meta
+|   |   cat_c.png
+|   |   cat_c.png.meta
+|   |   cat_d.png
+|   |   cat_d.png.meta
+|   |   cat_p.png
+|   |   cat_p.png.meta
+|   |   cat_r.png
+|   |   cat_r.png.meta
+|   |   ceaselesstantra.png
+|   |   ceaselesstantra.png.meta
+|   |   ceaselesstantrasanskrit.png
+|   |   ceaselesstantrasanskrit.png.meta
+|   |   chioneatabydos.png
+|   |   chioneatabydos.png.meta
+|   |   city.aachen.png
+|   |   city.aachen.png.meta
+|   |   city.alexandria.png
+|   |   city.alexandria.png.meta
+|   |   city.algiers.png
+|   |   city.algiers.png.meta
+|   |   city.amsterdam.png
+|   |   city.amsterdam.png.meta
+|   |   city.avignon.png
+|   |   city.avignon.png.meta
+|   |   city.baghdad.png
+|   |   city.baghdad.png.meta
+|   |   city.budapest.png
+|   |   city.budapest.png.meta
+|   |   city.candia.png
+|   |   city.candia.png.meta
+|   |   city.cluj.png
+|   |   city.cluj.png.meta
+|   |   city.granada.png
+|   |   city.granada.png.meta
+|   |   city.inflames.png
+|   |   city.inflames.png.meta
+|   |   city.istanbul.png
+|   |   city.istanbul.png.meta
+|   |   city.kaunas.png
+|   |   city.kaunas.png.meta
+|   |   city.kiev.png
+|   |   city.kiev.png.meta
+|   |   city.krakow.png
+|   |   city.krakow.png.meta
+|   |   city.leningrad.png
+|   |   city.leningrad.png.meta
+|   |   city.london.png
+|   |   city.london.png.meta
+|   |   city.marrakech.png
+|   |   city.marrakech.png.meta
+|   |   city.meshad.png
+|   |   city.meshad.png.meta
+|   |   city.munich.png
+|   |   city.munich.png.meta
+|   |   city.nizhny.png
+|   |   city.nizhny.png.meta
+|   |   city.paris.png
+|   |   city.paris.png.meta
+|   |   city.prague.png
+|   |   city.prague.png.meta
+|   |   city.rostock.png
+|   |   city.rostock.png.meta
+|   |   city.samarkand.png
+|   |   city.samarkand.png.meta
+|   |   city.stalingrad.png
+|   |   city.stalingrad.png.meta
+|   |   city.strasbourg.png
+|   |   city.strasbourg.png.meta
+|   |   city.sverdlovsk.png
+|   |   city.sverdlovsk.png.meta
+|   |   city.tiflis.png
+|   |   city.tiflis.png.meta
+|   |   city.tirana.png
+|   |   city.tirana.png.meta
+|   |   city.tripoli.png
+|   |   city.tripoli.png.meta
+|   |   city.valletta.png
+|   |   city.valletta.png.meta
+|   |   city.venice.png
+|   |   city.venice.png.meta
+|   |   city.vienna.png
+|   |   city.vienna.png.meta
+|   |   clifton_a.png
+|   |   clifton_a.png.meta
+|   |   clifton_b.png
+|   |   clifton_b.png.meta
+|   |   clifton_c.png
+|   |   clifton_c.png.meta
+|   |   clifton_d.png
+|   |   clifton_d.png.meta
+|   |   clifton_p.png
+|   |   clifton_p.png.meta
+|   |   clifton_r.png
+|   |   clifton_r.png.meta
+|   |   clovette_a.png
+|   |   clovette_a.png.meta
+|   |   clovette_b.png
+|   |   clovette_b.png.meta
+|   |   clovette_c.png
+|   |   clovette_c.png.meta
+|   |   clovette_d.png
+|   |   clovette_d.png.meta
+|   |   clovette_p.png
+|   |   clovette_p.png.meta
+|   |   clovette_r.png
+|   |   clovette_r.png.meta
+|   |   commandspreservationallexists.png
+|   |   commandspreservationallexists.png.meta
+|   |   commandspreservationallexistsmandaic.png
+|   |   commandspreservationallexistsmandaic.png.meta
+|   |   commissionarticleedge.png
+|   |   commissionarticleedge.png.meta
+|   |   commissionarticleedgeb.png
+|   |   commissionarticleedgeb.png.meta
+|   |   commissionarticleedgec.png
+|   |   commissionarticleedgec.png.meta
+|   |   commissionarticleforge.png
+|   |   commissionarticleforge.png.meta
+|   |   commissionarticleforgeb.png
+|   |   commissionarticleforgeb.png.meta
+|   |   commissionarticleforgec.png
+|   |   commissionarticleforgec.png.meta
+|   |   commissionarticlegrail.png
+|   |   commissionarticlegrail.png.meta
+|   |   commissionarticlegrailb.png
+|   |   commissionarticlegrailb.png.meta
+|   |   commissionarticlegrailc.png
+|   |   commissionarticlegrailc.png.meta
+|   |   commissionarticleheart.png
+|   |   commissionarticleheart.png.meta
+|   |   commissionarticleheartb.png
+|   |   commissionarticleheartb.png.meta
+|   |   commissionarticleheartc.png
+|   |   commissionarticleheartc.png.meta
+|   |   commissionarticleknock.png
+|   |   commissionarticleknock.png.meta
+|   |   commissionarticleknockb.png
+|   |   commissionarticleknockb.png.meta
+|   |   commissionarticleknockc.png
+|   |   commissionarticleknockc.png.meta
+|   |   commissionarticlelantern.png
+|   |   commissionarticlelantern.png.meta
+|   |   commissionarticlelanternb.png
+|   |   commissionarticlelanternb.png.meta
+|   |   commissionarticlelanternc.png
+|   |   commissionarticlelanternc.png.meta
+|   |   commissionarticlemoth.png
+|   |   commissionarticlemoth.png.meta
+|   |   commissionarticlemothb.png
+|   |   commissionarticlemothb.png.meta
+|   |   commissionarticlemothc.png
+|   |   commissionarticlemothc.png.meta
+|   |   commissionarticlesecrethistories.png
+|   |   commissionarticlesecrethistories.png.meta
+|   |   commissionarticlesecrethistoriesb.png
+|   |   commissionarticlesecrethistoriesb.png.meta
+|   |   commissionarticlesecrethistoriesc.png
+|   |   commissionarticlesecrethistoriesc.png.meta
+|   |   commissionarticlewinter.png
+|   |   commissionarticlewinter.png.meta
+|   |   commissionarticlewinterb.png
+|   |   commissionarticlewinterb.png.meta
+|   |   commissionarticlewinterc.png
+|   |   commissionarticlewinterc.png.meta
+|   |   compensation.png
+|   |   compensation.png.meta
+|   |   compensationb.png
+|   |   compensationb.png.meta
+|   |   compensationc.png
+|   |   compensationc.png.meta
+|   |   compensationd.png
+|   |   compensationd.png.meta
+|   |   concursumdiaries.png
+|   |   concursumdiaries.png.meta
+|   |   concursumdiariesphrygian.png
+|   |   concursumdiariesphrygian.png.meta
+|   |   connection.holy.png
+|   |   connection.holy.png.meta
+|   |   connection.official.png
+|   |   connection.official.png.meta
+|   |   connection.radicals.png
+|   |   connection.radicals.png.meta
+|   |   connection.ruler.png
+|   |   connection.ruler.png.meta
+|   |   connection.underworld.png
+|   |   connection.underworld.png.meta
+|   |   connie_r.PNG
+|   |   connie_r.PNG.meta
+|   |   contact.fivegoer.png
+|   |   contact.fivegoer.png.meta
+|   |   contact.retainer.png
+|   |   contact.retainer.png.meta
+|   |   contactintro.png
+|   |   contactintro.png.meta
+|   |   contentment.png
+|   |   contentment.png.meta
+|   |   corpse.exile.underling.png
+|   |   corpse.exile.underling.png.meta
+|   |   corpse.furious.png
+|   |   corpse.furious.png.meta
+|   |   corpse.horizon.png
+|   |   corpse.horizon.png.meta
+|   |   corpse.liminal.png
+|   |   corpse.liminal.png.meta
+|   |   corpse.luxurious.png
+|   |   corpse.luxurious.png.meta
+|   |   corpse.png
+|   |   corpse.png.meta
+|   |   corpse.splendid.png
+|   |   corpse.splendid.png.meta
+|   |   cultedge_1.png
+|   |   cultedge_1.png.meta
+|   |   cultforge_1.png
+|   |   cultforge_1.png.meta
+|   |   cultgrail_1.png
+|   |   cultgrail_1.png.meta
+|   |   cultheart_1.png
+|   |   cultheart_1.png.meta
+|   |   cultknock_1.png
+|   |   cultknock_1.png.meta
+|   |   cultlantern_1.png
+|   |   cultlantern_1.png.meta
+|   |   cultmoth_1.png
+|   |   cultmoth_1.png.meta
+|   |   cultsecrethistories_1.png
+|   |   cultsecrethistories_1.png.meta
+|   |   cultwinter_1.png
+|   |   cultwinter_1.png.meta
+|   |   curio.lantern.png
+|   |   curio.lantern.png.meta
+|   |   curse_affliction.png
+|   |   curse_affliction.png.meta
+|   |   curse_dread.png
+|   |   curse_dread.png.meta
+|   |   curse_nowhere.png
+|   |   curse_nowhere.png.meta
+|   |   curse_visions.png
+|   |   curse_visions.png.meta
+|   |   dancerjobecdysisa.png
+|   |   dancerjobecdysisa.png.meta
+|   |   dancerjobecdysisb.png
+|   |   dancerjobecdysisb.png.meta
+|   |   dancerjobecdysisc.png
+|   |   dancerjobecdysisc.png.meta
+|   |   dancerlegacy_plotitem_a.png
+|   |   dancerlegacy_plotitem_a.png.meta
+|   |   dayacquaintances.png
+|   |   dayacquaintances.png.meta
+|   |   daycriminals.png
+|   |   daycriminals.png.meta
+|   |   daypatrons.png
+|   |   daypatrons.png.meta
+|   |   dayplaces.png
+|   |   dayplaces.png.meta
+|   |   debellismurorum.png
+|   |   debellismurorum.png.meta
+|   |   debellismurorumlatin.png
+|   |   debellismurorumlatin.png.meta
+|   |   decade.stolen.png
+|   |   decade.stolen.png.meta
+|   |   decrepitude.png
+|   |   decrepitude.png.meta
+|   |   dedication.remembrance.png
+|   |   dedication.remembrance.png.meta
+|   |   deedsofthescarredcaptain.png
+|   |   deedsofthescarredcaptain.png.meta
+|   |   deedsofthescarredcaptaingreek.png
+|   |   deedsofthescarredcaptaingreek.png.meta
+|   |   defaulthunter.png
+|   |   defaulthunter.png.meta
+|   |   defaulthunterprisoner.png
+|   |   defaulthunterprisoner.png.meta
+|   |   dehoris1.png
+|   |   dehoris1.png.meta
+|   |   dehoris1latin.png
+|   |   dehoris1latin.png.meta
+|   |   dehoris2.png
+|   |   dehoris2.png.meta
+|   |   dehoris2latin.png
+|   |   dehoris2latin.png.meta
+|   |   devotee_edge.png
+|   |   devotee_edge.png.meta
+|   |   devotee_forge.png
+|   |   devotee_forge.png.meta
+|   |   devotee_grail.png
+|   |   devotee_grail.png.meta
+|   |   devotee_heart.png
+|   |   devotee_heart.png.meta
+|   |   devotee_knock.png
+|   |   devotee_knock.png.meta
+|   |   devotee_lantern.png
+|   |   devotee_lantern.png.meta
+|   |   devotee_moth.png
+|   |   devotee_moth.png.meta
+|   |   devotee_winter.png
+|   |   devotee_winter.png.meta
+|   |   devouredtantra.png
+|   |   devouredtantra.png.meta
+|   |   devouredtantrasanskrit.png
+|   |   devouredtantrasanskrit.png.meta
+|   |   diarist.defeated.png
+|   |   diarist.defeated.png.meta
+|   |   diarist.png
+|   |   diarist.png.meta
+|   |   diarist_unknown.png
+|   |   diarist_unknown.png.meta
+|   |   discreet.office.png
+|   |   discreet.office.png.meta
+|   |   doctorspractice.png
+|   |   doctorspractice.png.meta
+|   |   documentgeneric.png
+|   |   documentgeneric.png.meta
+|   |   domicile.aachen.png
+|   |   domicile.aachen.png.meta
+|   |   domicile.alexandria.png
+|   |   domicile.alexandria.png.meta
+|   |   domicile.algiers.png
+|   |   domicile.algiers.png.meta
+|   |   domicile.amsterdam.png
+|   |   domicile.amsterdam.png.meta
+|   |   domicile.avignon.png
+|   |   domicile.avignon.png.meta
+|   |   domicile.baghdad.png
+|   |   domicile.baghdad.png.meta
+|   |   domicile.budapest.png
+|   |   domicile.budapest.png.meta
+|   |   domicile.candia.png
+|   |   domicile.candia.png.meta
+|   |   domicile.cluj.png
+|   |   domicile.cluj.png.meta
+|   |   domicile.granada.png
+|   |   domicile.granada.png.meta
+|   |   domicile.istanbul.png
+|   |   domicile.istanbul.png.meta
+|   |   domicile.kaunas.png
+|   |   domicile.kaunas.png.meta
+|   |   domicile.kiev.png
+|   |   domicile.kiev.png.meta
+|   |   domicile.krakow.png
+|   |   domicile.krakow.png.meta
+|   |   domicile.leningrad.png
+|   |   domicile.leningrad.png.meta
+|   |   domicile.london.png
+|   |   domicile.london.png.meta
+|   |   domicile.marrakech.png
+|   |   domicile.marrakech.png.meta
+|   |   domicile.meshad.png
+|   |   domicile.meshad.png.meta
+|   |   domicile.munich.png
+|   |   domicile.munich.png.meta
+|   |   domicile.nizhny.png
+|   |   domicile.nizhny.png.meta
+|   |   domicile.paris.png
+|   |   domicile.paris.png.meta
+|   |   domicile.prague.png
+|   |   domicile.prague.png.meta
+|   |   domicile.rostock.png
+|   |   domicile.rostock.png.meta
+|   |   domicile.samarkand.png
+|   |   domicile.samarkand.png.meta
+|   |   domicile.stalingrad.png
+|   |   domicile.stalingrad.png.meta
+|   |   domicile.strasbourg.png
+|   |   domicile.strasbourg.png.meta
+|   |   domicile.sverdlovsk.png
+|   |   domicile.sverdlovsk.png.meta
+|   |   domicile.tiflis.png
+|   |   domicile.tiflis.png.meta
+|   |   domicile.tirana.png
+|   |   domicile.tirana.png.meta
+|   |   domicile.tripoli.png
+|   |   domicile.tripoli.png.meta
+|   |   domicile.valletta.png
+|   |   domicile.valletta.png.meta
+|   |   domicile.venice.png
+|   |   domicile.venice.png.meta
+|   |   domicile.vienna.png
+|   |   domicile.vienna.png.meta
+|   |   dorothy_a.png
+|   |   dorothy_a.png.meta
+|   |   dorothy_b.png
+|   |   dorothy_b.png.meta
+|   |   dorothy_c.png
+|   |   dorothy_c.png.meta
+|   |   dorothy_d.png
+|   |   dorothy_d.png.meta
+|   |   dorothy_p.png
+|   |   dorothy_p.png.meta
+|   |   dorothy_r.png
+|   |   dorothy_r.png.meta
+|   |   douglas_r.png
+|   |   douglas_r.png.meta
+|   |   dread.png
+|   |   dread.png.meta
+|   |   dreamconspiracyskies.png
+|   |   dreamconspiracyskies.png.meta
+|   |   dreamconspiracyskiesphrygian.png
+|   |   dreamconspiracyskiesphrygian.png.meta
+|   |   echidna.enroute.png
+|   |   echidna.enroute.png.meta
+|   |   echidna.png
+|   |   echidna.png.meta
+|   |   elridge_a.png
+|   |   elridge_a.png.meta
+|   |   elridge_b.png
+|   |   elridge_b.png.meta
+|   |   elridge_c.png
+|   |   elridge_c.png.meta
+|   |   elridge_d.png
+|   |   elridge_d.png.meta
+|   |   elridge_p.png
+|   |   elridge_p.png.meta
+|   |   elridge_r.png
+|   |   elridge_r.png.meta
+|   |   encirclingtantra.png
+|   |   encirclingtantra.png.meta
+|   |   encirclingtantrasanskrit.png
+|   |   encirclingtantrasanskrit.png.meta
+|   |   end.bornholm.png
+|   |   end.bornholm.png.meta
+|   |   end.cheko.png
+|   |   end.cheko.png.meta
+|   |   end.ghardaia.png
+|   |   end.ghardaia.png.meta
+|   |   end.messana.png
+|   |   end.messana.png.meta
+|   |   end.morbihan.png
+|   |   end.morbihan.png.meta
+|   |   end.paro.png
+|   |   end.paro.png.meta
+|   |   end.slettnes.png
+|   |   end.slettnes.png.meta
+|   |   enid_a.png
+|   |   enid_a.png.meta
+|   |   enid_b.png
+|   |   enid_b.png.meta
+|   |   enid_c.png
+|   |   enid_c.png.meta
+|   |   enid_d.png
+|   |   enid_d.png.meta
+|   |   enid_p.png
+|   |   enid_p.png.meta
+|   |   enid_r.png
+|   |   enid_r.png.meta
+|   |   erudition.png
+|   |   erudition.png.meta
+|   |   eruditionplus.png
+|   |   eruditionplus.png.meta
+|   |   evidence.png
+|   |   evidence.png.meta
+|   |   evidenceb.png
+|   |   evidenceb.png.meta
+|   |   fascination.png
+|   |   fascination.png.meta
+|   |   fatigue_old.png
+|   |   fatigue_old.png.meta
+|   |   favour.png
+|   |   favour.png.meta
+|   |   fervour.png
+|   |   fervour.png.meta
+|   |   firecircletantra.png
+|   |   firecircletantra.png.meta
+|   |   firecircletantrasanskrit.png
+|   |   firecircletantrasanskrit.png.meta
+|   |   fivecreations.png
+|   |   fivecreations.png.meta
+|   |   fivecreationsvak.png
+|   |   fivecreationsvak.png.meta
+|   |   flayedtantra.png
+|   |   flayedtantra.png.meta
+|   |   flayedtantrasanskrit.png
+|   |   flayedtantrasanskrit.png.meta
+|   |   fleeting.png
+|   |   fleeting.png.meta
+|   |   focusamber.png
+|   |   focusamber.png.meta
+|   |   focusambermandaic.png
+|   |   focusambermandaic.png.meta
+|   |   fragmentedge.colonel.png
+|   |   fragmentedge.colonel.png.meta
+|   |   fragmentedge.lionsmith.png
+|   |   fragmentedge.lionsmith.png.meta
+|   |   fragmentedge.png
+|   |   fragmentedge.png.meta
+|   |   fragmentedgeb.colonel.png
+|   |   fragmentedgeb.colonel.png.meta
+|   |   fragmentedgeb.lionsmith.png
+|   |   fragmentedgeb.lionsmith.png.meta
+|   |   fragmentedgeb.png
+|   |   fragmentedgeb.png.meta
+|   |   fragmentedgec.colonel.png
+|   |   fragmentedgec.colonel.png.meta
+|   |   fragmentedgec.lionsmith.png
+|   |   fragmentedgec.lionsmith.png.meta
+|   |   fragmentedgec.png
+|   |   fragmentedgec.png.meta
+|   |   fragmentedged.colonel.png
+|   |   fragmentedged.colonel.png.meta
+|   |   fragmentedged.lionsmith.png
+|   |   fragmentedged.lionsmith.png.meta
+|   |   fragmentedged.png
+|   |   fragmentedged.png.meta
+|   |   fragmentedgee.colonel.png
+|   |   fragmentedgee.colonel.png.meta
+|   |   fragmentedgee.lionsmith.png
+|   |   fragmentedgee.lionsmith.png.meta
+|   |   fragmentedgee.png
+|   |   fragmentedgee.png.meta
+|   |   fragmentedgef.colonel.png
+|   |   fragmentedgef.colonel.png.meta
+|   |   fragmentedgef.lionsmith.png
+|   |   fragmentedgef.lionsmith.png.meta
+|   |   fragmentedgef.png
+|   |   fragmentedgef.png.meta
+|   |   fragmentedgeg.colonel.png
+|   |   fragmentedgeg.colonel.png.meta
+|   |   fragmentedgeg.lionsmith.png
+|   |   fragmentedgeg.lionsmith.png.meta
+|   |   fragmentedgeg.png
+|   |   fragmentedgeg.png.meta
+|   |   fragmentforge.png
+|   |   fragmentforge.png.meta
+|   |   fragmentforgeb.png
+|   |   fragmentforgeb.png.meta
+|   |   fragmentforgec.png
+|   |   fragmentforgec.png.meta
+|   |   fragmentforged.png
+|   |   fragmentforged.png.meta
+|   |   fragmentforgee.png
+|   |   fragmentforgee.png.meta
+|   |   fragmentforgef.png
+|   |   fragmentforgef.png.meta
+|   |   fragmentforgeg.png
+|   |   fragmentforgeg.png.meta
+|   |   fragmentgrail.png
+|   |   fragmentgrail.png.meta
+|   |   fragmentgrailb.png
+|   |   fragmentgrailb.png.meta
+|   |   fragmentgrailc.png
+|   |   fragmentgrailc.png.meta
+|   |   fragmentgraild.png
+|   |   fragmentgraild.png.meta
+|   |   fragmentgraile.png
+|   |   fragmentgraile.png.meta
+|   |   fragmentgrailf.png
+|   |   fragmentgrailf.png.meta
+|   |   fragmentgrailg.png
+|   |   fragmentgrailg.png.meta
+|   |   fragmentheart.png
+|   |   fragmentheart.png.meta
+|   |   fragmentheartb.png
+|   |   fragmentheartb.png.meta
+|   |   fragmentheartc.png
+|   |   fragmentheartc.png.meta
+|   |   fragmentheartd.png
+|   |   fragmentheartd.png.meta
+|   |   fragmenthearte.png
+|   |   fragmenthearte.png.meta
+|   |   fragmentheartf.png
+|   |   fragmentheartf.png.meta
+|   |   fragmentheartg.png
+|   |   fragmentheartg.png.meta
+|   |   fragmentknock.png
+|   |   fragmentknock.png.meta
+|   |   fragmentknockb.png
+|   |   fragmentknockb.png.meta
+|   |   fragmentknockc.png
+|   |   fragmentknockc.png.meta
+|   |   fragmentknockd.png
+|   |   fragmentknockd.png.meta
+|   |   fragmentknocke.png
+|   |   fragmentknocke.png.meta
+|   |   fragmentknockf.png
+|   |   fragmentknockf.png.meta
+|   |   fragmentknockg.png
+|   |   fragmentknockg.png.meta
+|   |   fragmentlantern.png
+|   |   fragmentlantern.png.meta
+|   |   fragmentlanternb.png
+|   |   fragmentlanternb.png.meta
+|   |   fragmentlanternc.png
+|   |   fragmentlanternc.png.meta
+|   |   fragmentlanternd.png
+|   |   fragmentlanternd.png.meta
+|   |   fragmentlanterne.png
+|   |   fragmentlanterne.png.meta
+|   |   fragmentlanternf.png
+|   |   fragmentlanternf.png.meta
+|   |   fragmentlanterng.png
+|   |   fragmentlanterng.png.meta
+|   |   fragmentmoth.png
+|   |   fragmentmoth.png.meta
+|   |   fragmentmothb.png
+|   |   fragmentmothb.png.meta
+|   |   fragmentmothc.png
+|   |   fragmentmothc.png.meta
+|   |   fragmentmothd.png
+|   |   fragmentmothd.png.meta
+|   |   fragmentmothe.png
+|   |   fragmentmothe.png.meta
+|   |   fragmentmothf.png
+|   |   fragmentmothf.png.meta
+|   |   fragmentmothg.png
+|   |   fragmentmothg.png.meta
+|   |   fragmentsecrethistories.png
+|   |   fragmentsecrethistories.png.meta
+|   |   fragmentsecrethistoriesb.png
+|   |   fragmentsecrethistoriesb.png.meta
+|   |   fragmentsecrethistoriesc.png
+|   |   fragmentsecrethistoriesc.png.meta
+|   |   fragmentsecrethistoriesd.png
+|   |   fragmentsecrethistoriesd.png.meta
+|   |   fragmentsecrethistoriese.png
+|   |   fragmentsecrethistoriese.png.meta
+|   |   fragmentsecrethistoriesf.png
+|   |   fragmentsecrethistoriesf.png.meta
+|   |   fragmentsecrethistoriesg.png
+|   |   fragmentsecrethistoriesg.png.meta
+|   |   fragmentwinter.png
+|   |   fragmentwinter.png.meta
+|   |   fragmentwinterb.png
+|   |   fragmentwinterb.png.meta
+|   |   fragmentwinterc.png
+|   |   fragmentwinterc.png.meta
+|   |   fragmentwinterd.png
+|   |   fragmentwinterd.png.meta
+|   |   fragmentwintere.png
+|   |   fragmentwintere.png.meta
+|   |   fragmentwinterf.png
+|   |   fragmentwinterf.png.meta
+|   |   fragmentwinterg.png
+|   |   fragmentwinterg.png.meta
+|   |   franklinbancroftdiaries.png
+|   |   franklinbancroftdiaries.png.meta
+|   |   franklinbancroftdiarieslatin.png
+|   |   franklinbancroftdiarieslatin.png.meta
+|   |   funds.png
+|   |   funds.png.meta
+|   |   furioustantra.png
+|   |   furioustantra.png.meta
+|   |   furioustantrasanskrit.png
+|   |   furioustantrasanskrit.png.meta
+|   |   geminiad.png
+|   |   geminiad.png.meta
+|   |   geminiadfucine.png
+|   |   geminiadfucine.png.meta
+|   |   geminiadread.png
+|   |   geminiadread.png.meta
+|   |   generichq.png
+|   |   generichq.png.meta
+|   |   genericprisonerf.png
+|   |   genericprisonerf.png.meta
+|   |   genericprisonerfupgraded.png
+|   |   genericprisonerfupgraded.png.meta
+|   |   genericprisonerm.png
+|   |   genericprisonerm.png.meta
+|   |   genericprisonermupgraded.png
+|   |   genericprisonermupgraded.png.meta
+|   |   genericrubbishbook.png
+|   |   genericrubbishbook.png.meta
+|   |   generic_a.png
+|   |   generic_a.png.meta
+|   |   generic_a_edge.png
+|   |   generic_a_edge.png.meta
+|   |   generic_a_forge.png
+|   |   generic_a_forge.png.meta
+|   |   generic_a_grail.png
+|   |   generic_a_grail.png.meta
+|   |   generic_a_heart.png
+|   |   generic_a_heart.png.meta
+|   |   generic_a_knock.png
+|   |   generic_a_knock.png.meta
+|   |   generic_a_lantern.png
+|   |   generic_a_lantern.png.meta
+|   |   generic_a_moth.png
+|   |   generic_a_moth.png.meta
+|   |   generic_a_winter.png
+|   |   generic_a_winter.png.meta
+|   |   generic_b.png
+|   |   generic_b.png.meta
+|   |   generic_b_edge.png
+|   |   generic_b_edge.png.meta
+|   |   generic_b_forge.png
+|   |   generic_b_forge.png.meta
+|   |   generic_b_grail.png
+|   |   generic_b_grail.png.meta
+|   |   generic_b_heart.png
+|   |   generic_b_heart.png.meta
+|   |   generic_b_knock.png
+|   |   generic_b_knock.png.meta
+|   |   generic_b_lantern.png
+|   |   generic_b_lantern.png.meta
+|   |   generic_b_moth.png
+|   |   generic_b_moth.png.meta
+|   |   generic_b_winter.png
+|   |   generic_b_winter.png.meta
+|   |   generic_c_edge.png
+|   |   generic_c_edge.png.meta
+|   |   generic_c_forge.png
+|   |   generic_c_forge.png.meta
+|   |   generic_c_grail.png
+|   |   generic_c_grail.png.meta
+|   |   generic_c_heart.png
+|   |   generic_c_heart.png.meta
+|   |   generic_c_knock.png
+|   |   generic_c_knock.png.meta
+|   |   generic_c_lantern.png
+|   |   generic_c_lantern.png.meta
+|   |   generic_c_moth.png
+|   |   generic_c_moth.png.meta
+|   |   generic_c_winter.png
+|   |   generic_c_winter.png.meta
+|   |   generic_p.png
+|   |   generic_p.png.meta
+|   |   ghouljob.first.png
+|   |   ghouljob.first.png.meta
+|   |   ghouljob.png
+|   |   ghouljob.png.meta
+|   |   glimmering.png
+|   |   glimmering.png.meta
+|   |   glimmeringplus.png
+|   |   glimmeringplus.png.meta
+|   |   gloverandgloverjob.png
+|   |   gloverandgloverjob.png.meta
+|   |   gloverandgloverjob_demotion.png
+|   |   gloverandgloverjob_demotion.png.meta
+|   |   gloverandgloverjob_youngerglovergone.png
+|   |   gloverandgloverjob_youngerglovergone.png.meta
+|   |   gloverandgloverjob_youngerglovergone_demotion.png
+|   |   gloverandgloverjob_youngerglovergone_demotion.png.meta
+|   |   gloverandgloverjuniorjob.png
+|   |   gloverandgloverjuniorjob.png.meta
+|   |   gloverandgloverjuniorjob_demotion.png
+|   |   gloverandgloverjuniorjob_demotion.png.meta
+|   |   gloverandgloverjuniorjob_nodifficultbossa.png
+|   |   gloverandgloverjuniorjob_nodifficultbossa.png.meta
+|   |   gloverandgloverjuniorjob_nodifficultbossa_demotion.png
+|   |   gloverandgloverjuniorjob_nodifficultbossa_demotion.png.meta
+|   |   gloverandgloverseniorjob.png
+|   |   gloverandgloverseniorjob.png.meta
+|   |   gloverandgloverseniorjob_youngerglovergone.png
+|   |   gloverandgloverseniorjob_youngerglovergone.png.meta
+|   |   gloverandglovertopjob.png
+|   |   gloverandglovertopjob.png.meta
+|   |   gloverandglovertopjob_tainted.png
+|   |   gloverandglovertopjob_tainted.png.meta
+|   |   gloverandglovertopjob_tainted_demotion.png
+|   |   gloverandglovertopjob_tainted_demotion.png.meta
+|   |   gloverandglover_difficultbossa_gone_job.png
+|   |   gloverandglover_difficultbossa_gone_job.png.meta
+|   |   gloverandglover_difficultbossa_job.png
+|   |   gloverandglover_difficultbossa_job.png.meta
+|   |   gospelzacchaeus.png
+|   |   gospelzacchaeus.png.meta
+|   |   gospelzacchaeusgreek.png
+|   |   gospelzacchaeusgreek.png.meta
+|   |   guardian_dead.png
+|   |   guardian_dead.png.meta
+|   |   guardian_long.png
+|   |   guardian_long.png.meta
+|   |   guardian_monks.png
+|   |   guardian_monks.png.meta
+|   |   guardian_serpent.png
+|   |   guardian_serpent.png.meta
+|   |   guardian_soucouyants.png
+|   |   guardian_soucouyants.png.meta
+|   |   guardian_watchers.png
+|   |   guardian_watchers.png.meta
+|   |   health.png
+|   |   health.png.meta
+|   |   heart.png
+|   |   heart.png.meta
+|   |   highmysterieschurchsolar.png
+|   |   highmysterieschurchsolar.png.meta
+|   |   highmysterieschurchsolarfucine.png
+|   |   highmysterieschurchsolarfucine.png.meta
+|   |   historyofshadowlesskings.png
+|   |   historyofshadowlesskings.png.meta
+|   |   historyofshadowlesskingsaramaic.png
+|   |   historyofshadowlesskingsaramaic.png.meta
+|   |   howendwillbegin.png
+|   |   howendwillbegin.png.meta
+|   |   howendwillbeginvak.png
+|   |   howendwillbeginvak.png.meta
+|   |   hq.abandoned.png
+|   |   hq.abandoned.png.meta
+|   |   hq.bookshop.png
+|   |   hq.bookshop.png.meta
+|   |   hq.church.png
+|   |   hq.church.png.meta
+|   |   hq.hospital.png
+|   |   hq.hospital.png.meta
+|   |   hq.mithraeum.png
+|   |   hq.mithraeum.png.meta
+|   |   hq.townhouse.png
+|   |   hq.townhouse.png.meta
+|   |   hq.warehouse.png
+|   |   hq.warehouse.png.meta
+|   |   humoursofagentleman.png
+|   |   humoursofagentleman.png.meta
+|   |   hunger.png
+|   |   hunger.png.meta
+|   |   incandescenttantra.png
+|   |   incandescenttantra.png.meta
+|   |   incandescenttantrasanskrit.png
+|   |   incandescenttantrasanskrit.png.meta
+|   |   indignitiesobliviate.png
+|   |   indignitiesobliviate.png.meta
+|   |   indignitiesobliviatelatin.png
+|   |   indignitiesobliviatelatin.png.meta
+|   |   influenceedge.png
+|   |   influenceedge.png.meta
+|   |   influenceedgec.png
+|   |   influenceedgec.png.meta
+|   |   influenceedgee.png
+|   |   influenceedgee.png.meta
+|   |   influenceedgeg.png
+|   |   influenceedgeg.png.meta
+|   |   influenceforge.png
+|   |   influenceforge.png.meta
+|   |   influenceforgec.png
+|   |   influenceforgec.png.meta
+|   |   influenceforgee.png
+|   |   influenceforgee.png.meta
+|   |   influenceforgeg.png
+|   |   influenceforgeg.png.meta
+|   |   influencegrail.png
+|   |   influencegrail.png.meta
+|   |   influencegrailc.png
+|   |   influencegrailc.png.meta
+|   |   influencegraile.png
+|   |   influencegraile.png.meta
+|   |   influencegrailg.png
+|   |   influencegrailg.png.meta
+|   |   influenceheart.png
+|   |   influenceheart.png.meta
+|   |   influenceheartc.png
+|   |   influenceheartc.png.meta
+|   |   influencehearte.png
+|   |   influencehearte.png.meta
+|   |   influenceheartg.png
+|   |   influenceheartg.png.meta
+|   |   influenceknock.png
+|   |   influenceknock.png.meta
+|   |   influenceknockc.png
+|   |   influenceknockc.png.meta
+|   |   influenceknocke.png
+|   |   influenceknocke.png.meta
+|   |   influenceknockg.png
+|   |   influenceknockg.png.meta
+|   |   influencelantern.png
+|   |   influencelantern.png.meta
+|   |   influencelanternc.png
+|   |   influencelanternc.png.meta
+|   |   influencelanterne.png
+|   |   influencelanterne.png.meta
+|   |   influencelanterng.png
+|   |   influencelanterng.png.meta
+|   |   influencemoth.png
+|   |   influencemoth.png.meta
+|   |   influencemothc.png
+|   |   influencemothc.png.meta
+|   |   influencemothe.png
+|   |   influencemothe.png.meta
+|   |   influencemothg.png
+|   |   influencemothg.png.meta
+|   |   influencesecrethistories.png
+|   |   influencesecrethistories.png.meta
+|   |   influencesecrethistoriesc.png
+|   |   influencesecrethistoriesc.png.meta
+|   |   influencesecrethistoriese.png
+|   |   influencesecrethistoriese.png.meta
+|   |   influencesecrethistoriesg.png
+|   |   influencesecrethistoriesg.png.meta
+|   |   influencewinter.png
+|   |   influencewinter.png.meta
+|   |   influencewinterc.png
+|   |   influencewinterc.png.meta
+|   |   influencewintere.png
+|   |   influencewintere.png.meta
+|   |   influencewinterg.png
+|   |   influencewinterg.png.meta
+|   |   ingredientedgeb.png
+|   |   ingredientedgeb.png.meta
+|   |   ingredientedged.png
+|   |   ingredientedged.png.meta
+|   |   ingredientedgef.png
+|   |   ingredientedgef.png.meta
+|   |   ingredientforgeb.png
+|   |   ingredientforgeb.png.meta
+|   |   ingredientforged.png
+|   |   ingredientforged.png.meta
+|   |   ingredientforgef.png
+|   |   ingredientforgef.png.meta
+|   |   ingredientgrailb.png
+|   |   ingredientgrailb.png.meta
+|   |   ingredientgraild.png
+|   |   ingredientgraild.png.meta
+|   |   ingredientgrailf.png
+|   |   ingredientgrailf.png.meta
+|   |   ingredientheartb.png
+|   |   ingredientheartb.png.meta
+|   |   ingredientheartd.png
+|   |   ingredientheartd.png.meta
+|   |   ingredientheartf.png
+|   |   ingredientheartf.png.meta
+|   |   ingredientknockb.png
+|   |   ingredientknockb.png.meta
+|   |   ingredientknockd.png
+|   |   ingredientknockd.png.meta
+|   |   ingredientknockf.png
+|   |   ingredientknockf.png.meta
+|   |   ingredientlanternb.png
+|   |   ingredientlanternb.png.meta
+|   |   ingredientlanternd.png
+|   |   ingredientlanternd.png.meta
+|   |   ingredientlanternf.png
+|   |   ingredientlanternf.png.meta
+|   |   ingredientmothb.png
+|   |   ingredientmothb.png.meta
+|   |   ingredientmothd.png
+|   |   ingredientmothd.png.meta
+|   |   ingredientmothf.png
+|   |   ingredientmothf.png.meta
+|   |   ingredientwinterb.png
+|   |   ingredientwinterb.png.meta
+|   |   ingredientwinterd.png
+|   |   ingredientwinterd.png.meta
+|   |   ingredientwinterf.png
+|   |   ingredientwinterf.png.meta
+|   |   injury.png
+|   |   injury.png.meta
+|   |   insight.PNG
+|   |   insight.PNG.meta
+|   |   institutephysicianjob.png
+|   |   institutephysicianjob.png.meta
+|   |   inthemountainsasupontheplain.png
+|   |   inthemountainsasupontheplain.png.meta
+|   |   inthemountainsasupontheplainvak.png
+|   |   inthemountainsasupontheplainvak.png.meta
+|   |   introductiontohistories.png
+|   |   introductiontohistories.png.meta
+|   |   introjob.png
+|   |   introjob.png.meta
+|   |   investigator1.png
+|   |   investigator1.png.meta
+|   |   investigator1prisoner.png
+|   |   investigator1prisoner.png.meta
+|   |   investigator1upgraded.png
+|   |   investigator1upgraded.png.meta
+|   |   investigator2.png
+|   |   investigator2.png.meta
+|   |   investigator2prisoner.png
+|   |   investigator2prisoner.png.meta
+|   |   investigator3.PNG
+|   |   investigator3.PNG.meta
+|   |   investigator3prisoner.png
+|   |   investigator3prisoner.png.meta
+|   |   investigator4.PNG
+|   |   investigator4.PNG.meta
+|   |   investigator4prisoner.png
+|   |   investigator4prisoner.png.meta
+|   |   ironbook.png
+|   |   ironbook.png.meta
+|   |   ironbookfucine.png
+|   |   ironbookfucine.png.meta
+|   |   irreproachabletraditionssocietynobleendeavour.png
+|   |   irreproachabletraditionssocietynobleendeavour.png.meta
+|   |   irreproachabletraditionssocietynobleendeavourlatin.png
+|   |   irreproachabletraditionssocietynobleendeavourlatin.png.meta
+|   |   ivorybook.png
+|   |   ivorybook.png.meta
+|   |   ivorybookfucine.png
+|   |   ivorybookfucine.png.meta
+|   |   jannings.png
+|   |   jannings.png.meta
+|   |   janningsaway.png
+|   |   janningsaway.png.meta
+|   |   janningsready.png
+|   |   janningsready.png.meta
+|   |   jploc.png
+|   |   jploc.png.meta
+|   |   julian.defeated.png
+|   |   julian.defeated.png.meta
+|   |   julian.png
+|   |   julian.png.meta
+|   |   julian_unknown.png
+|   |   julian_unknown.png.meta
+|   |   jumble.png
+|   |   jumble.png.meta
+|   |   kitlingripe.png
+|   |   kitlingripe.png.meta
+|   |   kleidouchos.enroute.png
+|   |   kleidouchos.enroute.png.meta
+|   |   kleidouchos.png
+|   |   kleidouchos.png.meta
+|   |   knownunknowntantra.png
+|   |   knownunknowntantra.png.meta
+|   |   knownunknowntantrasanskrit.png
+|   |   knownunknowntantrasanskrit.png.meta
+|   |   laidlaw_a.png
+|   |   laidlaw_a.png.meta
+|   |   laidlaw_b.png
+|   |   laidlaw_b.png.meta
+|   |   laidlaw_c.png
+|   |   laidlaw_c.png.meta
+|   |   laidlaw_d.png
+|   |   laidlaw_d.png.meta
+|   |   laidlaw_p.png
+|   |   laidlaw_p.png.meta
+|   |   laidlaw_r.png
+|   |   laidlaw_r.png.meta
+|   |   larquebinecodex.png
+|   |   larquebinecodex.png.meta
+|   |   larquebinecodexphrygian.png
+|   |   larquebinecodexphrygian.png.meta
+|   |   legacybytjob.png
+|   |   legacybytjob.png.meta
+|   |   legacybytjobmatured.png
+|   |   legacybytjobmatured.png.meta
+|   |   legacydancerjob.png
+|   |   legacydancerjob.png.meta
+|   |   legacydancerjob_suspended.png
+|   |   legacydancerjob_suspended.png.meta
+|   |   legacydetectivejob.png
+|   |   legacydetectivejob.png.meta
+|   |   legacydetectivejob_disgraced.png
+|   |   legacydetectivejob_disgraced.png.meta
+|   |   legacydetectivejob_suspended.png
+|   |   legacydetectivejob_suspended.png.meta
+|   |   legacydetective_plotitem.png
+|   |   legacydetective_plotitem.png.meta
+|   |   legacydiarylastcharacter.png
+|   |   legacydiarylastcharacter.png.meta
+|   |   legacyphysicianjob.png
+|   |   legacyphysicianjob.png.meta
+|   |   legacyphysiciannotes.png
+|   |   legacyphysiciannotes.png.meta
+|   |   leoninetantra.png
+|   |   leoninetantra.png.meta
+|   |   leoninetantrasanskrit.png
+|   |   leoninetantrasanskrit.png.meta
+|   |   leo_a.png
+|   |   leo_a.png.meta
+|   |   leo_b.png
+|   |   leo_b.png.meta
+|   |   leo_c.png
+|   |   leo_c.png.meta
+|   |   leo_d.png
+|   |   leo_d.png.meta
+|   |   leo_p.png
+|   |   leo_p.png.meta
+|   |   leo_r.png
+|   |   leo_r.png.meta
+|   |   licence.import.png
+|   |   licence.import.png.meta
+|   |   licence.medical.png
+|   |   licence.medical.png.meta
+|   |   loc.shrine.colonel.png
+|   |   loc.shrine.colonel.png.meta
+|   |   loc.shrine.lionsmith.png
+|   |   loc.shrine.lionsmith.png.meta
+|   |   loc.shrine.nameless.png
+|   |   loc.shrine.nameless.png.meta
+|   |   location.cemetery.closing.png
+|   |   location.cemetery.closing.png.meta
+|   |   location.cemetery.png
+|   |   location.cemetery.png.meta
+|   |   location.gallery.png
+|   |   location.gallery.png.meta
+|   |   locationauctionhouse.png
+|   |   locationauctionhouse.png.meta
+|   |   locationbookdealer.png
+|   |   locationbookdealer.png.meta
+|   |   locationbookdealer_exhausted.png
+|   |   locationbookdealer_exhausted.png.meta
+|   |   locationcabaret.png
+|   |   locationcabaret.png.meta
+|   |   locationcabaretclosed.png
+|   |   locationcabaretclosed.png.meta
+|   |   locationstreetsstrange.png
+|   |   locationstreetsstrange.png.meta
+|   |   locationvaultu2.png
+|   |   locationvaultu2.png.meta
+|   |   lockscaredge.png
+|   |   lockscaredge.png.meta
+|   |   lockscarforge.png
+|   |   lockscarforge.png.meta
+|   |   lockscargrail.png
+|   |   lockscargrail.png.meta
+|   |   lockscarheart.png
+|   |   lockscarheart.png.meta
+|   |   lockscarlantern.png
+|   |   lockscarlantern.png.meta
+|   |   lockscarmoth.png
+|   |   lockscarmoth.png.meta
+|   |   lockscarwinter.png
+|   |   lockscarwinter.png.meta
+|   |   locksmithsdream1.png
+|   |   locksmithsdream1.png.meta
+|   |   locksmithsdream2.png
+|   |   locksmithsdream2.png.meta
+|   |   locksmithsdream3.png
+|   |   locksmithsdream3.png.meta
+|   |   locksmithsdream4.png
+|   |   locksmithsdream4.png.meta
+|   |   locksmithsdream5.png
+|   |   locksmithsdream5.png.meta
+|   |   long.lesson.connections.png
+|   |   long.lesson.connections.png.meta
+|   |   long.lesson.dreamwork.png
+|   |   long.lesson.dreamwork.png.meta
+|   |   long.lesson.might.png
+|   |   long.lesson.might.png.meta
+|   |   lunatic.png
+|   |   lunatic.png.meta
+|   |   malign.png
+|   |   malign.png.meta
+|   |   manneralchemistspared.png
+|   |   manneralchemistspared.png.meta
+|   |   manneralchemistsparedvak.png
+|   |   manneralchemistsparedvak.png.meta
+|   |   manualdeparture.png
+|   |   manualdeparture.png.meta
+|   |   manualdeparturevak.png
+|   |   manualdeparturevak.png.meta
+|   |   mapbookdealer.png
+|   |   mapbookdealer.png.meta
+|   |   marinette.enroute.png
+|   |   marinette.enroute.png.meta
+|   |   marinette.png
+|   |   marinette.png.meta
+|   |   matthiasamethystloss.png
+|   |   matthiasamethystloss.png.meta
+|   |   matthiasamethystlossaramaic.png
+|   |   matthiasamethystlossaramaic.png.meta
+|   |   matthiasamethystpursuit.png
+|   |   matthiasamethystpursuit.png.meta
+|   |   matthiasamethystpursuitaramaic.png
+|   |   matthiasamethystpursuitaramaic.png.meta
+|   |   matthiasamethysttransformation.png
+|   |   matthiasamethysttransformation.png.meta
+|   |   matthiasamethysttransformationaramaic.png
+|   |   matthiasamethysttransformationaramaic.png.meta
+|   |   medusaslament.png
+|   |   medusaslament.png.meta
+|   |   medusaslamentgreek.png
+|   |   medusaslamentgreek.png.meta
+|   |   memory.endless.png
+|   |   memory.endless.png.meta
+|   |   memory.furious.png
+|   |   memory.furious.png.meta
+|   |   memory.golden.png
+|   |   memory.golden.png.meta
+|   |   memory.honeyed.png
+|   |   memory.honeyed.png.meta
+|   |   memory.horizon.png
+|   |   memory.horizon.png.meta
+|   |   memory.joyful.png
+|   |   memory.joyful.png.meta
+|   |   memory.liminal.png
+|   |   memory.liminal.png.meta
+|   |   memory.luxurious.png
+|   |   memory.luxurious.png.meta
+|   |   memory.menacing.png
+|   |   memory.menacing.png.meta
+|   |   memory.profitable.png
+|   |   memory.profitable.png.meta
+|   |   memory.shameful.png
+|   |   memory.shameful.png.meta
+|   |   memory.splendid.png
+|   |   memory.splendid.png.meta
+|   |   memory.unexpected.png
+|   |   memory.unexpected.png.meta
+|   |   memory.wildering.png
+|   |   memory.wildering.png.meta
+|   |   memorybittersweet.png
+|   |   memorybittersweet.png.meta
+|   |   memoryofgods.png
+|   |   memoryofgods.png.meta
+|   |   memoryofgodsfucine.png
+|   |   memoryofgodsfucine.png.meta
+|   |   memorypassionate.png
+|   |   memorypassionate.png.meta
+|   |   memorypleasant.png
+|   |   memorypleasant.png.meta
+|   |   mentorguidance.png
+|   |   mentorguidance.png.meta
+|   |   mistakenidentity.png
+|   |   mistakenidentity.png.meta
+|   |   morphycodex.png
+|   |   morphycodex.png.meta
+|   |   morphycodexaramaic.png
+|   |   morphycodexaramaic.png.meta
+|   |   myevidence.png
+|   |   myevidence.png.meta
+|   |   myevidenceb.png
+|   |   myevidenceb.png.meta
+|   |   mystique.png
+|   |   mystique.png.meta
+|   |   naenia.png
+|   |   naenia.png.meta
+|   |   nameless.png
+|   |   nameless.png.meta
+|   |   natalia_r.PNG
+|   |   natalia_r.PNG.meta
+|   |   neville_a.png
+|   |   neville_a.png.meta
+|   |   neville_b.png
+|   |   neville_b.png.meta
+|   |   neville_c.png
+|   |   neville_c.png.meta
+|   |   neville_d.png
+|   |   neville_d.png.meta
+|   |   neville_p.png
+|   |   neville_p.png.meta
+|   |   neville_r.png
+|   |   neville_r.png.meta
+|   |   notoriety.png
+|   |   notoriety.png.meta
+|   |   npc.barber.png
+|   |   npc.barber.png.meta
+|   |   npc.delver.png
+|   |   npc.delver.png.meta
+|   |   npc.fivegoer.png
+|   |   npc.fivegoer.png.meta
+|   |   npc.ghoul.png
+|   |   npc.ghoul.png.meta
+|   |   npc.huntress.png
+|   |   npc.huntress.png.meta
+|   |   npc.smuggler.png
+|   |   npc.smuggler.png.meta
+|   |   npc.visionary.png
+|   |   npc.visionary.png.meta
+|   |   obscurity.png
+|   |   obscurity.png.meta
+|   |   onthematterandthedeedsofserpents.png
+|   |   onthematterandthedeedsofserpents.png.meta
+|   |   onthematterandthedeedsofserpentsvak.png
+|   |   onthematterandthedeedsofserpentsvak.png.meta
+|   |   onthewhite.png
+|   |   onthewhite.png.meta
+|   |   onwhatiscontainedbysilver.png
+|   |   onwhatiscontainedbysilver.png.meta
+|   |   onwhatiscontainedbysilvergreek.png
+|   |   onwhatiscontainedbysilvergreek.png.meta
+|   |   op.cats.png
+|   |   op.cats.png.meta
+|   |   op.cold.png
+|   |   op.cold.png.meta
+|   |   op.connection.holy.png
+|   |   op.connection.holy.png.meta
+|   |   op.connection.official.png
+|   |   op.connection.official.png.meta
+|   |   op.connection.radicals.png
+|   |   op.connection.radicals.png.meta
+|   |   op.connection.ruler.png
+|   |   op.connection.ruler.png.meta
+|   |   op.connection.underworld.png
+|   |   op.connection.underworld.png.meta
+|   |   op.curio.forge.png
+|   |   op.curio.forge.png.meta
+|   |   op.curio.grail.png
+|   |   op.curio.grail.png.meta
+|   |   op.curio.heart.png
+|   |   op.curio.heart.png.meta
+|   |   op.curio.knock.png
+|   |   op.curio.knock.png.meta
+|   |   op.curio.lantern.png
+|   |   op.curio.lantern.png.meta
+|   |   op.curio.moth.png
+|   |   op.curio.moth.png.meta
+|   |   op.dawn.png
+|   |   op.dawn.png.meta
+|   |   op.faith.png
+|   |   op.faith.png.meta
+|   |   op.flowermaker.png
+|   |   op.flowermaker.png.meta
+|   |   op.heat.png
+|   |   op.heat.png.meta
+|   |   op.heights.png
+|   |   op.heights.png.meta
+|   |   op.horned.png
+|   |   op.horned.png.meta
+|   |   op.licence.import.png
+|   |   op.licence.import.png.meta
+|   |   op.licence.medical.png
+|   |   op.licence.medical.png.meta
+|   |   op.medusa.png
+|   |   op.medusa.png.meta
+|   |   op.miracles.cultseed.png
+|   |   op.miracles.cultseed.png.meta
+|   |   op.morgen.png
+|   |   op.morgen.png.meta
+|   |   op.night.png
+|   |   op.night.png.meta
+|   |   op.office.png
+|   |   op.office.png.meta
+|   |   op.rarity.forge.png
+|   |   op.rarity.forge.png.meta
+|   |   op.rarity.grail.png
+|   |   op.rarity.grail.png.meta
+|   |   op.rarity.heart.png
+|   |   op.rarity.heart.png.meta
+|   |   op.rarity.knock.png
+|   |   op.rarity.knock.png.meta
+|   |   op.rarity.moth.png
+|   |   op.rarity.moth.png.meta
+|   |   op.rarity.winter.png
+|   |   op.rarity.winter.png.meta
+|   |   op.sea.png
+|   |   op.sea.png.meta
+|   |   op.sunset.png
+|   |   op.sunset.png.meta
+|   |   op.townhouse.png
+|   |   op.townhouse.png.meta
+|   |   op.unknown.png
+|   |   op.unknown.png.meta
+|   |   op.villa.png
+|   |   op.villa.png.meta
+|   |   op.warehouse.png
+|   |   op.warehouse.png.meta
+|   |   op.weapon.a.png
+|   |   op.weapon.a.png.meta
+|   |   op.weapon.b.png
+|   |   op.weapon.b.png.meta
+|   |   op.weapon.d.png
+|   |   op.weapon.d.png.meta
+|   |   op.wolf.png
+|   |   op.wolf.png.meta
+|   |   openedlockscaredge.png
+|   |   openedlockscaredge.png.meta
+|   |   openedlockscarforge.png
+|   |   openedlockscarforge.png.meta
+|   |   openedlockscargrail.png
+|   |   openedlockscargrail.png.meta
+|   |   openedlockscarheart.png
+|   |   openedlockscarheart.png.meta
+|   |   openedlockscarlantern.png
+|   |   openedlockscarlantern.png.meta
+|   |   openedlockscarmoth.png
+|   |   openedlockscarmoth.png.meta
+|   |   openedlockscarwinter.png
+|   |   openedlockscarwinter.png.meta
+|   |   orchidtransfigurations1.png
+|   |   orchidtransfigurations1.png.meta
+|   |   orchidtransfigurations1latin.png
+|   |   orchidtransfigurations1latin.png.meta
+|   |   orchidtransfigurations2.png
+|   |   orchidtransfigurations2.png.meta
+|   |   orchidtransfigurations2latin.png
+|   |   orchidtransfigurations2latin.png.meta
+|   |   orchidtransfigurations3.png
+|   |   orchidtransfigurations3.png.meta
+|   |   orchidtransfigurations3latin.png
+|   |   orchidtransfigurations3latin.png.meta
+|   |   originsofhours.png
+|   |   originsofhours.png.meta
+|   |   originsofhoursvak.png
+|   |   originsofhoursvak.png.meta
+|   |   overexposure.png
+|   |   overexposure.png.meta
+|   |   painting.palest.png
+|   |   painting.palest.png.meta
+|   |   paintingmansus.png
+|   |   paintingmansus.png.meta
+|   |   paintingmasteredge.png
+|   |   paintingmasteredge.png.meta
+|   |   paintingmasterforge.png
+|   |   paintingmasterforge.png.meta
+|   |   paintingmastergrail.png
+|   |   paintingmastergrail.png.meta
+|   |   paintingmasterheart.png
+|   |   paintingmasterheart.png.meta
+|   |   paintingmasterknock.png
+|   |   paintingmasterknock.png.meta
+|   |   paintingmasterlantern.png
+|   |   paintingmasterlantern.png.meta
+|   |   paintingmastermoth.png
+|   |   paintingmastermoth.png.meta
+|   |   paintingmastersecrethistories.png
+|   |   paintingmastersecrethistories.png.meta
+|   |   paintingmasterwinter.png
+|   |   paintingmasterwinter.png.meta
+|   |   passion.png
+|   |   passion.png.meta
+|   |   peril_desert.png
+|   |   peril_desert.png.meta
+|   |   peril_forest.png
+|   |   peril_forest.png.meta
+|   |   peril_mountains.png
+|   |   peril_mountains.png.meta
+|   |   peril_sea.png
+|   |   peril_sea.png.meta
+|   |   peril_treacherousground.png
+|   |   peril_treacherousground.png.meta
+|   |   playernote.png
+|   |   playernote.png.meta
+|   |   poppy.png
+|   |   poppy.png.meta
+|   |   poppyaway.png
+|   |   poppyaway.png.meta
+|   |   poppyready.png
+|   |   poppyready.png.meta
+|   |   porter_a.png
+|   |   porter_a.png.meta
+|   |   porter_b.png
+|   |   porter_b.png.meta
+|   |   porter_c.png
+|   |   porter_c.png.meta
+|   |   porter_d.png
+|   |   porter_d.png.meta
+|   |   porter_p.png
+|   |   porter_p.png.meta
+|   |   porter_r.png
+|   |   porter_r.png.meta
+|   |   prealzabo.png
+|   |   prealzabo.png.meta
+|   |   priestjob.png
+|   |   priestjob.png.meta
+|   |   progress.png
+|   |   progress.png.meta
+|   |   project_subvert_edgetowinter.png
+|   |   project_subvert_edgetowinter.png.meta
+|   |   project_subvert_forgetoedge.png
+|   |   project_subvert_forgetoedge.png.meta
+|   |   project_subvert_grailtomoth.png
+|   |   project_subvert_grailtomoth.png.meta
+|   |   project_subvert_hearttograil.png
+|   |   project_subvert_hearttograil.png.meta
+|   |   project_subvert_lanterntoforge.png
+|   |   project_subvert_lanterntoforge.png.meta
+|   |   project_subvert_mothtolantern.png
+|   |   project_subvert_mothtolantern.png.meta
+|   |   project_subvert_wintertoheart.png
+|   |   project_subvert_wintertoheart.png.meta
+|   |   project_upgrade_edge.png
+|   |   project_upgrade_edge.png.meta
+|   |   project_upgrade_forge.png
+|   |   project_upgrade_forge.png.meta
+|   |   project_upgrade_grail.png
+|   |   project_upgrade_grail.png.meta
+|   |   project_upgrade_heart.png
+|   |   project_upgrade_heart.png.meta
+|   |   project_upgrade_lantern.png
+|   |   project_upgrade_lantern.png.meta
+|   |   project_upgrade_moth.png
+|   |   project_upgrade_moth.png.meta
+|   |   project_upgrade_secrethistories.png
+|   |   project_upgrade_secrethistories.png.meta
+|   |   project_upgrade_subvert_knock.png
+|   |   project_upgrade_subvert_knock.png.meta
+|   |   project_upgrade_winter.png
+|   |   project_upgrade_winter.png.meta
+|   |   queensoftherivers.png
+|   |   queensoftherivers.png.meta
+|   |   rage.png
+|   |   rage.png.meta
+|   |   raptintheking.png
+|   |   raptintheking.png.meta
+|   |   rarity.grail.png
+|   |   rarity.grail.png.meta
+|   |   rarity.heart.png
+|   |   rarity.heart.png.meta
+|   |   rarity.knock.png
+|   |   rarity.knock.png.meta
+|   |   rarity.lantern.png
+|   |   rarity.lantern.png.meta
+|   |   rarity.moth.png
+|   |   rarity.moth.png.meta
+|   |   rarity.winter.png
+|   |   rarity.winter.png.meta
+|   |   reason.png
+|   |   reason.png.meta
+|   |   renira_a.png
+|   |   renira_a.png.meta
+|   |   renira_b.png
+|   |   renira_b.png.meta
+|   |   renira_c.png
+|   |   renira_c.png.meta
+|   |   renira_d.png
+|   |   renira_d.png.meta
+|   |   renira_p.png
+|   |   renira_p.png.meta
+|   |   renira_r.png
+|   |   renira_r.png.meta
+|   |   restlessness.png
+|   |   restlessness.png.meta
+|   |   riteconsumetoolingredientfollowerinfluence.png
+|   |   riteconsumetoolingredientfollowerinfluence.png.meta
+|   |   ritefollowerconsumeinfluence.png
+|   |   ritefollowerconsumeinfluence.png.meta
+|   |   ritefollowerconsumeingredient.png
+|   |   ritefollowerconsumeingredient.png.meta
+|   |   ritefollowerconsumetool.png
+|   |   ritefollowerconsumetool.png.meta
+|   |   riteinfluenceconsumefollower.png
+|   |   riteinfluenceconsumefollower.png.meta
+|   |   riteinfluenceconsumeingredient.png
+|   |   riteinfluenceconsumeingredient.png.meta
+|   |   ritetoolconsumefollower.png
+|   |   ritetoolconsumefollower.png.meta
+|   |   ritetoolconsumeinfluence.png
+|   |   ritetoolconsumeinfluence.png.meta
+|   |   ritetoolconsumeingredient.png
+|   |   ritetoolconsumeingredient.png.meta
+|   |   ritetoolfollowerconsumelore.png
+|   |   ritetoolfollowerconsumelore.png.meta
+|   |   rkx.enforcer.png
+|   |   rkx.enforcer.png.meta
+|   |   rkx.foe.defeated.png
+|   |   rkx.foe.defeated.png.meta
+|   |   rkx.foe.png
+|   |   rkx.foe.png.meta
+|   |   rkx.operative.png
+|   |   rkx.operative.png.meta
+|   |   rkx.scout.png
+|   |   rkx.scout.png.meta
+|   |   rkx.underboss.png
+|   |   rkx.underboss.png.meta
+|   |   rkx.weakness.cats.png
+|   |   rkx.weakness.cats.png.meta
+|   |   rkx.weakness.cold.png
+|   |   rkx.weakness.cold.png.meta
+|   |   rkx.weakness.faith.png
+|   |   rkx.weakness.faith.png.meta
+|   |   rkx.weakness.flowermaker.png
+|   |   rkx.weakness.flowermaker.png.meta
+|   |   rkx.weakness.heat.png
+|   |   rkx.weakness.heat.png.meta
+|   |   rkx.weakness.heights.png
+|   |   rkx.weakness.heights.png.meta
+|   |   rkx.weakness.horned.png
+|   |   rkx.weakness.horned.png.meta
+|   |   rkx.weakness.sea.png
+|   |   rkx.weakness.sea.png.meta
+|   |   rkx.weakness.unknown.png
+|   |   rkx.weakness.unknown.png.meta
+|   |   rkx.weakness.wolf.png
+|   |   rkx.weakness.wolf.png.meta
+|   |   roseofhypatia.png
+|   |   roseofhypatia.png.meta
+|   |   roseofhypatiagreek.png
+|   |   roseofhypatiagreek.png.meta
+|   |   roseofnuriel.png
+|   |   roseofnuriel.png.meta
+|   |   roseofnurielgreek.png
+|   |   roseofnurielgreek.png.meta
+|   |   roseofwaznei.png
+|   |   roseofwaznei.png.meta
+|   |   roseofwazneigreek.png
+|   |   roseofwazneigreek.png.meta
+|   |   rose_a.png
+|   |   rose_a.png.meta
+|   |   rose_b.png
+|   |   rose_b.png.meta
+|   |   rose_c.png
+|   |   rose_c.png.meta
+|   |   rose_d.png
+|   |   rose_d.png.meta
+|   |   rose_p.png
+|   |   rose_p.png.meta
+|   |   rose_r.png
+|   |   rose_r.png.meta
+|   |   rumour.png
+|   |   rumour.png.meta
+|   |   saliba_a.png
+|   |   saliba_a.png.meta
+|   |   saliba_b.png
+|   |   saliba_b.png.meta
+|   |   saliba_c.png
+|   |   saliba_c.png.meta
+|   |   saliba_d.png
+|   |   saliba_d.png.meta
+|   |   saliba_p.png
+|   |   saliba_p.png.meta
+|   |   saliba_r.png
+|   |   saliba_r.png.meta
+|   |   scarsky.png
+|   |   scarsky.png.meta
+|   |   scarskyfucine.png
+|   |   scarskyfucine.png.meta
+|   |   scar_edge.png
+|   |   scar_edge.png.meta
+|   |   scar_heart.png
+|   |   scar_heart.png.meta
+|   |   scar_heart_fatigued.png
+|   |   scar_heart_fatigued.png.meta
+|   |   scar_knock.png
+|   |   scar_knock.png.meta
+|   |   scar_lantern.png
+|   |   scar_lantern.png.meta
+|   |   scar_moth.png
+|   |   scar_moth.png.meta
+|   |   scar_moth_fatigued.png
+|   |   scar_moth_fatigued.png.meta
+|   |   scar_winter.png
+|   |   scar_winter.png.meta
+|   |   scholararamaic.png
+|   |   scholararamaic.png.meta
+|   |   scholarfucine.png
+|   |   scholarfucine.png.meta
+|   |   scholargreek.png
+|   |   scholargreek.png.meta
+|   |   scholarlatin.png
+|   |   scholarlatin.png.meta
+|   |   scholarmandaic.png
+|   |   scholarmandaic.png.meta
+|   |   scholarphrygian.png
+|   |   scholarphrygian.png.meta
+|   |   scholarsanskrit.png
+|   |   scholarsanskrit.png.meta
+|   |   scholarvak.png
+|   |   scholarvak.png.meta
+|   |   seal_hiddendoor.png
+|   |   seal_hiddendoor.png.meta
+|   |   seal_wardeddoor.png
+|   |   seal_wardeddoor.png.meta
+|   |   seasonambitions.png
+|   |   seasonambitions.png.meta
+|   |   seasonardours.png
+|   |   seasonardours.png.meta
+|   |   seasoncraving.png
+|   |   seasoncraving.png.meta
+|   |   seasondespair.png
+|   |   seasondespair.png.meta
+|   |   seasonpleasantday.png
+|   |   seasonpleasantday.png.meta
+|   |   seasonserenities.png
+|   |   seasonserenities.png.meta
+|   |   seasonsickness.png
+|   |   seasonsickness.png.meta
+|   |   seasonsilence.png
+|   |   seasonsilence.png.meta
+|   |   seasonsuspicion.png
+|   |   seasonsuspicion.png.meta
+|   |   seasonvisions.png
+|   |   seasonvisions.png.meta
+|   |   secondglory.png
+|   |   secondglory.png.meta
+|   |   secondglorymandaic.png
+|   |   secondglorymandaic.png.meta
+|   |   sendingheartb.png
+|   |   sendingheartb.png.meta
+|   |   sendingheartc.png
+|   |   sendingheartc.png.meta
+|   |   sendingheartd.png
+|   |   sendingheartd.png.meta
+|   |   sendinghearte.png
+|   |   sendinghearte.png.meta
+|   |   sendingheartf.png
+|   |   sendingheartf.png.meta
+|   |   sendingheartg.png
+|   |   sendingheartg.png.meta
+|   |   sendingmothb.png
+|   |   sendingmothb.png.meta
+|   |   sendingmothc.png
+|   |   sendingmothc.png.meta
+|   |   sendingmothd.png
+|   |   sendingmothd.png.meta
+|   |   sendingmothe.png
+|   |   sendingmothe.png.meta
+|   |   sendingmothf.png
+|   |   sendingmothf.png.meta
+|   |   sendingmothg.png
+|   |   sendingmothg.png.meta
+|   |   serenityofblackwood.png
+|   |   serenityofblackwood.png.meta
+|   |   serenityofblackwoodgreek.png
+|   |   serenityofblackwoodgreek.png.meta
+|   |   sevenfoldslayingsevencoiled.png
+|   |   sevenfoldslayingsevencoiled.png.meta
+|   |   sevenfoldslayingsevencoiledfucine.png
+|   |   sevenfoldslayingsevencoiledfucine.png.meta
+|   |   shavenlocktantra.png
+|   |   shavenlocktantra.png.meta
+|   |   shavenlocktantrasanskrit.png
+|   |   shavenlocktantrasanskrit.png.meta
+|   |   sicknessprotection.png
+|   |   sicknessprotection.png.meta
+|   |   silverbook.png
+|   |   silverbook.png.meta
+|   |   silverbookfucine.png
+|   |   silverbookfucine.png.meta
+|   |   sixlettersonnecessity.png
+|   |   sixlettersonnecessity.png.meta
+|   |   skeletonsongs.png
+|   |   skeletonsongs.png.meta
+|   |   skillhealtha.png
+|   |   skillhealtha.png.meta
+|   |   skillhealthb.png
+|   |   skillhealthb.png.meta
+|   |   skillhealthc.png
+|   |   skillhealthc.png.meta
+|   |   skillhealthd_grace.png
+|   |   skillhealthd_grace.png.meta
+|   |   skillhealthd_strength.png
+|   |   skillhealthd_strength.png.meta
+|   |   skillpassiona.png
+|   |   skillpassiona.png.meta
+|   |   skillpassionb.png
+|   |   skillpassionb.png.meta
+|   |   skillpassionc.png
+|   |   skillpassionc.png.meta
+|   |   skillreasona.png
+|   |   skillreasona.png.meta
+|   |   skillreasonb.png
+|   |   skillreasonb.png.meta
+|   |   skillreasonc.png
+|   |   skillreasonc.png.meta
+|   |   slee_a.png
+|   |   slee_a.png.meta
+|   |   slee_b.png
+|   |   slee_b.png.meta
+|   |   slee_c.png
+|   |   slee_c.png.meta
+|   |   slee_d.png
+|   |   slee_d.png.meta
+|   |   slee_p.png
+|   |   slee_p.png.meta
+|   |   slee_r.png
+|   |   slee_r.png.meta
+|   |   snare.png
+|   |   snare.png.meta
+|   |   songscarapacecross.png
+|   |   songscarapacecross.png.meta
+|   |   songscarapacecrossmandaic.png
+|   |   songscarapacecrossmandaic.png.meta
+|   |   spencer_r.png
+|   |   spencer_r.png.meta
+|   |   spirit_forgec_winter.png
+|   |   spirit_forgec_winter.png.meta
+|   |   spirit_forgee_edge.consumed.png
+|   |   spirit_forgee_edge.consumed.png.meta
+|   |   spirit_forgee_edge.defunct.png
+|   |   spirit_forgee_edge.defunct.png.meta
+|   |   spirit_forgee_edge.png
+|   |   spirit_forgee_edge.png.meta
+|   |   spirit_grailc_moth.png
+|   |   spirit_grailc_moth.png.meta
+|   |   spirit_graile_edge.defunct.png
+|   |   spirit_graile_edge.defunct.png.meta
+|   |   spirit_graile_edge.png
+|   |   spirit_graile_edge.png.meta
+|   |   spirit_heartc_edge.png
+|   |   spirit_heartc_edge.png.meta
+|   |   spirit_lanternc_edge.png
+|   |   spirit_lanternc_edge.png.meta
+|   |   spirit_lanterne_secret.defunct.png
+|   |   spirit_lanterne_secret.defunct.png.meta
+|   |   spirit_lanterne_secret.png
+|   |   spirit_lanterne_secret.png.meta
+|   |   spirit_wintera_edge.png
+|   |   spirit_wintera_edge.png.meta
+|   |   spirit_wintera_moth.png
+|   |   spirit_wintera_moth.png.meta
+|   |   spirit_winterb_heart.png
+|   |   spirit_winterb_heart.png.meta
+|   |   spirit_winterd_edge.png
+|   |   spirit_winterd_edge.png.meta
+|   |   starshatteredfane.png
+|   |   starshatteredfane.png.meta
+|   |   startingletter.png
+|   |   startingletter.png.meta
+|   |   strategy.assault.revealed.png
+|   |   strategy.assault.revealed.png.meta
+|   |   strategy.downtime.revealed.png
+|   |   strategy.downtime.revealed.png.meta
+|   |   strategy.dreams.revealed.png
+|   |   strategy.dreams.revealed.png.meta
+|   |   strategy.intrigue.revealed.png
+|   |   strategy.intrigue.revealed.png.meta
+|   |   strategy.prep.delayed.png
+|   |   strategy.prep.delayed.png.meta
+|   |   strategy.prep.png
+|   |   strategy.prep.png.meta
+|   |   strategy.unknown.png
+|   |   strategy.unknown.png.meta
+|   |   stumm.png
+|   |   stumm.png.meta
+|   |   sulochana.png
+|   |   sulochana.png.meta
+|   |   sunsetpassages.png
+|   |   sunsetpassages.png.meta
+|   |   sunsetpassageslatin.png
+|   |   sunsetpassageslatin.png.meta
+|   |   sylvia_a.png
+|   |   sylvia_a.png.meta
+|   |   sylvia_b.png
+|   |   sylvia_b.png.meta
+|   |   sylvia_c.png
+|   |   sylvia_c.png.meta
+|   |   sylvia_d.png
+|   |   sylvia_d.png.meta
+|   |   sylvia_p.png
+|   |   sylvia_p.png.meta
+|   |   sylvia_r.png
+|   |   sylvia_r.png.meta
+|   |   tantraworms.png
+|   |   tantraworms.png.meta
+|   |   tantrawormssanskrit.png
+|   |   tantrawormssanskrit.png.meta
+|   |   temptation.defiance.png
+|   |   temptation.defiance.png.meta
+|   |   temptation.obscurity.png
+|   |   temptation.obscurity.png.meta
+|   |   temptation.remembrance.png
+|   |   temptation.remembrance.png.meta
+|   |   textbookaramaic.png
+|   |   textbookaramaic.png.meta
+|   |   textbookfucine.png
+|   |   textbookfucine.png.meta
+|   |   textbookfucinelatin.png
+|   |   textbookfucinelatin.png.meta
+|   |   textbookgreek.png
+|   |   textbookgreek.png.meta
+|   |   textbooklatin.png
+|   |   textbooklatin.png.meta
+|   |   textbookmandaic.png
+|   |   textbookmandaic.png.meta
+|   |   textbookmandaicaramaic.png
+|   |   textbookmandaicaramaic.png.meta
+|   |   textbookpassion.png
+|   |   textbookpassion.png.meta
+|   |   textbookphrygian.png
+|   |   textbookphrygian.png.meta
+|   |   textbookphrygiangreek.png
+|   |   textbookphrygiangreek.png.meta
+|   |   textbookreason.png
+|   |   textbookreason.png.meta
+|   |   textbooksanskrit.png
+|   |   textbooksanskrit.png.meta
+|   |   textbookvak.png
+|   |   textbookvak.png.meta
+|   |   textbookvaksanskrit.png
+|   |   textbookvaksanskrit.png.meta
+|   |   theBritishLibrary.png
+|   |   theBritishLibrary.png.meta
+|   |   theskythesoul.png
+|   |   theskythesoul.png.meta
+|   |   theskythesoularamaic.png
+|   |   theskythesoularamaic.png.meta
+|   |   thirstingtantra.png
+|   |   thirstingtantra.png.meta
+|   |   thirstingtantrasanskrit.png
+|   |   thirstingtantrasanskrit.png.meta
+|   |   thosewhodonotsleep.png
+|   |   thosewhodonotsleep.png.meta
+|   |   thosewhodonotsleepfucine.png
+|   |   thosewhodonotsleepfucine.png.meta
+|   |   thugedge.png
+|   |   thugedge.png.meta
+|   |   thugedgeminor.png
+|   |   thugedgeminor.png.meta
+|   |   thugforgeedge.png
+|   |   thugforgeedge.png.meta
+|   |   thugknock.png
+|   |   thugknock.png.meta
+|   |   thuglanternmoth.png
+|   |   thuglanternmoth.png.meta
+|   |   thugmoth.png
+|   |   thugmoth.png.meta
+|   |   thugmothminor.png
+|   |   thugmothminor.png.meta
+|   |   ticket.train.png
+|   |   ticket.train.png.meta
+|   |   timedivision.png
+|   |   timedivision.png.meta
+|   |   timedivisionmandaic.png
+|   |   timedivisionmandaic.png.meta
+|   |   tooledgeb.png
+|   |   tooledgeb.png.meta
+|   |   tooledged.png
+|   |   tooledged.png.meta
+|   |   tooledgef.png
+|   |   tooledgef.png.meta
+|   |   toolforgeb.png
+|   |   toolforgeb.png.meta
+|   |   toolforged.png
+|   |   toolforged.png.meta
+|   |   toolforgef.png
+|   |   toolforgef.png.meta
+|   |   toolgrailb.png
+|   |   toolgrailb.png.meta
+|   |   toolgraild.png
+|   |   toolgraild.png.meta
+|   |   toolgrailf.png
+|   |   toolgrailf.png.meta
+|   |   toolgrailmoth.png
+|   |   toolgrailmoth.png.meta
+|   |   toolheartb.png
+|   |   toolheartb.png.meta
+|   |   toolheartd.png
+|   |   toolheartd.png.meta
+|   |   toolheartf.png
+|   |   toolheartf.png.meta
+|   |   toolknockb.png
+|   |   toolknockb.png.meta
+|   |   toolknockd.png
+|   |   toolknockd.png.meta
+|   |   toolknockf.png
+|   |   toolknockf.png.meta
+|   |   toollanternb.png
+|   |   toollanternb.png.meta
+|   |   toollanternbcracked.png
+|   |   toollanternbcracked.png.meta
+|   |   toollanternd.png
+|   |   toollanternd.png.meta
+|   |   toollanterndcracked.png
+|   |   toollanterndcracked.png.meta
+|   |   toollanternf.png
+|   |   toollanternf.png.meta
+|   |   toollanternfcracked.png
+|   |   toollanternfcracked.png.meta
+|   |   toolmothb.png
+|   |   toolmothb.png.meta
+|   |   toolmothd.png
+|   |   toolmothd.png.meta
+|   |   toolmothf.png
+|   |   toolmothf.png.meta
+|   |   toolsecrethistoriesb.png
+|   |   toolsecrethistoriesb.png.meta
+|   |   toolsecrethistoriesd.png
+|   |   toolsecrethistoriesd.png.meta
+|   |   toolwinterb.png
+|   |   toolwinterb.png.meta
+|   |   toolwinterd.png
+|   |   toolwinterd.png.meta
+|   |   toolwinterf.png
+|   |   toolwinterf.png.meta
+|   |   trail.false.exile.png
+|   |   trail.false.exile.png.meta
+|   |   tranquillity.png
+|   |   tranquillity.png.meta
+|   |   travellingatnight1.png
+|   |   travellingatnight1.png.meta
+|   |   travellingatnight2.png
+|   |   travellingatnight2.png.meta
+|   |   travellingatnight3.png
+|   |   travellingatnight3.png.meta
+|   |   treatiseonunderplaces.png
+|   |   treatiseonunderplaces.png.meta
+|   |   tristan_a.png
+|   |   tristan_a.png.meta
+|   |   tristan_b.png
+|   |   tristan_b.png.meta
+|   |   tristan_c.png
+|   |   tristan_c.png.meta
+|   |   tristan_d.png
+|   |   tristan_d.png.meta
+|   |   tristan_p.png
+|   |   tristan_p.png.meta
+|   |   tristan_r.png
+|   |   tristan_r.png.meta
+|   |   truecompleteasclepian.png
+|   |   truecompleteasclepian.png.meta
+|   |   truecompleteasclepiangreek.png
+|   |   truecompleteasclepiangreek.png.meta
+|   |   tryphon.defeated.png
+|   |   tryphon.defeated.png.meta
+|   |   tryphon.png
+|   |   tryphon.png.meta
+|   |   tryphon_unknown.png
+|   |   tryphon_unknown.png.meta
+|   |   twentysixenticementsseventorments.png
+|   |   twentysixenticementsseventorments.png.meta
+|   |   twentysixenticementsseventormentsfucine.png
+|   |   twentysixenticementsseventormentsfucine.png.meta
+|   |   twinserpenttantra.png
+|   |   twinserpenttantra.png.meta
+|   |   twinserpenttantrasanskrit.png
+|   |   twinserpenttantrasanskrit.png.meta
+|   |   valciane_a.png
+|   |   valciane_a.png.meta
+|   |   valciane_b.png
+|   |   valciane_b.png.meta
+|   |   valciane_c.png
+|   |   valciane_c.png.meta
+|   |   valciane_d.png
+|   |   valciane_d.png.meta
+|   |   valciane_p.png
+|   |   valciane_p.png.meta
+|   |   valciane_r.png
+|   |   valciane_r.png.meta
+|   |   vault.huntress.completed.png
+|   |   vault.huntress.completed.png.meta
+|   |   vaultcapital1.png
+|   |   vaultcapital1.png.meta
+|   |   vaultcapital2.png
+|   |   vaultcapital2.png.meta
+|   |   vaultcapital3.png
+|   |   vaultcapital3.png.meta
+|   |   vaultcapital4.png
+|   |   vaultcapital4.png.meta
+|   |   vaultcapital5.png
+|   |   vaultcapital5.png.meta
+|   |   vaultcapitaldefault.png
+|   |   vaultcapitaldefault.png.meta
+|   |   vaultcontinent1.png
+|   |   vaultcontinent1.png.meta
+|   |   vaultcontinent2.png
+|   |   vaultcontinent2.png.meta
+|   |   vaultcontinent3.png
+|   |   vaultcontinent3.png.meta
+|   |   vaultcontinent4.png
+|   |   vaultcontinent4.png.meta
+|   |   vaultcontinent5.png
+|   |   vaultcontinent5.png.meta
+|   |   vaultcontinent6.png
+|   |   vaultcontinent6.png.meta
+|   |   vaultcontinentdefault.png
+|   |   vaultcontinentdefault.png.meta
+|   |   vaulteveningisles1.png
+|   |   vaulteveningisles1.png.meta
+|   |   vaulteveningisles2.png
+|   |   vaulteveningisles2.png.meta
+|   |   vaulteveningisles3.png
+|   |   vaulteveningisles3.png.meta
+|   |   vaulteveningisles4.png
+|   |   vaulteveningisles4.png.meta
+|   |   vaulteveningislesdefault.png
+|   |   vaulteveningislesdefault.png.meta
+|   |   vaultfloating1.png
+|   |   vaultfloating1.png.meta
+|   |   vaultlandbeyondforest1.png
+|   |   vaultlandbeyondforest1.png.meta
+|   |   vaultlandbeyondforest2.png
+|   |   vaultlandbeyondforest2.png.meta
+|   |   vaultlandbeyondforest3.png
+|   |   vaultlandbeyondforest3.png.meta
+|   |   vaultlandbeyondforest4.png
+|   |   vaultlandbeyondforest4.png.meta
+|   |   vaultlandbeyondforest5.png
+|   |   vaultlandbeyondforest5.png.meta
+|   |   vaultlandbeyondforestdefault.png
+|   |   vaultlandbeyondforestdefault.png.meta
+|   |   vaultloneandlevelsands1.png
+|   |   vaultloneandlevelsands1.png.meta
+|   |   vaultloneandlevelsands2.png
+|   |   vaultloneandlevelsands2.png.meta
+|   |   vaultloneandlevelsands3.png
+|   |   vaultloneandlevelsands3.png.meta
+|   |   vaultloneandlevelsands4.png
+|   |   vaultloneandlevelsands4.png.meta
+|   |   vaultloneandlevelsandsdefault.png
+|   |   vaultloneandlevelsandsdefault.png.meta
+|   |   vaultrendingmountains1.png
+|   |   vaultrendingmountains1.png.meta
+|   |   vaultrendingmountains2.png
+|   |   vaultrendingmountains2.png.meta
+|   |   vaultrendingmountains3.png
+|   |   vaultrendingmountains3.png.meta
+|   |   vaultrendingmountains4.png
+|   |   vaultrendingmountains4.png.meta
+|   |   vaultrendingmountainsdefault.png
+|   |   vaultrendingmountainsdefault.png.meta
+|   |   vaultshires1.png
+|   |   vaultshires1.png.meta
+|   |   vaultshires2.png
+|   |   vaultshires2.png.meta
+|   |   vaultshires3.png
+|   |   vaultshires3.png.meta
+|   |   vaultshires4.png
+|   |   vaultshires4.png.meta
+|   |   vaultshires5.png
+|   |   vaultshires5.png.meta
+|   |   vaultshiresdefault.png
+|   |   vaultshiresdefault.png.meta
+|   |   victoryofcrowns.png
+|   |   victoryofcrowns.png.meta
+|   |   victor_a.png
+|   |   victor_a.png.meta
+|   |   victor_b.png
+|   |   victor_b.png.meta
+|   |   victor_c.png
+|   |   victor_c.png.meta
+|   |   victor_d.png
+|   |   victor_d.png.meta
+|   |   victor_p.png
+|   |   victor_p.png.meta
+|   |   victor_r.png
+|   |   victor_r.png.meta
+|   |   vienneseconundra.png
+|   |   vienneseconundra.png.meta
+|   |   vinzantinscriptions.png
+|   |   vinzantinscriptions.png.meta
+|   |   vinzantinscriptionsphrygian.png
+|   |   vinzantinscriptionsphrygian.png.meta
+|   |   violet_a.png
+|   |   violet_a.png.meta
+|   |   violet_b.png
+|   |   violet_b.png.meta
+|   |   violet_c.png
+|   |   violet_c.png.meta
+|   |   violet_d.png
+|   |   violet_d.png.meta
+|   |   violet_p.png
+|   |   violet_p.png.meta
+|   |   violet_r.png
+|   |   violet_r.png.meta
+|   |   vitality.png
+|   |   vitality.png.meta
+|   |   vitalityplus.png
+|   |   vitalityplus.png.meta
+|   |   voyagesfo.png
+|   |   voyagesfo.png.meta
+|   |   voyagesfofucine.png
+|   |   voyagesfofucine.png.meta
+|   |   wainscothistories.png
+|   |   wainscothistories.png.meta
+|   |   waroftheroadscensored.png
+|   |   waroftheroadscensored.png.meta
+|   |   watchfultantra.png
+|   |   watchfultantra.png.meta
+|   |   watchfultantrasanskrit.png
+|   |   watchfultantrasanskrit.png.meta
+|   |   waypeacock.png
+|   |   waypeacock.png.meta
+|   |   wayspider.png
+|   |   wayspider.png.meta
+|   |   waystagbefore_1.png
+|   |   waystagbefore_1.png.meta
+|   |   waystagbefore_2.png
+|   |   waystagbefore_2.png.meta
+|   |   waystagbefore_3.png
+|   |   waystagbefore_3.png.meta
+|   |   waystagbefore_4.png
+|   |   waystagbefore_4.png.meta
+|   |   waystagbefore_5.png
+|   |   waystagbefore_5.png.meta
+|   |   waystag_after.png
+|   |   waystag_after.png.meta
+|   |   waywhite.png
+|   |   waywhite.png.meta
+|   |   waywood.png
+|   |   waywood.png.meta
+|   |   weapon.a.png
+|   |   weapon.a.png.meta
+|   |   weapon.b.png
+|   |   weapon.b.png.meta
+|   |   weapon.c.png
+|   |   weapon.c.png.meta
+|   |   weapon.e.png
+|   |   weapon.e.png.meta
+|   |   welland.defeated.png
+|   |   welland.defeated.png.meta
+|   |   welland.png
+|   |   welland.png.meta
+|   |   welland_unknown.png
+|   |   welland_unknown.png.meta
+|   |   wherehasshegone.png
+|   |   wherehasshegone.png.meta
+|   |   wherehasshegonevak.png
+|   |   wherehasshegonevak.png.meta
+|   |   wilderness.png
+|   |   wilderness.png.meta
+|   |   worlddoesnotweep.png
+|   |   worlddoesnotweep.png.meta
+|   |   worlddoesnotweeparamaic.png
+|   |   worlddoesnotweeparamaic.png.meta
+|   |   wound.exile.png
+|   |   wound.exile.png.meta
+|   |   wound.exile.unstanchable.png
+|   |   wound.exile.unstanchable.png.meta
+|   |   wound.foe.png
+|   |   wound.foe.png.meta
+|   |   wound.foe.unstanchable.png
+|   |   wound.foe.unstanchable.png.meta
+|   |   wound.underling.png
+|   |   wound.underling.png.meta
+|   |   wound.underling.unstanchable.png
+|   |   wound.underling.unstanchable.png.meta
+|   |   xe.png
+|   |   xe.png.meta
+|   |   xf.png
+|   |   xf.png.meta
+|   |   xg.png
+|   |   xg.png.meta
+|   |   xh.png
+|   |   xh.png.meta
+|   |   xk.png
+|   |   xk.png.meta
+|   |   xl.png
+|   |   xl.png.meta
+|   |   xm.png
+|   |   xm.png.meta
+|   |   xw.png
+|   |   xw.png.meta
+|   |   year.stolen.png
+|   |   year.stolen.png.meta
+|   |   ysabet_a.png
+|   |   ysabet_a.png.meta
+|   |   ysabet_b.png
+|   |   ysabet_b.png.meta
+|   |   ysabet_c.png
+|   |   ysabet_c.png.meta
+|   |   ysabet_d.png
+|   |   ysabet_d.png.meta
+|   |   ysabet_p.png
+|   |   ysabet_p.png.meta
+|   |   ysabet_r.png
+|   |   ysabet_r.png.meta
+|   |   zachary_r.png
+|   |   zachary_r.png.meta
+|   |   _x.png
+|   |   _x.png.meta
+|   |   
+|   \---anim
+|           aladimready_0.png
+|           aladimready_0.png.meta
+|           aladim_0.png
+|           aladim_0.png.meta
+|           auclair_a_0.png
+|           auclair_a_0.png.meta
+|           auclair_b_0.png
+|           auclair_b_0.png.meta
+|           auclair_c_0.png
+|           auclair_c_0.png.meta
+|           auclair_d_0.png
+|           auclair_d_0.png.meta
+|           auclair_p_0.png
+|           auclair_p_0.png.meta
+|           bechetready_0.png
+|           bechetready_0.png.meta
+|           bechet_0.png
+|           bechet_0.png.meta
+|           benefactorf_0.png
+|           benefactorf_0.png.meta
+|           benefactorm_0.png
+|           benefactorm_0.png.meta
+|           cat_a_0.png
+|           cat_a_0.png.meta
+|           cat_b_0.png
+|           cat_b_0.png.meta
+|           cat_c_0.png
+|           cat_c_0.png.meta
+|           cat_d_0.png
+|           cat_d_0.png.meta
+|           cat_p_0.png
+|           cat_p_0.png.meta
+|           clifton_a_0.png
+|           clifton_a_0.png.meta
+|           clifton_b_0.png
+|           clifton_b_0.png.meta
+|           clifton_c_0.png
+|           clifton_c_0.png.meta
+|           clifton_d_0.png
+|           clifton_d_0.png.meta
+|           clifton_p_0.png
+|           clifton_p_0.png.meta
+|           clovette_a_0.png
+|           clovette_a_0.png.meta
+|           clovette_b_0.png
+|           clovette_b_0.png.meta
+|           clovette_c_0.png
+|           clovette_c_0.png.meta
+|           clovette_d_0.png
+|           clovette_d_0.png.meta
+|           clovette_p_0.png
+|           clovette_p_0.png.meta
+|           defaulthunter_a_0.png
+|           defaulthunter_a_0.png.meta
+|           defaulthunter_p_0.png
+|           defaulthunter_p_0.png.meta
+|           dorothy_a_0.png
+|           dorothy_a_0.png.meta
+|           dorothy_b_0.png
+|           dorothy_b_0.png.meta
+|           dorothy_c_0.png
+|           dorothy_c_0.png.meta
+|           dorothy_d_0.png
+|           dorothy_d_0.png.meta
+|           dorothy_p_0.png
+|           dorothy_p_0.png.meta
+|           elridge_a_0.png
+|           elridge_a_0.png.meta
+|           elridge_b_0.png
+|           elridge_b_0.png.meta
+|           elridge_c_0.png
+|           elridge_c_0.png.meta
+|           elridge_d_0.png
+|           elridge_d_0.png.meta
+|           elridge_p_0.png
+|           elridge_p_0.png.meta
+|           enid_a_0.png
+|           enid_a_0.png.meta
+|           enid_b_0.png
+|           enid_b_0.png.meta
+|           enid_c_0.png
+|           enid_c_0.png.meta
+|           enid_d_0.png
+|           enid_d_0.png.meta
+|           enid_p_0.png
+|           enid_p_0.png.meta
+|           health_0.png
+|           health_0.png.meta
+|           investigator1prisoner_0.png
+|           investigator1prisoner_0.png.meta
+|           investigator1_0.png
+|           investigator1_0.png.meta
+|           investigator2prisoner_0.png
+|           investigator2prisoner_0.png.meta
+|           investigator2_0.png
+|           investigator2_0.png.meta
+|           investigator3prisoner_0.png
+|           investigator3prisoner_0.png.meta
+|           investigator3_0.png
+|           investigator3_0.png.meta
+|           investigator4prisoner_0.png
+|           investigator4prisoner_0.png.meta
+|           investigator4_0.png
+|           investigator4_0.png.meta
+|           janningsready_0.png
+|           janningsready_0.png.meta
+|           jannings_0.png
+|           jannings_0.png.meta
+|           laidlaw_a_0.png
+|           laidlaw_a_0.png.meta
+|           laidlaw_b_0.png
+|           laidlaw_b_0.png.meta
+|           laidlaw_c_0.png
+|           laidlaw_c_0.png.meta
+|           laidlaw_d_0.png
+|           laidlaw_d_0.png.meta
+|           laidlaw_p_0.png
+|           laidlaw_p_0.png.meta
+|           leo_a_0.png
+|           leo_a_0.png.meta
+|           leo_b_0.png
+|           leo_b_0.png.meta
+|           leo_c_0.png
+|           leo_c_0.png.meta
+|           leo_d_0.png
+|           leo_d_0.png.meta
+|           leo_p_0.png
+|           leo_p_0.png.meta
+|           neville_a_0.png
+|           neville_a_0.png.meta
+|           neville_b_0.png
+|           neville_b_0.png.meta
+|           neville_c_0.png
+|           neville_c_0.png.meta
+|           neville_d_0.png
+|           neville_d_0.png.meta
+|           neville_p_0.png
+|           neville_p_0.png.meta
+|           obscurity_0.png
+|           obscurity_0.png.meta
+|           passion_0.png
+|           passion_0.png.meta
+|           poppyready_0.png
+|           poppyready_0.png.meta
+|           poppy_0.png
+|           poppy_0.png.meta
+|           porter_a_0.png
+|           porter_a_0.png.meta
+|           porter_b_0.png
+|           porter_b_0.png.meta
+|           porter_c_0.png
+|           porter_c_0.png.meta
+|           porter_d_0.png
+|           porter_d_0.png.meta
+|           porter_p_0.png
+|           porter_p_0.png.meta
+|           reason_0.png
+|           reason_0.png.meta
+|           renira_a_0.png
+|           renira_a_0.png.meta
+|           renira_b_0.png
+|           renira_b_0.png.meta
+|           renira_c_0.png
+|           renira_c_0.png.meta
+|           renira_d_0.png
+|           renira_d_0.png.meta
+|           renira_p_0.png
+|           renira_p_0.png.meta
+|           rose_a_0.png
+|           rose_a_0.png.meta
+|           rose_b_0.png
+|           rose_b_0.png.meta
+|           rose_c_0.png
+|           rose_c_0.png.meta
+|           rose_d_0.png
+|           rose_d_0.png.meta
+|           rose_p_0.png
+|           rose_p_0.png.meta
+|           saliba_a_0.png
+|           saliba_a_0.png.meta
+|           saliba_b_0.png
+|           saliba_b_0.png.meta
+|           saliba_c_0.png
+|           saliba_c_0.png.meta
+|           saliba_d_0.png
+|           saliba_d_0.png.meta
+|           saliba_p_0.png
+|           saliba_p_0.png.meta
+|           slee_a_0.png
+|           slee_a_0.png.meta
+|           slee_b_0.png
+|           slee_b_0.png.meta
+|           slee_c_0.png
+|           slee_c_0.png.meta
+|           slee_d_0.png
+|           slee_d_0.png.meta
+|           slee_p_0.png
+|           slee_p_0.png.meta
+|           spirit_forgec_winter_0.png
+|           spirit_forgec_winter_0.png.meta
+|           spirit_forgee_edge_0.png
+|           spirit_forgee_edge_0.png.meta
+|           spirit_grailc_moth_0.png
+|           spirit_grailc_moth_0.png.meta
+|           spirit_graile_edge_0.png
+|           spirit_graile_edge_0.png.meta
+|           spirit_heartc_edge_0.png
+|           spirit_heartc_edge_0.png.meta
+|           spirit_lanterne_secret_0.png
+|           spirit_lanterne_secret_0.png.meta
+|           spirit_winterd_edge_0.png
+|           spirit_winterd_edge_0.png.meta
+|           sulochana_0.png
+|           sulochana_0.png.meta
+|           sylvia_a_0.png
+|           sylvia_a_0.png.meta
+|           sylvia_b_0.png
+|           sylvia_b_0.png.meta
+|           sylvia_c_0.png
+|           sylvia_c_0.png.meta
+|           sylvia_d_0.png
+|           sylvia_d_0.png.meta
+|           sylvia_p_0.png
+|           sylvia_p_0.png.meta
+|           toollanternf_0.png
+|           toollanternf_0.png.meta
+|           tristan_a_0.png
+|           tristan_a_0.png.meta
+|           tristan_b_0.png
+|           tristan_b_0.png.meta
+|           tristan_c_0.png
+|           tristan_c_0.png.meta
+|           tristan_d_0.png
+|           tristan_d_0.png.meta
+|           tristan_p_0.png
+|           tristan_p_0.png.meta
+|           valciane_a_0.png
+|           valciane_a_0.png.meta
+|           valciane_b_0.png
+|           valciane_b_0.png.meta
+|           valciane_c_0.png
+|           valciane_c_0.png.meta
+|           valciane_d_0.png
+|           valciane_d_0.png.meta
+|           valciane_p_0.png
+|           valciane_p_0.png.meta
+|           victor_a_0.png
+|           victor_a_0.png.meta
+|           victor_b_0.png
+|           victor_b_0.png.meta
+|           victor_c_0.png
+|           victor_c_0.png.meta
+|           victor_d_0.png
+|           victor_d_0.png.meta
+|           victor_p_0.png
+|           victor_p_0.png.meta
+|           violet_a_0.png
+|           violet_a_0.png.meta
+|           violet_b_0.png
+|           violet_b_0.png.meta
+|           violet_c_0.png
+|           violet_c_0.png.meta
+|           violet_d_0.png
+|           violet_d_0.png.meta
+|           violet_p_0.png
+|           violet_p_0.png.meta
+|           ysabet_a_0.png
+|           ysabet_a_0.png.meta
+|           ysabet_b_0.png
+|           ysabet_b_0.png.meta
+|           ysabet_c_0.png
+|           ysabet_c_0.png.meta
+|           ysabet_d_0.png
+|           ysabet_d_0.png.meta
+|           ysabet_p_0.png
+|           ysabet_p_0.png.meta
+|           
++---endings
+|   |   auclair.png
+|   |   auclair.png.meta
+|   |   cat.png
+|   |   cat.png.meta
+|   |   clifton.png
+|   |   clifton.png.meta
+|   |   clovette.png
+|   |   clovette.png.meta
+|   |   colonel.png
+|   |   colonel.png.meta
+|   |   crownedgrowth.png
+|   |   crownedgrowth.png.meta
+|   |   despair.png
+|   |   despair.png.meta
+|   |   doorintheeye.png
+|   |   doorintheeye.png.meta
+|   |   dorothy.png
+|   |   dorothy.png.meta
+|   |   elegiast.png
+|   |   elegiast.png.meta
+|   |   elridge.png
+|   |   elridge.png.meta
+|   |   enid.png
+|   |   enid.png.meta
+|   |   finehouse.png
+|   |   finehouse.png.meta
+|   |   flowermaker.png
+|   |   flowermaker.png.meta
+|   |   forgeofdays.png
+|   |   forgeofdays.png.meta
+|   |   generichq.png
+|   |   generichq.png.meta
+|   |   insomnia.png
+|   |   insomnia.png.meta
+|   |   laidlaw.png
+|   |   laidlaw.png.meta
+|   |   leo.png
+|   |   leo.png.meta
+|   |   lionsmith.png
+|   |   lionsmith.png.meta
+|   |   loc_ru.meta
+|   |   loc_zh-hans.meta
+|   |   madness.png
+|   |   madness.png.meta
+|   |   madrugad.PNG
+|   |   madrugad.PNG.meta
+|   |   mareinthetree.png
+|   |   mareinthetree.png.meta
+|   |   meniscate.png
+|   |   meniscate.png.meta
+|   |   moonlitcastle.png
+|   |   moonlitcastle.png.meta
+|   |   moth.png
+|   |   moth.png.meta
+|   |   motherofants.png
+|   |   motherofants.png.meta
+|   |   neville.png
+|   |   neville.png.meta
+|   |   notorious.png
+|   |   notorious.png.meta
+|   |   porter.png
+|   |   porter.png.meta
+|   |   redgrail.png
+|   |   redgrail.png.meta
+|   |   renira.png
+|   |   renira.png.meta
+|   |   rose.png
+|   |   rose.png.meta
+|   |   saliba.png
+|   |   saliba.png.meta
+|   |   slee.png
+|   |   slee.png.meta
+|   |   suninrags.png
+|   |   suninrags.png.meta
+|   |   sylvia.png
+|   |   sylvia.png.meta
+|   |   thunderskin.png
+|   |   thunderskin.png.meta
+|   |   tristan.png
+|   |   tristan.png.meta
+|   |   vagabond.png
+|   |   vagabond.png.meta
+|   |   valciane.png
+|   |   valciane.png.meta
+|   |   vaultfloating1.png
+|   |   vaultfloating1.png.meta
+|   |   vaultshiresdefault.png
+|   |   vaultshiresdefault.png.meta
+|   |   velvet.png
+|   |   velvet.png.meta
+|   |   victor.png
+|   |   victor.png.meta
+|   |   violet.png
+|   |   violet.png.meta
+|   |   witchandsister.png
+|   |   witchandsister.png.meta
+|   |   wolfdivided.png
+|   |   wolfdivided.png.meta
+|   |   ysabet.png
+|   |   ysabet.png.meta
+|   |   
+|   +---loc_ru
+|   |       colonel.png
+|   |       colonel.png.meta
+|   |       crownedgrowth.png
+|   |       crownedgrowth.png.meta
+|   |       doorintheeye.png
+|   |       doorintheeye.png.meta
+|   |       elegiast.png
+|   |       elegiast.png.meta
+|   |       flowermaker.png
+|   |       flowermaker.png.meta
+|   |       forgeofdays.png
+|   |       forgeofdays.png.meta
+|   |       lionsmith.png
+|   |       lionsmith.png.meta
+|   |       madrugad.png
+|   |       madrugad.png.meta
+|   |       mareinthetree.png
+|   |       mareinthetree.png.meta
+|   |       meniscate.png
+|   |       meniscate.png.meta
+|   |       moth.png
+|   |       moth.png.meta
+|   |       motherofants.png
+|   |       motherofants.png.meta
+|   |       redgrail.png
+|   |       redgrail.png.meta
+|   |       suninrags.png
+|   |       suninrags.png.meta
+|   |       thunderskin.png
+|   |       thunderskin.png.meta
+|   |       vagabond.png
+|   |       vagabond.png.meta
+|   |       velvet.png
+|   |       velvet.png.meta
+|   |       witchandsister.png
+|   |       witchandsister.png.meta
+|   |       wolfdivided.png
+|   |       wolfdivided.png.meta
+|   |       
+|   \---loc_zh-hans
+|           colonel.png
+|           colonel.png.meta
+|           crownedgrowth.png
+|           crownedgrowth.png.meta
+|           doorintheeye.png
+|           doorintheeye.png.meta
+|           elegiast.png
+|           elegiast.png.meta
+|           flowermaker.png
+|           flowermaker.png.meta
+|           forgeofdays.png
+|           forgeofdays.png.meta
+|           lionsmith.png
+|           lionsmith.png.meta
+|           madrugad.png
+|           madrugad.png.meta
+|           mareinthetree.png
+|           mareinthetree.png.meta
+|           meniscate.png
+|           meniscate.png.meta
+|           moth.png
+|           moth.png.meta
+|           motherofants.png
+|           motherofants.png.meta
+|           redgrail.png
+|           redgrail.png.meta
+|           suninrags.png
+|           suninrags.png.meta
+|           thunderskin.png
+|           thunderskin.png.meta
+|           vagabond.png
+|           vagabond.png.meta
+|           velvet.png
+|           velvet.png.meta
+|           witchandsister.png
+|           witchandsister.png.meta
+|           wolfdivided.png
+|           wolfdivided.png.meta
+|           
++---legacies
+|       apostleforge.png
+|       apostleforge.png.meta
+|       apostlegrail.png
+|       apostlegrail.png.meta
+|       apostlelantern.png
+|       apostlelantern.png.meta
+|       apostlewinter.png
+|       apostlewinter.png.meta
+|       aspirant.png
+|       aspirant.png.meta
+|       byt.png
+|       byt.png.meta
+|       dancer.png
+|       dancer.png.meta
+|       detective.png
+|       detective.png.meta
+|       exile.png
+|       exile.png.meta
+|       ghoul.png
+|       ghoul.png.meta
+|       physician.png
+|       physician.png.meta
+|       priest.png
+|       priest.png.meta
+|       _apostleforge.png
+|       _apostleforge.png.meta
+|       _apostlegrail.png
+|       _apostlegrail.png.meta
+|       _apostlelantern.png
+|       _apostlelantern.png.meta
+|       _apostlewinter.png
+|       _apostlewinter.png.meta
+|       _aspirant.png
+|       _aspirant.png.meta
+|       _byt.png
+|       _byt.png.meta
+|       _dancer.png
+|       _dancer.png.meta
+|       _detective.png
+|       _detective.png.meta
+|       _exile.png
+|       _exile.png.meta
+|       _ghoul.png
+|       _ghoul.png.meta
+|       _physician.png
+|       _physician.png.meta
+|       _priest.png
+|       _priest.png.meta
+|       
++---statusbaricons
+|       comfort.png
+|       comfort.png.meta
+|       damage.exile.png
+|       damage.exile.png.meta
+|       follower_wound.png
+|       follower_wound.png.meta
+|       funds.png
+|       funds.png.meta
+|       health.png
+|       health.png.meta
+|       lifespan.stolen.png
+|       lifespan.stolen.png.meta
+|       obscurity.png
+|       obscurity.png.meta
+|       passion.png
+|       passion.png.meta
+|       reason.png
+|       reason.png.meta
+|       
++---ui
+|   |   cross.PNG
+|   |   cross.PNG.meta
+|   |   dropzone_purple.png
+|   |   dropzone_purple.png.meta
+|   |   dropzone_white.png
+|   |   dropzone_white.png.meta
+|   |   loc_de.meta
+|   |   loc_jp.meta
+|   |   loc_ru.meta
+|   |   loc_zh-hans.meta
+|   |   logo.png
+|   |   logo.png.meta
+|   |   mailing_list_button.png
+|   |   mailing_list_button.png.meta
+|   |   map cross glow algiers.png
+|   |   map cross glow algiers.png.meta
+|   |   map cross glow amsterdam.png
+|   |   map cross glow amsterdam.png.meta
+|   |   map cross glow avignon.png
+|   |   map cross glow avignon.png.meta
+|   |   map cross glow baghdad.png
+|   |   map cross glow baghdad.png.meta
+|   |   map cross glow candia.png
+|   |   map cross glow candia.png.meta
+|   |   map cross glow granada.png
+|   |   map cross glow granada.png.meta
+|   |   map cross glow kiev.png
+|   |   map cross glow kiev.png.meta
+|   |   map cross glow krakow.png
+|   |   map cross glow krakow.png.meta
+|   |   map cross glow munich.png
+|   |   map cross glow munich.png.meta
+|   |   map cross glow prague.png
+|   |   map cross glow prague.png.meta
+|   |   map cross glow stalingrad.png
+|   |   map cross glow stalingrad.png.meta
+|   |   map cross glow tirana.png
+|   |   map cross glow tirana.png.meta
+|   |   map cross glow valletta.png
+|   |   map cross glow valletta.png.meta
+|   |   map cross glow vienna.png
+|   |   map cross glow vienna.png.meta
+|   |   map cross scribble out.png
+|   |   map cross scribble out.png.meta
+|   |   map.png
+|   |   map.png.meta
+|   |   map_cross_glow.png
+|   |   map_cross_glow.png.meta
+|   |   map_cross_glow_alexandria.png
+|   |   map_cross_glow_alexandria.png.meta
+|   |   map_cross_glow_budapest.png
+|   |   map_cross_glow_budapest.png.meta
+|   |   map_cross_glow_istanbul.png
+|   |   map_cross_glow_istanbul.png.meta
+|   |   map_cross_glow_tiflis.png
+|   |   map_cross_glow_tiflis.png.meta
+|   |   map_domicile.png
+|   |   map_domicile.png.meta
+|   |   map_label_aachen.png
+|   |   map_label_aachen.png.meta
+|   |   map_label_alexandria.png
+|   |   map_label_alexandria.png.meta
+|   |   map_label_algiers.png
+|   |   map_label_algiers.png.meta
+|   |   map_label_amsterdam.png
+|   |   map_label_amsterdam.png.meta
+|   |   map_label_avignon.png
+|   |   map_label_avignon.png.meta
+|   |   map_label_baghdad.png
+|   |   map_label_baghdad.png.meta
+|   |   map_label_budapest.png
+|   |   map_label_budapest.png.meta
+|   |   map_label_candiaheraklion.png
+|   |   map_label_candiaheraklion.png.meta
+|   |   map_label_clujnapoca.png
+|   |   map_label_clujnapoca.png.meta
+|   |   map_label_granada.png
+|   |   map_label_granada.png.meta
+|   |   map_label_istanbul.png
+|   |   map_label_istanbul.png.meta
+|   |   map_label_kaunas.png
+|   |   map_label_kaunas.png.meta
+|   |   map_label_kiev.png
+|   |   map_label_kiev.png.meta
+|   |   map_label_krakow.png
+|   |   map_label_krakow.png.meta
+|   |   map_label_leningrad.png
+|   |   map_label_leningrad.png.meta
+|   |   map_label_london.png
+|   |   map_label_london.png.meta
+|   |   map_label_marrakech.png
+|   |   map_label_marrakech.png.meta
+|   |   map_label_meshad.png
+|   |   map_label_meshad.png.meta
+|   |   map_label_munich.png
+|   |   map_label_munich.png.meta
+|   |   map_label_nizhnynovgorod.png
+|   |   map_label_nizhnynovgorod.png.meta
+|   |   map_label_paris.png
+|   |   map_label_paris.png.meta
+|   |   map_label_prague.png
+|   |   map_label_prague.png.meta
+|   |   map_label_rostock.png
+|   |   map_label_rostock.png.meta
+|   |   map_label_samarkand.png
+|   |   map_label_samarkand.png.meta
+|   |   map_label_stalingrad.png
+|   |   map_label_stalingrad.png.meta
+|   |   map_label_strasbourg.png
+|   |   map_label_strasbourg.png.meta
+|   |   map_label_sverdlovsk.png
+|   |   map_label_sverdlovsk.png.meta
+|   |   map_label_tiflis.png
+|   |   map_label_tiflis.png.meta
+|   |   map_label_tirana.png
+|   |   map_label_tirana.png.meta
+|   |   map_label_tripoli.png
+|   |   map_label_tripoli.png.meta
+|   |   map_label_valletta.png
+|   |   map_label_valletta.png.meta
+|   |   map_label_venice.png
+|   |   map_label_venice.png.meta
+|   |   map_label_vienna.png
+|   |   map_label_vienna.png.meta
+|   |   mb_awaop.png
+|   |   mb_awaop.png.meta
+|   |   mb_bookofhours.png
+|   |   mb_bookofhours.png.meta
+|   |   mb_ld.png
+|   |   mb_ld.png.meta
+|   |   mb_mailinglist.png
+|   |   mb_mailinglist.png.meta
+|   |   mb_skeletonsongs.png
+|   |   mb_skeletonsongs.png.meta
+|   |   mb_staops.png
+|   |   mb_staops.png.meta
+|   |   mb_tla.png
+|   |   mb_tla.png.meta
+|   |   mysteries_temp.png
+|   |   mysteries_temp.png.meta
+|   |   Player.log.meta
+|   |   table_edge_red.png
+|   |   table_edge_red.png.meta
+|   |   table_leather_exile.png
+|   |   table_leather_exile.png.meta
+|   |   table_wood_red.png
+|   |   table_wood_red.png.meta
+|   |   tabs.meta
+|   |   textbinary.png
+|   |   textbinary.png.meta
+|   |   
+|   +---loc_de
+|   |       logo.png
+|   |       logo.png.meta
+|   |       mailing_list_button.png
+|   |       mailing_list_button.png.meta
+|   |       map.png
+|   |       map.png.meta
+|   |       map_label_aachen.png
+|   |       map_label_aachen.png.meta
+|   |       map_label_alexandria.png
+|   |       map_label_alexandria.png.meta
+|   |       map_label_algiers.png
+|   |       map_label_algiers.png.meta
+|   |       map_label_amsterdam.png
+|   |       map_label_amsterdam.png.meta
+|   |       map_label_avignon.png
+|   |       map_label_avignon.png.meta
+|   |       map_label_baghdad.png
+|   |       map_label_baghdad.png.meta
+|   |       map_label_budapest.png
+|   |       map_label_budapest.png.meta
+|   |       map_label_candiaheraklion.png
+|   |       map_label_candiaheraklion.png.meta
+|   |       map_label_clujnapoca.png
+|   |       map_label_clujnapoca.png.meta
+|   |       map_label_granada.png
+|   |       map_label_granada.png.meta
+|   |       map_label_istanbul.png
+|   |       map_label_istanbul.png.meta
+|   |       map_label_kaunas.png
+|   |       map_label_kaunas.png.meta
+|   |       map_label_kiev.png
+|   |       map_label_kiev.png.meta
+|   |       map_label_krakow.png
+|   |       map_label_krakow.png.meta
+|   |       map_label_leningrad.png
+|   |       map_label_leningrad.png.meta
+|   |       map_label_london.png
+|   |       map_label_london.png.meta
+|   |       map_label_marrakech.png
+|   |       map_label_marrakech.png.meta
+|   |       map_label_meshad.png
+|   |       map_label_meshad.png.meta
+|   |       map_label_munich.png
+|   |       map_label_munich.png.meta
+|   |       map_label_nizhnynovgorod.png
+|   |       map_label_nizhnynovgorod.png.meta
+|   |       map_label_paris.png
+|   |       map_label_paris.png.meta
+|   |       map_label_prague.png
+|   |       map_label_prague.png.meta
+|   |       map_label_rostock.png
+|   |       map_label_rostock.png.meta
+|   |       map_label_samarkand.png
+|   |       map_label_samarkand.png.meta
+|   |       map_label_stalingrad.png
+|   |       map_label_stalingrad.png.meta
+|   |       map_label_strasbourg.png
+|   |       map_label_strasbourg.png.meta
+|   |       map_label_sverdlovsk.png
+|   |       map_label_sverdlovsk.png.meta
+|   |       map_label_tiflis.png
+|   |       map_label_tiflis.png.meta
+|   |       map_label_tirana.png
+|   |       map_label_tirana.png.meta
+|   |       map_label_tripoli.png
+|   |       map_label_tripoli.png.meta
+|   |       map_label_valletta.png
+|   |       map_label_valletta.png.meta
+|   |       map_label_venice.png
+|   |       map_label_venice.png.meta
+|   |       map_label_vienna.png
+|   |       map_label_vienna.png.meta
+|   |       
+|   +---loc_jp
+|   |       logo.png
+|   |       logo.png.meta
+|   |       mailing_list_button.png
+|   |       mailing_list_button.png.meta
+|   |       map.png
+|   |       map.png.meta
+|   |       map_label_aachen.png
+|   |       map_label_aachen.png.meta
+|   |       map_label_alexandria.png
+|   |       map_label_alexandria.png.meta
+|   |       map_label_algiers.png
+|   |       map_label_algiers.png.meta
+|   |       map_label_amsterdam.png
+|   |       map_label_amsterdam.png.meta
+|   |       map_label_avignon.png
+|   |       map_label_avignon.png.meta
+|   |       map_label_baghdad.png
+|   |       map_label_baghdad.png.meta
+|   |       map_label_budapest.png
+|   |       map_label_budapest.png.meta
+|   |       map_label_candiaheraklion.png
+|   |       map_label_candiaheraklion.png.meta
+|   |       map_label_clujnapoca.png
+|   |       map_label_clujnapoca.png.meta
+|   |       map_label_granada.png
+|   |       map_label_granada.png.meta
+|   |       map_label_istanbul.png
+|   |       map_label_istanbul.png.meta
+|   |       map_label_kaunas.png
+|   |       map_label_kaunas.png.meta
+|   |       map_label_kiev.png
+|   |       map_label_kiev.png.meta
+|   |       map_label_krakow.png
+|   |       map_label_krakow.png.meta
+|   |       map_label_leningrad.png
+|   |       map_label_leningrad.png.meta
+|   |       map_label_london.png
+|   |       map_label_london.png.meta
+|   |       map_label_marrakech.png
+|   |       map_label_marrakech.png.meta
+|   |       map_label_meshad.png
+|   |       map_label_meshad.png.meta
+|   |       map_label_munich.png
+|   |       map_label_munich.png.meta
+|   |       map_label_nizhnynovgorod.png
+|   |       map_label_nizhnynovgorod.png.meta
+|   |       map_label_paris.png
+|   |       map_label_paris.png.meta
+|   |       map_label_prague.png
+|   |       map_label_prague.png.meta
+|   |       map_label_rostock.png
+|   |       map_label_rostock.png.meta
+|   |       map_label_samarkand.png
+|   |       map_label_samarkand.png.meta
+|   |       map_label_stalingrad.png
+|   |       map_label_stalingrad.png.meta
+|   |       map_label_strasbourg.png
+|   |       map_label_strasbourg.png.meta
+|   |       map_label_sverdlovsk.png
+|   |       map_label_sverdlovsk.png.meta
+|   |       map_label_tiflis.png
+|   |       map_label_tiflis.png.meta
+|   |       map_label_tirana.png
+|   |       map_label_tirana.png.meta
+|   |       map_label_tripoli.png
+|   |       map_label_tripoli.png.meta
+|   |       map_label_valletta.png
+|   |       map_label_valletta.png.meta
+|   |       map_label_venice.png
+|   |       map_label_venice.png.meta
+|   |       map_label_vienna.png
+|   |       map_label_vienna.png.meta
+|   |       
+|   +---loc_ru
+|   |       logo.png
+|   |       logo.png.meta
+|   |       mailing_list_button.png
+|   |       mailing_list_button.png.meta
+|   |       map.png
+|   |       map.png.meta
+|   |       map_label_aachen.png
+|   |       map_label_aachen.png.meta
+|   |       map_label_alexandria.png
+|   |       map_label_alexandria.png.meta
+|   |       map_label_algiers.png
+|   |       map_label_algiers.png.meta
+|   |       map_label_amsterdam.png
+|   |       map_label_amsterdam.png.meta
+|   |       map_label_avignon.png
+|   |       map_label_avignon.png.meta
+|   |       map_label_baghdad.png
+|   |       map_label_baghdad.png.meta
+|   |       map_label_candiaheraklion.png
+|   |       map_label_candiaheraklion.png.meta
+|   |       map_label_clujnapoca.png
+|   |       map_label_clujnapoca.png.meta
+|   |       map_label_granada.png
+|   |       map_label_granada.png.meta
+|   |       map_label_istanbul.png
+|   |       map_label_istanbul.png.meta
+|   |       map_label_kaunas.png
+|   |       map_label_kaunas.png.meta
+|   |       map_label_kiev.png
+|   |       map_label_kiev.png.meta
+|   |       map_label_krakow.png
+|   |       map_label_krakow.png.meta
+|   |       map_label_leningrad.png
+|   |       map_label_leningrad.png.meta
+|   |       map_label_london.png
+|   |       map_label_london.png.meta
+|   |       map_label_map_label_budapest.png
+|   |       map_label_map_label_budapest.png.meta
+|   |       map_label_map_label_marrakech.png
+|   |       map_label_map_label_marrakech.png.meta
+|   |       map_label_meshad.png
+|   |       map_label_meshad.png.meta
+|   |       map_label_munich.png
+|   |       map_label_munich.png.meta
+|   |       map_label_nizhnynovgorod.png
+|   |       map_label_nizhnynovgorod.png.meta
+|   |       map_label_paris.png
+|   |       map_label_paris.png.meta
+|   |       map_label_prague.png
+|   |       map_label_prague.png.meta
+|   |       map_label_rostock.png
+|   |       map_label_rostock.png.meta
+|   |       map_label_samarkand.png
+|   |       map_label_samarkand.png.meta
+|   |       map_label_stalingrad.png
+|   |       map_label_stalingrad.png.meta
+|   |       map_label_strasbourg.png
+|   |       map_label_strasbourg.png.meta
+|   |       map_label_sverdlovsk.png
+|   |       map_label_sverdlovsk.png.meta
+|   |       map_label_tiflis.png
+|   |       map_label_tiflis.png.meta
+|   |       map_label_tirana.png
+|   |       map_label_tirana.png.meta
+|   |       map_label_tripoli.png
+|   |       map_label_tripoli.png.meta
+|   |       map_label_valletta.png
+|   |       map_label_valletta.png.meta
+|   |       map_label_venice.png
+|   |       map_label_venice.png.meta
+|   |       map_label_vienna.png
+|   |       map_label_vienna.png.meta
+|   |       textbinary.png
+|   |       textbinary.png.meta
+|   |       
+|   +---loc_zh-hans
+|   |       logo.png
+|   |       logo.png.meta
+|   |       mailing_list_button.png
+|   |       mailing_list_button.png.meta
+|   |       map.png
+|   |       map.png.meta
+|   |       map_label_aachen.png
+|   |       map_label_aachen.png.meta
+|   |       map_label_alexandria.png
+|   |       map_label_alexandria.png.meta
+|   |       map_label_algiers.png
+|   |       map_label_algiers.png.meta
+|   |       map_label_amsterdam.png
+|   |       map_label_amsterdam.png.meta
+|   |       map_label_avignon.png
+|   |       map_label_avignon.png.meta
+|   |       map_label_baghdad.png
+|   |       map_label_baghdad.png.meta
+|   |       map_label_budapest.png
+|   |       map_label_budapest.png.meta
+|   |       map_label_candiaheraklion.png
+|   |       map_label_candiaheraklion.png.meta
+|   |       map_label_clujnapoca.png
+|   |       map_label_clujnapoca.png.meta
+|   |       map_label_granada.png
+|   |       map_label_granada.png.meta
+|   |       map_label_istanbul.png
+|   |       map_label_istanbul.png.meta
+|   |       map_label_kaunas.png
+|   |       map_label_kaunas.png.meta
+|   |       map_label_kiev.png
+|   |       map_label_kiev.png.meta
+|   |       map_label_krakow.png
+|   |       map_label_krakow.png.meta
+|   |       map_label_leningrad.png
+|   |       map_label_leningrad.png.meta
+|   |       map_label_london.png
+|   |       map_label_london.png.meta
+|   |       map_label_marrakech.png
+|   |       map_label_marrakech.png.meta
+|   |       map_label_meshad.png
+|   |       map_label_meshad.png.meta
+|   |       map_label_munich.png
+|   |       map_label_munich.png.meta
+|   |       map_label_nizhnynovgorod.png
+|   |       map_label_nizhnynovgorod.png.meta
+|   |       map_label_paris.png
+|   |       map_label_paris.png.meta
+|   |       map_label_prague.png
+|   |       map_label_prague.png.meta
+|   |       map_label_rostock.png
+|   |       map_label_rostock.png.meta
+|   |       map_label_samarkand.png
+|   |       map_label_samarkand.png.meta
+|   |       map_label_stalingrad.png
+|   |       map_label_stalingrad.png.meta
+|   |       map_label_strasbourg.png
+|   |       map_label_strasbourg.png.meta
+|   |       map_label_sverdlovsk.png
+|   |       map_label_sverdlovsk.png.meta
+|   |       map_label_tiflis.png
+|   |       map_label_tiflis.png.meta
+|   |       map_label_tirana.png
+|   |       map_label_tirana.png.meta
+|   |       map_label_tripoli.png
+|   |       map_label_tripoli.png.meta
+|   |       map_label_valletta.png
+|   |       map_label_valletta.png.meta
+|   |       map_label_venice.png
+|   |       map_label_venice.png.meta
+|   |       map_label_vienna.png
+|   |       map_label_vienna.png.meta
+|   |       textbinary.png
+|   |       textbinary.png.meta
+|   |       
+|   \---tabs
+|           UI_AUDIO.png
+|           UI_AUDIO.png.meta
+|           UI_GAMEPLAY.png
+|           UI_GAMEPLAY.png.meta
+|           UI_KEYBINDS.png
+|           UI_KEYBINDS.png.meta
+|           UI_VISUAL.png
+|           UI_VISUAL.png.meta
+|           
+\---verbs
+    |   ally.trail.false.1.png
+    |   ally.trail.false.1.png.meta
+    |   ally.trail.false.2.png
+    |   ally.trail.false.2.png.meta
+    |   anim.meta
+    |   auction.png
+    |   auction.png.meta
+    |   craving.png
+    |   craving.png.meta
+    |   cult.png
+    |   cult.png.meta
+    |   curse_affliction.png
+    |   curse_affliction.png.meta
+    |   curse_affliction_dormant.png
+    |   curse_affliction_dormant.png.meta
+    |   curse_dread.png
+    |   curse_dread.png.meta
+    |   curse_dread_dormant.png
+    |   curse_dread_dormant.png.meta
+    |   curse_nowhere.png
+    |   curse_nowhere.png.meta
+    |   curse_nowhere_dormant.png
+    |   curse_nowhere_dormant.png.meta
+    |   curse_visions.png
+    |   curse_visions.png.meta
+    |   curse_visions_dormant.png
+    |   curse_visions_dormant.png.meta
+    |   despair.png
+    |   despair.png.meta
+    |   dreadinduction.png
+    |   dreadinduction.png.meta
+    |   dream.png
+    |   dream.png.meta
+    |   droo.PNG
+    |   droo.PNG.meta
+    |   establishcult.png
+    |   establishcult.png.meta
+    |   expedition.corpse.find.png
+    |   expedition.corpse.find.png.meta
+    |   expelallspies.png
+    |   expelallspies.png.meta
+    |   explore.png
+    |   explore.png.meta
+    |   explorevault_casualty.png
+    |   explorevault_casualty.png.meta
+    |   fascinationinduction.png
+    |   fascinationinduction.png.meta
+    |   grailinduction.png
+    |   grailinduction.png.meta
+    |   grailminorpromotion.png
+    |   grailminorpromotion.png.meta
+    |   grailminorprwatchmanminorpromotion.png
+    |   grailminorprwatchmanminorpromotion.png.meta
+    |   grailminorwin.png
+    |   grailminorwin.png.meta
+    |   haunting.png
+    |   haunting.png.meta
+    |   healthend.png
+    |   healthend.png.meta
+    |   heartinduction.png
+    |   heartinduction.png.meta
+    |   hookplot.png
+    |   hookplot.png.meta
+    |   illhealth.png
+    |   illhealth.png.meta
+    |   lanterninduction.png
+    |   lanterninduction.png.meta
+    |   legacyeventbad.png
+    |   legacyeventbad.png.meta
+    |   long-forge.png
+    |   long-forge.png.meta
+    |   long-grail.png
+    |   long-grail.png.meta
+    |   long-lantern.png
+    |   long-lantern.png.meta
+    |   long-winter.png
+    |   long-winter.png.meta
+    |   long.png
+    |   long.png.meta
+    |   longassault.abduction.png
+    |   longassault.abduction.png.meta
+    |   longassault.assassination.png
+    |   longassault.assassination.png.meta
+    |   longassault.png
+    |   longassault.png.meta
+    |   longdowntime.png
+    |   longdowntime.png.meta
+    |   longdreams.png
+    |   longdreams.png.meta
+    |   longdreams.poisonway.png
+    |   longdreams.poisonway.png.meta
+    |   longintrigue.png
+    |   longintrigue.png.meta
+    |   lurk.png
+    |   lurk.png.meta
+    |   meeting.navil.chaima.png
+    |   meeting.navil.chaima.png.meta
+    |   mothinduction.png
+    |   mothinduction.png.meta
+    |   newrival.png
+    |   newrival.png.meta
+    |   obscurity.spawn.png
+    |   obscurity.spawn.png.meta
+    |   operation.edge.png
+    |   operation.edge.png.meta
+    |   operation.forge.png
+    |   operation.forge.png.meta
+    |   operation.grail.png
+    |   operation.grail.png.meta
+    |   operation.heart.png
+    |   operation.heart.png.meta
+    |   operation.knock.png
+    |   operation.knock.png.meta
+    |   operation.lantern.png
+    |   operation.lantern.png.meta
+    |   operation.moth.png
+    |   operation.moth.png.meta
+    |   operation.png
+    |   operation.png.meta
+    |   operation.secrethistories.png
+    |   operation.secrethistories.png.meta
+    |   operation.winter.png
+    |   operation.winter.png.meta
+    |   opx.caper.png
+    |   opx.caper.png.meta
+    |   peacockdoor.png
+    |   peacockdoor.png.meta
+    |   pit.underling.attack.success.png
+    |   pit.underling.attack.success.png.meta
+    |   pleasantday.png
+    |   pleasantday.png.meta
+    |   poison.dread.longlesson.induction.png
+    |   poison.dread.longlesson.induction.png.meta
+    |   poison.fascination.longlesson.induction.png
+    |   poison.fascination.longlesson.induction.png.meta
+    |   poison.health.dread.induction.png
+    |   poison.health.dread.induction.png.meta
+    |   poison.long.way.trap.png
+    |   poison.long.way.trap.png.meta
+    |   poison.notoriety.induction.png
+    |   poison.notoriety.induction.png.meta
+    |   poison.passion.dread.induction.png
+    |   poison.passion.dread.induction.png.meta
+    |   poison.reason.fascination.induction.png
+    |   poison.reason.fascination.induction.png.meta
+    |   poppytime.png
+    |   poppytime.png.meta
+    |   priest.repevent.png
+    |   priest.repevent.png.meta
+    |   purchase.png
+    |   purchase.png.meta
+    |   relinquish.png
+    |   relinquish.png.meta
+    |   rkx.enforcer.png
+    |   rkx.enforcer.png.meta
+    |   rkx.escort.png
+    |   rkx.escort.png.meta
+    |   rkx.foe.png
+    |   rkx.foe.png.meta
+    |   rkx.operative.png
+    |   rkx.operative.png.meta
+    |   rkx.png
+    |   rkx.png.meta
+    |   rkx.underboss.png
+    |   rkx.underboss.png.meta
+    |   rose.png
+    |   rose.png.meta
+    |   roseextra.png
+    |   roseextra.png.meta
+    |   scandal.notoriety.png
+    |   scandal.notoriety.png.meta
+    |   scandal.png
+    |   scandal.png.meta
+    |   scar_ability.png
+    |   scar_ability.png.meta
+    |   scheme.png
+    |   scheme.png.meta
+    |   scout.png
+    |   scout.png.meta
+    |   send.png
+    |   send.png.meta
+    |   social.png
+    |   social.png.meta
+    |   spawn.trace.png
+    |   spawn.trace.png.meta
+    |   spiderdoor.png
+    |   spiderdoor.png.meta
+    |   spit.edge.png
+    |   spit.edge.png.meta
+    |   spit.foe.attack.failure.png
+    |   spit.foe.attack.failure.png.meta
+    |   spit.foe.attack.png
+    |   spit.foe.attack.png.meta
+    |   spit.forge.png
+    |   spit.forge.png.meta
+    |   spit.grail.png
+    |   spit.grail.png.meta
+    |   spit.heart.png
+    |   spit.heart.png.meta
+    |   spit.infected.destination.png
+    |   spit.infected.destination.png.meta
+    |   spit.knock.png
+    |   spit.knock.png.meta
+    |   spit.lantern.png
+    |   spit.lantern.png.meta
+    |   spit.moth.png
+    |   spit.moth.png.meta
+    |   spit.underling.attack.failure.png
+    |   spit.underling.attack.failure.png.meta
+    |   spit.underling.attack.png
+    |   spit.underling.attack.png.meta
+    |   spit.underling.wounded.png
+    |   spit.underling.wounded.png.meta
+    |   spit.winter.png
+    |   spit.winter.png.meta
+    |   stagdoor.png
+    |   stagdoor.png.meta
+    |   study.png
+    |   study.png.meta
+    |   suspicion.png
+    |   suspicion.png.meta
+    |   talk.png
+    |   talk.png.meta
+    |   time.exile.png
+    |   time.exile.png.meta
+    |   time.png
+    |   time.png.meta
+    |   travel.png
+    |   travel.png.meta
+    |   tricuspidgate.png
+    |   tricuspidgate.png.meta
+    |   unsuspicion.png
+    |   unsuspicion.png.meta
+    |   use.png
+    |   use.png.meta
+    |   visions.png
+    |   visions.png.meta
+    |   watchmanminorwin.png
+    |   watchmanminorwin.png.meta
+    |   whitedoor.png
+    |   whitedoor.png.meta
+    |   wood.png
+    |   wood.png.meta
+    |   work.png
+    |   work.png.meta
+    |   workwin.png
+    |   workwin.png.meta
+    |   _x.png
+    |   _x.png.meta
+    |   
+    \---anim
+            rkx_0.png
+            rkx_0.png.meta
+            rkx_1.png
+            rkx_1.png.meta
+            
