@@ -41,7 +41,7 @@ export class BaseProp extends EventTarget {
      * @param {any} newVal
      */
     setValue(newVal) {
-        this._value = newVal;
+        this.value = newVal;
     }
 
     toJSON() {

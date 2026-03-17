@@ -12,25 +12,43 @@ export class PropView {
      * @returns {HTMLElement}
      */
     static renderProp(prop) {
-        if (!prop) {
-            console.error('属性不存在', prop);
-            return PropRenderer.createErrorDom();
+        try {
+            if (!prop) {
+                throw new Error('属性不存在');
+            }
+
+            if (!prop.type) {
+                throw new Error('属性类型未定义');
+            }
+
+            if (prop instanceof HubProp) {
+                const hub = this.createHub(prop);
+                if (!hub) {
+                    throw new Error('hub属性无法创建');
+                }
+                return hub;
+            }
+
+            if (prop instanceof ViewProp) {
+                const view = this.createView(prop);
+                if (!view) {
+                    throw new Error('view属性无法创建');
+                }
+                return view;
+            }
+
+            const row = this.createRow(prop);
+            if (!row) {
+                throw new Error('属性无法创建');
+            }
+
+            return row;
+        } catch (error) {
+            console.error('属性渲染失败', error, prop);
+            return PropRenderer.createErrorDom(error);
         }
 
-        if (!prop.type) {
-            console.error('属性类型未定义', prop);
-            return PropRenderer.createErrorDom();
-        }
 
-        if (prop instanceof HubProp) {
-            return this.createHub(prop);
-        }
-
-        if(prop instanceof ViewProp) {
-            return this.createView(prop);
-        }
-
-        return this.createRow(prop);
     }
 
     /**
@@ -98,11 +116,11 @@ export class PropView {
      * @param {PropType} param
      */
     static createContent(type, param) {
-        try {
-            return PropRenderer.RenderMap[type](param);
-        } catch (e) {
-            console.error(e, type, param);
-            return PropRenderer.createErrorDom();
+        if (PropRenderer.RenderMap[type]) {
+            const dom = PropRenderer.RenderMap[type](param);
+            return dom;
+        } else {
+            return PropRenderer.createErrorDom(`{ ${type} }渲染器未定义`);
         }
     }
 
@@ -114,7 +132,7 @@ export class PropView {
         dom.className = `port-dot ${portModel.portType} ${portModel.pos}`;
         dom.style.backgroundColor = NodeTypeRegistry.getColor(portModel.dataType);
 
-        dom.addEventListener('mousedown', (e) => {e.stopPropagation();});
+        dom.addEventListener('mousedown', (e) => { e.stopPropagation(); });
         return dom;
     }
 }

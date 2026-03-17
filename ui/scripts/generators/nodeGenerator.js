@@ -6,6 +6,7 @@ import { InlineNodeModel } from "../models/nodeModels/inlineNodeModel.js";
 import { NodeTypeRegistry } from "../types/nodeTypes.js";
 import { PropGenerator } from "./propGenerator.js";
 import { BaseProp } from "../models/propModels/baseProp.js";
+import { HubProp } from "../models/propModels/hubProp.js";
 
 export class NodeGenerator {
 
@@ -20,7 +21,10 @@ export class NodeGenerator {
     static createNode(id, uid, type, x, y) {
         const nodeTypeConfig = NodeTypeRegistry.getType(type);
 
-        const nodeModel = new NodeModel(uid, id, type, x, y, nodeTypeConfig, this.createProps(id, nodeTypeConfig.properties));
+        const nodeModel = new NodeModel(uid, id, type, x, y,
+            nodeTypeConfig,
+            this.createProps(id, nodeTypeConfig.properties),
+            this.createRecordProps(id, nodeTypeConfig.exProperties));
 
         const nodeView = new NodeView(nodeModel);
 
@@ -35,12 +39,32 @@ export class NodeGenerator {
     static createProps(nodeID, properties) {
         const result = [];
 
-        properties.forEach((prop,index) => {
+        properties.forEach((prop, index) => {
             const id = `${nodeID}_${prop.type}-${index}`
             result.push(PropGenerator.createProp(id, prop.type, prop));
         })
 
         return result;
+    }
+
+    /**
+     * @param {NodeID} nodeID
+     * @param {Record<string, PropConfig[]>} properties
+     * @returns {Record<string, HubProp>}
+     */
+    static createRecordProps(nodeID, properties) {
+        /**
+         * @type {Record<string, HubProp>}
+         */
+        const exProps = {};
+        for (let key in properties) {
+            const hub = PropGenerator.createProp(`${nodeID}:exHub-${key}`, 'hub',
+                { type: 'hub', label: key, properties: properties[key], layout:'single' });
+            if (hub instanceof HubProp) {
+                exProps[key] = hub;
+            }
+        }
+        return exProps;
     }
 
 

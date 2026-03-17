@@ -11,6 +11,7 @@
 }
 
 .prop-hub.single {
+    display: inline;
     grid-template-columns: 1fr;
 }
 

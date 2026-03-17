@@ -4,7 +4,7 @@ type NodePropConfig = PropConfig | PortPropConfig | HubPropConfig | ViewPropConf
 
 interface PropConfig {
   type: string;
-  value: any;
+  value?: any;
   label?: string;
   description?: string;
   default?: any;

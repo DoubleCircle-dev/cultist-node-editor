@@ -46,6 +46,10 @@ export class NodeView {
         }
         );
 
+        this.model.addEventListener('changeMode:node', (/** @type {CustomEvent} */ e) => {
+            this.redraw();
+        })
+
         // 防止触发画布鼠标按下
         this.element.addEventListener('mousedown', (e) => {
             e.stopPropagation();
@@ -56,6 +60,11 @@ export class NodeView {
         })
 
 
+    }
+
+    _removeListeners() {
+        this.model.removeEventListener('change:position', this._onPositionChange);
+        this.model.removeEventListener('change:property', this._onPropertyChange);
     }
 
     // 创建节点DOM元素
@@ -158,12 +167,15 @@ export class NodeView {
     }
 
     redraw() {
+        const world = this.element.parentElement;
         this.element.remove();
         this.element = this._createDOM();
+        this._initListeners();
+        world.appendChild(this.element);
+
     }
 
     onMounted() {
-
         if (!this.model.x || !this.model.y) {
             this.model.setPosition(this.element.offsetLeft, this.element.offsetTop);
         }

@@ -16,5 +16,15 @@ export class OptionsProp extends BaseProp {
         this.config.opts = options;
         this.isModeSwitcher = isModeSwitcher;
     }
+
+    setValue(value) {
+        super.setValue(value);
+
+        if (this.isModeSwitcher) {
+            this.dispatchEvent(new CustomEvent('changeMode:prop', {
+                detail: { value: value }
+            }));
+        }
+    }
 }
 

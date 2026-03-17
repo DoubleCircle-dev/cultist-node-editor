@@ -11,10 +11,10 @@ export class PropGenerator {
      * 
      * @param {*} id 
      * @param {*} type 
-     * @param {*} prop 
+     * @param {*} propConfig 
      * @returns {BaseProp | PortProp}
      */
-    static createProp(id, type, prop) {
+    static createProp(id, type, propConfig) {
         let propClass = null;
 
         // 根据类型预处理参数
@@ -22,52 +22,52 @@ export class PropGenerator {
         switch (type) {
             case 'hub':
                 const hubProps = [];
-                prop.properties.forEach((/** @type {PropConfig} */ p, /** @type {number} */ index) => {
-                    hubProps.push(PropGenerator.createProp(`${id}_hub:${prop.label}-${index}`, p.type, p))
+                propConfig.properties.forEach((/** @type {PropConfig} */ p, /** @type {number} */ index) => {
+                    hubProps.push(PropGenerator.createProp(`${id}_hub:${propConfig.label}-${index}`, p.type, p))
                 });
-                args = [id, prop.label, hubProps, prop.layout];
+                args = [id, propConfig.label, hubProps, propConfig.layout];
                 propClass = HubProp;
                 break;
             case 'range':
-                args = [id, prop.label, 'slider', prop.default, prop.min, prop.max];
+                args = [id, propConfig.label, 'slider', propConfig.default, propConfig.min, propConfig.max];
                 propClass = NumericProp;
                 break;
             case 'number':
             case 'integer':
             case 'slider':
-                args = [id, prop.label, prop.type, prop.default, prop.min, prop.max];
+                args = [id, propConfig.label, propConfig.type, propConfig.default, propConfig.min, propConfig.max];
                 propClass = NumericProp;
                 break;
             case 'text':
             case 'image-path':
-                args = [id, prop.label, prop.type, prop.default, {
+                args = [id, propConfig.label, propConfig.type, propConfig.default, {
                     inputPort: { id: `${id}-input`, portType: 'implicit', dataType: 'text' }
                 }];
                 propClass = PortProp;
                 break;
             case 'table':
             case 'table-preview':
-                args = [id, prop.label, 'table-preview', prop.default, prop.columns, prop.rows];
+                args = [id, propConfig.label, 'table-preview', propConfig.default, propConfig.columns, propConfig.rows];
                 propClass = ViewProp;
                 break;
             case 'image-preview':
-                args = [id, prop.label, 'image-preview', prop.default];
+                args = [id, propConfig.label, 'image-preview', propConfig.default];
                 propClass = ViewProp;
                 break;
             case 'textarea-preview':
-                args = [id, prop.label, 'textarea-preview', prop.default];
+                args = [id, propConfig.label, 'textarea-preview', propConfig.default];
                 propClass = ViewProp;
                 break;
             case 'image-icon':
-                args = [id, prop.label, 'image-icon', prop.default];
+                args = [id, propConfig.label, 'image-icon', propConfig.default];
                 propClass = ViewProp;
                 break;
             case 'bool':
-                args = [id, prop.label, 'bool-radio', prop.default,]
+                args = [id, propConfig.label, 'bool', propConfig.default];
                 propClass = BaseProp;
                 break;
             case 'select':
-                args = [id, prop.label, 'select', prop.default, prop.options, prop.isModeSwitcher];
+                args = [id, propConfig.label, 'select', propConfig.default, propConfig.options, propConfig.isModeSwitcher];
                 propClass = OptionsProp;
                 break;
             case 'port':
@@ -75,31 +75,31 @@ export class PropGenerator {
                     inputPort: null,
                     outputPort: null
                 }
-                if (!prop.direction || prop.direction === 'input') {
+                if (!propConfig.direction || propConfig.direction === 'input') {
                     portConfig.inputPort = {
                         id: `${id}-input`,
-                        dataType: prop.requireType || 'any',
+                        dataType: propConfig.requireType || 'any',
                     }
-                } else if (prop.direction === 'output') {
+                } else if (propConfig.direction === 'output') {
                     portConfig.outputPort = {
                         id: `${id}-output`,
-                        dataType: prop.returnType || 'any',
+                        dataType: propConfig.returnType || 'any',
                     }
-                } else if (prop.direction === 'both') {
+                } else if (propConfig.direction === 'both') {
                     portConfig.inputPort = {
                         id: `${id}-input`,
-                        dataType: prop.requireType || 'any',
+                        dataType: propConfig.requireType || 'any',
                     }
                     portConfig.outputPort = {
                         id: `${id}-output`,
-                        dataType: prop.returnType || 'any',
+                        dataType: propConfig.returnType || 'any',
                     }
                 }
-                args = [id, prop.label, prop.type, prop.default, portConfig];
+                args = [id, propConfig.label, propConfig.type, propConfig.default, portConfig];
                 propClass = PortProp;
                 break;
             default:
-                args = [id, prop.label, prop.type, prop.default];
+                args = [id, propConfig.label, propConfig.type, propConfig.default];
                 propClass = BaseProp;
                 break;
         }
@@ -124,20 +124,23 @@ export class PropRenderer {
         'text': (p) => this.createInput('text', p),
         'integer': (p) => this.createInput('number', p),
         'number': (p) => this.createInput('number', p),
+        'range': (p) => this.createInput('range', p, {
+            step: String(p.config?.step ?? 1)
+        }),
         'slider': (p) => this.createInput('range', p, {
             step: String(p.config?.step ?? 1)
         }),
         'radio': (p) => this.createRadio(p),
-        'bool-radio': (p) => this.createRadio(p, true),   // 直接传入 prop
+        'bool': (p) => this.createRadio(p, true),   // 直接传入 prop
         'select': (p) => this.createSelect(p),
-        'image-path': (p) => this.createInput('text', p, { placeholder: "Image Path..." }),
+        'image-path': (p) => this.createInput('text', p, { placeholder: "图片路径" }),
         'image-preview': (p) => this.createPreView('image', p),
         'image-icon': (p) => this.createPreView('icon', p),
-        'table-button': (p) => this.createButton('table', 'DATA TABLE', p),
+        'table-button': (p) => this.createButton('table', p),
         'table-preview': (p) => this.createPreView('table', p, p.columns),
         'textarea-preview': (p) => this.createPreView('textarea', p),
-        'port': (p) => this.createButton('port', p.label, p),
-        'selectPort': (p) => this.createButton('selectPort', p.default, p),
+        'port': (p) => this.createButton('port', p),
+        'selectPort': (p) => this.createButton('selectPort', p),
         'hub': (p) => this.createHub('hub', p)
     };
 
@@ -169,7 +172,6 @@ export class PropRenderer {
         input.addEventListener('change', (e) => {
             const target = e.target;
             if (target instanceof HTMLInputElement) {
-                console.log(target)
                 prop.setValue(target.value);
             }
         });
@@ -212,7 +214,7 @@ export class PropRenderer {
                 className: 'prop-radio-input'
             });
             // 设置选中状态：处理布尔型转换
-            if (p.type === 'bool-radio' || p.type === 'bool') {
+            if (boolFlag) {
                 // 布尔型：'是' 对应 true，'否' 对应 false
                 const boolVal = currentValue === true || currentValue === false ? currentValue : false;
                 if ((opt === '是' && boolVal === true) || (opt === '否' && boolVal === false)) {
@@ -232,7 +234,7 @@ export class PropRenderer {
             input.addEventListener('change', (e) => {
                 const target = e.target
                 if (target instanceof HTMLInputElement) {
-                    if (p.type === 'bool-radio' || p.type === 'bool') {
+                    if (boolFlag) {
                         p.setValue(target.value === '是' ? true : false);
                     } else {
                         p.setValue(target.value);
@@ -354,14 +356,13 @@ export class PropRenderer {
 
     /**
      * @param {string} type
-     * @param {string} label
-     * @param {any} val
+     * @param {BaseProp} p
      */
-    static createButton(type, label, val) {
+    static createButton(type, p) {
         const button = document.createElement('button');
 
         button.className = `button ${type}`;
-        button.textContent = label || '测试用';
+        button.textContent = p.label || '测试用';
 
         return button;
 
@@ -379,10 +380,10 @@ export class PropRenderer {
     }
 
     //TODO 显示错误原因
-    static createErrorDom(message = '未知原因') {
+    static createErrorDom(message = '属性未正确渲染') {
         const el = document.createElement('div');
         el.className = 'prop-error';
-        el.textContent = '属性未正确渲染';
+        el.textContent = message ;
         return el;
     }
 

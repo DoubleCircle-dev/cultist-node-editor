@@ -69,15 +69,15 @@ export class NodeTypeRegistry {
 
             ],
             exProperties: {
-                0: [
+                '选项1': [
                     { label: '二择', type: 'bool', default: false },
                     { label: '数值', type: 'range', min: 0, max: 100, default: 50 },
                 ],
-                1: [
+                '选项2': [
                     { label: '开关', type: 'checkbox', default: false },
                     { label: '数字', type: 'number', min: 0, max: 100, default: 50 },
                 ],
-                2: [
+                '选项3': [
                     { label: '整数输入', type: 'integer', default: 0 },
                     { label: '文本输入', type: 'text', default: '测试文本' }
                 ]
@@ -125,14 +125,10 @@ export class NodeTypeRegistry {
                 { label: '描述', type: 'text', default: '在达成该结局时，游戏中显示的文本', description: 'description: 在达成该结局时，游戏中显示的文本' },
                 { label: '成就', type: 'port', requireType: 'achievements', multiConnect: true, default: '达成该结局时，解锁的成就', description: 'achievement: 达成该结局时，解锁的成就' },
                 { label: '图片', type: 'image-preview', description: 'image: 达成该结局时，在达成该结局时显示的图片' },
-            ],
-            exProperties: {
-                0: [
-                    { label: '类型', type: 'select', options: ['坏结局(Melancholy)', '胜利(Grand)', '反面胜利(Vile)'], default: 0, description: 'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。' },
-                    { label: '动画', type: 'select', options: ['DramaticLight', 'DramaticLightCool', 'DramaticLightEvil'], default: 0, description: 'anim: 从某个recipe进入该结局时，显示的动画类型。“DramaticLight”在任何结局都可用，“DramaticLightCool”是胜利时显示的动画，“DramaticLightEvil”则是在坏结局时显示。' }
-                ]
-            }
+                { label: '类型', type: 'select', options: ['坏结局(Melancholy)', '胜利(Grand)', '反面胜利(Vile)'], default: 0, description: 'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。' },
+                { label: '动画', type: 'select', options: ['DramaticLight', 'DramaticLightCool', 'DramaticLightEvil'], default: 0, description: 'anim: 从某个recipe进入该结局时，显示的动画类型。“DramaticLight”在任何结局都可用，“DramaticLightCool”是胜利时显示的动画，“DramaticLightEvil”则是在坏结局时显示。' }
 
+            ]
         },
         achievements: {
             title: 'achievement',
@@ -146,12 +142,12 @@ export class NodeTypeRegistry {
             ],
             content: `成就(achievements)是游戏中解锁的成就/成就类型，可以在成就页面中查看。`,
             properties: [
-                { label: '类型', type: 'select', isModeSwitcher: true, options: ['成就类型', '成就'], default: 0, description: 'isCategory: 成就和成就类型都属于achievements,成就类型会在主界面的成就下面新建一个类别用来显示成就' },
+                { label: '类型', type: 'select', isModeSwitcher: true, options: ['成就类型', '成就'], default: '成就', description: 'isCategory: 成就和成就类型都属于achievements,成就类型会在主界面的成就下面新建一个类别用来显示成就' },
                 { label: '图标', type: 'image-preview', description: 'iconUnlocked: 成就/成就类型解锁后的图标' },
             ],
             exProperties: {
-                0: [],
-                1: [
+                '成就类型': [],
+                '成就': [
                     { label: '成就类型', type: 'port', requireType: 'achievements', multiConnect: false, description: 'category: 成就的类别（同一类成就会放在一个页面）' },
                     { label: '单一描述', type: 'bool', default: true, description: 'singleDescription: 如果为真，则解锁成就前就会显示成就描述。' },
                     { label: '描述', type: 'text', default: '成就描述', description: 'descriptionunlocked: 成就解锁后的描述' },
@@ -248,13 +244,13 @@ export class NodeTypeRegistry {
             content: `游戏中的卡牌、性相均属于elements`,
             icon: '📇',
             properties: [
-                { label: '类型', type: 'select', isModeSwitcher: true, options: ['卡牌', '性相'], default: 0 },
+                { label: '类型', type: 'select', isModeSwitcher: true, options: ['卡牌', '性相'], default: '卡牌' },
                 { label: '描述', type: 'text', default: '该元素（卡牌或性相）的介绍', description: 'description: 该元素（卡牌或性相）的介绍, 会显示在右上角详情中' },
                 { label: '图标', type: 'image-icon', description: 'icon: 该元素（卡牌或性相）的图标图片，默认为空，此时会寻找和id一致的文件名' },
                 { label: '引发', type: 'port', requireType: 'recipes', multiConnect: true, NotSetWarning: '该条件需要通过set设置几率以及排序，直接连接元素recipes则默认几率100，排序按给定id排序', description: 'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建' },
             ],
             exProperties: {
-                0: [
+                '卡牌': [
                     { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1', description: 'aspects: 该元素（卡牌）所具有的性相，数值代表等级' },
                     { label: '持续时间', type: 'number', default: 0, description: 'duration: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。' },
                     { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: true, description: 'slots: 该元素（卡牌）所拥有的卡槽，可以在交互(recipes)中额外生成卡槽放入卡牌' },
@@ -268,7 +264,7 @@ export class NodeTypeRegistry {
                     { label: '行动图像', type: 'image-preview', description: 'verbicon: 当该卡牌存在时，verb显示的图片。' },
                     { label: '替换性相描述文本', type: 'text', description: 'xexts: 注意：此代码仅作为收录，不建议在游戏中使用。类似于xtriggers，当此卡牌参与的recipe结束时，如果有相应的性相出现，则会增加相应性相在recipe的description中显示对应的描述。不支持中文。特别的，你可以使用富文本标签 "<font=NotoSansCJKsc-Regular>描述<\font>" 来显示中文，实际测试recipe不显示口口口但也没显示正常中文，右上角正常显示。' }
                 ],
-                1: [
+                '性相': [
                     { label: '隐藏性相', type: 'bool', default: false, description: 'isHidden: 是否隐藏该性相，默认为否。' },
                     { label: '无需图片', type: 'bool', default: false, description: 'noartneeded: 该性相是否不需要图片，默认为否。' },
                 ]

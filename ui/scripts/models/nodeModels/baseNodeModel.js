@@ -11,7 +11,7 @@ export class BaseNodeModel extends EventTarget {
      * @param {number} x 
      * @param {number} y 
      * @param {NodeConfig} config 
-     * @param {PropType[]} properties 
+     * @param {BaseProp[]} properties 
      */
 
     constructor(id, type, x, y, config, properties = []) {
