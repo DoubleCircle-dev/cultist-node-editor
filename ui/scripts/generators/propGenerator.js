@@ -64,10 +64,10 @@ export class PropGenerator {
                 break;
             case 'bool':
                 args = [id, prop.label, 'bool-radio', prop.default,]
-                propClass = OptionsProp;
+                propClass = BaseProp;
                 break;
             case 'select':
-                args = [id, prop.label, 'select', prop.default, prop.options];
+                args = [id, prop.label, 'select', prop.default, prop.options, prop.isModeSwitcher];
                 propClass = OptionsProp;
                 break;
             case 'port':
@@ -121,63 +121,24 @@ export class PropRenderer {
      * 渲染映射表
      */
     static RenderMap = {
-        'text': (/** @type {{ value: any; }} */ p) =>
-            this.createInput('text', p.value),
-
-        'integer': (/** @type {{ value: any; }} */ p) =>
-            this.createInput('number', p.value),
-
-        'number': (/** @type {{ value: any; }} */ p) =>
-            this.createInput('number', p.value),
-
-        'slider': (/** @type {{ value: any; config: { min: any; max: any; step: any; }; }} */ p) =>
-            this.createInput('range', p.value, {
-                min: String(p.config?.min ?? 0),
-                max: String(p.config?.max ?? 100),
-                step: String(p.config?.step ?? 1)
-            }),
-
-        'radio': (/** @type {any} */ p) =>
-            this.createRadio(p),
-
-        'bool-radio': (/** @type {{ id: any; label:String; value: any; }} */ p) =>
-            this.createRadio({
-                id: p.id,
-                label: p.label,
-                value: p.value ? '是' : '否',
-                config: { opts: ['是', '否'] }
-            }),
-
-        'select': (/** @type {any} */ p) =>
-            this.createSelect(p),
-
-        'image-path': (/** @type {{ value: any; }} */ p) =>
-            this.createInput('text', p.value, { placeholder: "Image Path..." }),
-
-        'image-preview': (/** @type {{ value: any; }} */ p) =>
-            this.createPreView('image', p.value),
-
-        'image-icon': (/** @type {{ value: any; }} */ p) =>
-            this.createPreView('icon', p.value),
-
-        //TODO 创建table界面
-        'table-button': () =>
-            this.createButton('table', 'DATA TABLE', { innerText: 'DATA TABLE' }),
-
-        'table-preview': (/** @type {{ value: any; columns: string[]; }} */ p) =>
-            this.createPreView('table', p.value, p.columns),
-
-        'textarea-preview': (/** @type {{ value: any; }} */ p) =>
-            this.createPreView('textarea', p.value),
-
-        'port': (/** @type {{label:'string'; value: any; }} */ p) =>
-            this.createButton('port', p.label, p.value),
-
-        'selectPort': (/** @type {{default: any; opts: Object; }} */ p) =>
-            this.createButton('selectPort', p.default, p.opts),
-
-        'hub': (/** @type {{layout: 'string'; }} */ p) =>
-            this.createHub('hub', p.layout)
+        'text': (p) => this.createInput('text', p),
+        'integer': (p) => this.createInput('number', p),
+        'number': (p) => this.createInput('number', p),
+        'slider': (p) => this.createInput('range', p, {
+            step: String(p.config?.step ?? 1)
+        }),
+        'radio': (p) => this.createRadio(p),
+        'bool-radio': (p) => this.createRadio(p, true),   // 直接传入 prop
+        'select': (p) => this.createSelect(p),
+        'image-path': (p) => this.createInput('text', p, { placeholder: "Image Path..." }),
+        'image-preview': (p) => this.createPreView('image', p),
+        'image-icon': (p) => this.createPreView('icon', p),
+        'table-button': (p) => this.createButton('table', 'DATA TABLE', p),
+        'table-preview': (p) => this.createPreView('table', p, p.columns),
+        'textarea-preview': (p) => this.createPreView('textarea', p),
+        'port': (p) => this.createButton('port', p.label, p),
+        'selectPort': (p) => this.createButton('selectPort', p.default, p),
+        'hub': (p) => this.createHub('hub', p)
     };
 
     /**
@@ -194,15 +155,23 @@ export class PropRenderer {
 
     /**
      * @param {string} type
-     * @param {any} val
+     * @param {BaseProp} prop
      * 
      */
-    static createInput(type, val, config = {}) {
+    static createInput(type, prop, config = {}) {
+        const val = prop.value;
         const input = this.createElement('input', {
             type,
             value: val ?? '',
             className: `prop-input ${type}`,
             ...config
+        });
+        input.addEventListener('change', (e) => {
+            const target = e.target;
+            if (target instanceof HTMLInputElement) {
+                console.log(target)
+                prop.setValue(target.value);
+            }
         });
 
         return input;
@@ -210,10 +179,10 @@ export class PropRenderer {
 
     /**
      * 创建一个单选按钮组
-     * @param {Object} p - 配置对象，包含id、value、config等属性
+     * @param {OptionsProp} p
      * @returns {HTMLElement} 返回包含单选按钮组的容器元素
      */
-    static createRadio(p) {
+    static createRadio(p, boolFlag = false) {
         // 创建一个div容器，类名为'prop-radio-group'
         const container = this.createElement('div', {}, 'prop-radio-group');
 
@@ -223,17 +192,53 @@ export class PropRenderer {
         container.appendChild(label);
 
         // 从配置中解构出选项数组和默认值
-        const { opts = [], default: def } = p.config || {};
+        let { opts = [] } = p.config || {};
+
+        if (boolFlag) {
+            opts = ['是', '否'];
+        }
+
+        const currentValue = p.value;
 
         // 遍历选项数组，为每个选项创建一个单选按钮
         opts.forEach((/** @type {any} */ opt) => {
             // 创建一个label元素，类名为'radio-option'
             const label = this.createElement('label', {}, 'radio-option');
-            // 创建一个radio类型的input元素，设置name和checked属性
-            const input = this.createInput('radio', opt, {
-                name: String(p.id),
-                checked: opt === (p.value || def)  // 如果当前选项等于值或默认值，则设为选中状态
+
+            const input = this.createElement('input', {
+                type: 'radio',
+                name: String(p.id),   // 同一组的 name 相同
+                value: opt,
+                className: 'prop-radio-input'
             });
+            // 设置选中状态：处理布尔型转换
+            if (p.type === 'bool-radio' || p.type === 'bool') {
+                // 布尔型：'是' 对应 true，'否' 对应 false
+                const boolVal = currentValue === true || currentValue === false ? currentValue : false;
+                if ((opt === '是' && boolVal === true) || (opt === '否' && boolVal === false)) {
+                    if (input instanceof HTMLInputElement) {
+                        input.checked = true;
+                    }
+                }
+            } else {
+                // 普通单选：直接比较值
+                if (opt === currentValue) {
+                    if (input instanceof HTMLInputElement) {
+                        input.checked = true;
+                    }
+                }
+            }
+
+            input.addEventListener('change', (e) => {
+                const target = e.target
+                if (target instanceof HTMLInputElement) {
+                    if (p.type === 'bool-radio' || p.type === 'bool') {
+                        p.setValue(target.value === '是' ? true : false);
+                    } else {
+                        p.setValue(target.value);
+                    }
+                }
+            })
 
             // 创建一个span元素作为标签文本，类名为'radio-option-label'
             const span = this.createElement('span', { textContent: opt }, 'radio-option-label');
@@ -247,7 +252,7 @@ export class PropRenderer {
 
     /**
      * 创建下拉选择框
-     * @param {{ config: { opts: any[]; }; value: any; }} p
+     * @param {BaseProp} p
      */
     static createSelect(p) {
         const s = this.createElement('select', {}, 'select');
@@ -265,6 +270,14 @@ export class PropRenderer {
 
             fragment.appendChild(option);
         });
+
+        s.addEventListener('change', (e) => {
+            const target = e.target;
+            if (target instanceof HTMLSelectElement) {
+                p.setValue(target.value);
+            }
+        })
+
         s.appendChild(fragment);
         return s;
     }
@@ -272,22 +285,22 @@ export class PropRenderer {
     /**
      * 创建预览组件
      * @param {string} type
-     * @param {any} val
+     * @param {ViewProp} prop
      */
-    static createPreView(type, val, columns = []) {
+    static createPreView(type, prop, columns = []) {
         const preView = this.createElement('div', {}, 'prop-card');
 
         switch (type) {
             case 'textarea':
                 const textInput = this.createElement('textarea', {
-                    value: val ?? '',
-                    placeholder: 'Text Area...'
+                    value: prop.value ?? '',
+                    placeholder: '输入文本内容...'
                 });
                 preView.appendChild(textInput);
                 break;
             case 'icon':
                 const icon = this.createElement('img', {
-                    src: val || '../../../test/img/placeholder.png'
+                    src: prop.value || '../../../test/img/placeholder.png'
                 })
                 preView.appendChild(icon);
                 preView.classList.add('icon');
@@ -295,7 +308,7 @@ export class PropRenderer {
 
             case 'image':
                 const img = this.createElement('img', {
-                    src: val || '../../../test/img/placeholder.png'
+                    src: prop.value || '../../../test/img/placeholder.png'
                 });
                 preView.appendChild(img);
                 break;
@@ -312,7 +325,7 @@ export class PropRenderer {
                 })
 
                 const tbody = this.createElement('tbody');
-                (Array.isArray(val) ? val : []).forEach(rowItem => {
+                (Array.isArray(prop.value) ? prop.value : []).forEach(rowItem => {
                     const tr = this.createElement('tr');
                     columns.forEach(col => {
                         const td = this.createElement('td');

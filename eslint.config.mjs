@@ -7,14 +7,13 @@ export default [{
             ...globals.commonjs,
             ...globals.node,
             ...globals.mocha,
+            ...globals.browser,
+            acquireVsCodeApi: "readonly", // vscode api
+            eruda: 'readonly'
         },
 
         ecmaVersion: 2022,
         sourceType: "module",
-    },
-    env: {
-        "browser": true,
-        "node": true,
     },
 
     rules: {
@@ -27,3 +26,4 @@ export default [{
         "valid-typeof": "warn",
     },
 }];
+

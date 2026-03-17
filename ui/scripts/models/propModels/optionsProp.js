@@ -7,9 +7,14 @@ export class OptionsProp extends BaseProp {
      * @param {string} type
      * @param {any} value
      */
-    constructor(id, label, type, value, options = []) {
+    constructor(id, label, type, value, options = [], isModeSwitcher=false) {
         super(id, label, type, value);
+        this.config = {
+            opts:options,
+            default: String(value | options[0])
+        }
         this.config.opts = options;
+        this.isModeSwitcher = isModeSwitcher;
     }
 }
 

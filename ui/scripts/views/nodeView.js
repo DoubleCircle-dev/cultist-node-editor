@@ -4,7 +4,7 @@ import { PropView } from './propView.js';
 export class NodeView {
     /**
      * 构造函数，初始化节点模型和DOM元素，并设置模型变化的监听器
-     * @param {NodeModel} model - 节点模型实例，默认为新的BaseNodeModel对象
+     * @param {NodeModel} model
      */
     constructor(model) {
         // 初始化节点模型
@@ -21,7 +21,6 @@ export class NodeView {
         this.model.addEventListener('change:position', (/** @type {CustomEvent} */ e) => {
             // 从事件详情中获取x和y坐标
             const { x, y } = (e).detail;
-
             this.element.style.left = x + 'px';
             this.element.style.top = y + 'px';
         });

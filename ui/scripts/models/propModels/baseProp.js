@@ -1,4 +1,4 @@
-export class BaseProp {
+export class BaseProp extends EventTarget {
 
     /**
      * @param {string} id - 用来识别属性 
@@ -8,20 +8,46 @@ export class BaseProp {
      *  
      *  */
     constructor(id, label, type, value) {
+        super();
         this.id = id;
         this.label = label;
         this.type = type;
-        this.value = value;
+        this._value = value;
 
         this.config = {};
 
         this.parentNode = null;
     }
 
+    /**
+     * @returns {any}
+     */
+    get value() {
+        return this._value;
+    }
+
+    set value(newVal) {
+
+        const oldVal = this._value;
+        if (oldVal !== newVal) {
+            this._value = newVal;
+            this.dispatchEvent(new CustomEvent('change', {
+                detail: { value: newVal, oldValue: oldVal }
+            }));
+        }
+    }
+
+    /**
+     * @param {any} newVal
+     */
+    setValue(newVal) {
+        this._value = newVal;
+    }
+
     toJSON() {
         return {
             id: this.id,
-            value: this.value,
+            value: this._value,
             config: this.config
         };
     }

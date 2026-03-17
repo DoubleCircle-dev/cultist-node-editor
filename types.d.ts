@@ -4,6 +4,7 @@ type NodePropConfig = PropConfig | PortPropConfig | HubPropConfig | ViewPropConf
 
 interface PropConfig {
   type: string;
+  value: any;
   label?: string;
   description?: string;
   default?: any;
@@ -44,10 +45,14 @@ interface PortPropConfig extends PropConfig {
   valueType?: string;
 }
 
-/** 属性配置接口 */
+type IPropType =
+  | PropType
+  | import("./ui/scripts/models/propModels/baseProp.js").BaseProp;
+
 interface PropType {
   id?: NodeID;
   type: string;
+  value: any;
   label?: string;
   default?: any;
   config?: any; //用于numericProp的如min,max等设置，或其他属性需要

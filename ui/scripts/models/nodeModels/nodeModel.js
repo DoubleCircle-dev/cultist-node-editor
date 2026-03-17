@@ -2,6 +2,7 @@ import { BaseProp } from '../propModels/baseProp.js';
 import { HubProp } from '../propModels/hubProp.js';
 import { PropGenerator } from '../../generators/propGenerator.js';
 import { BaseNodeModel } from './baseNodeModel.js';
+import { OptionsProp } from '../propModels/optionsProp.js';
 
 /**
  * NodeModel.js
@@ -46,6 +47,9 @@ export class NodeModel extends BaseNodeModel {
 
         this._createPortHub();
 
+        this.modeId = 0;
+        this._onModeSwitcher();
+
         // this.currentMode = this._getInitialMode(); // 初始化节点的当前模式
     }
 
@@ -54,6 +58,17 @@ export class NodeModel extends BaseNodeModel {
         const hub = new HubProp(`${this.id}:portHub`, '端口', [this.inputs, this.outputs], 'double');
 
         this.properties.push(hub);
+    }
+
+    _onModeSwitcher() {
+        for (let prop of this.properties) {
+            if (prop instanceof OptionsProp){
+                if (prop.isModeSwitcher) {
+                    this.modeSwitcher = prop
+                    break;
+                }
+            }
+        }
     }
 
     _getInitialMode() {

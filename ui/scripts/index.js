@@ -1,10 +1,19 @@
 import { ControllerCore } from './controllers/controllerCore.js';
 
+
 // 创建全局管理器实例
 let core = null;
+let vscode = null;
 
 console.log(navigator.userAgent)
+const isVsCodeWebview = typeof acquireVsCodeApi === 'function';
 
+if (isVsCodeWebview) {
+    console.log("当前处于 VS Code 插件环境");
+    vscode = acquireVsCodeApi();
+} else {
+    console.log("当前处于 普通浏览器环境");
+}
 // 更新状态显示
 export function updateStatus(text) {
     const statusElement = document.getElementById("status");
@@ -138,7 +147,12 @@ export function generateTest() {
 }
 
 export function toggleConsole() {
-
+    if (isVsCodeWebview){
+        vscode.postMessage({ command:'openConsole' });
+    }else{
+        eruda.get('entryBtn').show();
+        eruda.show();
+    }
 }
 
 export function customCheck() {
@@ -194,9 +208,14 @@ if (document.readyState === 'loading') {
 
 /** @type {any} */
 const win = window;
+win.vscode = vscode;
+
 win.customCheck = customCheck;
 win.clearCanvas = clearCanvas;
 win.addNode = addNode;
 win.addBlankNode = addBlankNode;
 win.addTestNode = addTestNode;
 win.fitView = fitView;
+win.toggleConsole = toggleConsole;
+
+win.generateTest = generateTest;

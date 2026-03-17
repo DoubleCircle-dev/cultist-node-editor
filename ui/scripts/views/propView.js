@@ -103,7 +103,6 @@ export class PropView {
         } catch (e) {
             console.error(e, type, param);
             return PropRenderer.createErrorDom();
-
         }
     }
 

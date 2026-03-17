@@ -136,137 +136,110 @@ function getWebviewContent(panel, context) {
     const uiDir = path.join(context.extensionPath, 'ui');
 
     try {
-        // 读取配置文件
-        const configPath = path.join(uiDir, 'webview-config.json');
-        let config = {};
-        if (fs.existsSync(configPath)) {
-            config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        }
-
-        // 读取HTML模板
         const htmlPath = path.join(uiDir, 'webUI.html');
-        let htmlContent = '';
+        if (!fs.existsSync(htmlPath)) throw new Error('HTML文件不存在: ' + htmlPath);
 
-        if (fs.existsSync(htmlPath)) {
-            htmlContent = fs.readFileSync(htmlPath, 'utf8');
-        } else {
-            // 如果HTML文件不存在，创建默认内容
-            throw new Error('HTML文件不存在' + htmlPath);
-        }
+        let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
-        // 获取所有资源文件的Webview URI
-        const resources = processResources(panel, uiDir, config.resources);
+        // 这里的调用去掉了 config 参数，直接传入 uiDir
+        const resources = processResources(panel, uiDir);
 
-        // 资源引用
         htmlContent = replaceResourceReferences(htmlContent, resources);
 
-        // 注入配置数据
-        htmlContent = injectConfigData(htmlContent, config);
+        // 保持原来的配置注入逻辑
+        const configPath = path.join(uiDir, 'webview-config.json');
+        if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            htmlContent = injectConfigData(htmlContent, config);
+        }
 
         return htmlContent;
-
     } catch (error) {
         console.error('加载Webview内容失败:', error);
         return getErrorHtml();
     }
 }
 
-function processResources(panel, uiDir, resourceConfig) {
+/**
+ * 递归获取目录下所有指定后缀的文件路径
+ * @param {string} dirPath 物理目录路径
+ * @param {string} extension 文件后缀（如 '.js'）
+ * @returns {string[]} 文件的绝对路径列表
+ */
+function getAllFiles(dirPath, extension, arrayOfFiles = []) {
+    const files = fs.readdirSync(dirPath);
+
+    files.forEach((file) => {
+        const fullPath = path.join(dirPath, file);
+        if (fs.statSync(fullPath).isDirectory()) {
+            // 如果是目录，递归调用
+            arrayOfFiles = getAllFiles(fullPath, extension, arrayOfFiles);
+        } else if (file.endsWith(extension)) {
+            // 如果是目标文件，记录路径
+            arrayOfFiles.push(fullPath);
+        }
+    });
+
+    return arrayOfFiles;
+}
+
+function processResources(panel, uiDir) {
     const resources = {
         css: [],
         scripts: []
     };
-    // 处理样式文件
-    if (resourceConfig && resourceConfig.css) {
-        resources.css = resourceConfig.css.map(styleFile => {
-            const stylePath = path.join(uiDir, 'css',styleFile);
-            if (fs.existsSync(stylePath)) {
-                const uri = panel.webview.asWebviewUri(vscode.Uri.file(stylePath));
-                return {
-                    name: styleFile,
-                    uri: uri.toString(),
-                    type: 'style'
-                };
-            }
-            return null;
-        }).filter(item => item !== null);
+
+    const cssDirPath = path.join(uiDir, 'css');
+    const scriptDirPath = path.join(uiDir, 'scripts');
+
+    // 递归处理 CSS
+    if (fs.existsSync(cssDirPath)) {
+        const allCssFiles = getAllFiles(cssDirPath, '.css');
+        resources.css = allCssFiles.map(filePath => ({
+            // 将绝对路径转换为 Webview URI
+            uri: panel.webview.asWebviewUri(vscode.Uri.file(filePath)).toString()
+        }));
     }
 
-    // 处理脚本文件
-    if (resourceConfig && resourceConfig.scripts) {
-        resources.scripts = resourceConfig.scripts.map(scriptFile => {
-            const scriptPath = path.join(uiDir, 'scripts', scriptFile);
-            if (fs.existsSync(scriptPath)) {
-                const uri = panel.webview.asWebviewUri(vscode.Uri.file(scriptPath));
-                return {
-                    name: scriptFile,
-                    uri: uri.toString(),
-                    type: 'script'
-                };
-            }
-            return null;
-        }).filter(item => item !== null);
+    // 递归处理 JS (Module)
+    if (fs.existsSync(scriptDirPath)) {
+        const allJsFiles = getAllFiles(scriptDirPath, '.js');
+        resources.scripts = allJsFiles.map(filePath => ({
+            uri: panel.webview.asWebviewUri(vscode.Uri.file(filePath)).toString()
+        }));
     }
 
     return resources;
 }
 
-function addResourceReferences(htmlContent, resources) {
-    let result = htmlContent;
-    
-    // 添加新的样式引用
-    const styleTags = resources.css.map(style =>
-        `<link rel="stylesheet" href="${style.uri}">`
-    ).join('\n');
-
-    // 添加新的脚本引用
-    const scriptTags = resources.scripts.map(script =>
-        `<script src="${script.uri}"></script>`
-    ).join('\n');
-
-    // 插入到head结束前
-    if (styleTags) {
-        result = result.replace('</head>', `${styleTags}\n</head>`);
-    }
-
-    // 插入到body结束前
-    if (scriptTags) {
-        result = result.replace('</body>', `${scriptTags}\n</body>`);
-    }
-    
-    return result;
-}
-
 function replaceResourceReferences(htmlContent, resources) {
     let result = htmlContent;
 
-    // 移除原有的资源引用
+    // 1. 移除原有的硬编码资源引用（可选，建议保留以清理模板）
     result = result.replace(/<link\s+rel="stylesheet"\s+href="[^"]*"\s*\/?>/g, '');
-    result = result.replace(/<script\s+src="[^"]*"><\/script>/g, '');
+    result = result.replace(/<script\s+[^>]*src="[^"]*"><\/script>/g, '');
 
-    // 添加新的样式引用
+    // 2. 生成新的标签
     const styleTags = resources.css.map(style =>
         `<link rel="stylesheet" href="${style.uri}">`
-    ).join('\n');
+    ).join('\n\t');
 
-    // 添加新的脚本引用
+    console.log(styleTags)
+
     const scriptTags = resources.scripts.map(script =>
-        `<script src="${script.uri}"></script>`
-    ).join('\n');
+        `<script type="module" src="${script.uri}"></script>` // 关键：添加 type="module"
+    ).join('\n\t');
 
-    // 插入到head结束前
+    // 3. 注入到 HTML
     if (styleTags) {
         result = result.replace('</head>', `${styleTags}\n</head>`);
     }
-
-    // 插入到body结束前
     if (scriptTags) {
         result = result.replace('</body>', `${scriptTags}\n</body>`);
     }
 
     return result;
 }
-
 function injectConfigData(htmlContent, config) {
     // 将配置注入到JavaScript中
     const configScript = `
@@ -395,7 +368,7 @@ function handleReadMod(panel) {
 
                 if (!synopsisData.name) {
                     vscode.window.showInformationMessage(`你还未给MOD命名！`);
-                }else {
+                } else {
                     vscode.window.showInformationMessage(`✅ MOD已加载: ${synopsisData.name}`);
                 }
 

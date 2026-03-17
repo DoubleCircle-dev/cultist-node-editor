@@ -1,0 +1,14 @@
+div[class*="eruda-entry"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.eruda-entry-btn {
+    display: none !important;
+}
+
+.debug-container{
+    display: none !important;
+}
