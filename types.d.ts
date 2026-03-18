@@ -1,6 +1,11 @@
-
 type NodeID = string | number;
-type NodePropConfig = PropConfig | PortPropConfig | HubPropConfig | ViewPropConfig | OptionsPropConfig | NumericPropConfig;
+type NodePropConfig =
+  | PropConfig
+  | PortPropConfig
+  | HubPropConfig
+  | ViewPropConfig
+  | OptionsPropConfig
+  | NumericPropConfig;
 
 interface PropConfig {
   type: string;
@@ -13,7 +18,7 @@ interface PropConfig {
 }
 
 interface OptionsPropConfig extends PropConfig {
-  type: 'options' | 'select';
+  type: "options" | "select";
   isModeSwitcher?: boolean; //是否是模式切换器
   options?: string[];
 }
@@ -25,13 +30,13 @@ interface HubPropConfig extends PropConfig {
 }
 
 interface NumericPropConfig extends PropConfig {
-  type: 'numeric' | 'number' | 'slider' | 'range' | 'integer';
+  type: "numeric" | "number" | "slider" | "range" | "integer";
   min?: number;
   max?: number;
 }
 
 interface ViewPropConfig extends PropConfig {
-  type: 'view';
+  type: "view";
 }
 
 interface PortPropConfig extends PropConfig {
@@ -53,6 +58,7 @@ interface PropType {
   id?: NodeID;
   type: string;
   value: any;
+  description?: string;
   label?: string;
   default?: any;
   config?: any; //用于numericProp的如min,max等设置，或其他属性需要

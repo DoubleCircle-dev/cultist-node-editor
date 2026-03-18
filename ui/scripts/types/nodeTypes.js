@@ -78,7 +78,7 @@ export class NodeTypeRegistry {
                     { label: '数字', type: 'number', min: 0, max: 100, default: 50 },
                 ],
                 '选项3': [
-                    { label: '整数输入', type: 'integer', default: 0 },
+                    { label: '整数输入', type: 'integer', default: null },
                     { label: '文本输入', type: 'text', default: '测试文本' }
                 ]
             }
@@ -259,7 +259,7 @@ export class NodeTypeRegistry {
                     { label: '触发器', type: 'port', requireType: 'xtriggers', multiConnect: true, description: 'xtriggers: 该元素（卡牌）所拥有的触发器，该卡牌在离开具有列出的性相的行动框时会对卡牌进行的转换；默认为空，不会有变动。' },
                     { label: '消逝转化', type: 'port', requireType: 'elements', multiConnect: false, description: 'decayto: 该元素（卡牌）在时间耗尽后或在burnTo未定义时被slot消耗后会变为的卡牌；特别地，如果填了自己的id，作用相当于于重置存在时间；默认为空，消逝后不会出现新的卡牌。' },
                     { label: '消耗转化', type: 'port', requireType: 'elements', multiConnect: false, description: 'burnto: 该元素（卡牌）在被slot消耗后会变为的卡牌；特别地，如果填了自己的id，作用相当于于重置存在时间；默认为空，消逝后不会出现新的卡牌。' },
-                    { label: '动画帧数', type: 'int', default: null, description: 'animFrames: 动画帧数，默认为空' },
+                    { label: '动画帧数', type: 'integer', default: null, description: 'animFrames: 动画帧数，默认为空' },
                     { label: '复彩特效', type: 'bool', default: false, description: 'resaturate: 决定该卡牌在倒计时时是/否会从灰色逐渐变为真实颜色，默认为否。' },
                     { label: '行动图像', type: 'image-preview', description: 'verbicon: 当该卡牌存在时，verb显示的图片。' },
                     { label: '替换性相描述文本', type: 'text', description: 'xexts: 注意：此代码仅作为收录，不建议在游戏中使用。类似于xtriggers，当此卡牌参与的recipe结束时，如果有相应的性相出现，则会增加相应性相在recipe的description中显示对应的描述。不支持中文。特别的，你可以使用富文本标签 "<font=NotoSansCJKsc-Regular>描述<\font>" 来显示中文，实际测试recipe不显示口口口但也没显示正常中文，右上角正常显示。' }

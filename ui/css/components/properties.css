@@ -149,6 +149,10 @@
     border-radius: 2px;
 }
 
+.prop-content .prop-number {
+    display: flex;
+}
+
 /* 单选框样式 */
 .prop-content .prop-radio-group {
     display: flex;
@@ -157,7 +161,7 @@
     align-items: center;
 }
 
-.prop-content .radio-group-label {
+.prop-content .label {
     font-size: 14px;
     margin-right: 4px;
     margin-left: 4px;
@@ -308,6 +312,17 @@
     border-color: var(--border-light);
 }
 
+.prop-content input[type="checkbox"] {
+    width: 1.2em;
+    height: 1.2em;
+    accent-color: #4a90e2;
+    /* 主题色 */
+    margin-right: 0.5em;
+    margin-left: 1em;
+    transform: translateY(0.2em);
+    /* 与文本对齐微调 */
+}
+
 .prop-card {
     grid-column: 2;
     margin: 6px calc(var(--port-slot-width) / 2);
@@ -329,7 +344,6 @@
     margin: 0;
     width: 100%;
 }
-
 
 .prop-card img {
     width: 100%;
@@ -439,3 +453,57 @@
     cursor: not-allowed;
     pointer-events: none;
 }
+
+/* 4. 提示框样式 */
+
+
+/* 伪元素作为描述框 */
+.tooltip-trigger::after {
+    content: attr(data-description);
+    /* 从 data-description 获取文本 */
+    position: absolute;
+    bottom: 150%;
+    /* 显示在元素上方 */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 14px;
+    z-index: 10;
+
+    /* 默认隐藏 */
+    visibility: hidden;
+    opacity: 0;
+
+    /* 避免影响布局，可加上过渡使其更平滑，但延迟效果由动画实现 */
+    transition: opacity 0.2s;
+    /* 可选：让淡入淡出更柔和 */
+}
+
+/* 悬停时启动延迟动画 */
+.tooltip-trigger:hover::after {
+    animation: delayShow 2s forwards;
+    /* 延迟2秒后显示 */
+}
+
+/* 动画定义：前99%时间不可见，最后一刻变为可见 */
+@keyframes delayShow {
+    0% {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    99% {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    100% {
+        visibility: visible;
+        opacity: 1;
+    }
+}
+

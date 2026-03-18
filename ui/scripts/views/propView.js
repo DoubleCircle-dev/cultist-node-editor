@@ -13,6 +13,8 @@ export class PropView {
      */
     static renderProp(prop) {
         try {
+            var result;
+
             if (!prop) {
                 throw new Error('属性不存在');
             }
@@ -26,23 +28,28 @@ export class PropView {
                 if (!hub) {
                     throw new Error('hub属性无法创建');
                 }
-                return hub;
-            }
-
-            if (prop instanceof ViewProp) {
+                result = hub;
+            } else if (prop instanceof ViewProp) {
                 const view = this.createView(prop);
                 if (!view) {
                     throw new Error('view属性无法创建');
                 }
-                return view;
+
+                result = view;
+            } else {
+                const row = this.createRow(prop);
+                if (!row) {
+                    throw new Error('属性无法创建');
+                }
+                result = row;
             }
 
-            const row = this.createRow(prop);
-            if (!row) {
-                throw new Error('属性无法创建');
+            if (prop.description) {
+                result.setAttribute('data-description', prop.description);
+                result.classList.add('tooltip-trigger');
             }
 
-            return row;
+            return result;
         } catch (error) {
             console.error('属性渲染失败', error, prop);
             return PropRenderer.createErrorDom(error);

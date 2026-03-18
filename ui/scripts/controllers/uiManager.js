@@ -26,7 +26,12 @@ export class UIManager {
     _initComponents() {
         this.updateStatus = document.getElementById("status");
         this.mousePosition = document.getElementById("mouse-coords");
-        this.viewControlPanel = document.getElementsByClassName("view-controls");
+        this.viewControlPanel = document.getElementsByClassName("view-controls").item(0);
+        this.tooltip = document.getElementsByClassName(".tooltip-trigger").item(0) || document.createElement("div");
+        this.tooltip.classList.add("tooltip-trigger");
+        this.tooltip.setAttribute("id", "tooltip");
+        console.log(this.tooltip);
+        this.viewport.appendChild(this.tooltip);
     }
 
     _initListeners() {

@@ -66,6 +66,10 @@ export class PropGenerator {
                 args = [id, propConfig.label, 'bool', propConfig.default];
                 propClass = BaseProp;
                 break;
+            case 'checkbox':
+                args = [id, propConfig.label, 'checkbox', propConfig.default];
+                propClass = BaseProp;
+                break;
             case 'select':
                 args = [id, propConfig.label, 'select', propConfig.default, propConfig.options, propConfig.isModeSwitcher];
                 propClass = OptionsProp;
@@ -109,7 +113,16 @@ export class PropGenerator {
             return new BaseProp(null, null, null, null);
         }
 
-        return Reflect.construct(propClass, args);
+        const result = Reflect.construct(propClass, args);
+
+        if (result instanceof BaseProp) {
+            result.description = propConfig.description;
+        }else {
+            console.error('注册属性失败', propClass, args);
+            return new BaseProp(null, null, null, null);
+        }
+
+        return result;
     }
 
 
@@ -121,9 +134,9 @@ export class PropRenderer {
      * 渲染映射表
      */
     static RenderMap = {
-        'text': (p) => this.createInput('text', p),
-        'integer': (p) => this.createInput('number', p),
-        'number': (p) => this.createInput('number', p),
+        'text': (p) => this.createInput('text', p, {placeholder: p.label}),
+        'integer': (p) => this.createInput('number', p, {placeholder:p.label}),
+        'number': (p) => this.createNumber('number', p),
         'range': (p) => this.createInput('range', p, {
             step: String(p.config?.step ?? 1)
         }),
@@ -131,7 +144,8 @@ export class PropRenderer {
             step: String(p.config?.step ?? 1)
         }),
         'radio': (p) => this.createRadio(p),
-        'bool': (p) => this.createRadio(p, true),   // 直接传入 prop
+        'bool': (p) => this.createRadio(p, true),
+        'checkbox': (p) => this.createCheckbox(p),
         'select': (p) => this.createSelect(p),
         'image-path': (p) => this.createInput('text', p, { placeholder: "图片路径" }),
         'image-preview': (p) => this.createPreView('image', p),
@@ -150,11 +164,14 @@ export class PropRenderer {
      */
     static createElement(tagName, props = {}, className = '') {
         const el = document.createElement(tagName);
+        if (el instanceof HTMLInputElement) {
+            el.name = props.label || `${el.type}输入`;
+        }
+
         if (className) el.className = className;
         Object.assign(el, props);
         return el;
     }
-
 
     /**
      * @param {string} type
@@ -165,6 +182,7 @@ export class PropRenderer {
         const val = prop.value;
         const input = this.createElement('input', {
             type,
+            id: prop.id || `input-${type}`,
             value: val ?? '',
             className: `prop-input ${type}`,
             ...config
@@ -179,6 +197,23 @@ export class PropRenderer {
         return input;
     }
 
+    static createLabel(textContent, forId, className = 'label') {
+        const label = this.createElement('label', { textContent, htmlFor: forId }, className);
+        return label;
+    }
+
+    static createNumber(type, prop) {
+        const num = this.createElement('div', {}, 'prop-number');
+
+        const label = this.createLabel(prop.label, String(prop.id));
+        const input = this.createInput(type, prop);
+
+        num.appendChild(label);
+        num.appendChild(input);
+
+        return num;
+    }
+
     /**
      * 创建一个单选按钮组
      * @param {OptionsProp} p
@@ -189,7 +224,7 @@ export class PropRenderer {
         const container = this.createElement('div', {}, 'prop-radio-group');
 
         // 创建一个label元素，类名为'radio-label'，并设置文本内容为p.label
-        const label = this.createElement('label', { textContent: p.label }, 'radio-group-label');
+        const label = this.createLabel(p.label, String(p.id), 'radio-label');
         // 将label添加到容器中
         container.appendChild(label);
 
@@ -282,6 +317,20 @@ export class PropRenderer {
 
         s.appendChild(fragment);
         return s;
+    }
+
+    static createCheckbox(p) {
+
+        const c = this.createElement('div', {}, 'checkbox');
+
+        const label = this.createLabel(p.label, String(p.id));
+
+        const input = this.createInput('checkbox', p);
+
+        c.appendChild(label);
+        c.appendChild(input);
+
+        return c
     }
 
     /**
@@ -383,7 +432,7 @@ export class PropRenderer {
     static createErrorDom(message = '属性未正确渲染') {
         const el = document.createElement('div');
         el.className = 'prop-error';
-        el.textContent = message ;
+        el.textContent = message;
         return el;
     }
 

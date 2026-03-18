@@ -1,6 +1,6 @@
 .btn {
     padding: 8px 16px;
-    background: var(--accent-primary);
+    background: var(--accent-info);
     color: white;
     border: none;
     border-radius: var(--radius-md);

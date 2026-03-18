@@ -7,7 +7,7 @@ export class BaseProp extends EventTarget {
      * @param {any} value - 属性的值
      *  
      *  */
-    constructor(id, label, type, value) {
+    constructor(id, label, type, value, description = null) {
         super();
         this.id = id;
         this.label = label;
@@ -15,6 +15,8 @@ export class BaseProp extends EventTarget {
         this._value = value;
 
         this.config = {};
+
+        this.description = description;
 
         this.parentNode = null;
     }
