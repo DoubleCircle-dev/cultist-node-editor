@@ -14,6 +14,7 @@ export class CanvasManager {
         this.bus = bus;
         this.viewport = viewport;
         this.world = world;
+        this.statusBar = document.getElementById("status-bar-under");
         this.coreSpace = coreSpace;
 
         if (!this.viewport || !this.world) {
@@ -33,7 +34,7 @@ export class CanvasManager {
             startY: 0,
             startTransX: 0,
             startTransY: 0,
-            panBtn: null
+            /**@type {number|null} */panBtn: null
         }
 
         this.mousePos = {
@@ -83,7 +84,7 @@ export class CanvasManager {
      * @param {{ preventDefault: () => void; button: number; altKey: any; clientX: any; clientY: any; }} e
      */
     handleMouseDown(e) {
-        if (this.panState.panning) {
+        if (this.panState?.panning) {
             e.preventDefault();
             return;
         }
@@ -100,8 +101,8 @@ export class CanvasManager {
                 panning: true,
                 startX: e.clientX,
                 startY: e.clientY,
-                startTransX: this.transform.x,
-                startTransY: this.transform.y,
+                startTransX: this.transform ? this.transform.x : 0,
+                startTransY: this.transform ? this.transform.y : 0,
                 panBtn: e.button
             }
 
@@ -133,13 +134,13 @@ export class CanvasManager {
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
         }
-        else if(e.button === 0) {
+        else if (e.button === 0) {
             this.bus.emit('canvas:click', this.mousePos);
         }
 
     }
 
-    handleClick(e){
+    handleClick(e) {
         if (this.mode === "select") {
             this.bus.emit('canvas:click', this.mousePos);
         }
@@ -156,6 +157,8 @@ export class CanvasManager {
         const vY = e.clientY - rect.top;
 
         this.mousePos = {
+            clientX: e.clientX,
+            clientY: e.clientY,
             viewportX: vX,
             viewportY: vY,
             worldX: (vX - this.transform.x) / this.transform.scale,
@@ -175,6 +178,8 @@ export class CanvasManager {
     // 鼠标移出画布时清空显示（保持界面整洁）
     handleMouseLeave() {
         this.bus.emit('mousePosition', {
+            clientX: 0,
+            clientY: 0,
             viewportX: 0,
             viewportY: 0,
             worldX: 0,
@@ -215,7 +220,7 @@ export class CanvasManager {
             this.viewport.style.cursor = 'default';
         }
 
-        this.bus.emit('modeChanged', mode);
+        this.bus.emit('modeChanged', { mode });
     }
 
     getMode() {
@@ -255,16 +260,14 @@ export class CanvasManager {
         }
 
         this.updateTransform();
-
-        this.bus.emit('zoomChanged', value);
     }
 
     fitView() {
 
-        let nodes = this.coreSpace.SelectedNodes;
+        let nodes = this.coreSpace.selectedNodes;
 
         if (nodes.length === 0) {
-            nodes = this.coreSpace.Nodes;
+            nodes = this.coreSpace.nodes;
         }
 
         if (nodes.length === 0) {
@@ -301,12 +304,54 @@ export class CanvasManager {
         this.transform.y = newY;
         this.updateTransform();
 
-        this.bus.emit('transformChanged', this.transform);
+    }
+
+    //强制画面缩放微小幅度，以触发重绘
+    Brefresh() {
+        const s = this.transform.scale;
+        this.transform.scale += 0.01;
+        this.updateTransform();
+        this.transform.scale = s;
+        this.updateTransform();
+    }
+
+    refresh() {
+        const viewBak = this.viewport;
+        const statusBak = this.statusBar;
+        const vParent = this.viewport.parentNode;
+        const sParent = this.statusBar.parentNode;
+
+        if (vParent) {
+            // 移除
+            vParent.removeChild(viewBak);
+            // 强制短暂延迟（可选，确保渲染引擎察觉变化）
+            setTimeout(() => {
+                // 重新插入
+                vParent.appendChild(viewBak);
+                this.viewport = viewBak;
+            }, 0);
+        }
+
+        if (sParent) {
+            // 移除
+            sParent.removeChild(statusBak);
+            // 强制短暂延迟（可选，确保渲染引擎察觉变化）
+            setTimeout(() => {
+                // 重新插入
+                sParent.appendChild(statusBak);
+                this.statusBar = statusBak;
+            }, 0);
+        }
+
+        this.updateTransform();
+
     }
 
     // 处理缩放与平移更新
     updateTransform() {
         this.world.style.transform = `translate(${this.transform.x}px, ${this.transform.y}px) scale(${this.transform.scale})`;
+
+        this.bus.emit('transformChanged', this.transform);
     }
 
     /** 
@@ -342,9 +387,9 @@ export class CanvasManager {
 
     reset() {
         this.transform = {
-            x: 0, 
+            x: 0,
             y: 0,
-            scale: 1 
+            scale: 1
         };
 
         this.panState = {

@@ -3,6 +3,7 @@ import { NodeModel } from "../models/nodeModels/nodeModel.js";
 import { BaseNodeModel } from "../models/nodeModels/baseNodeModel.js";
 import { ControllerCore } from "./controllerCore.js";
 import { EventBus } from "./eventBus.js";
+import { NodeView } from "../views/nodeView.js";
 import { IManager } from "./manager.js";
 
 /**
@@ -21,54 +22,17 @@ export class NodeManager extends IManager {
      * @param {ControllerCore} coreSpace
      */
     constructor(bus, viewport, world, coreSpace) {
-        super(bus,viewport,world,coreSpace);
+        super(bus, viewport, world, coreSpace);
 
         this.idGenerator = new BitmapIdGenerator();
         this.uidGenerator = new BitmapIdGenerator();
 
         // 节点列表
-        this.nodes = /**@type {map<nodeID, NodeModel>} */ new Map();
+        /**@type {Map<NodeID, BaseNodeModel>} */
+        this.nodes = new Map();
+        /**@type {Map<NodeID, NodeView>} */
+        this.nodeViews = new Map();
         this.maxIndex = 0;
-
-        // 连接列表
-        this.connections = [];
-
-        // 当前选中的节点
-        this.selectedNode = null;
-
-
-        // 当前选中的连接
-        this.selectedConnection = null;
-
-        // 缩放相关变量
-        this.transform = {
-            x: 0,
-            y: 0,
-            scale: 1
-        }
-
-        // 连接线相关变量
-        this.connectionState = {
-            isDragging: false,
-            startInfo: {
-                nodeId: null,
-                portId: null,
-                portDirect: null,
-            },
-            tempLine: null,
-            currentPortElement: null,
-            highlightedPorts: new Set(),
-        }
-
-        // 添加高亮状态缓存
-        this.highlightCache = {
-            highlightedNodes: new Set(),
-            dimmedConnections: new Set()
-        };
-
-        // this.basicActionManager = new BasicActionManager(this.nodes, this.connections, this.canvas, this.updateStatus);
-
-        // this.handleEvent();
 
         this._initListeners();
 
@@ -81,6 +45,7 @@ export class NodeManager extends IManager {
 
     _onEvent() {
         this.bus.on('canvas:click', this.clearNodeSelected.bind(this))
+        this.bus.on('addNode', this._addNode.bind(this))
     }
 
     get SelectedNodes() {
@@ -117,6 +82,10 @@ export class NodeManager extends IManager {
         return this.nodes.get(id);
     }
 
+    _addNode(e) {
+        this.addNode(e.detail.type, null, null);
+    }
+
     addNode(type, Px, Py) {
         let id = null;
         let uid = null;
@@ -131,10 +100,10 @@ export class NodeManager extends IManager {
         try {
             // 分配id
             id = this.idGenerator.generate();
+            uid = this.uidGenerator.generate();
             if (!id) {
                 throw new Error('节点数量已达到最大值');
             }
-            uid = this.uidGenerator.generate();
 
             // 创建节点视图
             const { nodeView, nodeModel } = NodeGenerator.createNode(String(id), uid, type, x, y);
@@ -144,19 +113,28 @@ export class NodeManager extends IManager {
 
             this._bindModelListeners(nodeModel);
 
-            this.nodes.set(id, nodeModel);
+            this.nodes.set(String(id), nodeModel);
 
-            // this.basicActionManager.addActionToHistory('addNode');
+
+            this.nodeViews.set(String(id), nodeView);
+
             this.bus.emit('nodeAdded', nodeModel);
 
-            // this.bringNodeToFront(uid);
         } catch (error) {
             console.error('添加节点失败:', error);
+            if (id) {
+                this.idGenerator.release(id);
+            }
             if (uid) {
-                this.idGenerator.release(uid);
+                this.uidGenerator.release(uid);
             }
             this.bus.emit('nodeAddFailed', error);
         }
+    }
+
+    _deleteNode(e) {
+        this.bus.emit('delete:node', { nodeId: e.detail.target });
+        this.deleteNode(e.detail.target);
     }
 
     /**
@@ -164,29 +142,36 @@ export class NodeManager extends IManager {
      */
     _bindModelListeners(nodeModel) {
 
-        nodeModel.addEventListener('mousedown', (/**@type {CustomEvent} */e) => {
+        nodeModel.addEventListener('delete', this._deleteNode.bind(this));
+        nodeModel.addEventListener('mousedown', (/**@type {CustomEvent}*/e) => {
+            switch(this.coreSpace.mode){
+                case 'select':
+                    nodeModel.setSelected(true);
+                    break;
+                case 'drag':
+                    this._handleNodeClick(e, nodeModel);
+                    break;
+                case 'focus':
+                    break;
+                default:
+                    break;
+
+            }
             const originalEvent = e.detail.originalEvent;
-            // 立即触发点击处理（鼠标按下时）
-            this._handleNodeClick(originalEvent, nodeModel);
 
-            // 取消选择时忽略拖动
-            if (!nodeModel.selected) return;
+            this.bus.emit('drag-start:node', { originalEvent, selectedNodes: this.coreSpace.selectedNodes });
 
-            const selectedNodes = [];
-            this.nodes.forEach(node => {
-                if (node.selected) selectedNodes.push(node);
-            })
 
-            // 开始潜在的拖动监听
-            this.bus.emit('drag-start:node', { originalEvent, selectedNodes });
         });
 
         nodeModel.addEventListener('mousedown:port', (/**@type {CustomEvent} */e) => {
-
             this.setNodeSelected(nodeModel, true);
+            this.bus.emit('drag-start:port', { ...e.detail, node: nodeModel });
+        });
 
-            this.bus.emit('drag-start:port', {...e.detail, node:nodeModel});
-        })
+        nodeModel.addEventListener('mouseup:port', (/**@type {CustomEvent} */e) => {
+            this.bus.emit('drag-end:port', { ...e.detail, node: nodeModel });
+        });
 
     }
 
@@ -235,421 +220,87 @@ export class NodeManager extends IManager {
         }
     }
 
-    // handleEvent() {
-    //     this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
-    //     this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this));
-    //     this.canvas.addEventListener('mousedown', this.handleCanvasMouseDown.bind(this));
-    //     this.canvas.addEventListener('change', this.handleCanvasChange.bind(this));
-
-    // }
-
-    // shouldIgnoreClick(target) {
-    //     return NodeManager.ignoreItem.some((item) => target.closest(item));
-    // }
-
-    // // 处理画布点击事件
-    // handleCanvasClick(e) {
-
-    //     if (this.shouldIgnoreClick(e.target)) {
-    //         return;
-    //     }
-    //     const nodeElement = e.target.closest('.node');
-
-    //     // 如果在节点上点击
-    //     if (nodeElement) {
-    //         // 如果不是多选（ctrl未按下）
-    //         if (!e.ctrlKey) {
-    //             document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
-    //         }
-
-    //         // 选中节点
-    //         nodeElement.classList.add('selected');
-    //         this.bringNodeToFront(nodeElement.uid);
-
-    //         // 更新连接线样式
-    //         this.updateSelectedNodesConnections();
-
-    //         // 获取焦点，使节点可以接收键盘事件
-    //         nodeElement.focus({ preventScroll: true });
-    //     } else {
-    //         // 如果点击的是画布空白处，取消选中所有节点
-    //         document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
-    //         // 取消焦点，使节点无法接收键盘事件
-    //         document.querySelectorAll('.node').forEach((n) => n.blur());
-
-    //         // 清除所有连接线高亮
-    //         this.clearConnectionHighlights();
-    //     }
-    //     return;
-
-    // }
-
-    // // === 右键菜单功能 ===
-
-    // // 处理右键菜单事件
-    // handleContextMenu(e) {
-    //     const nodeElement = e.target.closest('.node');
-    //     if (nodeElement) {
-    //         e.preventDefault(); // 阻止默认右键菜单
-    //         const nodeId = parseInt(nodeElement.uid);
-    //         this.showNodeContextMenu(nodeId, e.clientX, e.clientY);
-    //     } else {
-    //         // 如果点击的是画布空白处，隐藏右键菜单
-    //         this.hideNodeContextMenu();
-    //     }
-    // }
-
-    // // 创建节点的右键菜单
-    // createNodeContextMenu() {
-    //     const menu = document.createElement('div');
-    //     menu.className = 'node-context-menu';
-    //     menu.innerHTML = `
-    //     <div class="context-menu-item" data-action="delete">
-    //         <span class="menu-icon">🗑️</span>
-    //         <span class="menu-text">删除节点</span>
-    //     </div>
-    //     `;
-
-    //     // 添加菜单项点击事件
-    //     menu.addEventListener('click', (e) => {
-    //         e.preventDefault();
-    //         e.stopPropagation();
-
-    //         const menuItem = e.target.closest('.context-menu-item');
-    //         if (menuItem) {
-    //             const action = menuItem.dataset.action;
-    //             const nodeId = menu.dataset.nodeId;
-
-    //             if (action === 'delete' && nodeId) {
-
-    //                 // 先关闭菜单
-    //                 this.hideNodeContextMenu();
-
-    //                 // 删除操作
-    //                 this.deleteNode(nodeId);
-    //             }
-    //         } else {
-    //             this.hideNodeContextMenu();
-    //         }
-    //     });
-
-    //     // 点击其他地方关闭菜单
-    //     document.addEventListener('click', (e) => {
-    //         if (!menu.contains(e.target)) {
-    //             this.hideNodeContextMenu();
-    //         }
-    //     });
-
-    //     document.body.appendChild(menu);
-    //     return menu;
-    // }
-
-    // // 显示节点的右键菜单
-    // showNodeContextMenu(nodeId, x, y) {
-    //     let menu = document.querySelector('.node-context-menu');
-    //     if (!menu) {
-    //         menu = this.createNodeContextMenu();
-    //     }
-
-    //     menu.dataset.nodeId = nodeId;
-    //     menu.style.display = 'block';
-
-    //     // 确保菜单在视口内
-    //     const menuWidth = menu.offsetWidth || 150;
-    //     const menuHeight = menu.offsetHeight || 40;
-
-    //     const viewportWidth = window.innerWidth;
-    //     const viewportHeight = window.innerHeight;
-
-    //     let finalX = x;
-    //     let finalY = y;
-
-    //     // 防止菜单超出右边界
-    //     if (x + menuWidth > viewportWidth) {
-    //         finalX = x - menuWidth;
-    //     }
-
-    //     // 防止菜单超出下边界
-    //     if (y + menuHeight > viewportHeight) {
-    //         finalY = y - menuHeight;
-    //     }
-
-    //     menu.style.left = `${finalX}px`;
-    //     menu.style.top = `${finalY}px`;
-    // }
-
-    // // 隐藏节点的右键菜单
-    // hideNodeContextMenu() {
-    //     const menu = document.querySelector('.node-context-menu');
-    //     if (menu) {
-    //         menu.style.display = 'none';
-    //     }
-    // }
-
-    // // 处理鼠标按下事件
-    // handleCanvasMouseDown(e) {
-    //     const portElement = e.target.closest('.port-item');
-
-    //     if (e.button === 2) { // 右键点击
-    //         if (portElement) {
-    //             this.showConnectionInfo(portElement);
-    //             return;
-    //         }
-
-    //         this.handleContextMenu(e);
-    //         return;
-    //     }
-    //     const portDotElement = e.target.closest('.port-dot');
-    //     const nodeElement = e.target.closest('.node');
-
-    //     if (portDotElement) {
-
-    //         if (portElement) {
-    //             this.startPortDrag(e, portElement, nodeElement.uid);
-    //         } else {
-    //             throw new Error('端口未正确初始化：portElement为空');
-    //         }
-    //     }
-    //     if (nodeElement) {
-    //         const nodeId = parseInt(nodeElement.uid);
-    //         if (!nodeElement.locked) {
-    //             if (this.shouldIgnoreDrag(e.target)) {
-    //                 return;
-    //             }
-    //         }
-
-    //         this.startDrag(e, nodeId);
-    //         return;
-    //     }
-    //     else {
-    //         // 如果点击的是画布空白处，取消选中所有节点
-    //         document.querySelectorAll('.node').forEach((n) => n.classList.remove('selected'));
-    //     }
-
-
-    // }
-
-    // // === 拖拽功能实现 ===
-
-    // // 检查是否应该忽略拖拽
-    // shouldIgnoreDrag(target) {
-    //     return NodeManager.ignoreDragItem.some((item) => target.closest(item));
-    // }
-
-    // // 开始拖拽
-    // startDrag(event, nodeId) {
-    //     event.preventDefault();
-    //     event.stopPropagation();
-
-    //     const node = this.getNode(nodeId);
-    //     if (!node) return;
-
-    //     // 获取节点当前位置
-    //     const offsetPosition = viewportToCanvas(this.viewport, event.clientX, event.clientY, this.transform);
-
-    //     // 记录拖拽状态
-
-    //     // 计算鼠标相对于节点的偏移
-    //     this.dragState = {
-    //         isDragging: true,
-    //         nodeId: nodeId,
-    //         offsetX: offsetPosition.x - node.x,
-    //         offsetY: offsetPosition.y - node.y,
-    //         initialX: node.x,
-    //         initialY: node.y,
-    //         draggedNode: node
-    //     };
-
-    //     node.element.classList.add('selected');
-
-    //     // 获取焦点，使节点可以接收键盘事件
-    //     node.element.focus({ preventScroll: true });
-
-    //     // 添加拖拽样式
-    //     node.element.classList.add('dragging');
-
-    //     // 将节点置于顶层
-    //     this.bringNodeToFront(nodeId);
-
-    //     // 添加全局事件监听
-    //     document.addEventListener('mousemove', this.handleDrag.bind(this));
-    //     document.addEventListener('mouseup', this.stopDrag.bind(this));
-
-    //     this.updateStatus(`拖动节点: ${node.config.title} #${nodeId}`);
-    // }
-
-    // // 处理拖拽
-    // handleDrag(event) {
-    //     if (!this.dragState.isDragging || !this.dragState.draggedNode) return;
-
-    //     event.preventDefault();
-
-    //     const node = this.dragState.draggedNode;
-
-    //     // 计算新位置
-    //     const newPosition = viewportToCanvas(this.viewport, event.clientX, event.clientY, this.transform);
-    //     const newX = newPosition.x - this.dragState.offsetX;
-    //     const newY = newPosition.y - this.dragState.offsetY;
-
-    //     // // 边界检查
-    //     // newX = Math.max(0, Math.min(newX, canvas.clientWidth - node.element.offsetWidth));
-    //     // newY = Math.max(0, Math.min(newY, canvas.clientHeight - node.element.offsetHeight));
-
-    //     // 更新节点位置
-    //     node.x = newX;
-    //     node.y = newY;
-
-    //     // 更新DOM元素位置
-    //     node.element.style.left = newX + 'px';
-    //     node.element.style.top = newY + 'px';
-
-    //     // 实时更新连接线位置
-    //     this.updateNodeConnections(node.uid);
-
-    // }
-
-    // // 停止拖拽
-    // stopDrag(event) {
-    //     if (!this.dragState.isDragging) return;
-
-    //     const node = this.dragState.draggedNode;
-    //     if (node) {
-    //         node.element.classList.remove('dragging');
-
-    //         // 检查位置是否有变化
-    //         const moved = node.x !== this.dragState.initialX || node.y !== this.dragState.initialY;
-    //         if (moved) {
-    //             updateStatus(`移动节点到: (${Math.round(node.x)}, ${Math.round(node.y)})`);
-    //         }
-    //     }
-
-    //     // 重置拖拽状态
-    //     this.dragState = {
-    //         isDragging: false,
-    //         nodeId: null,
-    //         offsetX: 0,
-    //         offsetY: 0,
-    //         initialX: 0,
-    //         initialY: 0,
-    //         draggedNode: null
-    //     };
-
-    //     // 移除事件监听
-    //     document.removeEventListener('mousemove', this.handleDrag);
-    //     document.removeEventListener('mouseup', this.stopDrag);
-    // }
-
-    // // 更新单个连接线的位置
-    // updateConnectionPosition(connection) {
-    //     if (!connection) return;
-
-    //     const path = connection.line || document.querySelector(`.connection-path[data-connection-id="${connection.id}"]`);
-    //     if (!path) return;
-
-    //     const fromNode = this.getNode(connection.fromNodeId);
-    //     const toNode = this.getNode(connection.toNodeId);
-
-    //     if (!fromNode || !toNode) return;
-
-    //     // 获取端口位置
-    //     const fromPos = this.getPortDotPosition(connection.fromNodeId, connection.fromPortId);
-    //     const toPos = this.getPortDotPosition(connection.toNodeId, connection.toPortId);
-
-    //     // 更新路径
-    //     const newPath = this.createCurvedPath(fromPos.x, fromPos.y, toPos.x, toPos.y, 'out', 'in');
-    //     path.setAttribute('d', newPath);
-
-    //     // 更新连接对象的line引用
-    //     connection.line = path;
-    // }
-
-    // // 更新节点的所有连接线
-    // updateNodeConnections(nodeId) {
-    //     const node = this.getNode(nodeId);
-    //     if (!node) return;
-
-    //     // 收集所有需要更新的连接线
-    //     const connectionsToUpdate = node.getAllConnections();
-
-    //     // 更新所有相关连接线
-    //     connectionsToUpdate.forEach(connection => {
-    //         this.updateConnectionPosition(connection);
-    //     });
-    // }
-
     /**
-         * 将指定节点置顶
-         * @param {string} nodeId 
-         */
-    // bringToFront(nodeId) {
-    //     const node = this.nodes.get(nodeId);
-    //     if (!node) return;
+     * @param {NodeID} nodeId
+     */
+    deleteNode(nodeId) {
 
-    //     // 1. 增加全局最高索引
-    //     this.maxZIndex += 1;
+        if (typeof nodeId === 'number') {
+            nodeId = String(nodeId);
+        }
 
-    //     // 2. 更新节点的 zIndex
-    //     // 注意：BaseNodeModel 里的 setZIndex 需要真正修改属性并 emit
-    //     node.setZIndex(this.maxZIndex);
-    // }
+        let node = this.nodes.get(nodeId);
+        if (!node) {
+            console.error(`无法找到删除目标${nodeId}`)
+            return;
+        }
+        this.idGenerator.release(nodeId);
 
-    // 删除节点
-    // deleteNode(nodeId) {
-    //     this.updateStatus(`删除节点中... `);
-    //     if (typeof nodeId !== 'number' && typeof nodeId !== 'string') {
-    //         console.error('无效的节点ID:', nodeId);
-    //         return;
-    //     }
-    //     if (typeof nodeId == 'string') {
-    //         nodeId = parseInt(nodeId);
-    //     }
+        if (node instanceof NodeModel) {
+            this.uidGenerator.release(node.uid);
+        }
 
-    //     const node = this.getNode(nodeId);
-    //     if (!node) {
-    //         console.error('未找到节点:', nodeId);
-    //         this.updateStatus(`删除失败: 未找到节点 ${nodeId}`);
-    //         return;
-    //     }
+        this.nodes.delete(nodeId);
 
-    //     // 从DOM中移除节点
-    //     if (node.element && node.element.parentNode) {
-    //         node.element.parentNode.removeChild(node.element);
-    //     }
+        if (this.nodes.size === 0) {
+            this.bus.emit('nodeRemoved:All')
+        }
 
-    //     // 从connections中移除连接线
-    //     const connectionsToRemove = this.connections.filter(conn =>
-    //         conn.from.nodeId === nodeId || conn.to.nodeId === nodeId
-    //     );
-    //     connectionsToRemove.forEach(conn => {
-    //         this.removeConnection(conn.uid);
-    //     });
-    //     // 从nodes集合中移除
-    //     this.nodes.delete(nodeId);
-    //     this.idGenerator.release(nodeId);
+        if (this.coreSpace.setting.quickDelete){
+            this.nodeViews.get(nodeId).element.remove();
+            this.nodeViews.delete(nodeId);
+            return;
+        }
+
+        node.destroy();
+
+        let nodeView = this.nodeViews.get(nodeId);
+
+        if (nodeView) {
+            nodeView.destroy()
+        }
+
+        this.nodeViews.delete(nodeId);
 
 
-    //     this.updateStatus(`已删除节点: ${node.config.title} #${nodeId}`);
-    // }
+        node = null;
+        nodeView = null;
+    }
+
+    hiddenNode(nodeId) {
+        let node = this.nodes.get(nodeId);
+        if (!node) {
+            console.error(`无法找到隐藏目标${nodeId}`)
+            return;
+        }
+    }
 
     // 删除所有节点
     clear() {
+
+        if (this.coreSpace.setting.quickClear) {
+            const test_nodes = this.world.querySelectorAll(".test-node");
+            test_nodes.forEach((node) => node.remove());
+            const nodes = this.world.querySelectorAll(".node");
+            nodes.forEach((node) => node.remove());
+
+            this.bus.emit('nodeRemoved:All')
+        } else {
+            this.nodes.forEach((node) => {
+                this.deleteNode(node.id);
+            })
+        }
+
         this.nodes.clear();
-        this.connections = [];
+        this.nodeViews.clear();
         this.idGenerator.reset();
+        this.uidGenerator.reset();
         this.highlightCache = {
             highlightedNodes: new Set(),
             dimmedConnections: new Set()
         };
 
-        const test_nodes = this.world.querySelectorAll(".test-node");
-        test_nodes.forEach((node) => node.remove());
-        const nodes = this.world.querySelectorAll(".node");
-        nodes.forEach((node) => node.remove());
-        const connections = this.world.querySelectorAll(".connection-path");
-        connections.forEach((connection) => connection.remove());
-
-        this.bus.emit('清理完毕');
-
+        this.bus.emit('ClearOver:nodeManager', {});
     }
 
 
@@ -715,17 +366,29 @@ class BitmapIdGenerator {
         return null; // 没有可用ID
     }
 
-    // 释放ID
-    release(uid) {
-        if (uid < 1 || uid > this.maxSize) {
-            throw new Error(`uid ${uid} 超出范围 (1-${this.maxSize})`);
+    /** 
+     * 释放ID
+     * @param {number|string} id - 要释放的ID
+     */
+    release(id) {
+
+        if (typeof id != 'number') {
+            if (typeof id == 'string') {
+                id = parseInt(id);
+            } else {
+                throw new Error('无效的ID类型');
+            }
         }
 
-        if (this._checkBit(uid - 1)) {
-            this._clearBit(uid - 1);
+        if (id < 1 || id > this.maxSize) {
+            throw new Error(`id ${id} 超出范围 (1-${this.maxSize})`);
+        }
+
+        if (this._checkBit(id - 1)) {
+            this._clearBit(id - 1);
             // 如果释放的ID比nextId小，更新nextId
-            if (uid < this.nextId) {
-                this.nextId = uid;
+            if (id < this.nextId) {
+                this.nextId = id;
             }
             return true;
         }

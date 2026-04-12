@@ -6,4 +6,14 @@ export class HubProp extends BaseProp {
         this.layout = layout; // single, double, mix
         this.properties = properties;
     }
+
+    destroy(){
+        if (this.properties){
+            this.properties.forEach((p) => {
+                p.destroy();
+            })
+        }
+
+        super.destroy();
+    }
 }

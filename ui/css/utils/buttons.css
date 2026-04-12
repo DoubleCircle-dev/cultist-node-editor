@@ -57,6 +57,51 @@
     background: #454545;
 }
 
+.setting-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    background: #3a3a3a;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--transition-fast);
+
+}
+
+.setting-btn:hover {
+    background: #454545;
+}
+
+/* 收纳按钮行 */
+.sidebar-toggle {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px;
+    border-bottom: 1px solid #3a3a48;
+    margin-bottom: 8px;
+}
+
+.collapse-btn {
+    background: #3a3a4e;
+    border: none;
+    color: #eee;
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collapse-btn:hover {
+    background: #5a6e8a;
+}
+
 /* 调试按钮组 */
 .debug-buttons {
     display: flex;

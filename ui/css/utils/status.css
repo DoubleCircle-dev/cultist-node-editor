@@ -1,4 +1,5 @@
-status-bar {
+.status-bar {
+    position: relative;
     height: 24px;
     background: var(--accent-primary);
     color: white;

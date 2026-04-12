@@ -1,10 +1,12 @@
 import { EditorConfig } from "./constant.js";
+import { BaseNodeModel } from "../models/nodeModels/baseNodeModel.js";
 import { NodeManager } from "./nodeManager.js";
 import { CanvasManager } from "./canvasManager.js";
 import { UIManager } from "./uiManager.js";
 import { NodeActionManager } from "./nodeActionManager.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { EventBus } from "./eventBus.js";
+import { PanelManager } from "./panelManager.js";
 
 export class ControllerCore {
 
@@ -27,8 +29,20 @@ export class ControllerCore {
 
         this.connectionManager = new ConnectionManager(this.bus, this.viewport, this.world, this);
 
+        this.panelManager = new PanelManager(this.bus, this.viewport, this.world, this);
+
+        this.setting = {
+            refreshMovingConnection: true,
+            checkConnectionPos: false,
+            quickClear: true,
+            quickDelete: true,
+        }
     }
 
+    /**
+     * @param {number} x
+     * @param {number} y 
+     */
     viewportToWorld(x, y) {
         if (!this.canvasManager) {
             console.error("无法转化坐标，canvasManager未初始化");
@@ -36,7 +50,10 @@ export class ControllerCore {
         }
         return this.canvasManager.viewportToWorld(x, y);
     }
-
+    /**
+     * @param {number} x
+     * @param {number} y 
+     */
     worldToViewport(x, y) {
         if (!this.canvasManager) {
             console.error("无法转化坐标，canvasManager未初始化");
@@ -44,13 +61,29 @@ export class ControllerCore {
         return this.canvasManager.worldToViewport(x, y);
     }
 
-    get Nodes() {
+    get nodes() {
         const nodes = this.nodeManager.nodes;
         return Array.from(nodes.values());
     }
 
-    get SelectedNodes() {
-        return this.nodeManager.SelectedNodes;
+    get mode(){
+        if (!this.canvasManager) {
+            console.error("无法获取模式，canvasManager未初始化");
+            return null;
+        }
+        return this.canvasManager.mode;
+    }
+
+    get selectedNodes() {
+        /**
+         * @type {BaseNodeModel[]}
+         */
+        const selectedNodes = [];
+        this.nodes.forEach(node => {
+            if (node.selected) selectedNodes.push(node);
+        });
+
+        return selectedNodes;
     }
 
     get ViewCenter() {
@@ -61,10 +94,24 @@ export class ControllerCore {
         // this.historyManager.clear();
 
         this.nodeManager.clear();
-        // this.connectionManager.clear();
+        this.connectionManager.clear();
         // this.nodeActionManager.clear();
+
+
 
         this.canvasManager.reset();
         // this.uiManager.reset();
+
+        if (this.canvasManager) {
+            this.forceRepaint();
+            // console.log('刷新页面')
+        }
+
+
+    }
+
+    forceRepaint() {
+        this.canvasManager.refresh();
+
     }
 }

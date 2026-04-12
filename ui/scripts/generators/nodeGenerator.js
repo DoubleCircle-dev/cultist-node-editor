@@ -24,10 +24,11 @@ export class NodeGenerator {
 
         const nodeModel = new NodeModel(uid, id, type, x, y, nodeTypeConfig);
 
+        const nodeRef = new WeakRef(nodeModel);
 
-        nodeModel.setProperties(this.createProps(id, nodeTypeConfig.properties, nodeModel));
+        nodeModel.setProperties(this.createProps(id, nodeTypeConfig.properties, nodeRef));
 
-        nodeModel.setExProps(this.createRecordProps(id, nodeTypeConfig.exProperties, nodeModel));
+        nodeModel.setExProps(this.createRecordProps(id, nodeTypeConfig.exProperties, nodeRef));
 
         nodeModel.initialize();
 
@@ -39,6 +40,7 @@ export class NodeGenerator {
     /**
      * @param {NodeID} nodeID
      * @param {PropConfig[]} properties
+     * @param {WeakRef<BaseNodeModel>} node
      * @returns {BaseProp[]}
     */
     static createProps(nodeID, properties, node = null) {
@@ -56,6 +58,7 @@ export class NodeGenerator {
     /**
      * @param {NodeID} nodeID
      * @param {Record<string, PropConfig[]>} properties
+     * @param {WeakRef<BaseNodeModel>} node
      * @returns {Record<string, HubProp>}
      */
     static createRecordProps(nodeID, properties, node = null) {

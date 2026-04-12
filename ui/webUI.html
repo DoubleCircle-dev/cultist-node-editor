@@ -8,11 +8,17 @@
     <!-- 根目录 CSS：变量、基础样式、布局 -->
     <link rel="stylesheet" href="css/variables.css" />
     <link rel="stylesheet" href="css/style.css" />
-    <link rel="stylesheet" href="css/layout.css" />
+
+    <!-- layout CSS -->
+    <link rel="stylesheet" href="css/layout/layout.css" />
+    <link rel="stylesheet" href="css/layout/side_bar.css" />
+    <link rel="stylesheet" href="css/layout/tab_bar.css" />
+    <link rel="stylesheet" href="css/layout/sub_bar.css" />
 
     <!-- 工具类 CSS -->
+    <link rel="stylesheet" href="css/utils/panel.css" />
+    <link rel="stylesheet" href="css/utils/buttons.css" />
     <link rel="stylesheet" href="css/utils/status.css" />
-    <link rel="stylesheet" href="css/utils/layout_tools.css" />
     <link rel="stylesheet" href="css/utils/viewControl.css" />
 
     <!-- 组件 CSS（按需调整顺序） -->
@@ -27,158 +33,124 @@
   </head>
   <body>
     <div class="container">
-      <div class="sidebar">
-        <div class="node-palette">
-          <h3>节点类型</h3>
-          <button class="btn-node-type" onclick="addNode('recipes')">
-            📖 recipe
-          </button>
-          <button class="btn-node-type" onclick="addNode('elements')">
-            📇 element/aspect
-          </button>
-          <button class="btn-node-type" onclick="addNode('decks')">
-            🗃 deck
-          </button>
-          <button class="btn-node-type" onclick="addNode('verbs')">
-            ⚡ verb
-          </button>
-          <button class="btn-node-type" onclick="addNode('text')">
-            📝 文本
-          </button>
-        </div>
-
-        <div class="editor-palette">
-          <h3>操作</h3>
-          <button
-            class="btn btn-secondary"
-            style="width: auto"
-            onclick="testCommunication()"
-          >
-            🔌 通讯测试
-          </button>
-          <button
-            class="btn btn-secondary"
-            style="width: auto"
-            onclick="generateTest()"
-          >
-            🧪 生成测试
-          </button>
-          <button
-            class="btn btn-secondary"
-            style="width: auto"
-            onclick="toggleConsole()"
-          >
-            🔍 控制台
-          </button>
-          <button
-            class="btn btn-secondary"
-            style="width: auto"
-            onclick="customCheck()"
-          >
-            ⚙️ 自定义检测
-          </button>
-          <button class="btn btn-secondary" onclick="generateTest()">
-            💾 保存为 JSON
-          </button>
-          <button class="btn btn-secondary" onclick="loadGraph()">
-            📂 加载 JSON
-          </button>
-          <button
-            id="btn-readMod"
-            class="btn btn-secondary"
-            onclick="readMod()"
-          >
-            🔧 读取mod
-          </button>
-          <button class="btn" onclick="clearCanvas()">🗑️ 清空画布</button>
-        </div>
-
-        <!-- 调试生成任意节点 -->
-        <div
-          style="
-            margin-top: 12px;
-            border-top: 1px solid #444;
-            padding-top: 10px;
-          "
-        >
-          <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #ffaa00">
-            调试
-          </h4>
-          <div style="display: flex; gap: 5px">
-            <select
-              id="debugNodeSelect"
-              style="
-                flex: 1;
-                padding: 6px;
-                background: #2a2a2a;
-                color: #eee;
-                border: 1px solid #555;
-                border-radius: 4px;
-                width: 50%;
-              "
-            ></select>
-            <button
-              class="btn btn-secondary"
-              style="width: auto"
-              onclick="addSelectedDebugNode()"
-            >
-              添加
-            </button>
-          </div>
-        </div>
-
-        <div class="node-palette">
-          <h3>状态</h3>
-          <div id="status">等待命令...</div>
-          <span id="canvas-scale-display" style="margin-left: auto">100%</span>
-        </div>
-      </div>
-
       <div class="editor-area">
         <div class="toolbar">
-          <button class="btn" style="width: auto" onclick="addTestNode()">
-            添加测试节点
-          </button>
-          <button class="btn" style="width: auto" onclick="addBlankNode()">
-            引入json文件
-          </button>
-          <button class="btn" style="width: auto" onclick="addTestNode()">
-            引入素材文件
-          </button>
-          <button class="btn" style="width: auto" onclick="addTestNode()">
-            原版文件（！如果修改过请引用修改后的文件）
-          </button>
+          <div class="editor-palette">
+            <button class="btn btn-secondary" onclick="generateTest()">
+              💾 保存
+            </button>
+            <button class="btn btn-secondary" onclick="loadGraph()">
+              📂 加载
+            </button>
+            <button
+              id="btn-readMod"
+              class="btn btn-secondary"
+              onclick="readMod()"
+            >
+              🔧 读取mod
+            </button>
+            <button class="btn" onclick="clearCanvas()">🗑️ 清空画布</button>
+          </div>
           <span style="margin-left: auto; font-size: 12px; color: #888"
             >节点编辑器 v0.1</span
           >
+          <button
+            class="setting-btn"
+            id="settingBtn"
+            title=""
+            onclick="openFilesPage()"
+          >
+            ⚙️
+          </button>
         </div>
 
-        <div class="canvas-viewport" id="canvas-container">
-          <div class="canvas-world" id="canvas">
-            <!-- 这里将显示节点 -->
-            <div
-              id="placeholder"
-              style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                text-align: center;
-                color: #666;
-              "
-            >
-              <div style="font-size: 48px; margin-bottom: 16px">🧩</div>
-              <div style="font-size: 16px; margin-bottom: 8px">
-                节点编辑器已就绪
-              </div>
-              <div style="font-size: 12px">
-                从左侧面板添加节点，或点击上方按钮添加测试节点
+        <div class="tabs-panel">
+          <div class="tabs-scroll">
+            <div class="tabs-list" id="pageTabsList">
+              <!-- 动态选项卡会由你的js生成，示例静态占位 -->
+              <div class="page-tab active" data-page-id="page_1">
+                <span class="tab-name">未命名-1</span>
+                <button class="tab-close" title="关闭页面">✕</button>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="status-bar">
+        <div class="sublevel-bar">
+          <div class="level-path">
+            <span id="levelBreadcrumb">/</span>
+          </div>
+        </div>
+
+        <div class="canvas-container" id="canvas-basic">
+          <div class="sidebar">
+            <div id="sidebarContent" class="sidebar-content">
+              <!-- 上方面板切换按钮组 -->
+              <div class="sidebar-top-actions">
+                <button
+                  id="toggleAddPanelBtn"
+                  class="sidebar-main-btn"
+                  onclick="togglePanel('addNodesPanel')"
+                >
+                  <span class="icon-emoji">➕</span>
+                  添加节点
+                </button>
+                <button
+                  id="toggleFindPanelBtn"
+                  class="sidebar-main-btn"
+                  onclick="togglePanel('findNodesPanel')"
+                >
+                  <span class="icon-emoji">🔍</span>
+                  查找节点
+                </button>
+                <button
+                  id="toggleFilePanelBtn"
+                  class="sidebar-main-btn"
+                  onclick="togglePanel('openFilePanel')"
+                >
+                  <span class="icon-emoji">📂</span>
+                  查找文件
+                </button>
+              </div>
+
+              <!-- 下方面板切换按钮组 -->
+              <div class="sidebar-bottom-actions">
+                <button id="toggleHelpPanelBtn" class="sidebar-main-btn">
+                  <span class="icon-emoji">❓</span>
+                  帮助
+                </button>
+                <button id="toggleShortcutsPanelBtn" class="sidebar-main-btn">
+                  <span class="icon-emoji">⌨️</span>
+                  快捷键
+                </button>
+              </div>
+            </div>
+
+            <div id="expandPanel" class="expand-panel-container hidden"></div>
+
+            <div
+              id="bottomPanel"
+              class="bottom-expand-panel-container hidden"
+            ></div>
+          </div>
+
+          <div class="canvas-container" id="canvas-viewport">
+            <div class="canvas-container" id="canvas-world">
+              <!-- 这里将显示节点 -->
+              <div id="placeholder">
+                <div style="font-size: 48px; margin-bottom: 16px">🧩</div>
+                <div style="font-size: 16px; margin-bottom: 8px">
+                  节点编辑器已就绪
+                </div>
+                <div style="font-size: 12px">
+                  从左侧面板添加节点，或点击上方按钮添加测试节点
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-bar" id="status-bar-under">
           <span id="status-text">就绪</span>
           <span
             id="mouse-coords"
@@ -244,14 +216,14 @@
       </div>
     </div>
   </body>
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script>
     eruda.init({
       display: false,
     });
     eruda.get('entryBtn').hide();
     eruda.hide();
-  </script>
+  </script> -->
   <script type="module" src="scripts/index.js"></script>
   <script type="module" src="scripts/debug.js"></script>
   <!-- <script src="scripts/webview.js"></script> -->

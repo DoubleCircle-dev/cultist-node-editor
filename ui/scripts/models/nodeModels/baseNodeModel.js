@@ -1,6 +1,8 @@
+import { IEventTarget } from '../IEventTarget.js';
 import { BaseProp } from '../propModels/baseProp.js';
 
-export class BaseNodeModel extends EventTarget {
+
+export class BaseNodeModel extends IEventTarget {
 
 
     /**
@@ -20,6 +22,7 @@ export class BaseNodeModel extends EventTarget {
         this.id = id;
         this.type = type;
 
+        this.properties = properties;
         // 显示属性
         this.setProperties(properties);
 
@@ -124,19 +127,8 @@ export class BaseNodeModel extends EventTarget {
 
     }
 
-    /**
-     * 简单的事件分发辅助函数
-     * @param {string} type - 事件类型
-     * @param {any} detail - 事件详细信息
-     */
-    emit(type, detail) {
-        this.dispatchEvent(new CustomEvent(type, { detail }));
-    }
-
     handleMouseDown(originalEvent) {
-        this.dispatchEvent(new CustomEvent('mousedown', {
-            detail: { originalEvent, node: this }
-        }));
+        this.emit('mousedown', { originalEvent, node: this })
     }
 
     /**
@@ -151,6 +143,35 @@ export class BaseNodeModel extends EventTarget {
             connections: { inputs: this.connections.inputs, outputs: this.connections.outputs },
             ui: { collapsed: this.collapsed }
         };
+    }
+
+    destroy() {
+        this.removeAllEventListeners();
+        this.id = null;
+        this.type = null;
+
+        if (this.properties){
+            this.properties.forEach((p) => {
+                p.destroy();
+            })
+        }
+
+        this.properties = null;
+
+        this.color = null;
+        this.title = null;
+        this.icon = null;
+
+        // 连接管理
+        this.connections = null;
+
+        // UI状态
+        this.selected = null;
+        this.collapsed = null;
+        this.x = null;
+        this.y = null;
+        this.width = null;
+        this.height = null;
     }
 
     /**

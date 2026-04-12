@@ -1,23 +1,25 @@
 export class EventBus extends EventTarget {
     constructor() {
-        super();        
+        super();
     }
 
     /**
      * 订阅（监听）事件
      * @param {string} eventName - 事件名称
-     * @param {EventListenerOrEventListenerObject} listener - 回调函数
+     * @param {(e: CustomEvent) => void} listener - 回调函数
      */
     on(eventName, listener) {
+        // @ts-expect-error CustomEvent 回调与 EventListener 不兼容，但运行时安全
         this.addEventListener(eventName, listener);
     }
 
     /**
      * 取消订阅事件
      * @param {string} eventName - 事件名称
-     * @param {EventListenerOrEventListenerObject} listener - 回调函数
+     * @param {(e: CustomEvent) => void} listener - 回调函数
      */
     off(eventName, listener) {
+        // @ts-expect-error CustomEvent 回调与 EventListener 不兼容，但运行时安全
         this.removeEventListener(eventName, listener);
     }
 

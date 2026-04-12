@@ -46,22 +46,6 @@
     height: 100%;
 }
 
-/* 只有当属性标记为 'none' 时，槽位内不渲染内容，但 grid 依然保留宽度 */
-.port-dot.none {
-    display: none;
-}
-
-/* 隐式端点：不连接且未悬停时隐藏内容，但保留 div 结构 */
-.port-dot.implicit {
-    opacity: 0;
-    pointer-events: auto;
-    /* 依然允许鼠标悬停触发 */
-}
-
-.prop-row:hover .port-dot.implicit,
-.port-dot.connected {
-    opacity: 1;
-}
 
 .prop-input {
     width: 100%;

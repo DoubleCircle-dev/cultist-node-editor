@@ -21,9 +21,7 @@ export class OptionsProp extends BaseProp {
         super.setValue(value);
 
         if (this.isModeSwitcher) {
-            this.dispatchEvent(new CustomEvent('changeMode:prop', {
-                detail: { value: value }
-            }));
+            this.emit('changeMode:prop', { value: value });
         }
     }
 }

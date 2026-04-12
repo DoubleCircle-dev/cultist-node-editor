@@ -23,9 +23,23 @@ export class PortProp extends BaseProp {
         }
     }
 
+    destroy() {
+        if (this.inputPort) {
+            this.inputPort.destroy();
+        }
+        if (this.outputPort) {
+            this.outputPort.destroy();
+        }
+        super.destroy();
+
+    }
 
     onPortEvent(eventName, detail){
         this.onEvent(eventName, detail);
+    }
+
+    get isConnected() {
+        return this.inputPort && this.inputPort.isConnected || this.outputPort && this.outputPort.isConnected;
     }
 
     toJSON() {

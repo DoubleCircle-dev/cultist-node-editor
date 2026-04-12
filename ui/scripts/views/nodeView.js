@@ -7,65 +7,75 @@ export class NodeView {
      * @param {NodeModel} model
      */
     constructor(model) {
+        this.propListeners = [];
+
         // 初始化节点模型
         this.model = model;
         // 创建DOM元素并赋值给实例属性
         this.element = this._createDOM();
 
+
         this._initListeners();
     }
 
-    _initListeners() {
-        // 核心：监听 Model 的变化
-        // 监听位置变化事件，当模型位置改变时更新DOM元素的位置
-        this.model.addEventListener('change:position', (/** @type {CustomEvent} */ e) => {
-            // 从事件详情中获取x和y坐标
-            const { x, y } = (e).detail;
-            this.element.style.left = x + 'px';
-            this.element.style.top = y + 'px';
-        });
+    // 提取回调
+    _onPositionChange = (e) => {
+        const { x, y } = e.detail;
+        this.element.style.left = x + 'px';
+        this.element.style.top = y + 'px';
+    };
 
-        // 监听属性变化事件
-        this.model.addEventListener('change:property', (/** @type {CustomEvent} */ e) => {
-            // 根据属性 key 找到对应的 input 更新其显示值
-            this._updateInputDisplay(e.detail.key, e.detail.value);
-        });
+    _onPropertyChange = (e) => {
+        this._updateInputDisplay(e.detail.key, e.detail.value);
+    };
 
-        // 监听UI变化事件
-        this.model.addEventListener('change:select', (/** @type {CustomEvent} */ e) => {
-            if (e.detail.isSelected) {
-                this.element.classList.add('selected');
-            } else {
-                this.element.classList.remove('selected');
-            }
-        });
-
-        this.model.addEventListener('change:rect', (/** @type {CustomEvent} */ e) => {
-            this.element.style.width = e.detail.width + 'px';
-            this.element.style.height = e.detail.height + 'px';
+    _onSelectChange = (e) => {
+        if (e.detail.isSelected) {
+            this.element.classList.add('selected');
+        } else {
+            this.element.classList.remove('selected');
         }
-        );
+    };
 
-        this.model.addEventListener('changeMode:node', (/** @type {CustomEvent} */ e) => {
-            this.redraw();
-        })
+    _onRectChange = (e) => {
+        this.element.style.width = e.detail.width + 'px';
+        this.element.style.height = e.detail.height + 'px';
+    };
 
-        // 防止触发画布鼠标按下
-        this.element.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
+    _onModeChange = () => {
+        this.redraw();
+    };
 
-                // 将原生事件传递给对应的 NodeModel
-            this.model.handleMouseDown(e);
+    _onMouseDown = (e) => {
+        e.stopPropagation();
+        this.model.handleMouseDown(e);
+    };
 
-        })
+    _onNodeDelete = (e) => {
+        if (e.key === 'Delete') {
+            this.model.emit('delete', { target: this.model.id });
+        }
+    };
 
-
+    _initListeners() {
+        this.model.addEventListener('change:position', this._onPositionChange);
+        this.model.addEventListener('change:property', this._onPropertyChange);
+        this.model.addEventListener('change:select', this._onSelectChange);
+        this.model.addEventListener('change:rect', this._onRectChange);
+        this.model.addEventListener('changeMode:node', this._onModeChange);
+        this.element.addEventListener('mousedown', this._onMouseDown);
+        this.element.addEventListener('keydown', this._onNodeDelete);
     }
 
+    // 卸载所有监听器
     _removeListeners() {
-        this.model.removeEventListener('change:position', this._onPositionChange);
-        this.model.removeEventListener('change:property', this._onPropertyChange);
+        this.element.removeEventListener('mousedown', this._onMouseDown);
+        this.element.removeEventListener('keydown', this._onNodeDelete)
+        this.propListeners.forEach((l) => {
+            l.target.removeEventListener(l.type, l.listener);
+        })
     }
+
 
     // 创建节点DOM元素
     _createDOM() {
@@ -117,7 +127,6 @@ export class NodeView {
         return header;
     }
 
-    // TODO
     _createProperties() {
         const properties = document.createElement('div');
         properties.className = 'node-properties';
@@ -132,13 +141,13 @@ export class NodeView {
                 separateFlag = false;
             }
             const propView = PropView.renderProp(prop);
-            properties.appendChild(propView);
+            this.propListeners.push(...propView.listeners);
+            properties.appendChild(propView.element);
 
             if (prop.type === 'hub') {
                 properties.appendChild(this._createSeparator());
                 separateFlag = true;
             }
-
         })
 
         if (separateFlag) {
@@ -154,14 +163,6 @@ export class NodeView {
         return separator;
     }
 
-    _createPortHub() {
-        const portHub = document.createElement('div');
-
-
-        return portHub;
-    }
-
-
     _updateInputDisplay(key, value) {
 
     }
@@ -169,10 +170,10 @@ export class NodeView {
     redraw() {
         const world = this.element.parentElement;
         this.element.remove();
+        this._removeListeners();
         this.element = this._createDOM();
         this._initListeners();
         world.appendChild(this.element);
-
     }
 
     onMounted() {
@@ -184,6 +185,46 @@ export class NodeView {
         // 这样后续的 fitView 就能直接读取 model.width 而不触发重排
         this.model.width = this.element.offsetWidth;
         this.model.height = this.element.offsetHeight;
+    }
+
+    removeChild(node) {
+        // 防止重复处理（可选，用于防御循环引用）
+        if (node.__isRemoving) return;
+        node.__isRemoving = true;
+
+        // 1. 如果是元素节点，先递归删除所有子节点
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            // 复制一份快照，避免遍历时动态修改 childNodes
+            const children = Array.from(node.childNodes);
+            for (const child of children) {
+                
+                this.removeChild(child);  // 递归删除子节点
+
+            }
+        }
+
+        // 2. 从父节点中移除当前节点（如果存在父节点）
+        if (node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
+
+        delete node.__isRemoving;
+
+    }
+
+    destroy() {
+
+        this.model = null;
+        this._removeListeners();
+        this.removeChild(this.element);
+
+
+
+        this.element.remove();
+        this.element.innerHTML = '';
+        // 创建DOM元素并赋值给实例属性
+        this.element = null;
+
     }
 
 }

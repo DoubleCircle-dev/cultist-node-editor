@@ -1,16 +1,24 @@
+import { IEventTarget } from "./IEventTarget.js";
 import { PortProp } from "./propModels/portProp.js";
 
-export class PortModel extends EventTarget {
+export class PortModel extends IEventTarget {
     /**
      * 检查当前端口是否可以连接到目标端口
      * @param {string} id - 目标端口对象
-     * @param {'input'|'output'} direction -连接方向
+     * @param {'input'|'output'|'bi'} direction -连接方向
      * @param {object} options - 端口配置
      */
     constructor(id, direction, options = {}) {
         super();
         this.id = id;
         this.direction = direction;
+
+        this.width = null;
+        this.height = null;
+
+        //记录的中心点的绝对坐标
+        this.x = null;
+        this.y = null;
 
         // 核心设置
         this.portType = options.portType || 'explicit'; // explicit, implicit
@@ -52,6 +60,8 @@ export class PortModel extends EventTarget {
             return false; // 数据类型不匹配
         }
         if (this.links.length >= this.maxLinks) return false; // 达到连接上限
+        if (targetPort.links.length >= targetPort.maxLinks) return false; // 目标端口达到连接上限
+        if (this.links.includes(targetPort)) return false; // 已经连接
         return true;
     }
 
@@ -59,20 +69,42 @@ export class PortModel extends EventTarget {
      * 连接到目标端口的方法
      * @param {PortModel} targetPort - 要连接的目标端口对象
      */
-    /**
-     * 连接到目标端口的方法
-     * @param {Object} targetPort - 要连接的目标端口对象
-     */
     ConnectTo(targetPort) {
         // 将目标端口添加到当前对象的链接数组中，建立从当前对象到目标端口的连接
         this.links.push(targetPort);
         // 同时将当前对象添加到目标端口的链接数组中，实现双向连接，确保两个端口互相连接
         targetPort.links.push(this);
+
+        this.isConnected = true;
+        targetPort.isConnected = true;
+
+        this.emit('connected', null);
+        targetPort.emit('connected', null);
+    }
+
+    remove(targetPort){
+        this.remove_(targetPort);
+        targetPort.remove_(this);
+    }
+
+    remove_(targetPort) {
+
+        const index = this.links.indexOf(targetPort);
+        // const index = this.links..findIndex(m => m.id === targetPort.id);
+
+        if (index !== -1) {
+            this.links.splice(index, 1);
+        }
+
+        if (this.links.length === 0) {
+            this.isConnected = false;
+            this.emit('disconnected', null);
+        }
+
     }
 
     getLinks() {
         return this.links;
-
     }
 
     triggerEvent(eventName, originalEvent) {
@@ -96,12 +128,26 @@ export class PortModel extends EventTarget {
         }
 
         if (!this.canConnected()) {
-            this.parentProp.onPortEvent('fullConnected:port', detail);
+            this.parentProp.onPortEvent('canNotConnected:port', detail);
             return;
         }
 
         this.parentProp.onPortEvent(eventName, detail);
 
+    }
+
+    getBoundingClientRect() {
+        if (this.dispatchEvent(new CustomEvent('getRect', {}))) {
+            return { width: this.width, height: this.height, x:this.x, y:this.y };
+        } else {
+            console.error('无法发送获取位置的请求');
+            return { width: 0, height: 0, x: 0, y: 0 }
+        }
+
+    }
+
+    destroy(){
+        this.parentProp = null;
     }
 
     toJson() {

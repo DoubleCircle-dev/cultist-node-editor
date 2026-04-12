@@ -4,6 +4,7 @@ import { OptionsProp } from "../models/propModels/optionsProp.js";
 import { PortProp } from "../models/propModels/portProp.js";
 import { ViewProp } from "../models/propModels/viewProp.js";
 import { HubProp } from "../models/propModels/hubProp.js";
+import { BaseNodeModel } from "../models/nodeModels/baseNodeModel.js";
 
 export class PropGenerator {
 
@@ -12,6 +13,7 @@ export class PropGenerator {
      * @param {*} id 
      * @param {*} type 
      * @param {*} propConfig 
+     * @param {WeakRef<BaseNodeModel>} [node=null] 
      * @returns {BaseProp | PortProp}
      */
     static createProp(id, type, propConfig, node = null) {
@@ -129,10 +131,34 @@ export class PropGenerator {
         return result;
     }
 
-
 }
 
 export class PropRenderer {
+
+
+    /**
+     * 渲染属性
+     * @param {BaseProp} prop
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }}
+     */
+    static render(prop) {
+        const result = this.RenderMap[prop.type](prop);
+        if (!result) {
+            console.error(`未知属性类型: ${prop.type}`);
+            return { element: this.createErrorDom(`未知属性类型: ${prop.type}`), listeners:[]};
+        }
+
+        if (!result.element) {
+            console.error(`属性渲染出错: ${prop.type}`);
+            return { element: this.createErrorDom(`属性渲染出错: ${prop.type}`), listeners:[]};
+        }
+
+        return result;
+
+    }
 
     /**
      * 渲染映射表
@@ -180,8 +206,12 @@ export class PropRenderer {
     /**
      * @param {string} type
      * @param {BaseProp} prop
-     * 
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }}
      */
+
     static createInput(type, prop, config = {}) {
         const val = prop.value;
         const input = this.createElement('input', {
@@ -192,22 +222,37 @@ export class PropRenderer {
             ...config
         });
 
-        input.addEventListener('change', (e) => {
+        const changeValueListener = (e) => {
             const target = e.target;
             if (target instanceof HTMLInputElement) {
                 prop.setValue(target.value);
             }
-        });
+        }
 
-        input.addEventListener('mousedown', (e) => e.stopPropagation());
+        const mousedownListener = (e) => {
+            e.stopPropagation();
+        };
 
-        return input;
+        input.addEventListener('change', changeValueListener);
+
+        input.addEventListener('mousedown', mousedownListener);
+
+        const listeners = [{ listener: changeValueListener, target: input, type: 'change' }, { listener: mousedownListener, target: input, type: 'mousedown' }];
+
+        return { element: input, listeners: listeners };
     }
 
     static createLabel(textContent, forId, className = 'label') {
         const label = this.createElement('label', { textContent, htmlFor: forId }, className);
         return label;
     }
+
+    /**
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }}
+     */
 
     static createNumber(type, prop) {
         const num = this.createElement('div', {}, 'prop-number');
@@ -216,19 +261,27 @@ export class PropRenderer {
         const input = this.createInput(type, prop);
 
         num.appendChild(label);
-        num.appendChild(input);
+        num.appendChild(input.element);
 
-        return num;
+        return { element: num, listeners: input.listeners };
     }
 
     /**
      * 创建一个单选按钮组
      * @param {OptionsProp} p
-     * @returns {HTMLElement} 返回包含单选按钮组的容器元素
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }} 返回包含单选按钮组的容器元素,以及元素及子元素绑定的所有listener
      */
     static createRadio(p, boolFlag = false) {
         // 创建一个div容器，类名为'prop-radio-group'
         const container = this.createElement('div', {}, 'prop-radio-group');
+
+        /**
+         * @type { { listener: Function, target: HTMLElement, type: string }[] }
+         */
+        const listeners = [];
 
         // 创建一个label元素，类名为'radio-label'，并设置文本内容为p.label
         const label = this.createLabel(p.label, String(p.id), 'radio-label');
@@ -249,7 +302,19 @@ export class PropRenderer {
             // 创建一个label元素，类名为'radio-option'
             const label = this.createElement('label', {}, 'radio-option');
 
-            label.addEventListener('mousedown', (e) => e.stopPropagation());
+            const labelMouseDownListener = (e) => {
+                e.stopPropagation();
+            }
+
+            label.addEventListener('mousedown', labelMouseDownListener);
+
+            listeners.push(
+                {
+                    target: label,
+                    type: 'mousedown',
+                    listener: labelMouseDownListener
+                }
+            )
 
             const input = this.createElement('input', {
                 type: 'radio',
@@ -275,7 +340,7 @@ export class PropRenderer {
                 }
             }
 
-            input.addEventListener('change', (e) => {
+            const changeValueListener = (e) => {
                 const target = e.target
                 if (target instanceof HTMLInputElement) {
                     if (boolFlag) {
@@ -284,7 +349,16 @@ export class PropRenderer {
                         p.setValue(target.value);
                     }
                 }
-            })
+            }
+            input.addEventListener('change', changeValueListener);
+
+            listeners.push(
+                {
+                    target: input,
+                    type: 'change',
+                    listener: changeValueListener
+                }
+            )
 
             // 创建一个span元素作为标签文本，类名为'radio-option-label'
             const span = this.createElement('span', { textContent: opt }, 'radio-option-label');
@@ -293,18 +367,26 @@ export class PropRenderer {
             label.append(input, span);
             container.appendChild(label);
         });
-        return container;
+
+        return { element: container, listeners };
     }
 
     /**
      * 创建下拉选择框
      * @param {BaseProp} p
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }} 
      */
     static createSelect(p) {
         const s = this.createElement('select', {}, 'select');
+        if (!(s instanceof HTMLSelectElement)) {
+            throw new Error('创建select元素失败');
+        }
         const opts = p.config?.opts || [];
 
-        const fragment = document.createDocumentFragment();
+        let fragment = document.createDocumentFragment();
         opts.forEach(o => {
             const option = document.createElement('option');
             option.textContent = o;
@@ -317,18 +399,40 @@ export class PropRenderer {
             fragment.appendChild(option);
         });
 
-        s.addEventListener('mousedown', (e) => e.stopPropagation());
+        const mousedownListener = (e) => {
+            e.stopPropagation()
+        };
 
-        s.addEventListener('change', (e) => {
+        const changeListener = (e) => {
             const target = e.target;
             if (target instanceof HTMLSelectElement) {
                 p.setValue(target.value);
             }
-        })
+        }
+
+        s.addEventListener('mousedown', mousedownListener);
+
+        s.addEventListener('change', changeListener)
+
+        const changeValueListener = (/**@type {CustomEvent}*/e) => {
+            const newVal = e.detail.value;
+            s.value = newVal;
+        }
+
+        p.addEventListener('change', changeValueListener);
 
         s.appendChild(fragment);
-        return s;
+
+        return { element: s, listeners: [{ target: s, type: 'mousedown', listener: mousedownListener }, { target: s, type: 'change', listener: changeListener }] };
+
     }
+
+    /**
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }} 
+     */
 
     static createCheckbox(p) {
 
@@ -339,15 +443,19 @@ export class PropRenderer {
         const input = this.createInput('checkbox', p);
 
         c.appendChild(label);
-        c.appendChild(input);
+        c.appendChild(input.element);
 
-        return c
+        return { element: c, listeners: input.listeners };
     }
 
     /**
      * 创建预览组件
      * @param {string} type
      * @param {ViewProp} prop
+     * @returns {{
+        * element: HTMLElement,
+        *   listeners: { listener: Function, target: HTMLElement, type: string }[]
+        * }}
      */
     static createPreView(type, prop, columns = []) {
         const preView = this.createElement('div', {}, 'prop-card');
@@ -410,13 +518,17 @@ export class PropRenderer {
                 break;
         }
 
-        return preView;
+        return {element:preView, listeners: []};
     }
 
 
     /**
      * @param {string} type
      * @param {BaseProp} p
+     * @returns {{
+        * element: HTMLElement,
+        *   listeners: { listener: Function, target: HTMLElement, type: string }[]
+        *}}
      */
     static createButton(type, p) {
         const button = document.createElement('button');
@@ -424,9 +536,12 @@ export class PropRenderer {
         button.className = `button ${type}`;
         button.textContent = p.label || '测试用';
 
-        button.addEventListener('mousedown', (e) => e.stopPropagation());
+        const mousedownListener = (e) => {
+            e.stopPropagation()
+        }
+        button.addEventListener('mousedown', mousedownListener);
 
-        return button;
+        return {element:button, listeners: [{ listener: mousedownListener, target: button, type: 'mousedown' }]};
 
     }
 

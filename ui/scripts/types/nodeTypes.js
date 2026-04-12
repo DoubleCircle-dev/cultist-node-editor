@@ -324,7 +324,7 @@ export class NodeTypeRegistry {
                 { type: 'port', returnType: 'decks', label: '卡池', multiConnect: true, description: 'decks: mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。' }
             ],
             content: `decks是mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。`,
-            icon: '🎛️',
+            icon: '🗃',
             properties: [
                 { label: '描述', type: 'text', default: '该卡池的介绍', description: 'description: 该卡池的介绍' },
                 { label: '牌组', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1', description: 'spec: 卡池中随机抽取的卡牌列表', },

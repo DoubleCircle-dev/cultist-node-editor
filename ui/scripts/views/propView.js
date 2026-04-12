@@ -8,12 +8,16 @@ import { ViewProp } from "../models/propModels/viewProp.js";
 
 export class PropView {
     /**
-     * @param {PropType} prop
-     * @returns {HTMLElement}
+     * @param {BaseProp} prop
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }}
      */
     static renderProp(prop) {
         try {
             var result;
+            var listeners = [];
 
             if (!prop) {
                 throw new Error('属性不存在');
@@ -24,32 +28,33 @@ export class PropView {
             }
 
             if (prop instanceof HubProp) {
-                const hub = this.createHub(prop);
+                const { element: hub, listeners: hubListeners } = this.createHub(prop);
+                listeners = hubListeners;
                 if (!hub) {
                     throw new Error('hub属性无法创建');
                 }
                 result = hub;
             } else if (prop instanceof ViewProp) {
-                const view = this.createView(prop);
+                const{ element: view, listeners: viewListeners } = this.createView(prop);
+                listeners = viewListeners;
                 if (!view) {
                     throw new Error('view属性无法创建');
                 }
 
                 result = view;
             } else {
-                const row = this.createRow(prop);
+                const {element:row, listeners: rowListeners} = this.createRow(prop);
+                listeners = rowListeners;
                 if (!row) {
                     throw new Error('属性无法创建');
                 }
                 result = row;
             }
 
-
-
-            return result;
+            return { element: result, listeners: listeners };
         } catch (error) {
             console.error('属性渲染失败', error, prop);
-            return PropRenderer.createErrorDom(error);
+            return { element: PropRenderer.createErrorDom(error), listeners: listeners };
         }
 
 
@@ -65,30 +70,52 @@ export class PropView {
 
     /**
      * @param {HubPropType| HubProp} propModel
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }}
      */
     static createHub(propModel) {
         const hub = PropRenderer.createHub('hub', propModel.layout);
 
-        propModel.properties.forEach((/** @type {PropType} */ prop) => {
-            hub.appendChild(this.renderProp(prop));
+        const listeners = [];
+
+        propModel.properties.forEach((/** @type {BaseProp} */ prop) => {
+            const renderResult = this.renderProp(prop);
+            hub.appendChild(renderResult.element);
+            listeners.push(...renderResult.listeners);
         })
 
-        return hub;
+        return { element: hub, listeners: [] };
     }
 
     /**
      * 创建视图的方法
-     * @param {PropType} propModel - 属性模型对象，包含要渲染的属性信息
+     * @param {BaseProp} propModel - 属性模型对象，包含要渲染的属性信息
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }}
      */
     static createView(propModel) {
-        const view = PropRenderer.RenderMap[propModel.type](propModel);
-        view.addEventListener('mousedown', (e) => e.stopPropagation());
+        const renderResult = PropRenderer.render(propModel);
+        const view = renderResult.element;
+        const listeners = renderResult.listeners;
+
+        const mousedownListener = (e) => e.stopPropagation();
+        view.addEventListener('mousedown', mousedownListener);
+        listeners.push({ listener: mousedownListener, target: view, type: 'mousedown' });
         this.createHint(propModel, view);
-        return view;
+
+        return { element: view, listeners: listeners };
     }
 
     /**
-     * @param {PropType} propModel
+     * @param {BaseProp} propModel
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }}
      */
     static createRow(propModel) {
 
@@ -108,7 +135,8 @@ export class PropView {
         content.className = 'prop-content';
         // content.style.border = '1px solid white';
 
-        content.appendChild(this.createContent(propModel.type, propModel));
+        const {element: contentElement, listeners: listeners} = this.createContent(propModel.type, propModel);
+        content.appendChild(contentElement);
 
         this.createHint(propModel, content);
 
@@ -122,19 +150,24 @@ export class PropView {
         }
         row.appendChild(rightSlot);
 
-        return row;
+        return {element:row, listeners:listeners};
     }
 
     /**
      * @param {string} type
-     * @param {PropType} param
+     * @param {BaseProp} param
+     * @returns {{ 
+     * element: HTMLElement, 
+     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * }}
      */
     static createContent(type, param) {
         if (PropRenderer.RenderMap[type]) {
-            const dom = PropRenderer.RenderMap[type](param);
-            return dom;
+            const result = PropRenderer.RenderMap[type](param);
+            const dom = result.element;
+            return {element:dom, listeners:result.listeners};
         } else {
-            return PropRenderer.createErrorDom(`{ ${type} }渲染器未定义`);
+            return {element:PropRenderer.createErrorDom(`{ ${type} }渲染器未定义`),listeners:[]};
         }
     }
 
@@ -145,6 +178,35 @@ export class PropView {
         const dom = document.createElement('div');
         dom.className = `port-dot ${portModel.portType} ${portModel.pos}`;
         dom.style.backgroundColor = NodeTypeRegistry.getColor(portModel.dataType);
+
+        // 测量port元素
+        portModel.addEventListener('getRect', (e) => {
+            portModel.width = dom.offsetWidth;
+            portModel.height = dom.offsetHeight;
+
+            const rect = dom.getBoundingClientRect();
+
+            portModel.x = rect.x + rect.width / 2;
+            portModel.y = rect.y + rect.height / 2;
+
+        })
+
+        portModel.addEventListener('dragging', (e) => {
+            dom.classList.add('dragging');
+        })
+
+        portModel.addEventListener('connected', (e) => {
+            dom.classList.add('connected');
+        })
+
+        portModel.addEventListener('disconnected', (e) => {
+            dom.classList.remove('connected');
+        })
+
+        dom.addEventListener('mouseenter', () => {
+            dom.classList.add('hover');
+        });
+
 
         dom.addEventListener('mousedown', (e) => {
             e.stopPropagation();
@@ -157,12 +219,22 @@ export class PropView {
             portModel.triggerEvent('mousedown:port', e);
         });
 
-        portModel.addEventListener('dragging', (e) => {
-            dom.classList.add('dragging');            
+        dom.addEventListener('mouseup', (e) => {
+            // e.stopPropagation();
+
+            if (!portModel.parentProp) {
+                console.error('未找到端口对应属性');
+                return;
+            }
+
+            portModel.triggerEvent('mouseup:port', e);
         })
+
 
         return dom;
     }
+
+
 }
 
 

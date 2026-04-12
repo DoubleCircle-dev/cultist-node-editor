@@ -66,6 +66,7 @@
     /* z-index 分层 */
     --z-canvas: 0;
     --z-grid-lines: 1;
+    --z-placeholder: 2;
     --z-connections: 10;
 
     --z-node-default: 100;
@@ -75,6 +76,7 @@
     --z-node-dragging: 9000;
 
     /* --- 3. 全局覆盖层 --- */
+    --z-side-bar: 9999;
     --z-context-menu: 10000;
     --z-tooltip: 11000;
     --z-modal: 12000;

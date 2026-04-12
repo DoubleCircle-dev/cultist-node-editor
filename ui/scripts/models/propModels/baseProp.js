@@ -1,6 +1,7 @@
+import { IEventTarget } from "../IEventTarget.js";
 import { BaseNodeModel } from "../nodeModels/baseNodeModel.js";
 
-export class BaseProp extends EventTarget {
+export class BaseProp extends IEventTarget {
 
     /**
      * @param {string} id - 用来识别属性 
@@ -21,7 +22,7 @@ export class BaseProp extends EventTarget {
         this.description = description;
 
         /**
-         * @type {BaseNodeModel} parentNode
+         * @type {WeakRef<BaseNodeModel>} parentNode
          */
         this.parentNode = null;
     }
@@ -34,13 +35,10 @@ export class BaseProp extends EventTarget {
     }
 
     set value(newVal) {
-
         const oldVal = this._value;
         if (oldVal !== newVal) {
             this._value = newVal;
-            this.dispatchEvent(new CustomEvent('change', {
-                detail: { value: newVal, oldValue: oldVal }
-            }));
+            this.emit('change',  { value: newVal, oldValue: oldVal });
         }
     }
 
@@ -54,11 +52,21 @@ export class BaseProp extends EventTarget {
     onEvent(event, detail) {
         
         if (!this.parentNode) {
-            console.error('无法传递给父对象node，因为父对象不存在')
+            console.error('无法传递给父对象node，因为父对象不存在');
             return;
         }
 
-        this.parentNode.emit(event, detail);
+        if(!this.parentNode.deref()){
+            console.error('无法传递给父对象node，因为父对象已经被释放');
+            return;
+        }
+
+        this.parentNode.deref().emit(event, detail);
+    }
+
+    destroy() {
+        this.parentNode = null;
+        this.removeAllEventListeners();
     }
 
     toJSON() {

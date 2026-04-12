@@ -92,7 +92,7 @@
     filter: drop-shadow(0 0 8px rgba(255, 87, 34, 0.8));
 }
 
-/* 隐藏连接线的辅助类 */
-.hide-connections .connection-path {
+/* 隐藏连接线的容器*/
+#connections-svg-layer.hidden {
     display: none;
 }
