@@ -64,13 +64,20 @@
     --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
     /* z-index 分层 */
-    --z-canvas: 1;
-    --z-connections: 5;
-    --z-node: 10;
-    --z-node-selected: 20;
-    --z-node-dragging: 100;
-    --z-context-menu: 1000;
-    --z-tooltip: 2000;
+    --z-canvas: 0;
+    --z-grid-lines: 1;
+    --z-connections: 10;
+
+    --z-node-default: 100;
+
+
+    --z-node-selected: 8000;
+    --z-node-dragging: 9000;
+
+    /* --- 3. 全局覆盖层 --- */
+    --z-context-menu: 10000;
+    --z-tooltip: 11000;
+    --z-modal: 12000;
 
     --transition-fast: 0.2s ease-in-out;
 }

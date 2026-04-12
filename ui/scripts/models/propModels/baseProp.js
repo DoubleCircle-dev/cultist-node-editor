@@ -1,3 +1,5 @@
+import { BaseNodeModel } from "../nodeModels/baseNodeModel.js";
+
 export class BaseProp extends EventTarget {
 
     /**
@@ -18,6 +20,9 @@ export class BaseProp extends EventTarget {
 
         this.description = description;
 
+        /**
+         * @type {BaseNodeModel} parentNode
+         */
         this.parentNode = null;
     }
 
@@ -44,6 +49,16 @@ export class BaseProp extends EventTarget {
      */
     setValue(newVal) {
         this.value = newVal;
+    }
+
+    onEvent(event, detail) {
+        
+        if (!this.parentNode) {
+            console.error('无法传递给父对象node，因为父对象不存在')
+            return;
+        }
+
+        this.parentNode.emit(event, detail);
     }
 
     toJSON() {

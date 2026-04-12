@@ -57,7 +57,7 @@
 }
 
 /* SVG连接线容器 */
-#connections-svg {
+#connections-svg-layer {
     position: absolute;
     top: 0;
     left: 0;

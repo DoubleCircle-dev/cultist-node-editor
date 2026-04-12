@@ -10,7 +10,7 @@
     font-family: var(--font-sans);
     box-shadow: var(--shadow-sm);
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-    z-index: var(--z-node);
+    z-index: var(--z-node-default);
 }
 
 .node.selected {

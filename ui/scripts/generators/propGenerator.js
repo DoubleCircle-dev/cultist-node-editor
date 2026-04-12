@@ -14,7 +14,7 @@ export class PropGenerator {
      * @param {*} propConfig 
      * @returns {BaseProp | PortProp}
      */
-    static createProp(id, type, propConfig) {
+    static createProp(id, type, propConfig, node = null) {
         let propClass = null;
 
         // 根据类型预处理参数
@@ -23,7 +23,7 @@ export class PropGenerator {
             case 'hub':
                 const hubProps = [];
                 propConfig.properties.forEach((/** @type {PropConfig} */ p, /** @type {number} */ index) => {
-                    hubProps.push(PropGenerator.createProp(`${id}_hub:${propConfig.label}-${index}`, p.type, p))
+                    hubProps.push(PropGenerator.createProp(`${id}_hub:${propConfig.label}-${index}`, p.type, p, node))
                 });
                 args = [id, propConfig.label, hubProps, propConfig.layout];
                 propClass = HubProp;
@@ -117,7 +117,11 @@ export class PropGenerator {
 
         if (result instanceof BaseProp) {
             result.description = propConfig.description;
-        }else {
+            if (!(result instanceof HubProp)) {
+                result.parentNode = node;
+            }
+
+        } else {
             console.error('注册属性失败', propClass, args);
             return new BaseProp(null, null, null, null);
         }
@@ -134,8 +138,8 @@ export class PropRenderer {
      * 渲染映射表
      */
     static RenderMap = {
-        'text': (p) => this.createInput('text', p, {placeholder: p.label}),
-        'integer': (p) => this.createInput('number', p, {placeholder:p.label}),
+        'text': (p) => this.createInput('text', p, { placeholder: p.label }),
+        'integer': (p) => this.createInput('number', p, { placeholder: p.label }),
         'number': (p) => this.createNumber('number', p),
         'range': (p) => this.createInput('range', p, {
             step: String(p.config?.step ?? 1)
@@ -187,12 +191,15 @@ export class PropRenderer {
             className: `prop-input ${type}`,
             ...config
         });
+
         input.addEventListener('change', (e) => {
             const target = e.target;
             if (target instanceof HTMLInputElement) {
                 prop.setValue(target.value);
             }
         });
+
+        input.addEventListener('mousedown', (e) => e.stopPropagation());
 
         return input;
     }
@@ -241,6 +248,8 @@ export class PropRenderer {
         opts.forEach((/** @type {any} */ opt) => {
             // 创建一个label元素，类名为'radio-option'
             const label = this.createElement('label', {}, 'radio-option');
+
+            label.addEventListener('mousedown', (e) => e.stopPropagation());
 
             const input = this.createElement('input', {
                 type: 'radio',
@@ -307,6 +316,8 @@ export class PropRenderer {
 
             fragment.appendChild(option);
         });
+
+        s.addEventListener('mousedown', (e) => e.stopPropagation());
 
         s.addEventListener('change', (e) => {
             const target = e.target;
@@ -412,6 +423,8 @@ export class PropRenderer {
 
         button.className = `button ${type}`;
         button.textContent = p.label || '测试用';
+
+        button.addEventListener('mousedown', (e) => e.stopPropagation());
 
         return button;
 

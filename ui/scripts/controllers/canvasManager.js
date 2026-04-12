@@ -322,6 +322,19 @@ export class CanvasManager {
         };
     }
 
+    /**
+    * 画布坐标转视口坐标
+    * @param {number} x
+    * @param {number} y
+    */
+    worldToViewport(x, y) {
+        const rect = this.viewport.getBoundingClientRect();
+        return {
+            x: (x * this.transform.scale) + rect.left + this.transform.x,
+            y: (y * this.transform.scale) + rect.top + this.transform.y
+        }
+    }
+
     get ViewCenter() {
         const rect = this.viewport.getBoundingClientRect();
         return this.viewportToWorld(rect.width / 2, rect.height / 2);

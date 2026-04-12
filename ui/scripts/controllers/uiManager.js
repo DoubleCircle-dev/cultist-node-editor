@@ -31,7 +31,7 @@ export class UIManager {
         this.tooltip.classList.add("tooltip-trigger");
         this.tooltip.setAttribute("id", "tooltip");
         console.log(this.tooltip);
-        this.viewport.appendChild(this.tooltip);
+        this.world.appendChild(this.tooltip);
     }
 
     _initListeners() {

@@ -1,7 +1,8 @@
 import { EventBus } from "./eventBus.js";
 import { ControllerCore } from "./controllerCore.js";
+import { IManager } from "./manager.js";
 
-export class NodeActionManager {
+export class NodeActionManager extends IManager {
 
     /**
      * @param {EventBus} bus
@@ -10,10 +11,7 @@ export class NodeActionManager {
      * @param {ControllerCore} coreSpace
      */
     constructor(bus, viewport, world, coreSpace) {
-        this.bus = bus;
-        this.viewport = viewport;
-        this.world = world;
-        this.coreSpace = coreSpace;
+        super(bus, viewport, world, coreSpace);
 
         // 拖拽相关变量
         this.dragState = {
@@ -33,11 +31,6 @@ export class NodeActionManager {
         this.bus.on('drag-start:node', this._onNodeDragStart.bind(this));
     }
 
-    _shouldIgnore(e) {
-        const target = e.target;
-        return NodeActionManager.ignoreItem.some(item => target.matches(item));
-    }
-
     _onNodeDragStart(e) {
         // if(this._shouldIgnore(e.detail.originalEvent)) return;
 
@@ -48,14 +41,9 @@ export class NodeActionManager {
         this.dragState.isDragging = true;
         this.dragState.offsetX = offsetX;
         this.dragState.offsetY = offsetY;
-        ({ x: this.dragState.initialX, y: this.dragState.initialY } = this.coreSpace.canvasManager.viewportToWorld(clientX, clientY));
-        this.dragState.dragNodes = [];
-        this.coreSpace.nodeManager.nodes.forEach(node => {
-            if (node.selected) {
-                this.dragState.draggedNodes.push(node);
-            }
-        })
-
+        ({ x: this.dragState.initialX, y: this.dragState.initialY } =
+            this.coreSpace.viewportToWorld(clientX, clientY));
+        this.dragState.draggedNodes = e.detail.selectedNodes;
 
         window.addEventListener('mousemove', this._onDragMove);
         window.addEventListener('mouseup', this._onDragEnd);
@@ -65,13 +53,13 @@ export class NodeActionManager {
         if (!this.dragState.isDragging) return;
 
         // 计算鼠标移动后的世界坐标
-        const worldNew = this.coreSpace.canvasManager.viewportToWorld(e.clientX, e.clientY );
+        const worldNew = this.coreSpace.viewportToWorld(e.clientX, e.clientY);
 
         const dx = worldNew.x - this.dragState.initialX;
         const dy = worldNew.y - this.dragState.initialY;
 
         // 更新每个节点的位置
-        this.dragState.draggedNodes.forEach((node, index) => {
+        this.dragState.draggedNodes.forEach((node) => {
             node.moveBy(dx, dy);
         });
 
@@ -104,13 +92,4 @@ export class NodeActionManager {
         this.dragState.isDragging = false;
     };
 
-    /**
-     * @param {NodeID} nodeId
-     * @param {number} x
-     * @param {number} y
-     */
-
-    handleDrag(nodeId, x, y) {
-
-    }
 }

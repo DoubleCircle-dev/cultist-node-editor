@@ -1,4 +1,3 @@
-import { PropGenerator } from '../../generators/propGenerator.js'
 import { BaseProp } from '../propModels/baseProp.js';
 
 export class BaseNodeModel extends EventTarget {
@@ -22,7 +21,7 @@ export class BaseNodeModel extends EventTarget {
         this.type = type;
 
         // 显示属性
-        this.properties = properties;
+        this.setProperties(properties);
 
         this.color = config.color || '#ffffff';
         this.title = config.title || 'Base Node';
@@ -39,6 +38,28 @@ export class BaseNodeModel extends EventTarget {
         this.width = config.width || 300;
         this.height = config.height || 0;
 
+    }
+
+    /**
+     * @param {BaseProp[]} properties
+     */
+    setProperties(properties) {
+        this.properties = properties;
+    }
+
+    /**
+     * @param {BaseProp} prop
+     */
+    addProperty(prop) {
+        this.properties.push(prop);
+    }
+
+
+    /**
+     * @param {BaseProp[]} props
+     */
+    appendProps(props) {
+        this.properties.push(...props);
     }
 
     /**
@@ -93,6 +114,16 @@ export class BaseNodeModel extends EventTarget {
         this.emit('change:select', { isSelected });  // 触发选中状态变更事件，传递新的选中状态
     }
 
+    setZIndex(index) {
+        this.emit('change:zIndex', { index });
+    }
+
+
+    // TODO: 折叠状态
+    setCollapsed(isCollapsed) {
+
+    }
+
     /**
      * 简单的事件分发辅助函数
      * @param {string} type - 事件类型
@@ -101,7 +132,7 @@ export class BaseNodeModel extends EventTarget {
     emit(type, detail) {
         this.dispatchEvent(new CustomEvent(type, { detail }));
     }
-    
+
     handleMouseDown(originalEvent) {
         this.dispatchEvent(new CustomEvent('mousedown', {
             detail: { originalEvent, node: this }

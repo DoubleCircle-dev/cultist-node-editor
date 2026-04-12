@@ -1,4 +1,6 @@
-export class PortModel {
+import { PortProp } from "./propModels/portProp.js";
+
+export class PortModel extends EventTarget {
     /**
      * 检查当前端口是否可以连接到目标端口
      * @param {string} id - 目标端口对象
@@ -6,6 +8,7 @@ export class PortModel {
      * @param {object} options - 端口配置
      */
     constructor(id, direction, options = {}) {
+        super();
         this.id = id;
         this.direction = direction;
 
@@ -21,12 +24,21 @@ export class PortModel {
         this.links = options.links || [];
 
         // 归属引用
-        this.parentNode = options.parentNode || null;
+        /**@type {PortProp}  parentProp */
         this.parentProp = options.parentProp || null;
 
         this.isConnected = options.isConnected || false;
     }
 
+    canConnected() {
+        if (this.isConnected) {
+            if (this.links.length >= this.maxLinks) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /**
      * 检查当前端口是否可以连接到目标端口
@@ -60,6 +72,36 @@ export class PortModel {
 
     getLinks() {
         return this.links;
+
+    }
+
+    triggerEvent(eventName, originalEvent) {
+
+        const detail = {
+            portId: this.id,
+            port: this,
+            originalEvent: originalEvent
+        };
+
+        // 1. 触发自身事件，方便直接监听 Port
+        this.dispatchEvent(new CustomEvent(eventName, { detail }));
+        // 2. 向上传递给父 Prop
+        if (!this.parentProp) {
+            console.error('无法传递事件给父对象prop，父对象不存在');
+            return;
+        }
+        if (!(typeof this.parentProp.onPortEvent === 'function')) {
+            console.error('无法传递事件给父对象prop，父对象无法处理事件');
+            return;
+        }
+
+        if (!this.canConnected()) {
+            this.parentProp.onPortEvent('fullConnected:port', detail);
+            return;
+        }
+
+        this.parentProp.onPortEvent(eventName, detail);
+
     }
 
     toJson() {
@@ -70,7 +112,6 @@ export class PortModel {
             portType: this.portType,
             maxLinks: this.maxLinks,
             links: this.links,
-            parentNode: this.parentNode,
             parentProp: this.parentProp
         }
     }

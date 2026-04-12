@@ -460,27 +460,23 @@
 /* 伪元素作为描述框 */
 .tooltip-trigger::after {
     content: attr(data-description);
-    /* 从 data-description 获取文本 */
+
+    max-width: 100%;
+    min-width: 60%;
+    white-space: normal;
+    word-wrap: break-word;
+
     position: absolute;
-    bottom: 150%;
-    /* 显示在元素上方 */
-    left: 50%;
-    transform: translateX(-50%);
+    left: 100%;
     background: #333;
     color: #fff;
     padding: 6px 10px;
     border-radius: 4px;
-    white-space: nowrap;
     font-size: 14px;
-    z-index: 10;
-
-    /* 默认隐藏 */
+    z-index: var(--z-tooltip);
     visibility: hidden;
     opacity: 0;
-
-    /* 避免影响布局，可加上过渡使其更平滑，但延迟效果由动画实现 */
     transition: opacity 0.2s;
-    /* 可选：让淡入淡出更柔和 */
 }
 
 /* 悬停时启动延迟动画 */
@@ -506,4 +502,3 @@
         opacity: 1;
     }
 }
-

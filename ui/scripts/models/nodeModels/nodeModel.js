@@ -21,54 +21,64 @@ export class NodeModel extends BaseNodeModel {
      * @param {Record<string, HubProp>} exProperties - 节点的扩展属性列表
     */
     constructor(uid, id, type, x, y, config, properties = [], exProperties = {}) {
-        super(id, type, x, y, config, properties); // 调用父类的构造函数，传入配置参数
+        super(id, type, x, y, config); // 调用父类的构造函数，传入配置参数
         this.uid = uid; // 设置节点的唯一标识符
 
+        const { inputHub, outputHub } = this._resolveConfigPorts(config);
+        this.inputs = inputHub;
+        this.outputs = outputHub;
 
+        this.exProperties = exProperties;
+
+        if (this.properties.length !== 0) {
+            this.initialize();
+        }
+        // this.currentMode = this._getInitialMode(); // 初始化节点的当前模式
+
+    }
+
+    initialize() {
+        this._onModeSwitcher();
+
+        this._createPortHub();
+    }
+
+    _resolveConfigPorts(config) {
         const inputs = [];
         const outputs = [];
 
         config.inputs.forEach((input, index) => {
-            inputs.push(
-                new PortProp(`${this.id}:input-${index}`, input.label, 'port', input.default, {
-                    inputPort:{
-                        id: `${this.id}:input_port-${index}`,
-                        dataType: input.requireType
-                    }
-                })
-            );
+            const inputPort = new PortProp(`${this.id}:input-${index}`, input.label, 'port', input.default, {
+                inputPort: {
+                    id: `${this.id}:input_port-${index}`,
+                    dataType: input.requireType
+                }
+            })
+            inputPort.parentNode = this;
+            inputs.push(inputPort);
         })
 
         config.outputs.forEach((output, index) => {
-            outputs.push(
-                new PortProp(`${this.id}:output-${index}`, output.label, 'port', output.default, {
-                    outputPort:{
-                        id: `${this.id}:output_port-${index}`,
-                        dataType: output.returnType
-                    }
-                })
-            )
+            const outputPort = new PortProp(`${this.id}:output-${index}`, output.label, 'port', output.default, {
+                outputPort: {
+                    id: `${this.id}:output_port-${index}`,
+                    dataType: output.returnType
+                }
+            });
+            outputPort.parentNode = this;
+            outputs.push(outputPort);
         })
 
-
-        this.inputs = new HubProp(`${this.id}:inputHub`, '输入端口', inputs, 'single');
-
-        this.outputs = new HubProp(`${this.id}:outputHub`, '输出端口', outputs, 'single');
-
-        this.exProperties = exProperties;
-
-        this._onModeSwitcher();
-
-        // this.currentMode = this._getInitialMode(); // 初始化节点的当前模式
-
-        this._createPortHub();
+        const inputHub = new HubProp(`${this.id}:inputHub`, '输入端口', inputs, 'single');
+        const outputHub = new HubProp(`${this.id}:outputHub`, '输出端口', outputs, 'single');
+        return { inputHub, outputHub };
 
     }
 
     _createPortHub() {
         const hub = new HubProp(`${this.id}:portHub`, '端口', [this.inputs, this.outputs], 'double');
 
-        this.properties.push(hub);
+        this.addProperty(hub);
     }
 
     _onModeSwitcher() {
@@ -85,6 +95,13 @@ export class NodeModel extends BaseNodeModel {
                 }
             }
         }
+    }
+
+    /**
+     * @param {Record<string, HubProp>} exProperties
+     */
+    setExProps(exProperties) {
+        this.exProperties = exProperties;
     }
 
     // 模式切换逻辑（带连接检查）

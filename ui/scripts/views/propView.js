@@ -44,10 +44,7 @@ export class PropView {
                 result = row;
             }
 
-            if (prop.description) {
-                result.setAttribute('data-description', prop.description);
-                result.classList.add('tooltip-trigger');
-            }
+
 
             return result;
         } catch (error) {
@@ -56,6 +53,14 @@ export class PropView {
         }
 
 
+    }
+
+    static createHint(prop, target) {
+        if (prop.description) {
+            target.setAttribute('data-description', prop.description);
+            target.classList.add('tooltip-trigger');
+            // result.title = prop.description;
+        }
     }
 
     /**
@@ -78,6 +83,7 @@ export class PropView {
     static createView(propModel) {
         const view = PropRenderer.RenderMap[propModel.type](propModel);
         view.addEventListener('mousedown', (e) => e.stopPropagation());
+        this.createHint(propModel, view);
         return view;
     }
 
@@ -101,9 +107,10 @@ export class PropView {
         const content = document.createElement('div');
         content.className = 'prop-content';
         // content.style.border = '1px solid white';
-        content.addEventListener('mousedown', (e) => e.stopPropagation());
 
         content.appendChild(this.createContent(propModel.type, propModel));
+
+        this.createHint(propModel, content);
 
         row.appendChild(content);
 
@@ -139,7 +146,21 @@ export class PropView {
         dom.className = `port-dot ${portModel.portType} ${portModel.pos}`;
         dom.style.backgroundColor = NodeTypeRegistry.getColor(portModel.dataType);
 
-        dom.addEventListener('mousedown', (e) => { e.stopPropagation(); });
+        dom.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+
+            if (!portModel.parentProp) {
+                console.error('未找到端口对应属性');
+                return;
+            }
+
+            portModel.triggerEvent('mousedown:port', e);
+        });
+
+        portModel.addEventListener('dragging', (e) => {
+            dom.classList.add('dragging');            
+        })
+
         return dom;
     }
 }
