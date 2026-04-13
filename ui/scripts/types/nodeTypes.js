@@ -32,6 +32,7 @@ export class NodeTypeRegistry {
             properties: []
         },
         test: {
+            active: true,
             title: '测试节点',
             color: this.nodeColorVars.test,
             inputs: [
@@ -84,8 +85,9 @@ export class NodeTypeRegistry {
             }
         },
         legacies: {
+            active: true,
             title: 'legacy',
-            label: '职业(legacies)',
+            label: '职业',
             color: this.nodeColorVars.legacies,
             inputs: [
             ],
@@ -111,8 +113,9 @@ export class NodeTypeRegistry {
 
         },
         endings: {
+            active: true,
             title: 'ending',
-            label: '结局(endings)',
+            label: '结局',
             color: this.nodeColorVars.endings,
             inputs: [
             ],
@@ -131,8 +134,9 @@ export class NodeTypeRegistry {
             ]
         },
         achievements: {
+            active: true,
             title: 'achievement',
-            label: '成就(achievements)',
+            label: '成就',
             color: this.nodeColorVars.achievements,
             icon: '⚡',
             inputs: [],
@@ -158,8 +162,9 @@ export class NodeTypeRegistry {
             }
         },
         recipes: {
+            active: true,
             title: 'recipe',
-            label: '交互(recipes)',
+            label: '交互',
             color: this.nodeColorVars.recipes,
             inputs: [
                 { type: 'port', requireType: 'recipes', multiConnect: true, label: '前置交互', description: '跳转进本交互界面的入口，craftable为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发' },
@@ -215,8 +220,9 @@ export class NodeTypeRegistry {
             }
         },
         mutations: {
+            active: true,
             title: 'mutation',
-            label: '重载变化(mutations)',
+            label: '重载变化',
             color: this.nodeColorVars.mutations,
             inputs: [],
             outputs: [
@@ -232,8 +238,9 @@ export class NodeTypeRegistry {
             ]
         },
         elements: {
+            active: true,
             title: 'element',
-            label: '元素(elements)',
+            label: '元素',
             color: this.nodeColorVars.elements,
             inputs: [
                 { label: '继承', type: 'port', requireType: 'elements', multiConnect: false, description: 'inherits: 该元素（卡牌）所继承的元素，该元素（卡牌）会继承继承元素的属性，但不会继承继承元素的induces, icon等。' }
@@ -271,8 +278,9 @@ export class NodeTypeRegistry {
             }
         },
         xtriggers: {
+            active: true,
             title: 'xtrigger',
-            label: '触变(xtriggers)',
+            label: '触变',
             color: this.nodeColorVars.xtriggers,
             inputs: [
                 { label: '继承集合', type: 'port', requireType: 'xtriggers', multiConnect: true, description: '继承之前的xtrigger的元素，扩展成集合' }
@@ -299,8 +307,9 @@ export class NodeTypeRegistry {
             }
         },
         morphEffects: {
+            active: true,
             title: 'morphEffect',
-            label: '操作数(morphEffects)',
+            label: '操作数',
             color: this.nodeColorVars.morphEffects,
             icon: '🔗',
             inputs: [
@@ -316,8 +325,9 @@ export class NodeTypeRegistry {
             ]
         },
         decks: {
+            active: true,
             title: 'deck',
-            label: '卡池(decks)',
+            label: '卡池',
             color: this.nodeColorVars.decks,
             inputs: [],
             outputs: [
@@ -334,8 +344,9 @@ export class NodeTypeRegistry {
             ]
         },
         verbs: {
+            active: true,
             title: 'verb',
-            label: '行动框(verbs)',
+            label: '行动框',
             color: this.nodeColorVars.verbs,
             inputs: [
             ],
@@ -352,8 +363,9 @@ export class NodeTypeRegistry {
             ]
         },
         slots: {
+            active: true,
             title: 'slot',
-            label: '卡槽(slots)',
+            label: '卡槽',
             color: this.nodeColorVars.slots,
             inputs: [
                 {
@@ -393,6 +405,7 @@ export class NodeTypeRegistry {
             ]
         },
         levers: {
+            active: true,
             title: '继承物品',
             color: this.nodeColorVars.levers,
             inputs: [],
@@ -413,6 +426,7 @@ export class NodeTypeRegistry {
             ]
         },
         extends: {
+            active: true,
             title: '扩充对象',
             color: this.nodeColorVars.extends,
             icon: '🎚️',
@@ -425,6 +439,7 @@ export class NodeTypeRegistry {
             ]
         },
         copies: {
+            active: true,
             title: '引用复制',
             color: this.nodeColorVars.copies,
             icon: '🎚️',
@@ -442,6 +457,7 @@ export class NodeTypeRegistry {
             }
         },
         text: {
+            active: true,
             title: '文本',
             color: this.nodeColorVars.text,
             inputs: [],
@@ -455,6 +471,7 @@ export class NodeTypeRegistry {
             ]
         },
         number: {
+            active: true,
             title: '数字',
             color: this.nodeColorVars.number,
             inputs: [],
@@ -468,6 +485,7 @@ export class NodeTypeRegistry {
             ]
         },
         nodeSet: {
+            active: false,
             title: '集合',
             color: this.nodeColorVars.set,
             inputs: [
@@ -479,27 +497,27 @@ export class NodeTypeRegistry {
             content: `集合变量，输出参数集合，可以将多个集合链接，不允许成环`,
             icon: '🎚️',
             properties: [
-                { label: '类型', type: 'select', default: '字典', options: ['字典', '列表', 'xtriggers', 'mutaions'] },
+                { label: '类型', type: 'select', default: '字典', options: ['字典', '列表', 'xtriggers', 'mutations'] },
 
             ],
             exProperties: {
-                0: [{
+                '字典': [{
                     label: '字典', type: 'table', columns: [
                         { label: '键', field: 'key', type: 'any', width: '50%' },
                         { label: '值', field: 'value', type: 'any', width: '50%' }
                     ],
                     description: '键值对，项目可以是任何类型，用于'
                 }],
-                1: [{
+                '列表': [{
                     label: '列表', type: 'table', columns: [
                         { label: '项目', field: 'id', type: 'any', width: '100%' }
                     ],
                     description: '列表，可以用于deck的spec，属性可以重复'
                 }],
-                2: [
+                'xtriggers': [
                     { label: '版本', type: 'select', options: ['简易', '复杂'], default: 0, description: '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。' },
                 ],
-                3: [{
+                'mutations': [{
                     label: '重载', type: 'table', columns: [
                         { label: '条件', field: 'filter', type: 'elements', width: '100%' },
                         { label: '目标', field: 'mutate', type: 'elements', width: '100%' },
@@ -512,6 +530,7 @@ export class NodeTypeRegistry {
             }
         },
         images: {
+            active: true,
             title: '图片',
             color: this.nodeColorVars.images,
             inputs: [],

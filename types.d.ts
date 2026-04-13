@@ -82,6 +82,7 @@ interface NodeConfig {
   label?: string;
   color: string;
   icon: string;
+  active?: boolean;
   width?: number;
   height?: number;
   content?: string;
