@@ -13,6 +13,7 @@ interface PropConfig {
   label?: string;
   description?: string;
   default?: any;
+  placeholder?: string;
   config?: any; //用于numericProp的如min,max等设置，或其他属性需要
   columns?: any[]; //用于viewProp: table
 }
@@ -61,6 +62,7 @@ interface PropType {
   description?: string;
   label?: string;
   default?: any;
+  placeholder?: string;
   config?: any; //用于numericProp的如min,max等设置，或其他属性需要
   properties?: import("./ui/scripts/models/propModels/baseProp.js").BaseProp[]; // 用于hubProp
   columns?: any[]; //用于viewProp: table

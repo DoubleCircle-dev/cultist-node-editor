@@ -12,7 +12,7 @@ export class PortProp extends BaseProp {
      * 
      *  */
     constructor(id, label, type, value, portConfig = {}) {
-        super(id, label, type, value);
+        super(id, label, type, value, null, portConfig);
         this.inputPort = portConfig.inputPort ? new PortModel(portConfig.inputPort.id, 'input', portConfig.inputPort) : null;
         if (this.inputPort) {
             this.inputPort.parentProp = this;

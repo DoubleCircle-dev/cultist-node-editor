@@ -177,6 +177,15 @@ export class NodeModel extends BaseNodeModel {
         };
     }
 
+    toModJSON() {
+        console.log(this.properties.map((prop) => prop.toModJSON()));
+        return {
+            "id": this.title+"#"+this.id,
+            "label": this.label,
+        }
+        
+    }
+
 }
 
 

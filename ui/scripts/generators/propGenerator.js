@@ -43,6 +43,7 @@ export class PropGenerator {
             case 'text':
             case 'image-path':
                 args = [id, propConfig.label, propConfig.type, propConfig.default, {
+                    placeholder: propConfig.placeholder,
                     inputPort: { id: `${id}-input`, portType: 'implicit', dataType: 'text' }
                 }];
                 propClass = PortProp;
@@ -164,8 +165,8 @@ export class PropRenderer {
      * 渲染映射表
      */
     static RenderMap = {
-        'text': (p) => this.createInput('text', p, { placeholder: p.label }),
-        'integer': (p) => this.createInput('number', p, { placeholder: p.label }),
+        'text': (p) => this.createInput('text', p, { placeholder: p.placeholder || p.label }),
+        'integer': (p) => this.createInput('number', p, { placeholder: p.placeholder || p.label }),
         'number': (p) => this.createNumber('number', p),
         'range': (p) => this.createInput('range', p, {
             step: String(p.config?.step ?? 1)
@@ -221,6 +222,10 @@ export class PropRenderer {
             className: `prop-input ${type}`,
             ...config
         });
+
+        if (input instanceof HTMLInputElement) {
+            input.autocomplete = 'off';
+        }
 
         const changeValueListener = (e) => {
             const target = e.target;

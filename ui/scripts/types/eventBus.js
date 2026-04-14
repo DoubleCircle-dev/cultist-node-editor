@@ -1,4 +1,6 @@
-export class EventBus extends EventTarget {
+import { IEventTarget } from "./IEventTarget.js";
+
+export class EventBus extends IEventTarget {
     constructor() {
         super();
     }
@@ -29,11 +31,6 @@ export class EventBus extends EventTarget {
      * @param {any} detail - 需要传递的数据
      */
     emit(eventName, detail = {}) {
-        // 原生的 EventTarget 必须派发 Event 对象
-        // 使用 CustomEvent 可以将自定义数据挂载到 detail 属性上
-        if (eventName === 'NODE_DRAG_START') {
-            console.log('NODE_DRAG_START', detail);
-        }
         const event = new CustomEvent(eventName, { detail });
         this.dispatchEvent(event);
     }

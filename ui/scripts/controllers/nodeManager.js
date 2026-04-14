@@ -2,7 +2,7 @@ import { NodeGenerator } from "../generators/nodeGenerator.js";
 import { NodeModel } from "../models/nodeModels/nodeModel.js";
 import { BaseNodeModel } from "../models/nodeModels/baseNodeModel.js";
 import { ControllerCore } from "./controllerCore.js";
-import { EventBus } from "./eventBus.js";
+import { EventBus } from "../types/eventBus.js";
 import { NodeView } from "../views/nodeView.js";
 import { IManager } from "./manager.js";
 
@@ -230,6 +230,8 @@ export class NodeManager extends IManager {
         }
 
         let node = this.nodes.get(nodeId);
+        // console.log(node?.toJSON());
+        console.log(node?.toModJSON());
         if (!node) {
             console.error(`无法找到删除目标${nodeId}`)
             return;

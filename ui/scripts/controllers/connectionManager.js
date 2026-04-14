@@ -1,5 +1,5 @@
 
-import { EventBus } from "./eventBus.js";
+import { EventBus } from "../types/eventBus.js";
 import { ControllerCore } from "./controllerCore.js";
 import { PortModel } from "../models/portModel.js";
 import { IManager } from "./manager.js";

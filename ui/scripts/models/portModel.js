@@ -1,4 +1,4 @@
-import { IEventTarget } from "./IEventTarget.js";
+import { IEventTarget } from "../types/IEventTarget.js";
 import { PortProp } from "./propModels/portProp.js";
 
 export class PortModel extends IEventTarget {

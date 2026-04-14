@@ -1,4 +1,4 @@
-import { IEventTarget } from '../IEventTarget.js';
+import { IEventTarget } from '../../types/IEventTarget.js';
 import { BaseProp } from '../propModels/baseProp.js';
 
 
@@ -28,6 +28,7 @@ export class BaseNodeModel extends IEventTarget {
 
         this.color = config.color || '#ffffff';
         this.title = config.title || 'Base Node';
+        this.label = '';
         this.icon = config.icon || '⚡';
 
         // 连接管理
@@ -179,6 +180,10 @@ export class BaseNodeModel extends IEventTarget {
      */
     static fromJSON(json) {
 
+    }
+
+    toModJSON() {
+        
     }
 
 }

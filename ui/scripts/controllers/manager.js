@@ -1,4 +1,4 @@
-import { EventBus } from "./eventBus.js";
+import { EventBus } from "../types/eventBus.js";
 import { ControllerCore } from "./controllerCore.js";
 
 export class IManager{

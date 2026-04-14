@@ -1,5 +1,5 @@
 import { ControllerCore } from "./controllerCore.js";
-import { EventBus } from "./eventBus.js";
+import { EventBus } from "../types/eventBus.js";
 import { IManager } from "./manager.js";
 import { NodeTypeRegistry } from "../types/nodeTypes.js";
 

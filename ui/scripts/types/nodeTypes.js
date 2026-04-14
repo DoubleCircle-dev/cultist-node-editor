@@ -67,7 +67,6 @@ export class NodeTypeRegistry {
                         { label: '常驻文本输入', type: 'text', default: '测试常驻文本' }
                     ],
                 }
-
             ],
             exProperties: {
                 '选项1': [
@@ -81,6 +80,9 @@ export class NodeTypeRegistry {
                 '选项3': [
                     { label: '整数输入', type: 'integer', default: null },
                     { label: '文本输入', type: 'text', default: '测试文本' }
+                ],
+                999:[
+
                 ]
             }
         },
@@ -179,7 +181,12 @@ export class NodeTypeRegistry {
             icon: '📖',
             properties: [
                 { label: '使用行动', type: 'port', requireType: 'verbs', multiConnect: false, description: 'actionId: 使用的行动的id，如果此处填空则默认使用上一个recipe的verb' },
-                { label: '起始描述', type: 'text', default: '开始和进行时行动框显示的文本', description: 'startdescription: 开始和进行时行动框显示的文本' },
+                { label: '起始描述', type: 'text', placeholder: '开始和进行时行动框显示的文本', description: 'startdescription: 开始和进行时行动框显示的文本' },
+                { label: '持续时间', type: 'number', default: 0, description: 'warmup: 该recipe的持续时间，单位为秒。' },
+                { label: '描述', type: 'text', placeholder: '结束后显示的文本', description: 'description: 结束后显示的文本' },
+                { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: false, description: 'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。' },
+                { label: '生成元素', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: true, description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
+
                 {
                     label: '要求', type: 'hub',
                     properties: [
@@ -193,12 +200,6 @@ export class NodeTypeRegistry {
                 { label: '仅作提示', type: 'bool', default: false, description: 'hintonly: 为真时该recipe无法被实际执行，只做展示描述作用（多用于提示）' }
             ],
             exProperties: {
-                0: [
-                    { label: '持续时间', type: 'number', default: 0, description: 'warmup: 该recipe的持续时间，单位为秒。' },
-                    { label: '描述', type: 'text', default: '结束后显示的文本', description: 'description: 结束后显示的文本' },
-                    { label: '卡槽', type: 'port', requireType: 'slots', multiConnect: false, description: 'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。' },
-                    { label: '生成元素', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: true, description: 'effects: 产生（正数）/销毁（负数）对应数量的卡牌。当数值为负数时，可以在卡牌id处填写性相id，表示销毁对应数量具有此性相的卡牌（若实际数量低于销毁数量，则全部销毁。）' },
-                ],
                 999: [
                     { label: '重载属性', type: 'port', requireType: 'mutations', multiConnect: true, description: 'mutations: 给特定或具有特定性相的卡牌重载（additive为false时）或增加/减少（additive为true时根据level的正负）指定数量的性相，且过滤条件除了性相也可以是卡牌。mutation对性相的改变可以被继承，即使卡牌经过了xtrigger或decayto的变换，变异后的卡牌无法堆叠。' },
                     { label: '性相', type: 'port', requireType: 'elements', multiConnect: true, NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1', description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。' },

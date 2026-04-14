@@ -1,4 +1,4 @@
-import { IEventTarget } from "../IEventTarget.js";
+import { IEventTarget } from "../../types/IEventTarget.js";
 import { BaseNodeModel } from "../nodeModels/baseNodeModel.js";
 
 export class BaseProp extends IEventTarget {
@@ -10,7 +10,7 @@ export class BaseProp extends IEventTarget {
      * @param {any} value - 属性的值
      *  
      *  */
-    constructor(id, label, type, value, description = null) {
+    constructor(id, label, type, value, description = null, config={placeholder:''}) {
         super();
         this.id = id;
         this.label = label;
@@ -18,7 +18,7 @@ export class BaseProp extends IEventTarget {
         this._value = value;
 
         this.config = {};
-
+        this.placeholder = config.placeholder || '';
         this.description = description;
 
         /**
@@ -75,6 +75,12 @@ export class BaseProp extends IEventTarget {
             value: this._value,
             config: this.config
         };
+    }
+
+    toModJSON() {
+        const obj = {};
+        obj[this.type] = this._value;
+        return obj
     }
 }
 

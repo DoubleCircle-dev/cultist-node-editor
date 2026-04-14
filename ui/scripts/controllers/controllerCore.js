@@ -5,7 +5,7 @@ import { CanvasManager } from "./canvasManager.js";
 import { UIManager } from "./uiManager.js";
 import { NodeActionManager } from "./nodeActionManager.js";
 import { ConnectionManager } from "./connectionManager.js";
-import { EventBus } from "./eventBus.js";
+import { EventBus } from "../types/eventBus.js";
 import { PanelManager } from "./panelManager.js";
 
 export class ControllerCore {

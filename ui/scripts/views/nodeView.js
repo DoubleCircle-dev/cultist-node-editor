@@ -14,7 +14,6 @@ export class NodeView {
         // 创建DOM元素并赋值给实例属性
         this.element = this._createDOM();
 
-
         this._initListeners();
     }
 
@@ -97,33 +96,61 @@ export class NodeView {
 
     _createHeader() {
         const header = document.createElement('div');
-        const innerHTML = `
-        <div class="node-header">
-            <div class="node-icon" style="color: ${this.model.color}">
-                ${this.model.icon || '⚡'}
-            </div>
-            <div class="node-title">
-                <input type="text" 
-                       class="node-title-input" 
-                       value="${this.model.title}" 
-                       placeholder="节点标题"
-                       data-node-id="${this.model.id}"
-                       onmousedown="event.stopPropagation()"
-                       onkeydown="if(event.key === 'Enter') this.blur()">
-                <span class="node-id">#${this.model.id}</span>
-            </div>
-            <div class="node-label">
-                <input type="text" 
-                       class="node-label-input" 
-                       value="${''}" 
-                       placeholder="标签（label:游戏内显示的名称）"
-                       data-node-id="${this.model.id}"
-                       onmousedown="event.stopPropagation()"
-                       onkeydown="if(event.key === 'Enter') this.blur()">
-            </div>
-        </div>
-    `;
-        header.innerHTML = innerHTML;
+        header.className = 'node-header';
+
+        const icon = document.createElement('div');
+        icon.className = 'node-icon';
+        icon.style.color = this.model.color;
+        icon.textContent = this.model.icon || '⚡';
+        header.appendChild(icon);
+
+        const title = document.createElement('div');
+        title.className = 'node-title';
+        const titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.className = 'node-title-input';
+        titleInput.value = this.model.title;
+        titleInput.placeholder = '节点标题';
+
+        titleInput.addEventListener('mousedown', (e) => e.stopPropagation());
+        titleInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                titleInput.blur();
+            }
+        })
+        titleInput.addEventListener('change', (e) => {
+            this.model.title = e.target?.value;
+        })
+
+        title.appendChild(titleInput);
+
+        const titleId = document.createElement('div');
+        titleId.className = 'node-title-id';
+        titleId.textContent = '#' + this.model.id;
+        title.appendChild(titleId);
+
+        header.appendChild(title);
+
+        const label = document.createElement('div');
+        label.className = 'node-label';
+        const labelInput = document.createElement('input');
+        labelInput.type = 'text';
+        labelInput.className = 'node-label-input';
+        labelInput.value = this.model.label;
+        labelInput.placeholder = '标签（label:游戏内显示的名称）';
+        labelInput.addEventListener('mousedown', (e) => e.stopPropagation());
+        labelInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                labelInput.blur();
+            }
+        })
+        labelInput.addEventListener('change', (e) => {
+            this.model.label = e.target?.value;
+        })
+
+        label.appendChild(labelInput);
+        header.appendChild(label);
+
         return header;
     }
 
