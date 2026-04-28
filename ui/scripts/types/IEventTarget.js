@@ -104,9 +104,6 @@ export class IEventTarget extends EventTarget {
         this.dispatchEvent(new CustomEvent(type, { detail }));
     }
 
-
-
-
     /** @param {Event} e */
     transmit(e) {
         if (e instanceof CustomEvent) {

@@ -41,7 +41,6 @@ export class NodeManager extends IManager {
 
     /** @private */
     _initListeners() {
-        // document.addEventListener('mousedown', this.handleClick.bind(this));
     }
 
     /** @private */
@@ -86,7 +85,6 @@ export class NodeManager extends IManager {
 
     /** @private */
     _addNode(e) {
-        const p = /** @type {PortModel} */ e.detail.p;
         this.addNode(e.detail.type, null, null);
     }
 
@@ -96,6 +94,11 @@ export class NodeManager extends IManager {
      */
     _createNode(nodeModel) {
         if (nodeModel instanceof NodeModel) {
+
+            this.idGenerator.occupy(nodeModel.id);
+
+            this.uidGenerator.occupy(nodeModel.uid);
+
             const nodeView = new NodeView(nodeModel);
 
             this.world.appendChild(nodeView.element);
@@ -141,7 +144,6 @@ export class NodeManager extends IManager {
 
             this._createNode(nodeModel);
 
-
             this.bus.standardEmitDetail(
                 'create',
                 'node',
@@ -177,11 +179,7 @@ export class NodeManager extends IManager {
 
         switch (this.coreSpace.mode) {
             case 'select':
-                this.SelectedNodes.forEach((/** @type {import('./nodeActionManager.js').BaseNodeModel} */ node) => {
-                    ids.push(node.id);
-                    models.push(node);
-                    this.deleteNode(node.id);
-                });
+                this.deleteNodes(this.SelectedNodes.map((node)=> node.id))
                 break;
             case 'drag':
                 break;
@@ -190,22 +188,6 @@ export class NodeManager extends IManager {
             default:
                 break;
         }
-
-        this.bus.standardEmitDetail(
-            'delete',
-            'node',
-            { nodeIds: ids, models },
-            () => {
-                models.forEach((model) => {
-                    this._addNode(model);
-                })
-            },
-            () => {
-                models.forEach((model) => {
-                    this._removeNode(model.id);
-                })
-            }
-        )
 
     }
 
@@ -248,7 +230,7 @@ export class NodeManager extends IManager {
                     break;
             }
 
-            this.bus.onceExclusive('drag:node:false', 'drag:node:true', onFailed, onSuccess);
+            this.bus.onceExclusive('drag:node:success', 'drag:node:failed', onFailed, onSuccess);
 
             nodeModel.setSelected(true);
 
@@ -268,6 +250,19 @@ export class NodeManager extends IManager {
             const ce = /** @type {CustomEvent} */ (e);
             this.bus.emit('drag:port:end', { ...ce.detail, node: nodeModel });
         });
+
+        nodeModel.addEventListener('update:property:finished', (e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            this.bus.standardEmitDetail('update', 'property', ce.detail, (/**@type {any}*/data) =>{
+                nodeModel.setPropValue(data.propId, data.oldValue);
+            },
+            (/**@type {any}*/data) =>{
+                nodeModel.setPropValue(data.propId, data.newValue);
+            }
+        
+        );
+            
+        })
     }
 
     /**
@@ -325,6 +320,7 @@ export class NodeManager extends IManager {
      * @param {NodeID} nodeId
      */
     _removeNode(nodeId) {
+
         if (typeof nodeId === 'number') {
             nodeId = String(nodeId);
         }
@@ -334,6 +330,9 @@ export class NodeManager extends IManager {
             console.error(`无法找到删除目标${nodeId}`);
             return;
         }
+
+        node.setSelected(false);
+        node.removeAllEventListeners();
 
         if (node instanceof NodeModel) {
             this.uidGenerator.release(node.uid);
@@ -349,13 +348,31 @@ export class NodeManager extends IManager {
 
     /** @param {NodeID} nodeId */
     deleteNode(nodeId) {
-        this._removeNode(nodeId);
+        this.deleteNodes([nodeId]);
+    }
 
-        this.bus.emit('remove:node', { nodeId });
+    deleteNodes(nodeIds) {
+        const models = nodeIds.map((nodeId) => this.nodes.get(nodeId));
 
-        if (this.nodes.size === 0) {
-            this.bus.emit('nodeRemoved:All');
-        }
+        nodeIds.forEach((nodeId) => {
+            this._removeNode(nodeId);
+        });
+
+        this.bus.standardEmitDetail(
+            'delete',
+            'node',
+            { nodeIds, models },
+            (/** @type {any} */ data) => {
+                data.models.forEach((model) => {
+                    this._createNode(model);
+                });
+            },
+            (/** @type {any} */ data) => {
+                data.nodeIds.forEach((nodeId) => {
+                    this._removeNode(nodeId);
+                });
+            }
+        );
     }
 
     hiddenNode(nodeId) {

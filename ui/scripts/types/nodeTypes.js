@@ -154,8 +154,9 @@ export class NodeTypeRegistry {
                     },
                 ],
                 选项2: [
-                    { label: '开关', type: 'checkbox', default: false },
+                    { name:'testSwitch',label: '开关', type: 'checkbox', default: false },
                     {
+                        name: 'testNumber',
                         label: '数字',
                         type: 'number',
                         min: 0,
@@ -164,8 +165,9 @@ export class NodeTypeRegistry {
                     },
                 ],
                 选项3: [
-                    { label: '整数输入', type: 'integer', default: null },
-                    { label: '文本输入', type: 'text', default: '测试文本' },
+                    {
+                        name:'testInteger', label: '整数输入', type: 'integer', default: null },
+                    { name:'testText', label: '文本输入', type: 'text', default: '测试文本' },
                 ],
                 999: [],
             },
@@ -188,6 +190,7 @@ export class NodeTypeRegistry {
                     description: 'description: 菜单中选择职业时显示的文本',
                 },
                 {
+                    name: 'startdescription',
                     label: '初始描述',
                     type: 'text',
                     default: '初始描述',
@@ -195,6 +198,7 @@ export class NodeTypeRegistry {
                         'startdescription: 会显示在开始此职业的新游戏时的弹出窗口。',
                 },
                 {
+                    name: 'startingVerbId',
                     label: '起始行动框',
                     type: 'port',
                     requireType: 'verbs',
@@ -207,6 +211,7 @@ export class NodeTypeRegistry {
             exProperties: {
                 999: [
                     {
+                        name: 'startingEndingId',
                         label: '前置结局',
                         type: 'port',
                         requireType: 'endings',
@@ -214,6 +219,7 @@ export class NodeTypeRegistry {
                         description: 'fromEnding: 在某结局后必定可选',
                     },
                     {
+                        name: 'availableWithoutEndingMatch',
                         label: '非特定结局后续',
                         type: 'bool',
                         default: true,
@@ -221,6 +227,7 @@ export class NodeTypeRegistry {
                             'availableWithoutEndingMatch: 表示游戏是否可以在任何其他职业的任何结束后将此职业视为有效的新开始',
                     },
                     {
+                        name: 'newstart',
                         label: '新开始',
                         type: 'bool',
                         default: true,
@@ -228,6 +235,7 @@ export class NodeTypeRegistry {
                             'newstart: 表示我们是否可以在第六历史菜单中手动选择此职业来开始它（就像其他DLC一样）。',
                     },
                     {
+                        name: 'statusbarelements',
                         label: '跟踪元素',
                         type: 'port',
                         requireType: 'elements',
@@ -237,12 +245,14 @@ export class NodeTypeRegistry {
                             'statusbarelements: 此职业中在屏幕底部跟踪的元素列表。需要恰好包含四个内容。如果你要跟踪的项目少于4个，你可以重复其中一些使其达到4个,默认重复列表的最后一个。',
                     },
                     {
+                        name: 'tablecoverimage',
                         label: '桌面图片',
                         type: 'image-preview',
                         description:
                             'tablecoverimage: 决定桌面背景，如dlc流亡者中的地中海地图。(请将地图放入images/ui中)（没有该字段则使用默认桌面）',
                     },
                     {
+                        name: 'excludesOnEnding',
                         label: '禁用后续职业列表',
                         type: 'port',
                         requireType: 'legacies',

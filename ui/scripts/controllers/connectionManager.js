@@ -52,13 +52,15 @@ export class ConnectionManager extends IManager {
         this._onEvents();
     }
 
-    /** @private */
+    //* 初始化 *//
+    /**
+     * 新建svg层用于显示连接线
+     *
+     * @private
+     */
     _createSVGLayer() {
         if (this.SVG_layer) return;
-        const svgLayer = document.createElementNS(
-            'http://www.w3.org/2000/svg',
-            'svg'
-        );
+        const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svgLayer.id = 'connections-svg-layer';
 
         this.world.appendChild(svgLayer);
@@ -69,12 +71,40 @@ export class ConnectionManager extends IManager {
     /** @private */
     _onEvents() {
         this.bus.on('drag:port:start', this._onPortDragStart.bind(this));
-        this.bus.on(
-            'drag:node:moving',
-            this._updateMovingConnections.bind(this)
-        );
+        this.bus.on('drag:node:running', this._updateMovingConnections.bind(this));
         this.bus.on('drag:node:end', this._updateConnections.bind(this));
         this.bus.on('delete:node', this._deleteNodeConnections.bind(this));
+    }
+
+    /**
+     * @private
+     * @param {CustomEvent} e
+     */
+    _onPortDragStart(e) {
+        if (this.dragState.isDragging) return;
+
+        const { clientX, clientY, offsetX, offsetY } = e.detail.originalEvent;
+
+        ({ x: this.dragState.initialX, y: this.dragState.initialY } = this.coreSpace.viewportToWorld(clientX, clientY));
+
+        this.dragState.isDragging = true;
+        this.dragState.startPos = this.getPortDotPosition(e.detail.port);
+
+        this.startNode = e.detail.node;
+        this.startPort = e.detail.port;
+
+        this.bus.once('drag:port:end', this.setTargetPortF);
+        this.bus.once('canNotConnected:port', this.checkTargetF);
+
+        try {
+            this._createTempLine(e);
+
+            document.addEventListener('mousemove', this.handlePortDragMoveF);
+            document.addEventListener('mouseup', this.handlePortDragEndF);
+        } catch (error) {
+            console.error('端口拖动错误', error);
+            this.cleanupPortDrag();
+        }
     }
 
     /**
@@ -112,29 +142,26 @@ export class ConnectionManager extends IManager {
         });
 
         // 第二步：统一删除所有涉及到的连接
-        connectionIdsToRemove.forEach((connId) => {
-            const conn = this.connections.get(connId);
-            if (conn) {
-                conn.remove(); // 假设这是移除 DOM 元素的方法
-                this.connections.delete(connId);
-            }
-        });
+        this.deleteConnections(connectionIdsToRemove);
     }
 
-    /** @param {string} connId */
-    removeConnection(connId) {
+    /**
+     * @private
+     * @param {string} connId
+     */
+    _removeConnection(connId) {
         const conn = this.connections.get(connId);
         if (conn) {
             conn.remove();
 
-            let arr = this.fromNodeIndex.get(conn.formNodeId);
+            let arr = this.fromNodeIndex.get(conn.fromNodeId);
             if (arr) {
                 const index = arr.indexOf(conn);
 
                 if (index !== -1) {
                     arr.splice(index, 1); // 删除模型
                     if (arr.length === 0) {
-                        this.fromNodeIndex.delete(conn.formNodeId); // 数组为空时可选删除该键
+                        this.fromNodeIndex.delete(conn.fromNodeId); // 数组为空时可选删除该键
                     }
                 }
             }
@@ -153,6 +180,18 @@ export class ConnectionManager extends IManager {
 
             this.connections.delete(connId);
         }
+    }
+
+    /** @param {string} connId */
+    deleteConnection(connId) {
+        this.deleteConnections([connId]);
+    }
+
+    /** @param {string[]} connectionIds */
+    deleteConnections(connectionIds) {
+        connectionIds.forEach((connectionId) => {
+            this._removeConnection(connectionId);
+        });
     }
 
     /**
@@ -192,20 +231,14 @@ export class ConnectionManager extends IManager {
      * @param {CustomEvent} e
      */
     _updateConnections(e) {
-        if (!this.coreSpace.setting.checkConnectionPos) return;
+        // if (!this.coreSpace.setting.checkConnectionPos) return;
 
         for (const conn of this.connections.values()) {
             const startPortDotRect = conn.startPort.getBoundingClientRect();
-            const startPos = this.coreSpace.viewportToWorld(
-                startPortDotRect.x,
-                startPortDotRect.y
-            );
+            const startPos = this.coreSpace.viewportToWorld(startPortDotRect.x, startPortDotRect.y);
 
             const endPortDotRect = conn.targetPort.getBoundingClientRect();
-            const endPos = this.coreSpace.viewportToWorld(
-                endPortDotRect.x,
-                endPortDotRect.y
-            );
+            const endPos = this.coreSpace.viewportToWorld(endPortDotRect.x, endPortDotRect.y);
             conn.refresh(startPos, endPos);
         }
     }
@@ -236,40 +269,6 @@ export class ConnectionManager extends IManager {
      * @private
      * @param {CustomEvent} e
      */
-    _onPortDragStart(e) {
-        if (this.dragState.isDragging) return;
-
-        const { clientX, clientY, offsetX, offsetY } = e.detail.originalEvent;
-
-        ({ x: this.dragState.initialX, y: this.dragState.initialY } =
-            this.coreSpace.viewportToWorld(clientX, clientY));
-
-        this.dragState.isDragging = true;
-        this.dragState.startPos = this.getPortDotPosition(e.detail.port);
-
-        this.startNode = e.detail.node;
-        this.startPort = e.detail.port;
-
-        this.bus.once('drag:port:end', this.setTargetPortF);
-        this.bus.once('canNotConnected:port', this.checkTargetF);
-
-        try {
-            this.startPort?.emit('dragging', {});
-
-            this._createTempLine(e);
-
-            document.addEventListener('mousemove', this.handlePortDragMoveF);
-            document.addEventListener('mouseup', this.handlePortDragEndF);
-        } catch (error) {
-            console.error('端口拖动错误', error);
-            this.cleanupPortDrag();
-        }
-    }
-
-    /**
-     * @private
-     * @param {CustomEvent} e
-     */
     _createTempLine(e) {
         if (!this.SVG_layer) {
             console.error('找不到连接线SVG容器');
@@ -279,29 +278,15 @@ export class ConnectionManager extends IManager {
         const portDirect = e.detail.port.direction;
 
         // 创建SVG路径
-        const tempLine = document.createElementNS(
-            'http://www.w3.org/2000/svg',
-            'path'
-        );
+        const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         tempLine.id = 'temp-connection-line';
         tempLine.classList.add('connection-path', 'temp-connection');
 
         // 初始路径
 
-        const endPosition = this.coreSpace.viewportToWorld(
-            e.detail.originalEvent.clientX,
-            e.detail.originalEvent.clientY
-        );
+        const endPosition = this.coreSpace.viewportToWorld(e.detail.originalEvent.clientX, e.detail.originalEvent.clientY);
 
-        const path = this.createCurvedPath(
-            this.dragState.startPos.x,
-            this.dragState.startPos.y,
-            endPosition.x,
-            endPosition.y,
-            portDirect,
-            null,
-            true
-        );
+        const path = this.createCurvedPath(this.dragState.startPos.x, this.dragState.startPos.y, endPosition.x, endPosition.y, portDirect, null, true);
         tempLine.setAttribute('d', path);
 
         this.tempLine = tempLine;
@@ -310,15 +295,7 @@ export class ConnectionManager extends IManager {
     }
 
     // 创建曲线路径
-    createCurvedPath(
-        startX,
-        startY,
-        endX,
-        endY,
-        startPortDirect = 'output',
-        endDirect = 'input',
-        tempFlag = false
-    ) {
+    createCurvedPath(startX, startY, endX, endY, startPortDirect = 'output', endDirect = 'input', tempFlag = false) {
         // 计算垂直和水平距离
         const verticalDistance = Math.abs(endY - startY);
         const verticalDirect = endY - startY > 0 ? 1 : -1;
@@ -326,15 +303,9 @@ export class ConnectionManager extends IManager {
 
         const minBoundaryOffset = 60;
         const basicBoundaryOffset = 48;
-        const BoundaryOffset = Math.min(
-            horizontalDistance * 0.4 + basicBoundaryOffset,
-            horizontalDistance * 0.5
-        );
+        const BoundaryOffset = Math.min(horizontalDistance * 0.4 + basicBoundaryOffset, horizontalDistance * 0.5);
         const verticalCurveFactor = 0.15; // 垂直弯曲因子，控制S型曲线的幅度
-        const verticalOffset = Math.min(
-            verticalDistance * verticalCurveFactor,
-            100
-        );
+        const verticalOffset = Math.min(verticalDistance * verticalCurveFactor, 100);
 
         // 计算控制点
         let cp1x, cp1y, cp2x, cp2y;
@@ -388,7 +359,31 @@ export class ConnectionManager extends IManager {
                 break;
         }
 
+        if (!this._checkPath(cp1x, cp1y, cp2x, cp2y, startX, startY, endX, endY)) return null;
+
         return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
+    }
+
+    /** @private */
+    _checkPath(cp1x, cp1y, cp2x, cp2y, startX, startY, endX, endY) {
+        if (!cp1x) return false;
+        if (!cp1y) return false;
+        if (!cp2x) return false;
+        if (!cp2y) return false;
+        if (!startX) return false;
+        if (!startY) return false;
+        if (!endX) return false;
+        if (!endY) return false;
+        if (Number.isNaN(cp1x)) return false;
+        if (Number.isNaN(cp1y)) return false;
+        if (Number.isNaN(cp2x)) return false;
+        if (Number.isNaN(cp2y)) return false;
+        if (Number.isNaN(startX)) return false;
+        if (Number.isNaN(startY)) return false;
+        if (Number.isNaN(endX)) return false;
+        if (Number.isNaN(endY)) return false;
+
+        return true;
     }
 
     // 处理拖拽移动
@@ -401,10 +396,7 @@ export class ConnectionManager extends IManager {
 
         try {
             // 获取当前鼠标位置
-            const endPosition = this.coreSpace.viewportToWorld(
-                event.clientX,
-                event.clientY
-            );
+            const endPosition = this.coreSpace.viewportToWorld(event.clientX, event.clientY);
 
             // 更新临时连接线
             const path = this.createCurvedPath(
@@ -440,14 +432,9 @@ export class ConnectionManager extends IManager {
 
         if (hasTargetPort) {
             const { clientX, clientY, offsetX, offsetY } = event;
-            const endPosition = this.coreSpace.viewportToWorld(
-                clientX,
-                clientY
-            );
+            const endPosition = this.coreSpace.viewportToWorld(clientX, clientY);
             if (this.targetPort) {
-                this.dragState.endPos = this.getPortDotPosition(
-                    this.targetPort
-                );
+                this.dragState.endPos = this.getPortDotPosition(this.targetPort);
             } else {
                 console.error('目标端口未正确登记');
                 return;
@@ -478,9 +465,7 @@ export class ConnectionManager extends IManager {
             const elementsAtCursor = document.elementsFromPoint(x, y);
 
             // 查找第一个具有 'port' 类的元素（或自定义标识）
-            const portElement = elementsAtCursor.find((el) =>
-                el.classList?.contains('port-dot')
-            );
+            const portElement = elementsAtCursor.find((el) => el.classList?.contains('port-dot'));
 
             if (!portElement) {
                 console.warn('未找到端口 DOM 元素');
@@ -508,19 +493,49 @@ export class ConnectionManager extends IManager {
                     this.targetPort = tempPort;
                 }
                 // 创建连接
-                this.createConnection(
-                    this.startNode.id,
-                    this.startPort.id,
-                    this.targetNode.id,
-                    this.targetPort.id
-                );
+                this.createConnection(this.startNode.id, this.startPort.id, this.targetNode.id, this.targetPort.id);
             }
         } catch (error) {
             console.error('尝试创建连接时出错：', error);
         }
     }
 
+    /**
+     * @private
+     * @param {ConnectionModel} connModel
+     */
+
+    _createConnection(connModel) {
+        const connection = connModel;
+        const connectionId = connection.id;
+
+        this.connections.set(connectionId, connection);
+
+        let list = this.toNodeIndex.get(connection.toNodeId);
+        if (list) {
+            list.push(connection);
+        } else {
+            this.toNodeIndex.set(connection.toNodeId, [connection]);
+        }
+
+        list = this.fromNodeIndex.get(connection.fromNodeId);
+        if (list) {
+            list.push(connection);
+        } else {
+            this.fromNodeIndex.set(connection.fromNodeId, [connection]);
+        }
+
+        // 创建连接线
+        this.createConnectionLine(connection);
+    }
+
     // 创建永久连接
+    /**
+     * @param {string} fromNodeId
+     * @param {string} fromPortId
+     * @param {string} toNodeId
+     * @param {string} toPortId
+     */
     createConnection(fromNodeId, fromPortId, toNodeId, toPortId) {
         try {
             // 创建连接对象
@@ -541,25 +556,20 @@ export class ConnectionManager extends IManager {
                 this.dragState.endPos
             );
 
-            this.connections.set(connectionId, connection);
+            this._createConnection(connection);
 
-            let list = this.toNodeIndex.get(toNodeId);
-            if (list) {
-                list.push(connection);
-            } else {
-                this.toNodeIndex.set(toNodeId, [connection]);
-            }
-
-            list = this.fromNodeIndex.get(fromNodeId);
-            if (list) {
-                list.push(connection);
-            } else {
-                this.fromNodeIndex.set(fromNodeId, [connection]);
-            }
-
-            // 创建连接线
-            this.createConnectionLine(connection);
-
+            this.bus.standardEmitDetail(
+                'create',
+                'connection',
+                {},
+                () => {
+                    // connection.emit('delete:connection', {})
+                    this.deleteConnection(connectionId);
+                },
+                () => {
+                    this._createConnection(connection);
+                }
+            );
             // 更新端口样式
             // this.updatePortStyles();
 
@@ -579,20 +589,17 @@ export class ConnectionManager extends IManager {
         }
 
         // 创建SVG路径
-        const svgLine = document.createElementNS(
-            'http://www.w3.org/2000/svg',
-            'path'
-        );
+        const svgLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         svgLine.id = connection.id;
         svgLine.classList.add('connection-path', 'permanent-connection');
 
         const path = this.createCurvedPath(
-            this.dragState.startPos.x,
-            this.dragState.startPos.y,
-            this.dragState.endPos.x,
-            this.dragState.endPos.y,
-            this.startPort.direction,
-            this.targetPort.direction,
+            connection.startPos.x,
+            connection.startPos.y,
+            connection.endPos.x,
+            connection.endPos.y,
+            connection.startPort.direction,
+            connection.targetPort.direction,
             false
         );
         svgLine.setAttribute('d', path);
@@ -609,26 +616,21 @@ export class ConnectionManager extends IManager {
         // 双击断开连接
         svgLine.addEventListener('dblclick', (e) => {
             e.stopPropagation();
-            this.removeConnection(connection.id);
+            this.deleteConnection(connection.id);
+        });
+
+        connection.addEventListener('delete:connection', () => {
             svgLine.remove();
         });
 
-        connection.addEventListener('delete:conn', () => {
-            svgLine.remove();
-        });
-
-        connection.addEventListener(
-            'change:conn',
-            (/** @type {CustomEvent} */ e) => {
-                const path = this.createCurvedPath(
-                    e.detail.startX,
-                    e.detail.startY,
-                    e.detail.endX,
-                    e.detail.endY
-                );
-                svgLine.setAttribute('d', path);
+        connection.addEventListener('change:connection', (/** @type {CustomEvent} */ e) => {
+            const path = this.createCurvedPath(e.detail.startX, e.detail.startY, e.detail.endX, e.detail.endY);
+            if (!path) {
+                console.error('无法创建路径，参数不准确', e.detail.startX, e.detail.startY, e.detail.endX, e.detail.endY);
+                return;
             }
-        );
+            svgLine.setAttribute('d', path);
+        });
 
         if (this.tempLine) {
             this.tempLine.remove();

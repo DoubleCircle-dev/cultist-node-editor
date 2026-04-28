@@ -46,9 +46,6 @@ export class HistoryManager extends IManager {
 
     /** @private */
     _initListeners() {
-        this.viewport.addEventListener('keydown', (e)=>{
-
-        })
     }
 
     /**
@@ -66,16 +63,6 @@ export class HistoryManager extends IManager {
             this._history.shift();
         }
 
-        console.log(this._history, eventName);
-
-        //定时5s执行
-        setTimeout(() => {
-            this.undo();
-        }, 5000);
-
-        setTimeout(() => {
-            this.redo();
-        }, 10000);
     }
 
     /**
@@ -89,27 +76,27 @@ export class HistoryManager extends IManager {
     }
 
     undo() {
-        const history = this._history.pop();
-        if (!history) return;
-        this._undoHistory.push(history);
+        const historyItem = this._history.pop();
+        if (!historyItem) return;
+        this._undoHistory.push(historyItem);
 
         while (this._undoHistory.length > this.coreSpace.setting.undoHistoryMaxLength) {
             this._undoHistory.shift();
         }
 
-        history.undo();
+        historyItem.undo();
     }
 
     redo() {
-        const history = this._undoHistory.pop();
-        if (!history) return;
-        this._history.push(history);
+        const historyItem = this._undoHistory.pop();
+        if (!historyItem) return;
+        this._history.push(historyItem);
 
         while (this._history.length > this.coreSpace.setting.historyMaxLength) {
             this._history.shift();
         }
 
-        history.redo();
+        historyItem.redo();
     }
 }
 

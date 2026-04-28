@@ -1,19 +1,17 @@
-import { BaseProp } from "../models/propModels/baseProp.js";
-import { NumericProp } from "../models/propModels/numericProp.js";
-import { OptionsProp } from "../models/propModels/optionsProp.js";
-import { PortProp } from "../models/propModels/portProp.js";
-import { ViewProp } from "../models/propModels/viewProp.js";
-import { HubProp } from "../models/propModels/hubProp.js";
-import { BaseNodeModel } from "../models/nodeModels/baseNodeModel.js";
+import { BaseProp } from '../models/propModels/baseProp.js';
+import { NumericProp } from '../models/propModels/numericProp.js';
+import { OptionsProp } from '../models/propModels/optionsProp.js';
+import { PortProp } from '../models/propModels/portProp.js';
+import { ViewProp } from '../models/propModels/viewProp.js';
+import { HubProp } from '../models/propModels/hubProp.js';
+import { BaseNodeModel } from '../models/nodeModels/baseNodeModel.js';
 
 export class PropGenerator {
-
     /**
-     * 
-     * @param {*} id 
-     * @param {*} type 
-     * @param {*} propConfig 
-     * @param {WeakRef<BaseNodeModel>} [node=null] 
+     * @param {any} id
+     * @param {any} type
+     * @param {any} propConfig
+     * @param {WeakRef<BaseNodeModel>} [node=null] Default is `null`
      * @returns {BaseProp | PortProp}
      */
     static createProp(id, type, propConfig, node = null) {
@@ -25,7 +23,7 @@ export class PropGenerator {
             case 'hub':
                 const hubProps = [];
                 propConfig.properties.forEach((/** @type {PropConfig} */ p, /** @type {number} */ index) => {
-                    hubProps.push(PropGenerator.createProp(`${id}_hub:${propConfig.label}-${index}`, p.type, p, node))
+                    hubProps.push(PropGenerator.createProp(`${id}_hub:${propConfig.label}-${index}`, p.type, p, node));
                 });
                 args = [id, propConfig.label, hubProps, propConfig.layout];
                 propClass = HubProp;
@@ -42,10 +40,16 @@ export class PropGenerator {
                 break;
             case 'text':
             case 'image-path':
-                args = [id, propConfig.label, propConfig.type, propConfig.default, {
-                    placeholder: propConfig.placeholder,
-                    inputPort: { id: `${id}-input`, portType: 'implicit', dataType: 'text' }
-                }];
+                args = [
+                    id,
+                    propConfig.label,
+                    propConfig.type,
+                    propConfig.default,
+                    {
+                        placeholder: propConfig.placeholder,
+                        inputPort: { id: `${id}-input`, portType: 'implicit', dataType: 'text' },
+                    },
+                ];
                 propClass = PortProp;
                 break;
             case 'table':
@@ -78,41 +82,41 @@ export class PropGenerator {
                 propClass = OptionsProp;
                 break;
             case 'port':
+                {
+                    const portConfig = {
+                        inputPort: {},
+                        outputPort: {},
+                    };
 
-                const portConfig = {
-                    inputPort: null,
-                    outputPort: null
+                    const maxLinks = propConfig.multiConnect ? propConfig.connectNum || Infinity : 1;
+
+                    if (!propConfig.direction || propConfig.direction === 'input') {
+                        portConfig.inputPort = {
+                            id: `${id}-input`,
+                            maxLinks: maxLinks,
+                            dataType: propConfig.requireType || 'any',
+                        };
+                    } else if (propConfig.direction === 'output') {
+                        portConfig.outputPort = {
+                            id: `${id}-output`,
+                            maxLinks: maxLinks,
+                            dataType: propConfig.returnType || 'any',
+                        };
+                    } else if (propConfig.direction === 'both') {
+                        portConfig.inputPort = {
+                            id: `${id}-input`,
+                            maxLinks: maxLinks,
+                            dataType: propConfig.requireType || 'any',
+                        };
+                        portConfig.outputPort = {
+                            id: `${id}-output`,
+                            maxLinks: maxLinks,
+                            dataType: propConfig.returnType || 'any',
+                        };
+                    }
+                    args = [id, propConfig.label, propConfig.type, propConfig.default, portConfig];
+                    propClass = PortProp;
                 }
-
-                const maxLinks = propConfig.multiConnect ? (propConfig.connectNum || Infinity) : 1;
-
-
-                if (!propConfig.direction || propConfig.direction === 'input') {
-                    portConfig.inputPort = {
-                        id: `${id}-input`,
-                        maxLinks: maxLinks,
-                        dataType: propConfig.requireType || 'any',
-                    }
-                } else if (propConfig.direction === 'output') {
-                    portConfig.outputPort = {
-                        id: `${id}-output`,
-                        maxLinks: maxLinks,
-                        dataType: propConfig.returnType || 'any',
-                    }
-                } else if (propConfig.direction === 'both') {
-                    portConfig.inputPort = {
-                        id: `${id}-input`,
-                        maxLinks: maxLinks,
-                        dataType: propConfig.requireType || 'any',
-                    }
-                    portConfig.outputPort = {
-                        id: `${id}-output`,
-                        maxLinks: maxLinks,
-                        dataType: propConfig.returnType || 'any',
-                    }
-                }
-                args = [id, propConfig.label, propConfig.type, propConfig.default, portConfig];
-                propClass = PortProp;
                 break;
             default:
                 args = [id, propConfig.label, propConfig.type, propConfig.default];
@@ -132,7 +136,6 @@ export class PropGenerator {
             if (!(result instanceof HubProp)) {
                 result.parentNode = node;
             }
-
         } else {
             console.error('注册属性失败', propClass, args);
             return new BaseProp(null, null, null, null);
@@ -140,18 +143,16 @@ export class PropGenerator {
 
         return result;
     }
-
 }
 
 export class PropRenderer {
-
-
     /**
      * 渲染属性
+     *
      * @param {BaseProp} prop
-     * @returns {{ 
-     * element: HTMLElement, 
-     * listeners: listenerMap[] 
+     * @returns {{
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
      * }}
      */
     static render(prop) {
@@ -176,34 +177,38 @@ export class PropRenderer {
 
     /**
      * 渲染映射表
-     * @type {Record<string, (prop: any) => { element: HTMLElement, listeners: listenerMap[] }>}
+     *
+     * @type {Record<string, (prop: any) => { element: HTMLElement; listeners: listenerMap[] }>}
      */
     static RenderMap = {
-        'text': (p) => this.createInput('text', p, { placeholder: p.placeholder || p.label }),
-        'integer': (p) => this.createInput('number', p, { placeholder: p.placeholder || p.label }),
-        'number': (p) => this.createNumber('number', p),
-        'range': (p) => this.createInput('range', p, {
-            step: String(p.config?.step ?? 1)
-        }),
-        'slider': (p) => this.createInput('range', p, {
-            step: String(p.config?.step ?? 1)
-        }),
-        'radio': (p) => this.createRadio(p),
-        'bool': (p) => this.createRadio(p, true),
-        'checkbox': (p) => this.createCheckbox(p),
-        'select': (p) => this.createSelect(p),
-        'image-path': (p) => this.createInput('text', p, { placeholder: "图片路径" }),
+        text: (p) => this.createInput('text', p, { placeholder: p.placeholder || p.label }),
+        integer: (p) => this.createInput('number', p, { placeholder: p.placeholder || p.label }),
+        number: (p) => this.createNumber('number', p),
+        range: (p) =>
+            this.createInput('range', p, {
+                step: String(p.config?.step ?? 1),
+            }),
+        slider: (p) =>
+            this.createInput('range', p, {
+                step: String(p.config?.step ?? 1),
+            }),
+        radio: (p) => this.createRadio(p),
+        bool: (p) => this.createRadio(p, true),
+        checkbox: (p) => this.createCheckbox(p),
+        select: (p) => this.createSelect(p),
+        'image-path': (p) => this.createInput('text', p, { placeholder: '图片路径' }),
         'image-preview': (p) => this.createPreView('image', p),
         'image-icon': (p) => this.createPreView('icon', p),
         'table-button': (p) => this.createButton('table', p),
         'table-preview': (p) => this.createPreView('table', p, p.columns),
         'textarea-preview': (p) => this.createPreView('textarea', p),
-        'port': (p) => this.createButton('port', p),
-        'selectPort': (p) => this.createButton('selectPort', p)
+        port: (p) => this.createButton('port', p),
+        selectPort: (p) => this.createButton('selectPort', p),
     };
 
     /**
      * 辅助工具：创建 DOM 元素并分配属性
+     *
      * @param {string} tagName
      */
     static createElement(tagName, props = {}, className = '') {
@@ -220,9 +225,9 @@ export class PropRenderer {
     /**
      * @param {string} type
      * @param {BaseProp} prop
-     * @returns {{ 
-     * element: HTMLElement, 
-     * listeners: listenerMap[] 
+     * @returns {{
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
      * }}
      */
 
@@ -233,29 +238,42 @@ export class PropRenderer {
             id: prop.id || `input-${type}`,
             value: val ?? '',
             className: `prop-input ${type}`,
-            ...config
+            ...config,
         });
 
-        if (input instanceof HTMLInputElement) {
-            input.autocomplete = 'off';
+        if (!(input instanceof HTMLInputElement)) {
+            console.error(`无法创建 ${type} 类型的输入框`);
+            return { element: this.createErrorDom(`无法创建 ${type} 类型的输入框`), listeners: [] };
         }
 
+        input.autocomplete = 'off';
+
+        /** @param {Event} e */
         const changeValueListener = (e) => {
             const target = e.target;
             if (target instanceof HTMLInputElement) {
-                prop.setValue(target.value);
+                prop.updateValue(target.value);
             }
-        }
+        };
 
         const mousedownListener = (e) => {
             e.stopPropagation();
         };
 
+        prop.addEventListener('change', (e) => {
+            if (e instanceof CustomEvent) {
+                input.value = e.detail.value;
+            }
+        });
+
         input.addEventListener('change', changeValueListener);
 
         input.addEventListener('mousedown', mousedownListener);
 
-        const listeners = [{ listener: changeValueListener, target: input, type: 'change' }, { listener: mousedownListener, target: input, type: 'mousedown' }];
+        const listeners = [
+            { listener: changeValueListener, target: input, type: 'change' },
+            { listener: mousedownListener, target: input, type: 'mousedown' },
+        ];
 
         return { element: input, listeners: listeners };
     }
@@ -266,9 +284,9 @@ export class PropRenderer {
     }
 
     /**
-     * @returns {{ 
-     * element: HTMLElement, 
-     * listeners: listenerMap[] 
+     * @returns {{
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
      * }}
      */
 
@@ -286,34 +304,33 @@ export class PropRenderer {
 
     /**
      * 创建一个单选按钮组
-     * @param {OptionsProp} p
-     * @returns {{ 
-     * element: HTMLElement, 
-     * listeners: listenerMap[] 
+     *
+     * @param {OptionsProp} prop
+     * @returns {{
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
      * }} 返回包含单选按钮组的容器元素,以及元素及子元素绑定的所有listener
      */
-    static createRadio(p, boolFlag = false) {
+    static createRadio(prop, boolFlag = false) {
         // 创建一个div容器，类名为'prop-radio-group'
         const container = this.createElement('div', {}, 'prop-radio-group');
 
-        /**
-         * @type { listenerMap[] }
-         */
+        /** @type {listenerMap[]} */
         const listeners = [];
 
         // 创建一个label元素，类名为'radio-label'，并设置文本内容为p.label
-        const label = this.createLabel(p.label, String(p.id), 'radio-label');
+        const label = this.createLabel(prop.label, String(prop.id), 'radio-label');
         // 将label添加到容器中
         container.appendChild(label);
 
         // 从配置中解构出选项数组和默认值
-        let { opts = [] } = p.config || {};
+        let { opts = [] } = prop.config || {};
 
         if (boolFlag) {
             opts = ['是', '否'];
         }
 
-        const currentValue = p.value;
+        const currentValue = prop.value;
 
         // 遍历选项数组，为每个选项创建一个单选按钮
         opts.forEach((/** @type {any} */ opt) => {
@@ -322,61 +339,75 @@ export class PropRenderer {
 
             const labelMouseDownListener = (e) => {
                 e.stopPropagation();
-            }
+            };
 
             label.addEventListener('mousedown', labelMouseDownListener);
 
-            listeners.push(
-                {
-                    target: label,
-                    type: 'mousedown',
-                    listener: labelMouseDownListener
-                }
-            )
+            listeners.push({
+                target: label,
+                type: 'mousedown',
+                listener: labelMouseDownListener,
+            });
 
             const input = this.createElement('input', {
                 type: 'radio',
-                name: String(p.id),   // 同一组的 name 相同
+                name: String(prop.id), // 同一组的 name 相同
                 value: opt,
-                className: 'prop-radio-input'
+                className: 'prop-radio-input',
             });
+
+            if (!(input instanceof HTMLInputElement)) {
+                console.error(`无法创建单选输入框`, prop);
+                return { element: this.createErrorDom(`无法创建单选输入框`), listeners: [] };
+            }
+
             // 设置选中状态：处理布尔型转换
             if (boolFlag) {
                 // 布尔型：'是' 对应 true，'否' 对应 false
                 const boolVal = currentValue === true || currentValue === false ? currentValue : false;
                 if ((opt === '是' && boolVal === true) || (opt === '否' && boolVal === false)) {
-                    if (input instanceof HTMLInputElement) {
-                        input.checked = true;
-                    }
+                    input.checked = true;
                 }
             } else {
                 // 普通单选：直接比较值
                 if (opt === currentValue) {
-                    if (input instanceof HTMLInputElement) {
-                        input.checked = true;
-                    }
+                    input.checked = true;
                 }
             }
 
             const changeValueListener = (e) => {
-                const target = e.target
-                if (target instanceof HTMLInputElement) {
-                    if (boolFlag) {
-                        p.setValue(target.value === '是' ? true : false);
-                    } else {
-                        p.setValue(target.value);
-                    }
+                const target = e.target;
+                if (boolFlag) {
+                    prop.updateValue(target.value === '是' ? true : false);
+                } else {
+                    prop.updateValue(target.value);
                 }
-            }
+            };
             input.addEventListener('change', changeValueListener);
 
-            listeners.push(
-                {
-                    target: input,
-                    type: 'change',
-                    listener: changeValueListener
+            prop.addEventListener('change', (e) => {
+                if (e instanceof CustomEvent) {
+                    const eventValue = e.detail.value;
+                    if (boolFlag) {
+                        // 布尔型：'是' 对应 true，'否' 对应 false
+                        const boolVal = eventValue === true || eventValue === false ? eventValue : false;
+                        if ((opt === '是' && boolVal === true) || (opt === '否' && boolVal === false)) {
+                            input.checked = true;
+                        }
+                    } else {
+                        // 普通单选：直接比较值
+                        if (opt === eventValue) {
+                            input.checked = true;
+                        }
+                    }
                 }
-            )
+            });
+
+            listeners.push({
+                target: input,
+                type: 'change',
+                listener: changeValueListener,
+            });
 
             // 创建一个span元素作为标签文本，类名为'radio-option-label'
             const span = this.createElement('span', { textContent: opt }, 'radio-option-label');
@@ -391,11 +422,12 @@ export class PropRenderer {
 
     /**
      * 创建下拉选择框
+     *
      * @param {BaseProp} p
-     * @returns {{ 
-     * element: HTMLElement, 
-     * listeners: listenerMap[] 
-     * }} 
+     * @returns {{
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
+     * }}
      */
     static createSelect(p) {
         const s = this.createElement('select', {}, 'select');
@@ -405,7 +437,7 @@ export class PropRenderer {
         const opts = p.config?.opts || [];
 
         let fragment = document.createDocumentFragment();
-        opts.forEach(o => {
+        opts.forEach((o) => {
             const option = document.createElement('option');
             option.textContent = o;
             option.value = o;
@@ -418,42 +450,45 @@ export class PropRenderer {
         });
 
         const mousedownListener = (e) => {
-            e.stopPropagation()
+            e.stopPropagation();
         };
 
         const changeListener = (e) => {
             const target = e.target;
             if (target instanceof HTMLSelectElement) {
-                p.setValue(target.value);
+                p.updateValue(target.value);
             }
-        }
+        };
 
         s.addEventListener('mousedown', mousedownListener);
 
-        s.addEventListener('change', changeListener)
+        s.addEventListener('change', changeListener);
 
-        const changeValueListener = (/**@type {CustomEvent}*/e) => {
-            const newVal = e.detail.value;
-            s.value = newVal;
-        }
-
-        p.addEventListener('change', changeValueListener);
+        p.addEventListener('change', (e) => {
+            if (e instanceof CustomEvent) {
+                s.value = e.detail.value;
+            }
+        });
 
         s.appendChild(fragment);
 
-        return { element: s, listeners: [{ target: s, type: 'mousedown', listener: mousedownListener }, { target: s, type: 'change', listener: changeListener }] };
-
+        return {
+            element: s,
+            listeners: [
+                { target: s, type: 'mousedown', listener: mousedownListener },
+                { target: s, type: 'change', listener: changeListener },
+            ],
+        };
     }
 
     /**
-     * @returns {{ 
-     * element: HTMLElement, 
-     * listeners: listenerMap[] 
-     * }} 
+     * @returns {{
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
+     * }}
      */
 
     static createCheckbox(p) {
-
         const c = this.createElement('div', {}, 'checkbox');
 
         const label = this.createLabel(p.label, String(p.id));
@@ -468,12 +503,13 @@ export class PropRenderer {
 
     /**
      * 创建预览组件
+     *
      * @param {string} type
      * @param {ViewProp} prop
      * @returns {{
-        * element: HTMLElement,
-        *   listeners: listenerMap[]
-        * }}
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
+     * }}
      */
     static createPreView(type, prop, columns = []) {
         const preView = this.createElement('div', {}, 'prop-card');
@@ -482,21 +518,21 @@ export class PropRenderer {
             case 'textarea':
                 const textInput = this.createElement('textarea', {
                     value: prop.value ?? '',
-                    placeholder: '输入文本内容...'
+                    placeholder: '输入文本内容...',
                 });
                 preView.appendChild(textInput);
                 break;
             case 'icon':
                 const icon = this.createElement('img', {
-                    src: prop.value || '../../../test/img/placeholder.png'
-                })
+                    src: prop.value || '../../../test/img/placeholder.png',
+                });
                 preView.appendChild(icon);
                 preView.classList.add('icon');
                 break;
 
             case 'image':
                 const img = this.createElement('img', {
-                    src: prop.value || '../../../test/img/placeholder.png'
+                    src: prop.value || '../../../test/img/placeholder.png',
                 });
                 preView.appendChild(img);
                 break;
@@ -508,14 +544,14 @@ export class PropRenderer {
                 const thead = this.createElement('thead');
                 const headerRow = this.createElement('tr');
 
-                columns.forEach(col => {
+                columns.forEach((col) => {
                     headerRow.appendChild(this.createElement('th', { textContent: col.label }));
-                })
+                });
 
                 const tbody = this.createElement('tbody');
-                (Array.isArray(prop.value) ? prop.value : []).forEach(rowItem => {
+                (Array.isArray(prop.value) ? prop.value : []).forEach((rowItem) => {
                     const tr = this.createElement('tr');
-                    columns.forEach(col => {
+                    columns.forEach((col) => {
                         const td = this.createElement('td');
 
                         const value = rowItem[col.field];
@@ -539,14 +575,13 @@ export class PropRenderer {
         return { element: preView, listeners: [] };
     }
 
-
     /**
      * @param {string} type
      * @param {BaseProp} p
      * @returns {{
-        * element: HTMLElement,
-        *   listeners: listenerMap[]
-        *}}
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
+     * }}
      */
     static createButton(type, p) {
         const button = document.createElement('button');
@@ -555,17 +590,14 @@ export class PropRenderer {
         button.textContent = p.label || '测试用';
 
         const mousedownListener = (e) => {
-            e.stopPropagation()
-        }
+            e.stopPropagation();
+        };
         button.addEventListener('mousedown', mousedownListener);
 
         return { element: button, listeners: [{ listener: mousedownListener, target: button, type: 'mousedown' }] };
-
     }
 
-    /**
-     * @param {string} type
-     */
+    /** @param {string} type */
     static createHub(type, layout = 'single') {
         const hub = document.createElement('div');
         hub.className = 'prop-hub';
@@ -581,6 +613,4 @@ export class PropRenderer {
         el.textContent = message;
         return el;
     }
-
-
 }

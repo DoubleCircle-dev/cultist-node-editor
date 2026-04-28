@@ -55,21 +55,11 @@ export class CanvasManager {
         this.viewport.addEventListener('wheel', this.handleWheel.bind(this), {
             passive: false,
         });
-        this.viewport.addEventListener(
-            'mousedown',
-            this.handleMouseDown.bind(this)
-        );
+        this.viewport.addEventListener('mousedown', this.handleMouseDown.bind(this));
 
-        this.viewport.addEventListener(
-            'mousemove',
-            this.handleMouseMove.bind(this)
-        );
-        this.viewport.addEventListener(
-            'mouseleave',
-            this.handleMouseLeave.bind(this)
-        );
+        this.viewport.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this.viewport.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
 
-        document.addEventListener('keydown', this.handleKeyDown.bind(this));
     }
 
     /**
@@ -90,10 +80,7 @@ export class CanvasManager {
 
         // 计算新的缩放比例
         const factor = Math.exp(direction * zoomIntensity);
-        const newScale = Math.min(
-            Math.max(this.transform.scale * factor, EditorConfig.ZOOM.MIN),
-            EditorConfig.ZOOM.MAX
-        );
+        const newScale = Math.min(Math.max(this.transform.scale * factor, EditorConfig.ZOOM.MIN), EditorConfig.ZOOM.MAX);
 
         this.setZoom(newScale, false, e.clientX, e.clientY);
     }
@@ -116,11 +103,7 @@ export class CanvasManager {
         }
 
         // 中键(1) 或 按住alt的左键(0) 或 移动模式下的左键(0)
-        if (
-            e.button === 1 ||
-            (this.mode === 'drag' && e.button === 0) ||
-            (e.button === 0 && e.altKey)
-        ) {
+        if (e.button === 1 || (this.mode === 'drag' && e.button === 0) || (e.button === 0 && e.altKey)) {
             e.preventDefault();
 
             this.panState = {
@@ -135,9 +118,7 @@ export class CanvasManager {
             const preCursor = this.viewport.style.cursor;
             this.viewport.style.cursor = 'grabbing';
 
-            const onMouseMove = (
-                /** @type {{ clientX: number; clientY: number }} */ me
-            ) => {
+            const onMouseMove = (/** @type {{ clientX: number; clientY: number }} */ me) => {
                 if (!this.panState.panning) return;
 
                 const dx = me.clientX - this.panState.startX;
@@ -210,32 +191,7 @@ export class CanvasManager {
         });
     }
 
-    // 处理键盘事件--快捷键设置
-    /** @param {KeyboardEvent} e */
-    handleKeyDown(e) {
-        if (e.target) {
-            if (e.target instanceof HTMLElement) {
-                if (
-                    e.target.tagName === 'INPUT' ||
-                    e.target.tagName === 'SELECT' ||
-                    e.target.tagName === 'TEXTAREA'
-                )
-                    return;
-            }
-        }
-
-        const key = e.key.toUpperCase();
-        if (key === 'H') {
-            e.preventDefault();
-            this.setMode('select');
-        } else if (key === 'G') {
-            e.preventDefault();
-            this.setMode('drag');
-        } else if (key === 'F') {
-            e.preventDefault();
-            this.setMode('focus');
-        }
-    }
+    
 
     /** @param {string} mode */
     setMode(mode) {
@@ -269,12 +225,8 @@ export class CanvasManager {
         }
 
         // 计算偏移量修正
-        this.transform.x =
-            centerX -
-            (centerX - this.transform.x) * (value / this.transform.scale);
-        this.transform.y =
-            centerY -
-            (centerY - this.transform.y) * (value / this.transform.scale);
+        this.transform.x = centerX - (centerX - this.transform.x) * (value / this.transform.scale);
+        this.transform.y = centerY - (centerY - this.transform.y) * (value / this.transform.scale);
 
         this.transform.scale = value;
 

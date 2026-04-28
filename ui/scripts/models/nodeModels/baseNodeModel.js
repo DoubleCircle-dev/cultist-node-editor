@@ -1,5 +1,6 @@
 import { IEventTarget } from '../../types/IEventTarget.js';
 import { BaseProp } from '../propModels/baseProp.js';
+import { HubProp } from '../propModels/hubProp.js';
 
 export class BaseNodeModel extends IEventTarget {
     /**
@@ -74,6 +75,26 @@ export class BaseNodeModel extends IEventTarget {
     set properties(properties) {
         /** @private */
         this._properties = properties;
+    }
+
+    get detailProperties() {
+        return this.properties.flatMap((prop) => (prop instanceof HubProp ? prop.detailProperties : prop));
+    }
+
+    /**
+     * 直接设置属性值，不触发finished事件
+     *
+     * @param {string} propId
+     * @param {any} value
+     */
+    setPropValue(propId, value) {
+        const prop = this.detailProperties.find((prop) => prop.id === propId);
+        if (!prop) {
+            console.error('未找到对应属性', propId);
+            return;
+        }
+
+        prop.setValue(value);
     }
 
     /** @param {BaseProp} prop */
@@ -153,7 +174,6 @@ export class BaseNodeModel extends IEventTarget {
             ui: { collapsed: this.collapsed },
         };
     }
-
 
     /**
      * 反序列化：从保存的数据恢复

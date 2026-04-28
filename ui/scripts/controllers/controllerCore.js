@@ -10,7 +10,6 @@ import { PanelManager } from './panelManager.js';
 import { HistoryManager } from './historyManager.js';
 import { Profiler } from 'weigh-js';
 
-
 export class ControllerCore {
     /**
      * @param {HTMLElement} world
@@ -20,6 +19,15 @@ export class ControllerCore {
         this.world = world;
         this.viewport = viewport;
         this.bus = new EventBus();
+
+        this.setting = {
+            refreshMovingConnection: true,
+            checkConnectionPos: false,
+            quickClear: true,
+            quickDelete: true,
+            historyMaxLength: 20,
+            undoHistoryMaxLength: 20,
+        };
 
         this.historyManager = new HistoryManager(this.bus, this.viewport, this.world, this);
 
@@ -35,14 +43,7 @@ export class ControllerCore {
 
         this.panelManager = new PanelManager(this.bus, this.viewport, this.world, this);
 
-        this.setting = {
-            refreshMovingConnection: true,
-            checkConnectionPos: false,
-            quickClear: true,
-            quickDelete: true,
-            historyMaxLength: 20,
-            undoHistoryMaxLength: 20,
-        };
+        this._bindShortCut();
     }
 
     /**
@@ -103,6 +104,10 @@ export class ControllerCore {
         this.nodeManager.addNode(nodeType, Px, Py);
     }
 
+    setMode(mode) {
+        this.canvasManager.setMode(mode);
+    }
+
     clearCanvas() {
         // this.historyManager.clear();
 
@@ -133,11 +138,63 @@ export class ControllerCore {
 
     // 计算节点大小
 
-    /**
-     * @param {BaseNodeModel} node
-     */
-    sizeof( node )    {
+    /** @param {BaseNodeModel} node */
+    sizeof(node) {
         const profiler = new Profiler();
         console.log(profiler.computeDetailedSize(node));
+    }
+
+    /**
+     * 快捷键管理
+     *
+     * @private
+     */
+    _bindShortCut() {
+        document.addEventListener('keydown', (e) => {
+            // 处理键盘事件--快捷键设置
+            if (e.target) {
+                if (e.target instanceof HTMLElement) {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+                }
+            }
+
+            e.preventDefault();
+
+            const key = e.key.toUpperCase();
+            if (e.ctrlKey || e.metaKey) {
+                switch (key) {
+                    case 'Z':
+
+                        this.undo();
+                        break;
+                    case 'Y':
+                        this.redo();
+                        break;
+                    case 'S':
+                        // this.save();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+
+
+            switch (key) {
+                case 'H':
+                    this.setMode('select');
+                    break;
+
+                case 'G':
+                    this.setMode('drag');
+                    break;
+
+                case 'F':
+                    this.setMode('focus');
+                    break;
+                default:
+                    break;
+            }
+        });
     }
 }

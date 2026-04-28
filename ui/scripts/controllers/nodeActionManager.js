@@ -103,25 +103,34 @@ export class NodeActionManager extends IManager {
 
         if (Math.abs(dx) <= 0.01 && Math.abs(dy) <= 0.01) {
             this.bus.standardEmitMessage('drag', 'node', 'failed');
+            this._cleanDragState();
+            return;
         }
 
         // 发布拖拽结束事件
         this.bus.standardEmitDetail(
             'drag',
             'node',
-            { nodeIds, nodes: this.dragState.draggedNodes},
+            { nodeIds, nodes: this.dragState.draggedNodes },
             (/** @type {any} */ data) => {
                 data.nodes.forEach((/** @type {BaseNodeModel} */ node) => {
-                    node.moveBy(-dx, -dy)
+                    node.moveBy(-dx, -dy);
                 });
+                this.bus.emit('drag:node:end', { nodeIds, dx: -dx, dy: -dy });
             },
             (/** @type {any} */ data) => {
                 data.nodes.forEach((/** @type {BaseNodeModel} */ node) => {
-                    node.moveBy(dx, dy)
+                    node.moveBy(dx, dy);
                 });
+                this.bus.emit('drag:node:end', { nodeIds, dx, dy });
             }
         );
 
+        this._cleanDragState();
+    };
+
+    /** @private */
+    _cleanDragState() {
         this.dragState = {
             isDragging: false,
             startX: 0,
@@ -131,11 +140,8 @@ export class NodeActionManager extends IManager {
             draggedNodes: [],
             startPositions: [],
         };
-
         // 移除全局监听
         window.removeEventListener('mousemove', this._onDragMove);
         window.removeEventListener('mouseup', this._onDragEnd);
-
-        this.dragState.isDragging = false;
-    };
+    }
 }

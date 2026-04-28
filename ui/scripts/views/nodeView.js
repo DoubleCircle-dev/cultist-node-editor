@@ -92,7 +92,7 @@ export class NodeView {
         this.model.addEventListener('change:property', this._onPropertyChange);
         this.model.addEventListener('change:select', this._onSelectChange);
         this.model.addEventListener('change:rect', this._onRectChange);
-        this.model.addEventListener('changeMode:node', this._onModeChange);
+        this.model.addEventListener('change:mode', this._onModeChange);
         this.element.addEventListener('mousedown', this._onMouseDown);
         this.element.addEventListener('keydown', this._onNodeDelete);
     }

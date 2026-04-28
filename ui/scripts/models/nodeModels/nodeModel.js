@@ -37,8 +37,13 @@ export class NodeModel extends BaseNodeModel {
         // this.currentMode = this._getInitialMode(); // 初始化节点的当前模式
     }
 
+    /**
+     * 获取节点的属性列表
+     *
+     * @returns {BaseProp[]}
+     */
     get properties() {
-        return [...this._properties, this.portHub];
+        return [...super.properties, this.exProperties[this.currentMode], this.portHub];
     }
 
     initialize() {
@@ -46,38 +51,6 @@ export class NodeModel extends BaseNodeModel {
 
         this._createPortHub();
     }
-
-    // _resolveConfigPorts(config) {
-    //     const inputs = [];
-    //     const outputs = [];
-
-    //     config.inputs.forEach((input, index) => {
-    //         const inputPort = new PortProp(`${this.id}:input-${index}`, input.label, 'port', input.default, {
-    //             inputPort: {
-    //                 id: `${this.id}:input_port-${index}`,
-    //                 dataType: input.requireType
-    //             }
-    //         })
-    //         inputPort.parentNode = new WeakRef(this);
-    //         inputs.push(inputPort);
-    //     })
-
-    //     config.outputs.forEach((output, index) => {
-    //         const outputPort = new PortProp(`${this.id}:output-${index}`, output.label, 'port', output.default, {
-    //             outputPort: {
-    //                 id: `${this.id}:output_port-${index}`,
-    //                 dataType: output.returnType
-    //             }
-    //         });
-    //         outputPort.parentNode = new WeakRef(this);
-    //         outputs.push(outputPort);
-    //     })
-
-    //     const inputHub = new HubProp(`${this.id}:inputHub`, '输入端口', inputs, 'single');
-    //     const outputHub = new HubProp(`${this.id}:outputHub`, '输出端口', outputs, 'single');
-    //     return { inputHub, outputHub };
-
-    // }
 
     /** @private */
     _createPortHub() {
@@ -100,8 +73,15 @@ export class NodeModel extends BaseNodeModel {
                 if (prop.isModeSwitcher) {
                     this.modeSwitcher = prop;
                     this.currentMode = prop.value;
-                    prop.addEventListener('changeMode:prop', (/** @type {CustomEvent} */ e) => {
-                        this.switchMode(e.detail.value);
+
+                    prop.addEventListener('change', (/** @type {Event} */ e) => {
+                        const ce = /** @type {CustomEvent} */ e;
+                        this.switchMode(ce.detail.value);
+                    })
+
+                    prop.addEventListener('update:property:finished', (/** @type {Event} */ e) => {
+                        const ce = /** @type {CustomEvent} */ e;
+                        this.switchMode(ce.detail.value);
                     });
 
                     if (this.exProperties) {
@@ -155,7 +135,7 @@ export class NodeModel extends BaseNodeModel {
         }
 
         this.currentMode = newMode;
-        this.emit('changeMode:node', newMode);
+        this.emit('change:mode', newMode);
     }
 
     toJSON() {
