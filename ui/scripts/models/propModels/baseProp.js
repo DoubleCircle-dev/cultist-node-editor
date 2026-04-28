@@ -3,6 +3,8 @@ import { BaseNodeModel } from "../nodeModels/baseNodeModel.js";
 
 export class BaseProp extends IEventTarget {
 
+
+
     /**
      * @param {string} id - 用来识别属性 
      * @param {string} label - 属性的显示名称
@@ -10,21 +12,24 @@ export class BaseProp extends IEventTarget {
      * @param {any} value - 属性的值
      *  
      *  */
-    constructor(id, label, type, value, description = null, config={placeholder:''}) {
+    constructor(id, label, type, value, description = null, config={placeholder:'', name:'undefined', layout:'normal'}) {
         super();
         this.id = id;
         this.label = label;
         this.type = type;
         this._value = value;
 
+        this.layout = config.layout;
         this.config = {};
+
+        this.name = config.name || label;
         this.placeholder = config.placeholder || '';
         this.description = description;
 
         /**
-         * @type {WeakRef<BaseNodeModel>} parentNode
+         * @type {WeakRef<BaseNodeModel> | null} parentNode
          */
-        this.parentNode = null;
+        this._parentNode = null;
     }
 
     /**
@@ -40,6 +45,14 @@ export class BaseProp extends IEventTarget {
             this._value = newVal;
             this.emit('change',  { value: newVal, oldValue: oldVal });
         }
+    }
+
+    get parentNode() {
+        return this._parentNode;
+    }
+
+    set parentNode(newVal) {
+        this._parentNode = newVal;
     }
 
     /**
@@ -61,12 +74,7 @@ export class BaseProp extends IEventTarget {
             return;
         }
 
-        this.parentNode.deref().emit(event, detail);
-    }
-
-    destroy() {
-        this.parentNode = null;
-        this.removeAllEventListeners();
+        this.parentNode.deref()?.emit(event, detail);
     }
 
     toJSON() {

@@ -107,8 +107,24 @@
     pointer-events: auto;
 }
 
+.expand-panel-container.exit {
+    animation: panelCollapse 0.15s ease-out forwards;
+}
+
 .expand-panel-container.hidden {
     display: none;
+}
+
+@keyframes panelCollapse {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    100% {
+        opacity: 0.5;
+        transform: translateX(-6px);
+    }
 }
 
 @keyframes panelExpand {
@@ -122,6 +138,7 @@
         transform: translateX(0);
     }
 }
+
 
 /* 向下扩展面板（帮助/快捷键） */
 .bottom-expand-panel-container {

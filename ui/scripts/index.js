@@ -81,9 +81,7 @@ export function addTestNode() {
  * @param {string} type
  */
 export function addNode(type) {
-
-    core.nodeManager.addNode(type);
-
+    core.addNode(type);
 }
 
 export function addBlankNode() {
@@ -214,7 +212,6 @@ export function customCheck() {
     const weakRef = new WeakRef(nodeView);
 
     setTimeout(() => {
-        // nodeView.destroy();
         nodeModel = null;
         nodeView.remove();
         nodeView = null;

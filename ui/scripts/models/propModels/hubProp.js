@@ -7,13 +7,14 @@ export class HubProp extends BaseProp {
         this.properties = properties;
     }
 
-    destroy(){
-        if (this.properties){
-            this.properties.forEach((p) => {
-                p.destroy();
-            })
-        }
+    addProp(prop) {
+        this.properties.push(prop);
+    }
 
-        super.destroy();
+
+    toModJSON() {
+        return {
+            ...this.properties.map((p) => p.toModJSON()),
+        }
     }
 }

@@ -9,6 +9,7 @@ type NodePropConfig =
 
 interface PropConfig {
   type: string;
+  name: string;
   value?: any;
   label?: string;
   description?: string;

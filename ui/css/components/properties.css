@@ -2,6 +2,8 @@
     --port-slot-width: 24px;
     /* 端点占用的总宽度 */
 
+    --port-slot-min-width: 2px;
+
     --padding-text: 6px 8px;
 }
 
@@ -46,6 +48,20 @@
     height: 100%;
 }
 
+/* 当左槽位隐藏时，将左列宽度设为 0 */
+.prop-row:has(.port-slot:first-child.hidden) {
+    grid-template-columns: var(--port-slot-min-width) 1fr var(--port-slot-width);
+}
+
+/* 当右槽位隐藏时，将右列宽度设为 0 */
+.prop-row:has(.port-slot:last-child.hidden) {
+    grid-template-columns: var(--port-slot-width) 1fr var(--port-slot-min-width);
+}
+
+/* 同时隐藏左右槽位 */
+.prop-row:has(.port-slot:first-child.hidden):has(.port-slot:last-child.hidden) {
+    grid-template-columns: var(--port-slot-min-width) 1fr var(--port-slot-min-width);
+}
 
 .prop-input {
     width: 100%;

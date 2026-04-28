@@ -25,10 +25,10 @@ export class PortModel extends IEventTarget {
         // input时当作requiredType, output时当作returnType
         this.dataType = options.dataType || 'any'; // 对应 --node-number, --node-text 等
         // 位置管理
-        this.pos = options.pos || 'left'; // left, right, left-top, right-top, left-bottom, right-bottom
+        this.pos = options.pos || 'mid'; // mid, top, attached, attached-top, attached-bottom
 
         // 连接管理
-        this.maxLinks = options.maxLinks || (direction === 'input' ? 1 : Infinity);
+        this.maxLinks = options.maxLinks || Infinity;
         this.links = options.links || [];
 
         // 归属引用
@@ -116,7 +116,7 @@ export class PortModel extends IEventTarget {
         };
 
         // 1. 触发自身事件，方便直接监听 Port
-        this.dispatchEvent(new CustomEvent(eventName, { detail }));
+        this.emit(eventName, detail)
         // 2. 向上传递给父 Prop
         if (!this.parentProp) {
             console.error('无法传递事件给父对象prop，父对象不存在');
@@ -146,9 +146,6 @@ export class PortModel extends IEventTarget {
 
     }
 
-    destroy(){
-        this.parentProp = null;
-    }
 
     toJson() {
         return {

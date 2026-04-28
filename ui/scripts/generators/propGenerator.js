@@ -78,27 +78,36 @@ export class PropGenerator {
                 propClass = OptionsProp;
                 break;
             case 'port':
+
                 const portConfig = {
                     inputPort: null,
                     outputPort: null
                 }
+
+                const maxLinks = propConfig.multiConnect ? (propConfig.connectNum || Infinity) : 1;
+
+
                 if (!propConfig.direction || propConfig.direction === 'input') {
                     portConfig.inputPort = {
                         id: `${id}-input`,
+                        maxLinks: maxLinks,
                         dataType: propConfig.requireType || 'any',
                     }
                 } else if (propConfig.direction === 'output') {
                     portConfig.outputPort = {
                         id: `${id}-output`,
+                        maxLinks: maxLinks,
                         dataType: propConfig.returnType || 'any',
                     }
                 } else if (propConfig.direction === 'both') {
                     portConfig.inputPort = {
                         id: `${id}-input`,
+                        maxLinks: maxLinks,
                         dataType: propConfig.requireType || 'any',
                     }
                     portConfig.outputPort = {
                         id: `${id}-output`,
+                        maxLinks: maxLinks,
                         dataType: propConfig.returnType || 'any',
                     }
                 }
@@ -142,27 +151,32 @@ export class PropRenderer {
      * @param {BaseProp} prop
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }}
      */
     static render(prop) {
+        if (prop instanceof HubProp) {
+            console.warn('HubProp 不应被此函数渲染, 会导致listener丢失');
+            return { element: PropRenderer.createHub(prop.type), listeners: [] };
+        }
+
         const result = this.RenderMap[prop.type](prop);
         if (!result) {
             console.error(`未知属性类型: ${prop.type}`);
-            return { element: this.createErrorDom(`未知属性类型: ${prop.type}`), listeners:[]};
+            return { element: this.createErrorDom(`未知属性类型: ${prop.type}`), listeners: [] };
         }
 
         if (!result.element) {
             console.error(`属性渲染出错: ${prop.type}`);
-            return { element: this.createErrorDom(`属性渲染出错: ${prop.type}`), listeners:[]};
+            return { element: this.createErrorDom(`属性渲染出错: ${prop.type}`), listeners: [] };
         }
 
         return result;
-
     }
 
     /**
      * 渲染映射表
+     * @type {Record<string, (prop: any) => { element: HTMLElement, listeners: listenerMap[] }>}
      */
     static RenderMap = {
         'text': (p) => this.createInput('text', p, { placeholder: p.placeholder || p.label }),
@@ -185,8 +199,7 @@ export class PropRenderer {
         'table-preview': (p) => this.createPreView('table', p, p.columns),
         'textarea-preview': (p) => this.createPreView('textarea', p),
         'port': (p) => this.createButton('port', p),
-        'selectPort': (p) => this.createButton('selectPort', p),
-        'hub': (p) => this.createHub('hub', p)
+        'selectPort': (p) => this.createButton('selectPort', p)
     };
 
     /**
@@ -209,7 +222,7 @@ export class PropRenderer {
      * @param {BaseProp} prop
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }}
      */
 
@@ -255,7 +268,7 @@ export class PropRenderer {
     /**
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }}
      */
 
@@ -276,7 +289,7 @@ export class PropRenderer {
      * @param {OptionsProp} p
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }} 返回包含单选按钮组的容器元素,以及元素及子元素绑定的所有listener
      */
     static createRadio(p, boolFlag = false) {
@@ -284,7 +297,7 @@ export class PropRenderer {
         const container = this.createElement('div', {}, 'prop-radio-group');
 
         /**
-         * @type { { listener: Function, target: HTMLElement, type: string }[] }
+         * @type { listenerMap[] }
          */
         const listeners = [];
 
@@ -381,7 +394,7 @@ export class PropRenderer {
      * @param {BaseProp} p
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }} 
      */
     static createSelect(p) {
@@ -435,7 +448,7 @@ export class PropRenderer {
     /**
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }} 
      */
 
@@ -459,7 +472,7 @@ export class PropRenderer {
      * @param {ViewProp} prop
      * @returns {{
         * element: HTMLElement,
-        *   listeners: { listener: Function, target: HTMLElement, type: string }[]
+        *   listeners: listenerMap[]
         * }}
      */
     static createPreView(type, prop, columns = []) {
@@ -523,7 +536,7 @@ export class PropRenderer {
                 break;
         }
 
-        return {element:preView, listeners: []};
+        return { element: preView, listeners: [] };
     }
 
 
@@ -532,7 +545,7 @@ export class PropRenderer {
      * @param {BaseProp} p
      * @returns {{
         * element: HTMLElement,
-        *   listeners: { listener: Function, target: HTMLElement, type: string }[]
+        *   listeners: listenerMap[]
         *}}
      */
     static createButton(type, p) {
@@ -546,7 +559,7 @@ export class PropRenderer {
         }
         button.addEventListener('mousedown', mousedownListener);
 
-        return {element:button, listeners: [{ listener: mousedownListener, target: button, type: 'mousedown' }]};
+        return { element: button, listeners: [{ listener: mousedownListener, target: button, type: 'mousedown' }] };
 
     }
 

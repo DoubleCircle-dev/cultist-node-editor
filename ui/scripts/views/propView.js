@@ -1,7 +1,7 @@
 import { BaseProp } from "../models/propModels/baseProp.js";
 import { PortProp } from "../models/propModels/portProp.js";
 import { PortModel } from "../models/portModel.js";
-import { PropRenderer } from "../generators/propGenerator.js";
+import { PropGenerator, PropRenderer } from "../generators/propGenerator.js";
 import { NodeTypeRegistry } from "../types/nodeTypes.js";
 import { HubProp } from "../models/propModels/hubProp.js";
 import { ViewProp } from "../models/propModels/viewProp.js";
@@ -11,7 +11,7 @@ export class PropView {
      * @param {BaseProp} prop
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }}
      */
     static renderProp(prop) {
@@ -35,7 +35,7 @@ export class PropView {
                 }
                 result = hub;
             } else if (prop instanceof ViewProp) {
-                const{ element: view, listeners: viewListeners } = this.createView(prop);
+                const { element: view, listeners: viewListeners } = this.createView(prop);
                 listeners = viewListeners;
                 if (!view) {
                     throw new Error('view属性无法创建');
@@ -43,7 +43,7 @@ export class PropView {
 
                 result = view;
             } else {
-                const {element:row, listeners: rowListeners} = this.createRow(prop);
+                const { element: row, listeners: rowListeners } = this.createRow(prop);
                 listeners = rowListeners;
                 if (!row) {
                     throw new Error('属性无法创建');
@@ -54,9 +54,12 @@ export class PropView {
             return { element: result, listeners: listeners };
         } catch (error) {
             console.error('属性渲染失败', error, prop);
-            return { element: PropRenderer.createErrorDom(error), listeners: listeners };
+            if (error instanceof Error) {
+                return { element: PropRenderer.createErrorDom(error.message), listeners: [] };
+            } else {
+                return { element: PropRenderer.createErrorDom('未知错误'), listeners: [] };
+            }
         }
-
 
     }
 
@@ -72,7 +75,7 @@ export class PropView {
      * @param {HubPropType| HubProp} propModel
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }}
      */
     static createHub(propModel) {
@@ -94,7 +97,7 @@ export class PropView {
      * @param {BaseProp} propModel - 属性模型对象，包含要渲染的属性信息
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }}
      */
     static createView(propModel) {
@@ -102,7 +105,7 @@ export class PropView {
         const view = renderResult.element;
         const listeners = renderResult.listeners;
 
-        const mousedownListener = (e) => e.stopPropagation();
+        const mousedownListener = (/**@type {Event}*/e) => e.stopPropagation();
         view.addEventListener('mousedown', mousedownListener);
         listeners.push({ listener: mousedownListener, target: view, type: 'mousedown' });
         this.createHint(propModel, view);
@@ -114,7 +117,7 @@ export class PropView {
      * @param {BaseProp} propModel
      * @returns {{ 
      * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
+     * listeners: listenerMap[] 
      * }}
      */
     static createRow(propModel) {
@@ -125,17 +128,27 @@ export class PropView {
         // 1. 左槽位 (处理所有输入端点)
         const leftSlot = document.createElement('div');
         leftSlot.className = 'port-slot';
-        if (propModel instanceof PortProp && propModel.inputPort) {
-            leftSlot.appendChild(this.createPortDom(propModel.inputPort));
+        if (propModel instanceof PortProp) {
+
+            if (propModel.inputPort) {
+                leftSlot.appendChild(this.createPortDom(propModel.inputPort));
+            }
+
+            if (propModel.layout === PortProp.layoutTypes.noLeft ||
+                propModel.layout === PortProp.layoutTypes.ignorePort) {
+                leftSlot.classList.add('hidden');
+            }
         }
+
         row.appendChild(leftSlot);
+
 
         // 2. 中间内容区 (Label + Control)
         const content = document.createElement('div');
         content.className = 'prop-content';
         // content.style.border = '1px solid white';
 
-        const {element: contentElement, listeners: listeners} = this.createContent(propModel.type, propModel);
+        const { element: contentElement, listeners: listeners } = PropRenderer.render(propModel);
         content.appendChild(contentElement);
 
         this.createHint(propModel, content);
@@ -145,30 +158,23 @@ export class PropView {
         // 3. 右槽位 (处理所有输出端点)
         const rightSlot = document.createElement('div');
         rightSlot.className = 'port-slot';
-        if (propModel instanceof PortProp && propModel.outputPort) {
-            rightSlot.appendChild(this.createPortDom(propModel.outputPort));
+        
+        if (propModel instanceof PortProp) {
+            if (propModel.outputPort) {
+                rightSlot.appendChild(this.createPortDom(propModel.outputPort));
+            }
+
+            if (propModel.layout === PortProp.layoutTypes.noRight ||
+                propModel.layout === PortProp.layoutTypes.ignorePort) {
+                rightSlot.classList.add('hidden');
+            }
+            
         }
         row.appendChild(rightSlot);
 
-        return {element:row, listeners:listeners};
-    }
 
-    /**
-     * @param {string} type
-     * @param {BaseProp} param
-     * @returns {{ 
-     * element: HTMLElement, 
-     * listeners: { listener: Function, target: HTMLElement, type: string }[] 
-     * }}
-     */
-    static createContent(type, param) {
-        if (PropRenderer.RenderMap[type]) {
-            const result = PropRenderer.RenderMap[type](param);
-            const dom = result.element;
-            return {element:dom, listeners:result.listeners};
-        } else {
-            return {element:PropRenderer.createErrorDom(`{ ${type} }渲染器未定义`),listeners:[]};
-        }
+
+        return { element: row, listeners: listeners };
     }
 
     /**

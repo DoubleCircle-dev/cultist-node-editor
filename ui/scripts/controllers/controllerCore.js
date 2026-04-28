@@ -1,15 +1,17 @@
-import { EditorConfig } from "./constant.js";
-import { BaseNodeModel } from "../models/nodeModels/baseNodeModel.js";
-import { NodeManager } from "./nodeManager.js";
-import { CanvasManager } from "./canvasManager.js";
-import { UIManager } from "./uiManager.js";
-import { NodeActionManager } from "./nodeActionManager.js";
-import { ConnectionManager } from "./connectionManager.js";
-import { EventBus } from "../types/eventBus.js";
-import { PanelManager } from "./panelManager.js";
+import { EditorConfig } from './constant.js';
+import { BaseNodeModel } from '../models/nodeModels/baseNodeModel.js';
+import { NodeManager } from './nodeManager.js';
+import { CanvasManager } from './canvasManager.js';
+import { UIManager } from './uiManager.js';
+import { NodeActionManager } from './nodeActionManager.js';
+import { ConnectionManager } from './connectionManager.js';
+import { EventBus } from '../types/eventBus.js';
+import { PanelManager } from './panelManager.js';
+import { HistoryManager } from './historyManager.js';
+import { Profiler } from 'weigh-js';
+
 
 export class ControllerCore {
-
     /**
      * @param {HTMLElement} world
      * @param {HTMLElement} viewport
@@ -18,6 +20,8 @@ export class ControllerCore {
         this.world = world;
         this.viewport = viewport;
         this.bus = new EventBus();
+
+        this.historyManager = new HistoryManager(this.bus, this.viewport, this.world, this);
 
         this.nodeManager = new NodeManager(this.bus, this.viewport, this.world, this);
 
@@ -36,27 +40,29 @@ export class ControllerCore {
             checkConnectionPos: false,
             quickClear: true,
             quickDelete: true,
-        }
+            historyMaxLength: 20,
+            undoHistoryMaxLength: 20,
+        };
     }
 
     /**
      * @param {number} x
-     * @param {number} y 
+     * @param {number} y
      */
     viewportToWorld(x, y) {
         if (!this.canvasManager) {
-            console.error("无法转化坐标，canvasManager未初始化");
+            console.error('无法转化坐标，canvasManager未初始化');
             return { x, y };
         }
         return this.canvasManager.viewportToWorld(x, y);
     }
     /**
      * @param {number} x
-     * @param {number} y 
+     * @param {number} y
      */
     worldToViewport(x, y) {
         if (!this.canvasManager) {
-            console.error("无法转化坐标，canvasManager未初始化");
+            console.error('无法转化坐标，canvasManager未初始化');
         }
         return this.canvasManager.worldToViewport(x, y);
     }
@@ -66,20 +72,18 @@ export class ControllerCore {
         return Array.from(nodes.values());
     }
 
-    get mode(){
+    get mode() {
         if (!this.canvasManager) {
-            console.error("无法获取模式，canvasManager未初始化");
+            console.error('无法获取模式，canvasManager未初始化');
             return null;
         }
         return this.canvasManager.mode;
     }
 
     get selectedNodes() {
-        /**
-         * @type {BaseNodeModel[]}
-         */
+        /** @type {BaseNodeModel[]} */
         const selectedNodes = [];
-        this.nodes.forEach(node => {
+        this.nodes.forEach((node) => {
             if (node.selected) selectedNodes.push(node);
         });
 
@@ -90,14 +94,21 @@ export class ControllerCore {
         return this.canvasManager.ViewCenter;
     }
 
+    /**
+     * @param {string} nodeType
+     * @param {number | null} Px
+     * @param {number | null} Py
+     */
+    addNode(nodeType, Px = null, Py = null) {
+        this.nodeManager.addNode(nodeType, Px, Py);
+    }
+
     clearCanvas() {
         // this.historyManager.clear();
 
         this.nodeManager.clear();
         this.connectionManager.clear();
         // this.nodeActionManager.clear();
-
-
 
         this.canvasManager.reset();
         // this.uiManager.reset();
@@ -106,12 +117,27 @@ export class ControllerCore {
             this.forceRepaint();
             // console.log('刷新页面')
         }
+    }
 
+    undo() {
+        this.historyManager.undo();
+    }
 
+    redo() {
+        this.historyManager.redo();
     }
 
     forceRepaint() {
         this.canvasManager.refresh();
+    }
 
+    // 计算节点大小
+
+    /**
+     * @param {BaseNodeModel} node
+     */
+    sizeof( node )    {
+        const profiler = new Profiler();
+        console.log(profiler.computeDetailedSize(node));
     }
 }

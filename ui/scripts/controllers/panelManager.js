@@ -417,7 +417,11 @@ export class PanelManager extends IManager {
             }
 
             if (this.currentExpandPanel === panel) {
-                this.expandPanel?.classList.toggle('hidden');
+                if (!this.expandPanel?.classList.contains('hidden')) {
+                    this._exitExpandPanel();
+                } else {
+                    this.expandPanel?.classList.remove('hidden');
+                }
             } else {
                 this.currentExpandPanel.remove();
                 this.currentExpandPanel = panel;
@@ -425,6 +429,17 @@ export class PanelManager extends IManager {
                 this.expandPanel?.classList.remove('hidden');
             }
         }
+    }
+
+    _exitExpandPanel() {
+        if(!this.expandPanel) return;
+        const panel = this.expandPanel;
+        panel.classList.add('exit');
+        panel.addEventListener('animationend', function onAnimationEnd() {
+            panel.classList.remove('exit');      // 清理动画类
+            panel.classList.add('hidden');      // 隐藏元素
+
+        }, { once: true }); // 也可直接使用 { once: true }
     }
 
     _toggleBottomPanel() {

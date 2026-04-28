@@ -1,223 +1,143 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>节点编辑器</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>节点编辑器</title>
 
-    <!-- 根目录 CSS：变量、基础样式、布局 -->
-    <link rel="stylesheet" href="css/variables.css" />
-    <link rel="stylesheet" href="css/style.css" />
+        <!-- 根目录 CSS：变量、基础样式、布局 -->
+        <link rel="stylesheet" href="css/variables.css" />
+        <link rel="stylesheet" href="css/style.css" />
 
-    <!-- layout CSS -->
-    <link rel="stylesheet" href="css/layout/layout.css" />
-    <link rel="stylesheet" href="css/layout/side_bar.css" />
-    <link rel="stylesheet" href="css/layout/tab_bar.css" />
-    <link rel="stylesheet" href="css/layout/sub_bar.css" />
+        <!-- layout CSS -->
+        <link rel="stylesheet" href="css/layout/layout.css" />
+        <link rel="stylesheet" href="css/layout/side_bar.css" />
+        <link rel="stylesheet" href="css/layout/tab_bar.css" />
+        <link rel="stylesheet" href="css/layout/sub_bar.css" />
 
-    <!-- 工具类 CSS -->
-    <link rel="stylesheet" href="css/utils/panel.css" />
-    <link rel="stylesheet" href="css/utils/file_panel.css" />
-    <link rel="stylesheet" href="css/utils/buttons.css" />
-    <link rel="stylesheet" href="css/utils/status.css" />
-    <link rel="stylesheet" href="css/utils/viewControl.css" />
+        <!-- 工具类 CSS -->
+        <link rel="stylesheet" href="css/utils/panel.css" />
+        <link rel="stylesheet" href="css/utils/file_panel.css" />
+        <link rel="stylesheet" href="css/utils/buttons.css" />
+        <link rel="stylesheet" href="css/utils/status.css" />
+        <link rel="stylesheet" href="css/utils/viewControl.css" />
 
-    <!-- 组件 CSS（按需调整顺序） -->
-    <link rel="stylesheet" href="css/components/connections.css" />
-    <link rel="stylesheet" href="css/components/menus.css" />
-    <link rel="stylesheet" href="css/components/nodes.css" />
-    <link rel="stylesheet" href="css/components/other.css" />
-    <link rel="stylesheet" href="css/components/ports.css" />
-    <link rel="stylesheet" href="css/components/properties.css" />
+        <!-- 组件 CSS（按需调整顺序） -->
+        <link rel="stylesheet" href="css/components/connections.css" />
+        <link rel="stylesheet" href="css/components/menus.css" />
+        <link rel="stylesheet" href="css/components/nodes.css" />
+        <link rel="stylesheet" href="css/components/other.css" />
+        <link rel="stylesheet" href="css/components/ports.css" />
+        <link rel="stylesheet" href="css/components/properties.css" />
 
-    <!-- 修复部分css -->
-  </head>
-  <body>
-    <div class="container">
-      <div class="editor-area">
-        <div class="toolbar">
-          <div class="editor-palette">
-            <button class="btn btn-secondary" onclick="generateTest()">
-              💾 保存
-            </button>
-            <button class="btn btn-secondary" onclick="loadGraph()">
-              📂 加载
-            </button>
-            <button
-              id="btn-readMod"
-              class="btn btn-secondary"
-              onclick="readMod()"
-            >
-              🔧 读取mod
-            </button>
-            <button class="btn" onclick="clearCanvas()">🗑️ 清空画布</button>
-          </div>
-          <span style="margin-left: auto; font-size: 12px; color: #888"
-            >节点编辑器 v0.1</span
-          >
-          <button
-            class="setting-btn"
-            id="settingBtn"
-            title=""
-            onclick="openFilesPage()"
-          >
-            ⚙️
-          </button>
-        </div>
-
-        <div class="tabs-panel">
-          <div class="tabs-scroll">
-            <div class="tabs-list" id="pageTabsList">
-              <!-- 动态选项卡会由你的js生成，示例静态占位 -->
-              <div class="page-tab active" data-page-id="page_1">
-                <span class="tab-name">未命名-1</span>
-                <button class="tab-close" title="关闭页面">✕</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="sublevel-bar">
-          <div class="level-path">
-            <span id="levelBreadcrumb">/</span>
-          </div>
-        </div>
-
-        <div class="canvas-container" id="canvas-basic">
-          <div class="sidebar">
-            <div id="sidebarContent" class="sidebar-content">
-              <!-- 上方面板切换按钮组 -->
-              <div class="sidebar-top-actions">
-                <button
-                  id="toggleAddPanelBtn"
-                  class="sidebar-main-btn"
-                  onclick="togglePanel('addNodesPanel')"
-                >
-                  <span class="icon-emoji">➕</span>
-                  添加节点
-                </button>
-                <button
-                  id="toggleFindPanelBtn"
-                  class="sidebar-main-btn"
-                  onclick="togglePanel('findNodesPanel')"
-                >
-                  <span class="icon-emoji">🔍</span>
-                  查找节点
-                </button>
-                <button
-                  id="toggleFilePanelBtn"
-                  class="sidebar-main-btn"
-                  onclick="togglePanel('openFilePanel')"
-                >
-                  <span class="icon-emoji">📂</span>
-                  查找文件
-                </button>
-              </div>
-
-              <!-- 下方面板切换按钮组 -->
-              <div class="sidebar-bottom-actions">
-                <button id="toggleHelpPanelBtn" class="sidebar-main-btn">
-                  <span class="icon-emoji">❓</span>
-                  帮助
-                </button>
-                <button id="toggleShortcutsPanelBtn" class="sidebar-main-btn">
-                  <span class="icon-emoji">⌨️</span>
-                  快捷键
-                </button>
-              </div>
-            </div>
-
-            <div id="expandPanel" class="expand-panel-container hidden"></div>
-
-            <div
-              id="bottomPanel"
-              class="bottom-expand-panel-container hidden"
-            ></div>
-          </div>
-
-          <div class="canvas-container" id="canvas-viewport">
-            <div class="canvas-container" id="canvas-world">
-              <!-- 这里将显示节点 -->
-              <div id="placeholder">
-                <div style="font-size: 48px; margin-bottom: 16px">🧩</div>
-                <div style="font-size: 16px; margin-bottom: 8px">
-                  节点编辑器已就绪
+        <!-- 修复部分css -->
+    </head>
+    <body>
+        <div class="container">
+            <div class="editor-area">
+                <div class="toolbar">
+                    <div class="editor-palette">
+                        <button class="btn btn-secondary" onclick="generateTest()">💾 保存</button>
+                        <button class="btn btn-secondary" onclick="loadGraph()">📂 加载</button>
+                        <button id="btn-readMod" class="btn btn-secondary" onclick="readMod()">🔧 读取mod</button>
+                        <button class="btn" onclick="clearCanvas()">🗑️ 清空画布</button>
+                    </div>
+                    <span style="margin-left: auto; font-size: 12px; color: #888">节点编辑器 v0.1</span>
+                    <button class="setting-btn" id="settingBtn" title="" onclick="openFilesPage()">⚙️</button>
                 </div>
-                <div style="font-size: 12px">
-                  从左侧面板添加节点，或点击上方按钮添加测试节点
+
+                <div class="tabs-panel">
+                    <div class="tabs-scroll">
+                        <div class="tabs-list" id="pageTabsList">
+                            <!-- 动态选项卡会由你的js生成，示例静态占位 -->
+                            <div class="page-tab active" data-page-id="page_1">
+                                <span class="tab-name">未命名-1</span>
+                                <button class="tab-close" title="关闭页面">✕</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
+
+                <div class="sublevel-bar">
+                    <div class="level-path">
+                        <span id="levelBreadcrumb">/</span>
+                    </div>
+                </div>
+
+                <div class="canvas-container" id="canvas-basic">
+                    <div class="sidebar">
+                        <div id="sidebarContent" class="sidebar-content">
+                            <!-- 上方面板切换按钮组 -->
+                            <div class="sidebar-top-actions">
+                                <button id="toggleAddPanelBtn" class="sidebar-main-btn" onclick="togglePanel('addNodesPanel')">
+                                    <span class="icon-emoji">➕</span>
+                                    添加节点
+                                </button>
+                                <button id="toggleFindPanelBtn" class="sidebar-main-btn" onclick="togglePanel('findNodesPanel')">
+                                    <span class="icon-emoji">🔍</span>
+                                    查找节点
+                                </button>
+                                <button id="toggleFilePanelBtn" class="sidebar-main-btn" onclick="togglePanel('openFilePanel')">
+                                    <span class="icon-emoji">📂</span>
+                                    查找文件
+                                </button>
+                            </div>
+
+                            <!-- 下方面板切换按钮组 -->
+                            <div class="sidebar-bottom-actions">
+                                <button id="toggleHelpPanelBtn" class="sidebar-main-btn">
+                                    <span class="icon-emoji">❓</span>
+                                    帮助
+                                </button>
+                                <button id="toggleShortcutsPanelBtn" class="sidebar-main-btn">
+                                    <span class="icon-emoji">⌨️</span>
+                                    快捷键
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="expandPanel" class="expand-panel-container hidden"></div>
+
+                        <div id="bottomPanel" class="bottom-expand-panel-container hidden"></div>
+                    </div>
+
+                    <div class="canvas-container" id="canvas-viewport">
+                        <div class="canvas-container" id="canvas-world">
+                            <!-- 这里将显示节点 -->
+                            <div id="placeholder">
+                                <div style="font-size: 48px; margin-bottom: 16px">🧩</div>
+                                <div style="font-size: 16px; margin-bottom: 8px">节点编辑器已就绪</div>
+                                <div style="font-size: 12px">从左侧面板添加节点，或点击上方按钮添加测试节点</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-bar" id="status-bar-under">
+                    <span id="status-text">就绪</span>
+                    <span id="mouse-coords" style="margin-left: auto; font-family: monospace"> (0,0) | (0,0) </span>
+                </div>
+
+                <div class="view-controls">
+                    <div class="control-row">
+                        <button class="view-btn" data-mode="select" title="选择模式 (H)" onclick="changeMode('select')">选择</button>
+                        <button class="view-btn" data-mode="drag" title="拖拽视图 (G)" onclick="changeMode('drag')">拖拽</button>
+                        <button class="view-btn" data-mode="focus" title="专注模式 (F)" onclick="changeMode('focus')">专注</button>
+                    </div>
+                    <div class="control-row">
+                        <button id="toggle-connections" title="隐藏连接线" onclick="toggleConnections()">隐藏连接</button>
+                        <button id="fit-view" title="适应视图" onclick="fitView()">适应视图</button>
+                    </div>
+                    <div class="control-row" style="align-items: center">
+                        <span style="color: #eee">缩放</span>
+                        <input type="range" id="zoom-slider" min="0.1" max="5" step="0.01" value="1" oninput="setScale(this.value)" />
+                        <span id="zoom-percent">100%</span>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-
-        <div class="status-bar" id="status-bar-under">
-          <span id="status-text">就绪</span>
-          <span
-            id="mouse-coords"
-            style="margin-left: auto; font-family: monospace"
-          >
-            (0,0) | (0,0)
-          </span>
-        </div>
-
-        <div class="view-controls">
-          <div class="control-row">
-            <button
-              class="view-btn"
-              data-mode="select"
-              title="选择模式 (H)"
-              onclick="changeMode('select')"
-            >
-              选择
-            </button>
-            <button
-              class="view-btn"
-              data-mode="drag"
-              title="拖拽视图 (G)"
-              onclick="changeMode('drag')"
-            >
-              拖拽
-            </button>
-            <button
-              class="view-btn"
-              data-mode="focus"
-              title="专注模式 (F)"
-              onclick="changeMode('focus')"
-            >
-              专注
-            </button>
-          </div>
-          <div class="control-row">
-            <button
-              id="toggle-connections"
-              title="隐藏连接线"
-              onclick="toggleConnections()"
-            >
-              隐藏连接
-            </button>
-            <button id="fit-view" title="适应视图" onclick="fitView()">
-              适应视图
-            </button>
-          </div>
-          <div class="control-row" style="align-items: center">
-            <span style="color: #eee">缩放</span>
-            <input
-              type="range"
-              id="zoom-slider"
-              min="0.1"
-              max="5"
-              step="0.01"
-              value="1"
-              oninput="setScale(this.value)"
-            />
-            <span id="zoom-percent">100%</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </body>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    </body>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script>
     eruda.init({
       display: false,
@@ -225,7 +145,14 @@
     eruda.get('entryBtn').hide();
     eruda.hide();
   </script> -->
-  <script type="module" src="scripts/index.js"></script>
-  <script type="module" src="scripts/debug.js"></script>
-  <!-- <script src="scripts/webview.js"></script> -->
+    <script type="importmap">
+        {
+            "imports": {
+                "weigh-js": "https://esm.sh/weigh-js@1.0.2"
+            }
+        }
+    </script>
+    <script type="module" src="scripts/index.js"></script>
+    <script type="module" src="scripts/debug.js"></script>
+    <!-- <script src="scripts/webview.js"></script> -->
 </html>

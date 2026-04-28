@@ -1,38 +1,31 @@
 import { IEventTarget } from '../../types/IEventTarget.js';
 import { BaseProp } from '../propModels/baseProp.js';
 
-
 export class BaseNodeModel extends IEventTarget {
-
-
     /**
-     * 
-     * @param {String | number} id 
-     * @param {String} type 
-     * @param {number} x 
-     * @param {number} y 
-     * @param {NodeConfig} config 
-     * @param {BaseProp[]} properties 
+     * @param {String | number} id
+     * @param {String} type
+     * @param {number} x
+     * @param {number} y
+     * @param {NodeConfig} config
+     * @param {BaseProp[]} properties
      */
 
     constructor(id, type, x, y, config, properties = []) {
         super();
 
         // 基础属性
-        this.id = id;
+        /** @private */
+        this._id = id;
         this.type = type;
 
-        this.properties = properties;
-        // 显示属性
-        this.setProperties(properties);
+        /** @private */
+        this._properties = properties;
 
         this.color = config.color || '#ffffff';
         this.title = config.title || 'Base Node';
         this.label = '';
         this.icon = config.icon || '⚡';
-
-        // 连接管理
-        this.connections = { inputs: [], outputs: [] };
 
         // UI状态
         this.selected = false;
@@ -41,33 +34,61 @@ export class BaseNodeModel extends IEventTarget {
         this.y = y;
         this.width = config.width || 300;
         this.height = config.height || 0;
-
     }
 
     /**
-     * @param {BaseProp[]} properties
+     * 获取对象的ID属性 将内部ID转换为字符串形式返回
+     *
+     * @returns {string} 返回转换后的字符串ID
      */
-    setProperties(properties) {
-        this.properties = properties;
+    get id() {
+        return String(this._id); // 将内部_id属性转换为字符串并返回
     }
 
     /**
-     * @param {BaseProp} prop
+     * 设置ID的setter方法
+     *
+     * @param {any} id - 要设置的ID值，可以是任何类型，但会被转换为字符串类型
      */
+    set id(id) {
+        if (!id) {
+            return;
+        }
+
+        // 检查传入的id是否为String类型
+        if (typeof id === 'string' || typeof id === 'number') {
+            // 如果是String类型，直接赋值给_id属性
+            /** @private */
+            this._id = id;
+        } else {
+            console.error('Invalid id type:', typeof id);
+        }
+    }
+
+    /** @returns {BaseProp[]} Properties */
+    get properties() {
+        return this._properties;
+    }
+
+    /** @param {BaseProp[]} properties */
+    set properties(properties) {
+        /** @private */
+        this._properties = properties;
+    }
+
+    /** @param {BaseProp} prop */
     addProperty(prop) {
-        this.properties.push(prop);
+        this._properties.push(prop);
     }
 
-
-    /**
-     * @param {BaseProp[]} props
-     */
+    /** @param {BaseProp[]} props */
     appendProps(props) {
-        this.properties.push(...props);
+        this._properties.push(...props);
     }
 
     /**
      * 更新位置并通知监听者
+     *
      * @param {number} x
      * @param {number} y
      */
@@ -79,6 +100,7 @@ export class BaseNodeModel extends IEventTarget {
 
     /**
      * 通过差值更新位置并通知监听者
+     *
      * @param {number} dx
      * @param {number} dy
      */
@@ -90,6 +112,7 @@ export class BaseNodeModel extends IEventTarget {
 
     /**
      * 重设大小并通知监听者
+     *
      * @param {number} width
      * @param {number} height
      */
@@ -100,91 +123,44 @@ export class BaseNodeModel extends IEventTarget {
     }
 
     /**
-     * 更新属性值
-     * @param {string} key 属性名
-     * @param {any} value 属性值
-     */
-    setProperty(key, value) {
-        this.properties[key] = value;
-        this.emit('change:property', { key, value });
-    }
-
-    /**
      * 设置选中状态并触发变更事件
+     *
      * @param {boolean} isSelected - 要设置的选中状态值
      */
     setSelected(isSelected) {
-        this.selected = isSelected;  // 更新当前选中状态
-        this.emit('change:select', { isSelected });  // 触发选中状态变更事件，传递新的选中状态
+        this.selected = isSelected; // 更新当前选中状态
+        this.emit('change:select', { isSelected }); // 触发选中状态变更事件，传递新的选中状态
     }
 
+    /** @param {number} index */
     setZIndex(index) {
         this.emit('change:zIndex', { index });
     }
 
-
-    // TODO: 折叠状态
+    /** @param {boolean} isCollapsed */
     setCollapsed(isCollapsed) {
-
+        this.collapsed = isCollapsed;
+        this.emit('change:collapsed', { isCollapsed });
     }
 
-    handleMouseDown(originalEvent) {
-        this.emit('mousedown', { originalEvent, node: this })
-    }
-
-    /**
-     * 序列化：用于保存到 JSON 或发送给 VSCode 后端
-     */
+    /** 序列化：用于保存到 JSON 或发送给 VSCode 后端 */
     toJSON() {
         return {
             id: this.id,
             type: this.type,
             position: { x: this.x, y: this.y },
             properties: { ...this.properties },
-            connections: { inputs: this.connections.inputs, outputs: this.connections.outputs },
-            ui: { collapsed: this.collapsed }
+            ui: { collapsed: this.collapsed },
         };
     }
 
-    destroy() {
-        this.removeAllEventListeners();
-        this.id = null;
-        this.type = null;
-
-        if (this.properties){
-            this.properties.forEach((p) => {
-                p.destroy();
-            })
-        }
-
-        this.properties = null;
-
-        this.color = null;
-        this.title = null;
-        this.icon = null;
-
-        // 连接管理
-        this.connections = null;
-
-        // UI状态
-        this.selected = null;
-        this.collapsed = null;
-        this.x = null;
-        this.y = null;
-        this.width = null;
-        this.height = null;
-    }
 
     /**
      * 反序列化：从保存的数据恢复
+     *
+     * @param {Object} json - JSON 格式的节点数据
      */
-    static fromJSON(json) {
+    static fromJSON(json) {}
 
-    }
-
-    toModJSON() {
-        
-    }
-
+    toModJSON() {}
 }
-

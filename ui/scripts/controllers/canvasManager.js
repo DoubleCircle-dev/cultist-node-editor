@@ -1,9 +1,8 @@
-import { EditorConfig } from "./constant.js";
-import { ControllerCore } from "./controllerCore.js";
-import { EventBus } from "../types/eventBus.js";
+import { EditorConfig } from './constant.js';
+import { ControllerCore } from './controllerCore.js';
+import { EventBus } from '../types/eventBus.js';
 
 export class CanvasManager {
-
     /**
      * @param {EventBus} bus
      * @param {HTMLElement} viewport
@@ -14,18 +13,18 @@ export class CanvasManager {
         this.bus = bus;
         this.viewport = viewport;
         this.world = world;
-        this.statusBar = document.getElementById("status-bar-under");
+        this.statusBar = document.getElementById('status-bar-under');
         this.coreSpace = coreSpace;
 
         if (!this.viewport || !this.world) {
-            console.error("无法找到 canvas-container 或 canvas界面 元素");
+            console.error('无法找到 canvas-container 或 canvas界面 元素');
             return;
         }
 
         this.transform = {
             x: 0, // 水平偏移
             y: 0, // 垂直偏移
-            scale: 1  // 缩放比例 (scale)
+            scale: 1, // 缩放比例 (scale)
         };
 
         this.panState = {
@@ -34,37 +33,54 @@ export class CanvasManager {
             startY: 0,
             startTransX: 0,
             startTransY: 0,
-            /**@type {number|null} */panBtn: null
-        }
+            /** @type {number | null} */ panBtn: null,
+        };
 
         this.mousePos = {
             viewportX: 0,
             viewportY: 0,
             worldX: 0,
-            worldY: 0
-        }
+            worldY: 0,
+        };
 
         this.transform = { x: 0, y: 0, scale: 1 };
 
-        this.mode = "select";
+        this.mode = 'select';
 
         this._initListeners();
     }
 
+    /** @private */
     _initListeners() {
-        this.viewport.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
-        this.viewport.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this.viewport.addEventListener('wheel', this.handleWheel.bind(this), {
+            passive: false,
+        });
+        this.viewport.addEventListener(
+            'mousedown',
+            this.handleMouseDown.bind(this)
+        );
 
-        this.viewport.addEventListener('mousemove', this.handleMouseMove.bind(this));
-        this.viewport.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+        this.viewport.addEventListener(
+            'mousemove',
+            this.handleMouseMove.bind(this)
+        );
+        this.viewport.addEventListener(
+            'mouseleave',
+            this.handleMouseLeave.bind(this)
+        );
 
         document.addEventListener('keydown', this.handleKeyDown.bind(this));
     }
 
     /**
-     * 处理滚轮缩放：核心算法
-     * 目标：以鼠标指针为中心进行缩放，鼠标下的点在缩放前后位置不变
-     * @param {{ preventDefault: () => void; deltaY: number; clientX: number; clientY: number; }} e
+     * 处理滚轮缩放：核心算法 目标：以鼠标指针为中心进行缩放，鼠标下的点在缩放前后位置不变
+     *
+     * @param {{
+     *     preventDefault: () => void;
+     *     deltaY: number;
+     *     clientX: number;
+     *     clientY: number;
+     * }} e
      */
     handleWheel(e) {
         e.preventDefault();
@@ -72,16 +88,26 @@ export class CanvasManager {
         const zoomIntensity = EditorConfig.ZOOM.STEP; // 缩放灵敏度
         const direction = e.deltaY < 0 ? 1 : -1;
 
-        // 计算新的缩放比例 
+        // 计算新的缩放比例
         const factor = Math.exp(direction * zoomIntensity);
-        const newScale = Math.min(Math.max(this.transform.scale * factor, EditorConfig.ZOOM.MIN), EditorConfig.ZOOM.MAX);
+        const newScale = Math.min(
+            Math.max(this.transform.scale * factor, EditorConfig.ZOOM.MIN),
+            EditorConfig.ZOOM.MAX
+        );
 
         this.setZoom(newScale, false, e.clientX, e.clientY);
     }
 
     /**
      * 处理平移：鼠标中键 或 alt+左键
-     * @param {{ preventDefault: () => void; button: number; altKey: any; clientX: any; clientY: any; }} e
+     *
+     * @param {{
+     *     preventDefault: () => void;
+     *     button: number;
+     *     altKey: any;
+     *     clientX: any;
+     *     clientY: any;
+     * }} e
      */
     handleMouseDown(e) {
         if (this.panState?.panning) {
@@ -92,7 +118,7 @@ export class CanvasManager {
         // 中键(1) 或 按住alt的左键(0) 或 移动模式下的左键(0)
         if (
             e.button === 1 ||
-            (this.mode === "drag" && e.button === 0) ||
+            (this.mode === 'drag' && e.button === 0) ||
             (e.button === 0 && e.altKey)
         ) {
             e.preventDefault();
@@ -103,13 +129,15 @@ export class CanvasManager {
                 startY: e.clientY,
                 startTransX: this.transform ? this.transform.x : 0,
                 startTransY: this.transform ? this.transform.y : 0,
-                panBtn: e.button
-            }
+                panBtn: e.button,
+            };
 
             const preCursor = this.viewport.style.cursor;
             this.viewport.style.cursor = 'grabbing';
 
-            const onMouseMove = (/** @type {{ clientX: number; clientY: number; }} */ me) => {
+            const onMouseMove = (
+                /** @type {{ clientX: number; clientY: number }} */ me
+            ) => {
                 if (!this.panState.panning) return;
 
                 const dx = me.clientX - this.panState.startX;
@@ -118,11 +146,10 @@ export class CanvasManager {
                 this.transform.x = this.panState.startTransX + dx;
                 this.transform.y = this.panState.startTransY + dy;
 
-
                 this.updateTransform();
             };
 
-            const onMouseUp = (/** @type {{ button: any; }} */ e) => {
+            const onMouseUp = (/** @type {{ button: any }} */ e) => {
                 if (e.button !== this.panState.panBtn) return;
 
                 this.panState.panning = false;
@@ -133,23 +160,19 @@ export class CanvasManager {
 
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
-        }
-        else if (e.button === 0) {
+        } else if (e.button === 0) {
             this.bus.emit('canvas:click', this.mousePos);
         }
-
     }
 
     handleClick(e) {
-        if (this.mode === "select") {
+        if (this.mode === 'select') {
             this.bus.emit('canvas:click', this.mousePos);
         }
     }
 
     // 监听鼠标位置
-    /**
-     * @param {MouseEvent} e
-     */
+    /** @param {MouseEvent} e */
     handleMouseMove(e) {
         // 1. 仅仅记录数据，不触发逻辑
         const rect = this.viewport.getBoundingClientRect();
@@ -162,7 +185,7 @@ export class CanvasManager {
             viewportX: vX,
             viewportY: vY,
             worldX: (vX - this.transform.x) / this.transform.scale,
-            worldY: (vY - this.transform.y) / this.transform.scale
+            worldY: (vY - this.transform.y) / this.transform.scale,
         };
 
         // 2. 使用 rAF 节流：只在浏览器准备重绘时才派发一次事件
@@ -183,16 +206,24 @@ export class CanvasManager {
             viewportX: 0,
             viewportY: 0,
             worldX: 0,
-            worldY: 0
-        })
+            worldY: 0,
+        });
     }
 
     // 处理键盘事件--快捷键设置
-    /**
-     * @param {{ target: { tagName: string; }; key: string; preventDefault: () => void; }} e
-     */
+    /** @param {KeyboardEvent} e */
     handleKeyDown(e) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.target) {
+            if (e.target instanceof HTMLElement) {
+                if (
+                    e.target.tagName === 'INPUT' ||
+                    e.target.tagName === 'SELECT' ||
+                    e.target.tagName === 'TEXTAREA'
+                )
+                    return;
+            }
+        }
+
         const key = e.key.toUpperCase();
         if (key === 'H') {
             e.preventDefault();
@@ -206,9 +237,7 @@ export class CanvasManager {
         }
     }
 
-    /**
-     * @param {string} mode
-     */
+    /** @param {string} mode */
     setMode(mode) {
         this.mode = mode;
         // 更新光标样式
@@ -227,11 +256,8 @@ export class CanvasManager {
         return this.mode;
     }
 
-    /**
-     * @param {number} value
-     */
+    /** @param {number} value */
     setZoom(value, keepCenter = true, clientX = 0, clientY = 0) {
-
         const rect = this.viewport.getBoundingClientRect();
         let centerX = rect.width / 2;
         let centerY = rect.height / 2;
@@ -243,8 +269,12 @@ export class CanvasManager {
         }
 
         // 计算偏移量修正
-        this.transform.x = centerX - (centerX - this.transform.x) * (value / this.transform.scale);
-        this.transform.y = centerY - (centerY - this.transform.y) * (value / this.transform.scale);
+        this.transform.x =
+            centerX -
+            (centerX - this.transform.x) * (value / this.transform.scale);
+        this.transform.y =
+            centerY -
+            (centerY - this.transform.y) * (value / this.transform.scale);
 
         this.transform.scale = value;
 
@@ -255,15 +285,14 @@ export class CanvasManager {
                 startY: clientY,
                 startTransX: this.transform.x,
                 startTransY: this.transform.y,
-                panBtn: this.panState.panBtn
-            }
+                panBtn: this.panState.panBtn,
+            };
         }
 
         this.updateTransform();
     }
 
     fitView() {
-
         let nodes = this.coreSpace.selectedNodes;
 
         if (nodes.length === 0) {
@@ -275,8 +304,11 @@ export class CanvasManager {
             return;
         }
 
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        nodes.forEach(node => {
+        let minX = Infinity,
+            minY = Infinity,
+            maxX = -Infinity,
+            maxY = -Infinity;
+        nodes.forEach((node) => {
             const w = node.width;
             const h = node.height;
             minX = Math.min(minX, node.x);
@@ -298,12 +330,10 @@ export class CanvasManager {
         const newX = viewportW / 2 - centerX * newScale;
         const newY = viewportH / 2 - centerY * newScale;
 
-
         this.transform.scale = newScale;
         this.transform.x = newX;
         this.transform.y = newY;
         this.updateTransform();
-
     }
 
     //强制画面缩放微小幅度，以触发重绘
@@ -344,7 +374,6 @@ export class CanvasManager {
         }
 
         this.updateTransform();
-
     }
 
     // 处理缩放与平移更新
@@ -354,30 +383,32 @@ export class CanvasManager {
         this.bus.emit('transformChanged', this.transform);
     }
 
-    /** 
-    * 视口坐标转画布坐标
-    * @param {number} clientX
-    * @param {number} clientY
-    */
+    /**
+     * 视口坐标转画布坐标
+     *
+     * @param {number} clientX
+     * @param {number} clientY
+     */
     viewportToWorld(clientX, clientY) {
         const rect = this.viewport.getBoundingClientRect();
         return {
             x: (clientX - rect.left - this.transform.x) / this.transform.scale,
-            y: (clientY - rect.top - this.transform.y) / this.transform.scale
+            y: (clientY - rect.top - this.transform.y) / this.transform.scale,
         };
     }
 
     /**
-    * 画布坐标转视口坐标
-    * @param {number} x
-    * @param {number} y
-    */
+     * 画布坐标转视口坐标
+     *
+     * @param {number} x
+     * @param {number} y
+     */
     worldToViewport(x, y) {
         const rect = this.viewport.getBoundingClientRect();
         return {
-            x: (x * this.transform.scale) + rect.left + this.transform.x,
-            y: (y * this.transform.scale) + rect.top + this.transform.y
-        }
+            x: x * this.transform.scale + rect.left + this.transform.x,
+            y: y * this.transform.scale + rect.top + this.transform.y,
+        };
     }
 
     get ViewCenter() {
@@ -389,7 +420,7 @@ export class CanvasManager {
         this.transform = {
             x: 0,
             y: 0,
-            scale: 1
+            scale: 1,
         };
 
         this.panState = {
@@ -398,20 +429,20 @@ export class CanvasManager {
             startY: 0,
             startTransX: 0,
             startTransY: 0,
-            panBtn: null
-        }
+            panBtn: null,
+        };
 
         this.mousePos = {
             viewportX: 0,
             viewportY: 0,
             worldX: 0,
-            worldY: 0
-        }
+            worldY: 0,
+        };
 
         this.transform = { x: 0, y: 0, scale: 1 };
         this.updateTransform();
 
-        this.mode = "select";
+        this.mode = 'select';
         this.setMode(this.mode);
     }
 }
