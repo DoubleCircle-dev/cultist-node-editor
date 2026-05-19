@@ -27,6 +27,24 @@ export class HubProp extends BaseProp {
         return this._properties;
     }
 
+    popProp() {
+        return this._properties.pop();
+    }
+
+    findProp(id) {
+        return this._properties.find((p) => p.id === id);
+    }
+
+    findPropIndex(id) {
+        return this._properties.findIndex((p) => p.id === id);
+    }
+
+    findPropToPop(id) {
+        const index = this.findPropIndex(id);
+        return index >= 0 ? this._properties.splice(index, 1)[0] : null;
+    }
+
+
     /**
      * @returns {BaseProp[]}
      */

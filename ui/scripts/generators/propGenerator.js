@@ -196,6 +196,7 @@ export class PropRenderer {
         bool: (p) => this.createRadio(p, true),
         checkbox: (p) => this.createCheckbox(p),
         select: (p) => this.createSelect(p),
+        button: (p) => this.createButton('simple', p),
         'image-path': (p) => this.createInput('text', p, { placeholder: '图片路径' }),
         'image-preview': (p) => this.createPreView('image', p),
         'image-icon': (p) => this.createPreView('icon', p),
@@ -252,7 +253,7 @@ export class PropRenderer {
         const changeValueListener = (e) => {
             const target = e.target;
             if (target instanceof HTMLInputElement) {
-                prop.updateValue(target.value);
+                prop.changeValue(target.value);
             }
         };
 
@@ -260,7 +261,7 @@ export class PropRenderer {
             e.stopPropagation();
         };
 
-        prop.addEventListener('change', (e) => {
+        prop.addEventListener('update', (e) => {
             if (e instanceof CustomEvent) {
                 input.value = e.detail.value;
             }
@@ -378,14 +379,14 @@ export class PropRenderer {
             const changeValueListener = (e) => {
                 const target = e.target;
                 if (boolFlag) {
-                    prop.updateValue(target.value === '是' ? true : false);
+                    prop.changeValue(target.value === '是' ? true : false);
                 } else {
-                    prop.updateValue(target.value);
+                    prop.changeValue(target.value);
                 }
             };
             input.addEventListener('change', changeValueListener);
 
-            prop.addEventListener('change', (e) => {
+            prop.addEventListener('update', (e) => {
                 if (e instanceof CustomEvent) {
                     const eventValue = e.detail.value;
                     if (boolFlag) {
@@ -456,7 +457,7 @@ export class PropRenderer {
         const changeListener = (e) => {
             const target = e.target;
             if (target instanceof HTMLSelectElement) {
-                p.updateValue(target.value);
+                p.changeValue(target.value);
             }
         };
 
@@ -464,7 +465,7 @@ export class PropRenderer {
 
         s.addEventListener('change', changeListener);
 
-        p.addEventListener('change', (e) => {
+        p.addEventListener('update', (e) => {
             if (e instanceof CustomEvent) {
                 s.value = e.detail.value;
             }
@@ -589,8 +590,9 @@ export class PropRenderer {
         button.className = `button ${type}`;
         button.textContent = p.label || '测试用';
 
-        const mousedownListener = (e) => {
+        const mousedownListener = (/**@type {Event}*/e) => {
             e.stopPropagation();
+            p.transmit(e);
         };
         button.addEventListener('mousedown', mousedownListener);
 

@@ -8,7 +8,8 @@ import { ConnectionManager } from './connectionManager.js';
 import { EventBus } from '../types/eventBus.js';
 import { PanelManager } from './panelManager.js';
 import { HistoryManager } from './historyManager.js';
-import { Profiler } from 'weigh-js';
+import { MenuManager } from './MenuManager.js';
+import { StandardMessage } from '../types/standardDetail.js';
 
 export class ControllerCore {
     /**
@@ -40,6 +41,8 @@ export class ControllerCore {
         this.nodeActionManager = new NodeActionManager(this.bus, this.viewport, this.world, this);
 
         this.connectionManager = new ConnectionManager(this.bus, this.viewport, this.world, this);
+
+        this.menuManager = new MenuManager(this.bus, this.viewport, this.world, this);
 
         this.panelManager = new PanelManager(this.bus, this.viewport, this.world, this);
 
@@ -104,6 +107,10 @@ export class ControllerCore {
         this.nodeManager.addNode(nodeType, Px, Py);
     }
 
+    /**
+     * @param {string} mode
+     * @returns {void}
+     */
     setMode(mode) {
         this.canvasManager.setMode(mode);
     }
@@ -136,14 +143,6 @@ export class ControllerCore {
         this.canvasManager.refresh();
     }
 
-    // 计算节点大小
-
-    /** @param {BaseNodeModel} node */
-    sizeof(node) {
-        const profiler = new Profiler();
-        console.log(profiler.computeDetailedSize(node));
-    }
-
     /**
      * 快捷键管理
      *
@@ -164,7 +163,6 @@ export class ControllerCore {
             if (e.ctrlKey || e.metaKey) {
                 switch (key) {
                     case 'Z':
-
                         this.undo();
                         break;
                     case 'Y':
@@ -177,8 +175,6 @@ export class ControllerCore {
                         break;
                 }
             }
-
-
 
             switch (key) {
                 case 'H':

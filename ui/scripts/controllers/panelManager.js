@@ -1,10 +1,9 @@
-import { ControllerCore } from "./controllerCore.js";
-import { EventBus } from "../types/eventBus.js";
-import { IManager } from "./manager.js";
-import { NodeTypeRegistry } from "../types/nodeTypes.js";
+import { ControllerCore } from './controllerCore.js';
+import { EventBus } from '../types/eventBus.js';
+import { IManager } from './manager.js';
+import { NodeTypeRegistry } from '../types/nodeTypes.js';
 
 export class PanelManager extends IManager {
-
     /**
      * @param {EventBus} bus
      * @param {HTMLElement} viewport
@@ -24,22 +23,22 @@ export class PanelManager extends IManager {
         this.currentExpandPanel = null;
         this.currentBottomPanel = null;
 
-        this.expandPanel = document.getElementById("expandPanel");
-        this.bottomPanel = document.getElementById("bottomPanel");
+        this.expandPanel = document.getElementById('expandPanel');
+        this.bottomPanel = document.getElementById('bottomPanel');
 
         this._initPanel();
     }
 
+    /** @private */
     _initPanel() {
         this.addNodesPanel = this._createAddNodesPanel();
 
         this.findNodesPanel = this._createFindNodesPanel();
 
         this.openFilePanel = this._createOpenFilePanel();
-
-
     }
 
+    /** @private */
     _createAddNodesPanel() {
         // 根容器 div.add-nodes-panel
         const panel = document.createElement('div');
@@ -103,10 +102,10 @@ export class PanelManager extends IManager {
 
             node.addEventListener('click', () => {
                 this.bus.emit('addNode', { type: typeKey });
-            })
+            });
 
             nodeList.appendChild(node);
-        })
+        });
 
         // 内部注释可以忽略，动态渲染时填充内容
         panel.appendChild(nodeList);
@@ -114,6 +113,7 @@ export class PanelManager extends IManager {
         return panel;
     }
 
+    /** @private */
     _createFindNodesPanel() {
         const panel = document.createElement('div');
         panel.className = 'expand-panel';
@@ -147,14 +147,14 @@ export class PanelManager extends IManager {
         nodeList.className = 'node-list';
         nodeList.id = 'nodeExampleListContainer';
 
-        this.bus.on('nodeList:render', this.renderNodesList.bind(this, nodeList))        
+        this.bus.on('nodeList:render', this.renderNodesList.bind(this, nodeList));
 
         panel.appendChild(nodeList);
 
         return panel;
     }
 
-    renderNodesList(nodeList){
+    renderNodesList(nodeList) {
         nodeList.innerHTML = '';
         this.coreSpace.nodes.forEach((node) => {
             const nodeItem = document.createElement('div');
@@ -181,12 +181,13 @@ export class PanelManager extends IManager {
 
             nodeItem.addEventListener('click', () => {
                 this.bus.emit('addNode:copy', { node: node });
-            })
+            });
 
             nodeList.appendChild(nodeItem);
-        })
+        });
     }
 
+    /** @private */
     _createOpenFilePanel() {
         const panel = document.createElement('div');
         panel.className = 'expand-panel';
@@ -219,7 +220,7 @@ export class PanelManager extends IManager {
         const manifestList = document.createElement('div');
         manifestList.className = 'manifest-list';
         manifestList.id = 'manifestListContainer';
-        this.bus.addEventListener('addFilesTree', this.addFilesTree.bind(this, manifestList))
+        this.bus.addEventListener('addFilesTree', this.addFilesTree.bind(this, manifestList));
 
         this.addOriginResourcesPanel(manifestList);
 
@@ -230,51 +231,48 @@ export class PanelManager extends IManager {
 
     addNodesList() {
         this.coreSpace.nodes.forEach((node) => {
-            const onClick = ((file) => {
+            const onClick = (file) => {
                 this.bus.emit('addNode:copy', { node: node });
-            });
-        })
+            };
+        });
     }
 
     addFilesTree(manifestList, e) {
         const { filesTree } = e.detail;
         if (!filesTree) return;
         const rootName = e.detail.rootName || 'root';
-        manifestList.appendChild(this.createTreePanel(filesTree, rootName))
+        manifestList.appendChild(this.createTreePanel(filesTree, rootName));
     }
 
     addOriginResourcesPanel(manifestList) {
         if (!manifestList) return;
         if (!manifestList.className.includes('manifest-list')) return;
 
-
         fetch('./json-manifest.json')
-            .then(response => {
+            .then((response) => {
                 if (!response.ok) {
                     throw new Error(`HTTP错误！状态码：${response.status}`);
                 }
                 return response.json();
             })
-            .then(data => {
+            .then((data) => {
                 return Object.keys(data)
-                    .filter(key => key in NodeTypeRegistry.nodeTypes)
+                    .filter((key) => key in NodeTypeRegistry.nodeTypes)
                     .reduce((obj, key) => {
                         obj[key] = data[key];
                         return obj;
                     }, {});
             })
-            .then(data => {
+            .then((data) => {
                 const treePanel = this.createTreePanel(data, 'original resources');
                 manifestList.appendChild(treePanel);
             })
-            .catch(error => {
+            .catch((error) => {
                 console.error('读取JSON出错：', error);
             });
-
     }
 
     createTreePanel(data, rootName = 'root', onClick = null) {
-
         const panel = document.createElement('div');
         panel.className = 'list-panel';
 
@@ -350,7 +348,7 @@ export class PanelManager extends IManager {
         function attachToggleEvents(container, onFileClick) {
             // 折叠/展开事件
             const headers = container.querySelectorAll('.dir-category-header');
-            headers.forEach(header => {
+            headers.forEach((header) => {
                 header.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const fileList = header.parentElement.querySelector('.dir-file-list');
@@ -383,19 +381,17 @@ export class PanelManager extends IManager {
         }
     }
 
-    /**
-     * @param {string} panel
-     */
+    /** @param {string} panel */
     togglePanel(panel) {
         switch (panel) {
-            case "addNodesPanel":
+            case 'addNodesPanel':
                 this._toggleExpandPanel(this.addNodesPanel);
                 break;
-            case "findNodesPanel":
+            case 'findNodesPanel':
                 this.bus.emit('nodeList:render');
                 this._toggleExpandPanel(this.findNodesPanel);
                 break;
-            case "openFilePanel":
+            case 'openFilePanel':
                 this._toggleExpandPanel(this.openFilePanel);
                 break;
             default:
@@ -405,6 +401,7 @@ export class PanelManager extends IManager {
     }
 
     /**
+     * @private
      * @param {HTMLDivElement | null} panel
      */
     _toggleExpandPanel(panel) {
@@ -431,19 +428,21 @@ export class PanelManager extends IManager {
         }
     }
 
+    /** @private */
     _exitExpandPanel() {
-        if(!this.expandPanel) return;
+        if (!this.expandPanel) return;
         const panel = this.expandPanel;
         panel.classList.add('exit');
-        panel.addEventListener('animationend', function onAnimationEnd() {
-            panel.classList.remove('exit');      // 清理动画类
-            panel.classList.add('hidden');      // 隐藏元素
-
-        }, { once: true }); // 也可直接使用 { once: true }
+        panel.addEventListener(
+            'animationend',
+            function onAnimationEnd() {
+                panel.classList.remove('exit'); // 清理动画类
+                panel.classList.add('hidden'); // 隐藏元素
+            },
+            { once: true }
+        ); // 也可直接使用 { once: true }
     }
 
-    _toggleBottomPanel() {
-
-    }
-
+    /** @private */
+    _toggleBottomPanel() {}
 }

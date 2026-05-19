@@ -8,7 +8,7 @@ import { PropGenerator } from './propGenerator.js';
 import { BaseProp } from '../models/propModels/baseProp.js';
 import { PortProp } from '../models/propModels/portProp.js';
 import { HubProp } from '../models/propModels/hubProp.js';
-import { Profiler } from 'weigh-js';
+import { OptionsProp } from '../models/propModels/optionsProp.js';
 
 export class NodeGenerator {
     /**
@@ -17,7 +17,7 @@ export class NodeGenerator {
      * @param {string} type
      * @param {number} x
      * @param {number} y
-     * @returns {BaseNodeModel}
+     * @returns {NodeModel}
      */
     static createNode(id, uid, type, x, y) {
         const nodeTypeConfig = NodeTypeRegistry.getType(type);
@@ -34,7 +34,84 @@ export class NodeGenerator {
 
         nodeModel.initialize();
 
+        this._bindNodeListeners(nodeModel);
+
         return nodeModel;
+    }
+
+    /**
+     * @private
+     * @param {NodeModel} nodeModel
+     */
+    static _bindNodeListeners(nodeModel) {
+        if (nodeModel instanceof NodeModel) {
+            this._onPropertyChange(nodeModel);
+            this._onModeSwitcher(nodeModel);
+
+            if (999 in nodeModel.exProperties) {
+                nodeModel.extendButton.addEventListener('mousedown', (e) => {
+                    const oe = e.detail.originalEvent;
+                    nodeModel.emit('append:property', { props: nodeModel.exProperties[999].properties, position: { x: oe.clientX, y: oe.clientY } });
+                });
+            }
+        }
+    }
+
+    /**
+     * @private
+     * @param {NodeModel} nodeModel
+     */
+    /**
+     * 处理属性更新的静态方法
+     *
+     * @private
+     * @param {NodeModel} nodeModel - 节点模型对象
+     */
+    static _onPropertyChange(nodeModel) {
+        // 监听节点模型的属性外部更改事件
+        nodeModel.addEventListener('change:property', (/** @type {Event} */ e) => {
+            const ce = /** @type {CustomEvent} */ e;
+            // 检查更新属性是否为模式切换器
+            if (ce.detail.propId === nodeModel.modeSwitcher?.id) {
+                return; // 如果是模式切换器则直接返回，不执行后续操作
+            }
+            nodeModel.emit('change:property:success', ce.detail);
+        });
+    }
+
+    /**
+     * @private
+     * @param {NodeModel} nodeModel
+     */
+    static _onModeSwitcher(nodeModel) {
+        for (let prop of nodeModel.properties) {
+            if (prop instanceof OptionsProp) {
+                if (prop.isModeSwitcher) {
+                    nodeModel.modeSwitcher = prop;
+                    nodeModel.currentMode = prop.value;
+
+                    prop.addEventListener('change:property', (e) => {
+                        const ce = /** @type {CustomEvent} */ e;
+                        if (nodeModel.switchMode(ce.detail.value)) {
+                            nodeModel.emit('change:property:success', ce.detail);
+                        } else {
+                            nodeModel.emit('change:property:failed', { propId: prop.id });
+                        }
+                    });
+
+                    prop.addEventListener('update', (/** @type {Event} */ e) => {
+                        const ce = /** @type {CustomEvent} */ e;
+                        if (nodeModel.switchMode(ce.detail.value)) {
+                            nodeModel.emit('update:property:success', ce.detail);
+                        } else {
+                            nodeModel.emit('update:property:failed', { propId: prop.id });
+                        }
+                    });
+
+                    break;
+                }
+            }
+        }
     }
 
     /**

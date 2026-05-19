@@ -51,19 +51,25 @@ export class BaseProp extends IEventTarget {
     }
 
     /** @param {any} newVal */
-    setValue(newVal) {
+    changeValue(newVal) {
         const oldVal = this._value;
         this.value = newVal;
-        this.emit('change', { value: newVal, oldValue: oldVal });
+        this.onEvent('change:property', { value: this._value, oldValue: oldVal, newValue: newVal, propId: this.id });
     }
 
     /** @param {any} newVal */
     updateValue(newVal) {
         const oldVal = this._value;
         this._value = newVal;
-        this.onEvent('update:property:finished', { value: this._value, newValue: newVal, oldValue: oldVal, propId: this.id });
+        this.emit('update', { value: this._value, newValue: newVal, oldValue: oldVal, propId: this.id });
     }
 
+    /**
+     * 向父对象传递事件
+     * 
+     * @param {string} event - 事件名称
+     * @param {any} detail - 事件详情
+     */
     onEvent(event, detail) {
 
         this.emit(event, detail);

@@ -35,7 +35,9 @@ export class BaseNodeModel extends IEventTarget {
         this.y = y;
         this.width = config.width || 300;
         this.height = config.height || 0;
+
     }
+
 
     /**
      * 获取对象的ID属性 将内部ID转换为字符串形式返回
@@ -94,7 +96,7 @@ export class BaseNodeModel extends IEventTarget {
             return;
         }
 
-        prop.setValue(value);
+        prop.updateValue(value);
     }
 
     /** @param {BaseProp} prop */

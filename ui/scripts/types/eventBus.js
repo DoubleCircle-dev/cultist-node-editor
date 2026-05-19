@@ -106,13 +106,13 @@ export class EventBus extends IEventTarget {
      *
      * @param {string} type
      * @param {string} targetType
+     * @param {string} status
      * @param {any} data
      * @param {Function | null} undoFunction
      * @param {Function | null} redoFunction
      */
-    standardEmitDetail(type, targetType, data, undoFunction = null, redoFunction = null) {
-        const typeName = `${type}:${targetType}:${StandardMessage.STATUS.FINISHED}`;
-        const detail = new StandardDetail(type, targetType, data);
+    standardEmitDetail(type, targetType, data, undoFunction = null, redoFunction = null, status = 'finished') {
+        const detail = new StandardDetail(type, targetType, data, status);
 
         if (!detail.checkValid()) {
             console.error('错误的使用标准detail，请检查参数', type, targetType);
@@ -123,7 +123,7 @@ export class EventBus extends IEventTarget {
             detail.registerFunctions(undoFunction, redoFunction);
         }
 
-        this.emit(typeName, detail, true);
+        this.emit(detail.eventName, detail, true);
     }
 
     /**
@@ -140,5 +140,25 @@ export class EventBus extends IEventTarget {
             return;
         }
         this.emit(message.eventName);
+    }
+
+    /**
+     * 处理标准message的事件
+     *
+     * @param {string} type
+     * @param {string} targetType
+     * @param {string} status
+     * @param {Function | null} execFunction
+     */
+    standardOn(type, targetType, status, execFunction = null) {
+        const message = new StandardMessage(type, targetType, status);
+        if (!message.checkValid()) {
+            console.error('错误的使用标准message，请检查参数', type, targetType, status);
+        }
+        this.on(message.eventName, (e) => {
+            if (execFunction) {
+                execFunction(e.detail);
+            }
+        });
     }
 }

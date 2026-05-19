@@ -3,6 +3,7 @@ import { ControllerCore } from './controllerCore.js';
 import { PortModel } from '../models/portModel.js';
 import { IManager } from './manager.js';
 import { ConnectionModel } from '../models/connectionModel.js';
+import { StandardDetail } from '../types/standardDetail.js';
 export class ConnectionManager extends IManager {
     /**
      * @param {EventBus} bus
@@ -72,8 +73,8 @@ export class ConnectionManager extends IManager {
     _onEvents() {
         this.bus.on('drag:port:start', this._onPortDragStart.bind(this));
         this.bus.on('drag:node:running', this._updateMovingConnections.bind(this));
-        this.bus.on('drag:node:end', this._updateConnections.bind(this));
-        this.bus.on('delete:node', this._deleteNodeConnections.bind(this));
+        this.bus.standardOn('drag', 'node', 'end', this._updateConnections.bind(this));
+        this.bus.standardOn('delete', 'node', 'finished', this._deleteNodeConnections.bind(this));
     }
 
     /**
@@ -109,40 +110,79 @@ export class ConnectionManager extends IManager {
 
     /**
      * @private
-     * @param {CustomEvent} e
+     * @param {StandardDetail} detail
      */
-    _deleteNodeConnections(e) {
-        const nodeIds = e.detail.nodeId || e.detail.nodeIds;
+    /**
+     * @private
+     * @param {StandardDetail} detail
+     */
+    _deleteNodeConnections(detail) {
+        const nodeIds = detail.data.nodeIds;
 
         if (!nodeIds) {
             console.error('删除节点消息未正确提供节点 id');
             return;
         }
+
         // 兼容单个 id 或 id 数组
         const ids = Array.isArray(nodeIds) ? nodeIds : [nodeIds];
 
         // 用于记录需要删除的连接 ID（Set 自动去重）
         const connectionIdsToRemove = new Set();
+        // 用于保存被删除的连接模型实体，以便撤销时原样恢复
+        const connectionsToRemove = [];
 
-        // 第一步：收集所有相关的连接 ID，并清理索引
+        // 第一步：收集所有相关的连接 ID 和模型实体
         ids.forEach((nodeId) => {
             // 处理作为起点的连接
             const fromList = this.fromNodeIndex.get(nodeId);
             if (fromList) {
-                fromList.forEach((conn) => connectionIdsToRemove.add(conn.id));
-                this.fromNodeIndex.delete(nodeId);
+                fromList.forEach((conn) => {
+                    if (!connectionIdsToRemove.has(conn.id)) {
+                        connectionIdsToRemove.add(conn.id);
+                        connectionsToRemove.push(conn);
+                    }
+                });
+                // 将清理工作统一交给底层的 _removeConnection 处理，避免破坏内部索引
             }
 
             // 处理作为终点的连接
             const toList = this.toNodeIndex.get(nodeId);
             if (toList) {
-                toList.forEach((conn) => connectionIdsToRemove.add(conn.id));
-                this.toNodeIndex.delete(nodeId);
+                toList.forEach((conn) => {
+                    if (!connectionIdsToRemove.has(conn.id)) {
+                        connectionIdsToRemove.add(conn.id);
+                        connectionsToRemove.push(conn);
+                    }
+                });
             }
         });
 
-        // 第二步：统一删除所有涉及到的连接
-        this.deleteConnections(connectionIdsToRemove);
+        // 第二步：如果存在需要删除的连线，劫持(Monkey-patch)该事件的撤销/重做逻辑
+        if (connectionsToRemove.length > 0) {
+            const originalUndo = detail.undoFunction;
+            const originalRedo = detail.redoFunction;
+
+            detail.registerFunctions(
+                (data) => {
+                    // 1. 先执行原有的撤销逻辑（恢复节点模型和视图）
+                    if (originalUndo) originalUndo(data);
+                    // 2. 节点恢复后，重新把这些连线加回画布
+                    connectionsToRemove.forEach((conn) => {
+                        this._createConnection(conn);
+                    });
+                },
+                (data) => {
+                    // 1. 先执行原有的重做逻辑（再次删除节点）
+                    if (originalRedo) originalRedo(data);
+                    // 2. 节点删除后，再次将这些连线清理掉
+                    this.deleteConnections(Array.from(connectionIdsToRemove));
+                }
+            );
+        }
+
+        // 第三步：统一删除所有涉及到的连接
+        this.deleteConnections(Array.from(connectionIdsToRemove));
     }
 
     /**
@@ -482,8 +522,6 @@ export class ConnectionManager extends IManager {
 
         try {
             if (this.startPort.canConnectTo(this.targetPort)) {
-                this.startPort.ConnectTo(this.targetPort);
-
                 if (this.startPort.direction === 'input') {
                     const tempNode = this.startNode;
                     const tempPort = this.startPort;
@@ -508,6 +546,8 @@ export class ConnectionManager extends IManager {
     _createConnection(connModel) {
         const connection = connModel;
         const connectionId = connection.id;
+
+        connection.startPort.ConnectTo(connection.targetPort);
 
         this.connections.set(connectionId, connection);
 

@@ -154,7 +154,7 @@ export class NodeTypeRegistry {
                     },
                 ],
                 选项2: [
-                    { name:'testSwitch',label: '开关', type: 'checkbox', default: false },
+                    { name: 'testSwitch', label: '开关', type: 'checkbox', default: false },
                     {
                         name: 'testNumber',
                         label: '数字',
@@ -166,10 +166,29 @@ export class NodeTypeRegistry {
                 ],
                 选项3: [
                     {
-                        name:'testInteger', label: '整数输入', type: 'integer', default: null },
-                    { name:'testText', label: '文本输入', type: 'text', default: '测试文本' },
+                        name: 'testInteger',
+                        label: '整数输入',
+                        type: 'integer',
+                        default: null,
+                    },
+                    { name: 'testText', label: '文本输入', type: 'text', default: '测试文本' },
                 ],
-                999: [],
+                999: [
+                    {
+                        name: 'testPortExtend',
+                        label: '额外端口',
+                        type: 'port',
+                        requireType: 'test',
+                        multiConnect: true,
+                        description: '测试额外属性连接端口',
+                    },
+                    {
+                        name: 'testTextExtend',
+                        label: '额外文本输入',
+                        type: 'text',
+                        default: '测试额外文本',
+                    },
+                ],
             },
         },
         legacies: {
@@ -194,8 +213,7 @@ export class NodeTypeRegistry {
                     label: '初始描述',
                     type: 'text',
                     default: '初始描述',
-                    description:
-                        'startdescription: 会显示在开始此职业的新游戏时的弹出窗口。',
+                    description: 'startdescription: 会显示在开始此职业的新游戏时的弹出窗口。',
                 },
                 {
                     name: 'startingVerbId',
@@ -204,8 +222,7 @@ export class NodeTypeRegistry {
                     requireType: 'verbs',
                     multiConnect: false,
                     default: 'work',
-                    description:
-                        'startingVerbId: 游戏开始时提供给玩家的verb，你可以自创一个，也可以从已有的verb中选择一个',
+                    description: 'startingVerbId: 游戏开始时提供给玩家的verb，你可以自创一个，也可以从已有的verb中选择一个',
                 },
             ],
             exProperties: {
@@ -223,16 +240,14 @@ export class NodeTypeRegistry {
                         label: '非特定结局后续',
                         type: 'bool',
                         default: true,
-                        description:
-                            'availableWithoutEndingMatch: 表示游戏是否可以在任何其他职业的任何结束后将此职业视为有效的新开始',
+                        description: 'availableWithoutEndingMatch: 表示游戏是否可以在任何其他职业的任何结束后将此职业视为有效的新开始',
                     },
                     {
                         name: 'newstart',
                         label: '新开始',
                         type: 'bool',
                         default: true,
-                        description:
-                            'newstart: 表示我们是否可以在第六历史菜单中手动选择此职业来开始它（就像其他DLC一样）。',
+                        description: 'newstart: 表示我们是否可以在第六历史菜单中手动选择此职业来开始它（就像其他DLC一样）。',
                     },
                     {
                         name: 'statusbarelements',
@@ -248,8 +263,7 @@ export class NodeTypeRegistry {
                         name: 'tablecoverimage',
                         label: '桌面图片',
                         type: 'image-preview',
-                        description:
-                            'tablecoverimage: 决定桌面背景，如dlc流亡者中的地中海地图。(请将地图放入images/ui中)（没有该字段则使用默认桌面）',
+                        description: 'tablecoverimage: 决定桌面背景，如dlc流亡者中的地中海地图。(请将地图放入images/ui中)（没有该字段则使用默认桌面）',
                     },
                     {
                         name: 'excludesOnEnding',
@@ -257,8 +271,7 @@ export class NodeTypeRegistry {
                         type: 'port',
                         requireType: 'legacies',
                         multiConnect: true,
-                        description:
-                            'excludesOnEnding: 在此职业之后无法选择的其他职业列表。',
+                        description: 'excludesOnEnding: 在此职业之后无法选择的其他职业列表。',
                     },
                 ],
             },
@@ -285,8 +298,7 @@ export class NodeTypeRegistry {
                     label: '描述',
                     type: 'text',
                     default: '在达成该结局时，游戏中显示的文本',
-                    description:
-                        'description: 在达成该结局时，游戏中显示的文本',
+                    description: 'description: 在达成该结局时，游戏中显示的文本',
                 },
                 {
                     label: '成就',
@@ -299,29 +311,19 @@ export class NodeTypeRegistry {
                 {
                     label: '图片',
                     type: 'image-preview',
-                    description:
-                        'image: 达成该结局时，在达成该结局时显示的图片',
+                    description: 'image: 达成该结局时，在达成该结局时显示的图片',
                 },
                 {
                     label: '类型',
                     type: 'select',
-                    options: [
-                        '坏结局(Melancholy)',
-                        '胜利(Grand)',
-                        '反面胜利(Vile)',
-                    ],
+                    options: ['坏结局(Melancholy)', '胜利(Grand)', '反面胜利(Vile)'],
                     default: 0,
-                    description:
-                        'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。',
+                    description: 'flavour: 该结局的类型，“Melancholy”代表坏结局；“Grand”代表胜利；“Vile”代表反面胜利。',
                 },
                 {
                     label: '动画',
                     type: 'select',
-                    options: [
-                        'DramaticLight',
-                        'DramaticLightCool',
-                        'DramaticLightEvil',
-                    ],
+                    options: ['DramaticLight', 'DramaticLightCool', 'DramaticLightEvil'],
                     default: 0,
                     description:
                         'anim: 从某个recipe进入该结局时，显示的动画类型。“DramaticLight”在任何结局都可用，“DramaticLightCool”是胜利时显示的动画，“DramaticLightEvil”则是在坏结局时显示。',
@@ -341,16 +343,14 @@ export class NodeTypeRegistry {
                     type: 'port',
                     returnType: 'achievements',
                     multiConnect: true,
-                    description:
-                        'categories: 成就类型（成就类型会在主界面的成就下面新建一个类别用来显示成就）',
+                    description: 'categories: 成就类型（成就类型会在主界面的成就下面新建一个类别用来显示成就）',
                 },
                 {
                     label: '成就',
                     type: 'port',
                     returnType: 'achievements',
                     multiConnect: true,
-                    description:
-                        'achievements: 成就（同一类成就会放在一个页面）',
+                    description: 'achievements: 成就（同一类成就会放在一个页面）',
                 },
             ],
             content: `成就(achievements)是游戏中解锁的成就/成就类型，可以在成就页面中查看。`,
@@ -361,8 +361,7 @@ export class NodeTypeRegistry {
                     isModeSwitcher: true,
                     options: ['成就类型', '成就'],
                     default: '成就',
-                    description:
-                        'isCategory: 成就和成就类型都属于achievements,成就类型会在主界面的成就下面新建一个类别用来显示成就',
+                    description: 'isCategory: 成就和成就类型都属于achievements,成就类型会在主界面的成就下面新建一个类别用来显示成就',
                 },
                 {
                     label: '图标',
@@ -378,15 +377,13 @@ export class NodeTypeRegistry {
                         type: 'port',
                         requireType: 'achievements',
                         multiConnect: false,
-                        description:
-                            'category: 成就的类别（同一类成就会放在一个页面）',
+                        description: 'category: 成就的类别（同一类成就会放在一个页面）',
                     },
                     {
                         label: '单一描述',
                         type: 'bool',
                         default: true,
-                        description:
-                            'singleDescription: 如果为真，则解锁成就前就会显示成就描述。',
+                        description: 'singleDescription: 如果为真，则解锁成就前就会显示成就描述。',
                     },
                     {
                         label: '描述',
@@ -398,8 +395,7 @@ export class NodeTypeRegistry {
                         label: '显示成就信息',
                         type: 'bool',
                         default: true,
-                        description:
-                            'validateOnStorefront: 如果为真，则解锁成就时会在游戏内显示成就信息窗口。',
+                        description: 'validateOnStorefront: 如果为真，则解锁成就时会在游戏内显示成就信息窗口。',
                     },
                     {
                         label: '解锁信息',
@@ -412,8 +408,7 @@ export class NodeTypeRegistry {
                         label: '隐藏成就',
                         type: 'bool',
                         default: false,
-                        description:
-                            'isHidden: 如果为真，则该成就未解锁前不会显示在成就页面上（会显示剩下若干隐藏成就）。',
+                        description: 'isHidden: 如果为真，则该成就未解锁前不会显示在成就页面上（会显示剩下若干隐藏成就）。',
                     },
                 ],
             },
@@ -447,8 +442,7 @@ export class NodeTypeRegistry {
                     returnType: 'recipes',
                     label: '链接',
                     multiConnect: true,
-                    description:
-                        'linked: 指向在此recipe后会概率生效的recipe，与alt类似，但需要等待当前recipe结束后才会生效。',
+                    description: 'linked: 指向在此recipe后会概率生效的recipe，与alt类似，但需要等待当前recipe结束后才会生效。',
                 },
                 {
                     type: 'port',
@@ -467,15 +461,13 @@ export class NodeTypeRegistry {
                     type: 'port',
                     requireType: 'verbs',
                     multiConnect: false,
-                    description:
-                        'actionId: 使用的行动的id，如果此处填空则默认使用上一个recipe的verb',
+                    description: 'actionId: 使用的行动的id，如果此处填空则默认使用上一个recipe的verb',
                 },
                 {
                     label: '起始描述',
                     type: 'text',
                     placeholder: '开始和进行时行动框显示的文本',
-                    description:
-                        'startdescription: 开始和进行时行动框显示的文本',
+                    description: 'startdescription: 开始和进行时行动框显示的文本',
                 },
                 {
                     label: '持续时间',
@@ -494,8 +486,7 @@ export class NodeTypeRegistry {
                     type: 'port',
                     requireType: 'slots',
                     multiConnect: false,
-                    description:
-                        'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。',
+                    description: 'slots: 指定该recipe的卡槽，recipe只能拥有一个卡槽，在其进行时会出现。',
                 },
                 {
                     label: '生成元素',
@@ -515,31 +506,25 @@ export class NodeTypeRegistry {
                             type: 'port',
                             requireType: 'elements',
                             multiConnect: true,
-                            NotSetWarning:
-                                '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
+                            NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
                             label: '前置要求',
-                            description:
-                                '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件。',
+                            description: '跳转进本交互界面的要求: requirements表示为了进入此recipe，该行动框内需要满足的条件。',
                         },
                         {
                             type: 'port',
                             requireType: 'elements',
                             multiConnect: true,
-                            NotSetWarning:
-                                '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
+                            NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
                             label: '全局要求',
-                            description:
-                                '跳转进本交互界面的要求: extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element。',
+                            description: '跳转进本交互界面的要求: extantreqs与requirement类似，区别在于它检测的是整个游戏中（包括其他行动框中）的element。',
                         },
                         {
                             type: 'port',
                             requireType: 'elements',
                             multiConnect: true,
-                            NotSetWarning:
-                                '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
+                            NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
                             label: '桌面要求',
-                            description:
-                                '跳转进本交互界面的要求: tablereqs与requirement类似，区别在于它检测的是桌面上的element。',
+                            description: '跳转进本交互界面的要求: tablereqs与requirement类似，区别在于它检测的是桌面上的element。',
                         },
                     ],
                 },
@@ -547,15 +532,13 @@ export class NodeTypeRegistry {
                     label: '起始点',
                     type: 'bool',
                     default: false,
-                    description:
-                        'craftable: 为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发。',
+                    description: 'craftable: 为真时该recipe可以被玩家主动使用对应行动框触发，否则则只能通过其他方式（如其他的recipe）触发。',
                 },
                 {
                     label: '仅作提示',
                     type: 'bool',
                     default: false,
-                    description:
-                        'hintonly: 为真时该recipe无法被实际执行，只做展示描述作用（多用于提示）',
+                    description: 'hintonly: 为真时该recipe无法被实际执行，只做展示描述作用（多用于提示）',
                 },
             ],
             exProperties: {
@@ -573,17 +556,14 @@ export class NodeTypeRegistry {
                         type: 'port',
                         requireType: 'elements',
                         multiConnect: true,
-                        NotSetWarning:
-                            '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
-                        description:
-                            'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。',
+                        NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
+                        description: 'aspects: 此交互(recipes)的性相，本身并不显示在性相栏中，但是会参与在"induces"和"xtrigger"的作用中。',
                     },
                     {
                         label: '最大执行次数',
                         type: 'int',
                         default: 0,
-                        description:
-                            'maxexecutions: 该recipe的最大执行次数，0表示无限制。',
+                        description: 'maxexecutions: 该recipe的最大执行次数，0表示无限制。',
                     },
                     {
                         label: '抽取卡牌',
@@ -591,22 +571,19 @@ export class NodeTypeRegistry {
                         requireType: 'deck',
                         multiConnect: false,
                         valueType: 'number',
-                        description:
-                            'deckeffects: 从一个对应卡组中随机抽取一定数量张牌。',
+                        description: 'deckeffects: 从一个对应卡组中随机抽取一定数量张牌。',
                     },
                     {
                         label: '内置卡池',
                         type: 'port',
                         requireType: 'deck',
                         multiConnect: false,
-                        description:
-                            'internaldeck: 在recipe中直接定义一个卡组。',
+                        description: 'internaldeck: 在recipe中直接定义一个卡组。',
                     },
                     {
                         label: '特效图片',
                         type: 'image-preview',
-                        description:
-                            'burnimage: recipe开始后环绕动作框显示的图片。',
+                        description: 'burnimage: recipe开始后环绕动作框显示的图片。',
                     },
                     {
                         label: '结局',
@@ -618,13 +595,7 @@ export class NodeTypeRegistry {
                     {
                         label: '计时效果',
                         type: 'select',
-                        options: [
-                            'None',
-                            'Grand',
-                            'Melancholy',
-                            'Pale',
-                            'Vile',
-                        ],
+                        options: ['None', 'Grand', 'Melancholy', 'Pale', 'Vile'],
                         default: 0,
                         description:
                             'signalEndingFlavour: 改变recipe进行时行动框计时圈线的颜色并播放一个音乐，Grand：黄色/Melancholy：红色/Pale：灰白色/Vile：黄绿色。',
@@ -633,68 +604,52 @@ export class NodeTypeRegistry {
                     {
                         label: '漫宿效果',
                         type: 'select',
-                        options: [
-                            'None',
-                            'wood',
-                            'whitedoor',
-                            'spiderdoor',
-                            'peacockdoor',
-                            'tricuspidgate',
-                        ],
+                        options: ['None', 'wood', 'whitedoor', 'spiderdoor', 'peacockdoor', 'tricuspidgate'],
                         default: 0,
-                        description:
-                            'portaleffect: 进入对应的漫宿之路，这会导致配方从与门相关的每个牌组中绘制一张牌，并让您在板上从中进行选择',
+                        description: 'portaleffect: 进入对应的漫宿之路，这会导致配方从与门相关的每个牌组中绘制一张牌，并让您在板上从中进行选择',
                     },
                     {
                         label: '终止行动',
                         type: 'port',
                         requireType: 'verb',
                         multiConnect: true,
-                        description:
-                            'haltverb: 强行停止一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）',
+                        description: 'haltverb: 强行停止一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）',
                     },
                     {
                         label: '删除行动',
                         type: 'port',
                         requireType: 'verb',
                         multiConnect: true,
-                        description:
-                            'deleteverb: 强行删除一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）',
+                        description: 'deleteverb: 强行删除一个进行中的verb，这个verb中的所有elements弹出（需要玩家“收取”才能放在桌面上）',
                     },
                     {
                         label: '销毁卡牌',
                         type: 'port',
                         requireType: 'elements',
                         multiConnect: true,
-                        NotSetWarning:
-                            '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
-                        description:
-                            'purge: 销毁桌面对应数量的卡牌。若被处理卡牌拥有decayto，则以decay代替销毁。',
+                        NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
+                        description: 'purge: 销毁桌面对应数量的卡牌。若被处理卡牌拥有decayto，则以decay代替销毁。',
                     },
                     {
                         label: '提示音',
                         type: 'bool',
                         default: false,
-                        description:
-                            'signalimportantloop: 这将使游戏在该recipe进行时播放一个响亮的声音，以提示有重要事情发生。',
+                        description: 'signalimportantloop: 这将使游戏在该recipe进行时播放一个响亮的声音，以提示有重要事情发生。',
                     },
                     {
                         label: '全局属性',
                         type: 'port',
                         requireType: 'elements',
                         multiConnect: true,
-                        NotSetWarning:
-                            '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
-                        description:
-                            'xpans: 扩展全局属性，类似aspects，但是作用于全局，可以触发桌面上的xtriggers。',
+                        NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认需求数量为1',
+                        description: 'xpans: 扩展全局属性，类似aspects，但是作用于全局，可以触发桌面上的xtriggers。',
                     },
                     {
                         label: '成就',
                         type: 'port',
                         requireType: 'achievements',
                         multiConnect: true,
-                        description:
-                            'achievements: 触发对应成就，成就会显示在主界面成就栏中。',
+                        description: 'achievements: 触发对应成就，成就会显示在主界面成就栏中。',
                     },
                 ],
             },
@@ -711,8 +666,7 @@ export class NodeTypeRegistry {
                     returnType: 'mutations',
                     label: '重载变化',
                     multiConnect: true,
-                    description:
-                        'mutations: 重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相',
+                    description: 'mutations: 重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相',
                 },
             ],
             content: `重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相（仅在recipes内部使用）`,
@@ -757,8 +711,7 @@ export class NodeTypeRegistry {
                     type: 'port',
                     requireType: 'elements',
                     multiConnect: false,
-                    description:
-                        'inherits: 该元素（卡牌）所继承的元素，该元素（卡牌）会继承继承元素的属性，但不会继承继承元素的induces, icon等。',
+                    description: 'inherits: 该元素（卡牌）所继承的元素，该元素（卡牌）会继承继承元素的属性，但不会继承继承元素的induces, icon等。',
                 },
             ],
             outputs: [
@@ -784,22 +737,19 @@ export class NodeTypeRegistry {
                     label: '描述',
                     type: 'text',
                     default: '该元素（卡牌或性相）的介绍',
-                    description:
-                        'description: 该元素（卡牌或性相）的介绍, 会显示在右上角详情中',
+                    description: 'description: 该元素（卡牌或性相）的介绍, 会显示在右上角详情中',
                 },
                 {
                     label: '图标',
                     type: 'image-icon',
-                    description:
-                        'icon: 该元素（卡牌或性相）的图标图片，默认为空，此时会寻找和id一致的文件名',
+                    description: 'icon: 该元素（卡牌或性相）的图标图片，默认为空，此时会寻找和id一致的文件名',
                 },
                 {
                     label: '引发',
                     type: 'port',
                     requireType: 'recipes',
                     multiConnect: true,
-                    NotSetWarning:
-                        '该条件需要通过set设置几率以及排序，直接连接元素recipes则默认几率100，排序按给定id排序',
+                    NotSetWarning: '该条件需要通过set设置几率以及排序，直接连接元素recipes则默认几率100，排序按给定id排序',
                     description:
                         'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建',
                 },
@@ -811,32 +761,27 @@ export class NodeTypeRegistry {
                         type: 'port',
                         requireType: 'elements',
                         multiConnect: true,
-                        NotSetWarning:
-                            '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
-                        description:
-                            'aspects: 该元素（卡牌）所具有的性相，数值代表等级',
+                        NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
+                        description: 'aspects: 该元素（卡牌）所具有的性相，数值代表等级',
                     },
                     {
                         label: '持续时间',
                         type: 'number',
                         default: 0,
-                        description:
-                            'duration: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。',
+                        description: 'duration: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。',
                     },
                     {
                         label: '卡槽',
                         type: 'port',
                         requireType: 'slots',
                         multiConnect: true,
-                        description:
-                            'slots: 该元素（卡牌）所拥有的卡槽，可以在交互(recipes)中额外生成卡槽放入卡牌',
+                        description: 'slots: 该元素（卡牌）所拥有的卡槽，可以在交互(recipes)中额外生成卡槽放入卡牌',
                     },
                     {
                         label: '唯一性',
                         type: 'bool',
                         default: false,
-                        description:
-                            'unique: 该卡牌是/否同一时间在桌面上至多存在一张（新的卡牌会顶替旧的卡牌），默认为否。',
+                        description: 'unique: 该卡牌是/否同一时间在桌面上至多存在一张（新的卡牌会顶替旧的卡牌），默认为否。',
                     },
                     {
                         label: '唯一性组',
@@ -849,8 +794,7 @@ export class NodeTypeRegistry {
                         type: 'port',
                         requireType: 'xtriggers',
                         multiConnect: true,
-                        description:
-                            'xtriggers: 该元素（卡牌）所拥有的触发器，该卡牌在离开具有列出的性相的行动框时会对卡牌进行的转换；默认为空，不会有变动。',
+                        description: 'xtriggers: 该元素（卡牌）所拥有的触发器，该卡牌在离开具有列出的性相的行动框时会对卡牌进行的转换；默认为空，不会有变动。',
                     },
                     {
                         label: '消逝转化',
@@ -878,14 +822,12 @@ export class NodeTypeRegistry {
                         label: '复彩特效',
                         type: 'bool',
                         default: false,
-                        description:
-                            'resaturate: 决定该卡牌在倒计时时是/否会从灰色逐渐变为真实颜色，默认为否。',
+                        description: 'resaturate: 决定该卡牌在倒计时时是/否会从灰色逐渐变为真实颜色，默认为否。',
                     },
                     {
                         label: '行动图像',
                         type: 'image-preview',
-                        description:
-                            'verbicon: 当该卡牌存在时，verb显示的图片。',
+                        description: 'verbicon: 当该卡牌存在时，verb显示的图片。',
                     },
                     {
                         label: '替换性相描述文本',
@@ -905,8 +847,7 @@ export class NodeTypeRegistry {
                         label: '无需图片',
                         type: 'bool',
                         default: false,
-                        description:
-                            'noartneeded: 该性相是否不需要图片，默认为否。',
+                        description: 'noartneeded: 该性相是否不需要图片，默认为否。',
                     },
                 ],
             },
@@ -931,8 +872,7 @@ export class NodeTypeRegistry {
                     returnType: 'xtriggers',
                     label: '触变',
                     multiConnect: true,
-                    description:
-                        'xtriggers: 触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换',
+                    description: 'xtriggers: 触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换',
                 },
             ],
             content: `触变(xtriggers)在元素（卡牌）离开具有列出的性相的行动框时会对卡牌进行的转换（仅在元素(elements)内部使用,如果定义在性相(aspects)内则会继承给具有该性相的卡牌）`,
@@ -944,8 +884,7 @@ export class NodeTypeRegistry {
                     isModeSwitcher: true,
                     options: ['简易', '复杂'],
                     default: 0,
-                    description:
-                        '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。',
+                    description: '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。',
                 },
                 {
                     label: '条件',
@@ -962,8 +901,7 @@ export class NodeTypeRegistry {
                         type: 'port',
                         multiConnect: false,
                         requireType: 'elements',
-                        description:
-                            '离开具有条件性相的交互(recipes)时触发，将卡牌转化目标卡牌',
+                        description: '离开具有条件性相的交互(recipes)时触发，将卡牌转化目标卡牌',
                     },
                 ],
                 1: [
@@ -979,19 +917,12 @@ export class NodeTypeRegistry {
                         type: 'port',
                         requireType: 'elements',
                         multiConnect: false,
-                        description:
-                            'id: 只有一个效果时使用，离开具有条件性相的交互(recipes)时触发，触发操作数',
+                        description: 'id: 只有一个效果时使用，离开具有条件性相的交互(recipes)时触发，触发操作数',
                     },
                     {
                         label: '基础操作数',
                         type: 'select',
-                        options: [
-                            'transform',
-                            'spawn',
-                            'quantity',
-                            'mutate',
-                            'setmutaion',
-                        ],
+                        options: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'],
                         description:
                             'morpheffects: 只有一个效果时使用，不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）',
                     },
@@ -1025,8 +956,7 @@ export class NodeTypeRegistry {
                     type: 'port',
                     returnType: 'morphEffects',
                     multiConnect: true,
-                    description:
-                        '仅在xtriggers复杂版本中生效，同一个条件可以触发多个效果',
+                    description: '仅在xtriggers复杂版本中生效，同一个条件可以触发多个效果',
                 },
             ],
             properties: [
@@ -1035,19 +965,12 @@ export class NodeTypeRegistry {
                     type: 'port',
                     requireType: 'elements',
                     multiConnect: false,
-                    description:
-                        'id: 离开具有条件性相的交互(recipes)时触发，触发操作数',
+                    description: 'id: 离开具有条件性相的交互(recipes)时触发，触发操作数',
                 },
                 {
                     label: '操作数',
                     type: 'select',
-                    options: [
-                        'transform',
-                        'spawn',
-                        'quantity',
-                        'mutate',
-                        'setmutaion',
-                    ],
+                    options: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'],
                     description:
                         'morpheffects: 不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）',
                 },
@@ -1071,8 +994,7 @@ export class NodeTypeRegistry {
                     returnType: 'decks',
                     label: '卡池',
                     multiConnect: true,
-                    description:
-                        'decks: mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。',
+                    description: 'decks: mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。',
                 },
             ],
             content: `decks是mod中随机抽卡的卡池，可以写在recipe中，也可以单独写出。`,
@@ -1089,23 +1011,20 @@ export class NodeTypeRegistry {
                     type: 'port',
                     requireType: 'elements',
                     multiConnect: true,
-                    NotSetWarning:
-                        '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
+                    NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
                     description: 'spec: 卡池中随机抽取的卡牌列表',
                 },
                 {
                     label: '补充牌组',
                     type: 'bool',
                     default: false,
-                    description:
-                        'resetonexhaustion: 是否在卡牌抽完之后重新补充牌组',
+                    description: 'resetonexhaustion: 是否在卡牌抽完之后重新补充牌组',
                 },
                 {
                     label: '抽取数量',
                     type: 'number',
                     default: 1,
-                    description:
-                        'draws: 【仅存在于interaldeck】draws是一次性从卡组中抽取卡牌的数量',
+                    description: 'draws: 【仅存在于interaldeck】draws是一次性从卡组中抽取卡牌的数量',
                 },
                 {
                     label: '默认卡牌',
@@ -1113,8 +1032,7 @@ export class NodeTypeRegistry {
                     requireType: 'elements',
                     multiConnect: false,
                     default: 'genericrubbishbook',
-                    description:
-                        '"defaultcard":  卡池里所有卡牌被抽完时默认出现的卡牌',
+                    description: '"defaultcard":  卡池里所有卡牌被抽完时默认出现的卡牌',
                 },
             ],
         },
@@ -1151,8 +1069,7 @@ export class NodeTypeRegistry {
                     label: '可重复',
                     type: 'bool',
                     default: false,
-                    description:
-                        'Multiple: 是否允许该动词同时出现多个（默认为否）',
+                    description: 'Multiple: 是否允许该动词同时出现多个（默认为否）',
                 },
                 {
                     label: '初始卡槽',
@@ -1174,8 +1091,7 @@ export class NodeTypeRegistry {
                     label: '需求',
                     requireType: 'elements',
                     multiConnect: true,
-                    NotSetWarning:
-                        '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
+                    NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
                     description: `required: 卡槽可以容纳的元素（性相或卡牌），当卡牌符合或卡牌上其中一项性相数量大于等于要求时便可放入槽中。
                                     slot的required采用或逻辑，与recipe的与逻辑相反。
                                     只接受正值`,
@@ -1185,8 +1101,7 @@ export class NodeTypeRegistry {
                     label: '禁止',
                     requireType: 'elements',
                     multiConnect: true,
-                    NotSetWarning:
-                        '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
+                    NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
                     description: `forbidden: 卡槽不可以容纳的元素（性相或卡牌），当卡牌符合或卡牌上其中一项性相数量大于等于要求时便不可放入槽中。
                                     当卡牌同时满足required和forbidden时，拒绝进入槽。
                                     slot的forbidden采用或逻辑。
@@ -1197,8 +1112,7 @@ export class NodeTypeRegistry {
                     label: '必要',
                     requireType: 'elements',
                     multiConnect: true,
-                    NotSetWarning:
-                        '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
+                    NotSetWarning: '该条件需要通过set设置数量，直接连接元素(elements)则默认数量为1',
                     description: `essential: 卡槽必须容纳的元素（性相或卡牌），当卡牌符合或卡牌上其中一项性相数量大于等于要求时便可放入槽中。
                                     slot的essential采用与逻辑，与recipe相同。
                                     如果存在required，则仍需要满足required中的至少一项
@@ -1211,8 +1125,7 @@ export class NodeTypeRegistry {
                     returnType: 'slots',
                     label: '卡槽',
                     multiConnect: true,
-                    description:
-                        'slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。',
+                    description: 'slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。',
                 },
             ],
             content: `slots: 卡槽，仅可以在交互(recipes)、卡牌(elements)或事件框(verbs)中使用。`,
@@ -1228,8 +1141,7 @@ export class NodeTypeRegistry {
                     label: '自动吸取',
                     type: 'bool',
                     default: false,
-                    description:
-                        'greedy: 代表该卡槽是否会自动吸取卡牌; 此属性在slot从属于verb时被忽略',
+                    description: 'greedy: 代表该卡槽是否会自动吸取卡牌; 此属性在slot从属于verb时被忽略',
                 },
                 {
                     label: '消耗卡牌',
@@ -1244,8 +1156,7 @@ export class NodeTypeRegistry {
                     requireType: 'verb',
                     multiConnect: false,
                     default: 'work',
-                    description:
-                        'actionId: 使用的行动的id, 当卡槽写在卡牌中时，在该卡牌进入此事件框时会显示; 此属性在slot从属于recipe或verb时被忽略',
+                    description: 'actionId: 使用的行动的id, 当卡槽写在卡牌中时，在该卡牌进入此事件框时会显示; 此属性在slot从属于recipe或verb时被忽略',
                 },
                 {
                     label: '显示条件',
@@ -1300,17 +1211,14 @@ export class NodeTypeRegistry {
                     type: 'port',
                     requireType: 'elements',
                     multiConnect: true,
-                    NotSetWarning:
-                        '该条件需要通过set设置权重，直接连接元素(elements)则默认权重为1',
-                    description:
-                        'weight: 用于决定继承的性相（或卡牌）的权重，可以为负数。',
+                    NotSetWarning: '该条件需要通过set设置权重，直接连接元素(elements)则默认权重为1',
+                    description: 'weight: 用于决定继承的性相（或卡牌）的权重，可以为负数。',
                 },
                 {
                     label: '需求权重',
                     type: 'number',
                     default: 1,
-                    description:
-                        'requiredScore: 需要的权重，只有卡牌满足了权重才会被记录。有多个被记录的卡牌取权重最高者。',
+                    description: 'requiredScore: 需要的权重，只有卡牌满足了权重才会被记录。有多个被记录的卡牌取权重最高者。',
                 },
                 //TODO: 需求是set需要一一对应
                 {
@@ -1318,8 +1226,7 @@ export class NodeTypeRegistry {
                     type: 'port',
                     requireType: 'set',
                     multiConnect: false,
-                    description:
-                        'redirects: 当卡牌符合左侧id时，会被记录为右侧的id。如欲望无论是几级，都只会记录为一级',
+                    description: 'redirects: 当卡牌符合左侧id时，会被记录为右侧的id。如欲望无论是几级，都只会记录为一级',
                 },
             ],
         },
@@ -1414,8 +1321,7 @@ export class NodeTypeRegistry {
                     requireType: 'set',
                     multiConnect: true,
                     label: '继承集合',
-                    description:
-                        '继承之前的集合的元素，扩展成新的集合，注意集合的元素类型必须一致',
+                    description: '继承之前的集合的元素，扩展成新的集合，注意集合的元素类型必须一致',
                 },
             ],
             outputs: [
@@ -1480,8 +1386,7 @@ export class NodeTypeRegistry {
                         type: 'select',
                         options: ['简易', '复杂'],
                         default: 0,
-                        description:
-                            '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。',
+                        description: '简易版本版本只能实现将该卡牌转换为指定的卡牌，并重置剩余时间；复杂版本可以实现多种变化，但编码格式较简单版本更为复杂。',
                     },
                 ],
                 mutations: [
@@ -1514,8 +1419,7 @@ export class NodeTypeRegistry {
                                 width: '100%',
                             },
                         ],
-                        description:
-                            '重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相（仅在recipes内部使用）',
+                        description: '重载变化(mutations)给特定或具有特定性相的卡牌重载或增加/减少指定数量的性相（仅在recipes内部使用）',
                     },
                 ],
             },

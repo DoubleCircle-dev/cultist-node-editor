@@ -31,6 +31,12 @@ export class NodeModel extends BaseNodeModel {
 
         this.exProperties = exProperties;
 
+        this.extendButton = new BaseProp(`${this.id}:extendButton`, '添加属性', 'button', '');
+        this.extendProperties = new HubProp(`${this.id}:extendProperties`, '扩展属性', [this.extendButton], 'single');
+
+        /** @type {OptionsProp | null} */
+        this.modeSwitcher = null;
+
         if (this.properties.length !== 0) {
             this.initialize();
         }
@@ -43,12 +49,21 @@ export class NodeModel extends BaseNodeModel {
      * @returns {BaseProp[]}
      */
     get properties() {
-        return [...super.properties, this.exProperties[this.currentMode], this.portHub];
+        const result = [this.portHub, ...super.properties];
+        const ex = this.exProperties;
+
+        if (ex[this.currentMode]) {
+            result.push(ex[this.currentMode]);
+        }
+
+        if (999 in ex) {
+            result.push(this.extendProperties);
+        }
+
+        return result;
     }
 
     initialize() {
-        this._onModeSwitcher();
-
         this._createPortHub();
     }
 
@@ -66,36 +81,17 @@ export class NodeModel extends BaseNodeModel {
         return hub;
     }
 
-    /** @private */
-    _onModeSwitcher() {
-        for (let prop of this.properties) {
-            if (prop instanceof OptionsProp) {
-                if (prop.isModeSwitcher) {
-                    this.modeSwitcher = prop;
-                    this.currentMode = prop.value;
-
-                    prop.addEventListener('change', (/** @type {Event} */ e) => {
-                        const ce = /** @type {CustomEvent} */ e;
-                        this.switchMode(ce.detail.value);
-                    })
-
-                    prop.addEventListener('update:property:finished', (/** @type {Event} */ e) => {
-                        const ce = /** @type {CustomEvent} */ e;
-                        this.switchMode(ce.detail.value);
-                    });
-
-                    if (this.exProperties) {
-                        this.properties.push(this.exProperties[prop.value]);
-                    } else {
-                        console.error('未加载额外属性，无法正常切换', this.id, this.type);
-                    }
-
-                    break;
-                }
-            }
+    /**
+     * @param {string} propId 
+     */
+    appendExtendProp(propId) {
+        const prop = this.exProperties[999].findPropToPop(propId);
+        if (prop) {
+            this.extendProperties.addProp(prop);
         }
     }
 
+    /** @param {{ inputs: HubProp; outputs: HubProp }} ports */
     setPorts(ports) {
         if (!ports) return;
 
@@ -112,13 +108,24 @@ export class NodeModel extends BaseNodeModel {
     // 模式切换逻辑（带连接检查）
     /** @param {any} newMode */
     switchMode(newMode) {
+        if (!this.modeSwitcher) {
+            console.error('没有找到模式切换器');
+            return;
+        }
+
+        if (this.currentMode === newMode) return;
+
         const hasConnected = this.exProperties[this.currentMode].properties.some(
             (/** @type {BaseProp} */ prop) => prop instanceof PortProp && prop.isConnected
         );
+
+
         if (hasConnected) {
+            // alert('存在连接，无法切换模式');
             console.warn('存在连接，无法切换模式');
-            this.modeSwitcher.value = this.currentMode;
-            return;
+            this.modeSwitcher.updateValue(this.currentMode);
+            this.emit('change:property:failed', {propId: this.modeSwitcher.id, value: this.currentMode});
+            return false;
         }
 
         const oldID = `${this.id}:exHub-${this.currentMode}`;
@@ -136,6 +143,7 @@ export class NodeModel extends BaseNodeModel {
 
         this.currentMode = newMode;
         this.emit('change:mode', newMode);
+        return true;
     }
 
     toJSON() {

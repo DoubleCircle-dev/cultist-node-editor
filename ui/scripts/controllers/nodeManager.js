@@ -1,10 +1,12 @@
-import { NodeGenerator } from '../generators/nodeGenerator.js';
 import { NodeModel } from '../models/nodeModels/nodeModel.js';
 import { EventBus } from '../types/eventBus.js';
 import { NodeView } from '../views/nodeView.js';
 import { ControllerCore } from './controllerCore.js';
 import { IManager } from './manager.js';
 import { BaseNodeModel } from '../models/nodeModels/baseNodeModel.js';
+import { BaseProp } from '../models/propModels/baseProp.js';
+import { NodeGenerator } from '../generators/nodeGenerator.js';
+
 
 /**
  * 节点管理器类，用于管理画布上的节点 该类负责处理节点的创建、删除、更新等操作
@@ -40,8 +42,7 @@ export class NodeManager extends IManager {
     }
 
     /** @private */
-    _initListeners() {
-    }
+    _initListeners() {}
 
     /** @private */
     _onEvent() {
@@ -94,7 +95,6 @@ export class NodeManager extends IManager {
      */
     _createNode(nodeModel) {
         if (nodeModel instanceof NodeModel) {
-
             this.idGenerator.occupy(nodeModel.id);
 
             this.uidGenerator.occupy(nodeModel.uid);
@@ -113,8 +113,6 @@ export class NodeManager extends IManager {
     }
 
     /**
-     * Description placeholder
-     *
      * @param {string} type
      * @param {number | null} Px
      * @param {number | null} Py
@@ -179,7 +177,7 @@ export class NodeManager extends IManager {
 
         switch (this.coreSpace.mode) {
             case 'select':
-                this.deleteNodes(this.SelectedNodes.map((node)=> node.id))
+                this.deleteNodes(this.SelectedNodes.map((node) => node.id));
                 break;
             case 'drag':
                 break;
@@ -188,7 +186,6 @@ export class NodeManager extends IManager {
             default:
                 break;
         }
-
     }
 
     /**
@@ -251,18 +248,66 @@ export class NodeManager extends IManager {
             this.bus.emit('drag:port:end', { ...ce.detail, node: nodeModel });
         });
 
-        nodeModel.addEventListener('update:property:finished', (e) => {
+
+        nodeModel.addEventListener('change:property:success', (e) => {
             const ce = /** @type {CustomEvent} */ (e);
-            this.bus.standardEmitDetail('update', 'property', ce.detail, (/**@type {any}*/data) =>{
-                nodeModel.setPropValue(data.propId, data.oldValue);
-            },
-            (/**@type {any}*/data) =>{
-                nodeModel.setPropValue(data.propId, data.newValue);
+            this.bus.standardEmitDetail(
+                'change',
+                'property',
+                ce.detail,
+                (/** @type {any} */ data) => {
+                    nodeModel.setPropValue(data.propId, data.oldValue);
+                },
+                (/** @type {any} */ data) => {
+                    nodeModel.setPropValue(data.propId, data.newValue);
+                }
+            );
+        });
+
+
+        nodeModel.addEventListener('append:property', (e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+
+            const props = ce.detail.props;
+
+            if (!props || props.length === 0) {
+                return;
             }
-        
-        );
-            
-        })
+
+            if (nodeModel instanceof NodeModel) {
+                const panel = this._createNodePropertyPanel(nodeModel, props);
+                this.bus.emit('toggleMenu', {
+                    menu: panel,
+                    menuId: panel.id,
+                    position: ce.detail.position,
+                });
+            }
+        });
+    }
+
+    /**
+     * @private
+     * @param {NodeModel} nodeModel
+     * @param {BaseProp[]} props
+     */
+    _createNodePropertyPanel(nodeModel, props) {
+        const panel = document.createElement('div');
+        panel.classList.add('node-extend-property-panel');
+        panel.id = `${nodeModel.id}-extend-property-panel`;
+
+        props.forEach((prop) => {
+            const optEl = document.createElement('div');
+            optEl.className = 'extend-prop-option';
+            optEl.textContent = prop.label || prop.name;
+            optEl.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                nodeModel.appendExtendProp(prop.id);
+                this.bus.emit('toggleMenu', { menuId: panel.id });
+            });
+            panel.appendChild(optEl);
+        });
+
+        return panel;
     }
 
     /**
@@ -320,7 +365,6 @@ export class NodeManager extends IManager {
      * @param {NodeID} nodeId
      */
     _removeNode(nodeId) {
-
         if (typeof nodeId === 'number') {
             nodeId = String(nodeId);
         }
@@ -348,6 +392,7 @@ export class NodeManager extends IManager {
 
     /** @param {NodeID} nodeId */
     deleteNode(nodeId) {
+
         this.deleteNodes([nodeId]);
     }
 
@@ -373,6 +418,10 @@ export class NodeManager extends IManager {
                 });
             }
         );
+
+        if (this.nodes.size === 0) {
+            this.bus.emit('delete:all_node:success');
+        }
     }
 
     hiddenNode(nodeId) {
@@ -391,7 +440,7 @@ export class NodeManager extends IManager {
             const nodes = this.world.querySelectorAll('.node');
             nodes.forEach((node) => node.remove());
 
-            this.bus.emit('nodeRemoved:All');
+            this.bus.emit('delete:all_node:success');
         } else {
             this.nodes.forEach((node) => {
                 this.deleteNode(node.id);
@@ -548,3 +597,5 @@ class BitmapIdGenerator {
         this.nextId = 1;
     }
 }
+
+

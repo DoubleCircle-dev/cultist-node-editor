@@ -1,7 +1,7 @@
 {
     "Codegeex.RepoIndex": true,
     "Codegeex.GenerationPreference": "line by line",
-    "Codegeex.CompletionDelay": 0.4,
+    "Codegeex.CompletionDelay": 0.3,
     "cSpell.words": [
         "xtrigger",
         "xtriggers"

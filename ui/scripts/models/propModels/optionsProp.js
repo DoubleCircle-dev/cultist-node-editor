@@ -17,8 +17,8 @@ export class OptionsProp extends BaseProp {
         this.isModeSwitcher = isModeSwitcher;
     }
 
-    setValue(value) {
-        super.setValue(value);
+    changeValue(value) {
+        super.changeValue(value);
 
         if (this.isModeSwitcher) {
             this.emit('changeMode:prop', { value: value });
