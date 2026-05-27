@@ -16,7 +16,55 @@ export class IManager {
         this.bus = bus;
         this.coreSpace = coreSpace;
 
+        /** @type {listenerMap[]} */
+        this.listenerMaps = [];
+
         this.checkValid();
+    }
+
+    /**
+     * 自动绑定this
+     *
+     * @param {EventTarget} target - 绑定目标
+     * @param {string} event
+     * @param {Function} listener - 绑定函数
+     * @returns {listenerMap} - 返回绑定函数
+     */
+    autoBind(target, event, listener) {
+        const listenerBind = listener.bind(this);
+        target.addEventListener(event, listenerBind);
+
+        return { target, type: event, listener: listenerBind };
+    }
+
+    /**
+     * @param {EventTarget} target - 绑定目标
+     * @param {string} event
+     * @param {Function} listener - 绑定函数
+     */
+    registerListener(target, event, listener) {
+        this.listenerMaps.push(this.autoBind(target, event, listener));
+    }
+
+    /**
+     * @param {EventTarget} target - 绑定目标
+     * @param {string} event
+     * @param {Function} listener - 绑定函数
+     */
+    removeListener(target, event, listener) {
+        const index = this.listenerMaps.findIndex((m) => m.target === target && m.type === event && m.listener === listener);
+        if (index === -1) return false;
+
+        const item = this.listenerMaps[index];
+        item.target?.removeEventListener(item.type, item.listener);
+        this.listenerMaps.splice(index, 1);
+        return true;
+    }
+
+    removeListeners() {
+        this.listenerMaps.forEach((listenerMap) => {
+            listenerMap.target.removeEventListener(listenerMap.type, listenerMap.listener);
+        });
     }
 
     checkValid() {
@@ -24,5 +72,4 @@ export class IManager {
             throw new Error(`创建管理器失败，id: ${this.id}`);
         }
     }
-
 }

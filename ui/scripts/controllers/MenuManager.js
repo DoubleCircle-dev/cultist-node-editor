@@ -18,24 +18,32 @@ export class MenuManager extends IManager {
         this.menuContainer = this._createMenuContainer();
         this.viewport.appendChild(this.menuContainer);
 
-        this._onEvent();
+        /** @type {listenerMap[]} */
+        this.listenerMaps = this._initListeners();
 
-        this._initListeners();
+        this._onEvent();
     }
 
     /** @private */
     _initListeners() {
-        document.addEventListener('mousedown', this._onMouseDown.bind(this));
+        /** @type {listenerMap[]} listener */
+        const listeners = [];
+
+        listeners.push(this.autoBind(document, 'mousedown', this._onMouseDown));
+        return listeners;
     }
 
-    /** @private */
+    /**
+     * @private
+     * @param {Event} e
+     */
     _onMouseDown(e) {
         this.menuContainer.classList.remove('active');
     }
 
     /** @private */
     _onEvent() {
-        this.bus.on('toggleMenu', this._toggleMenu.bind(this));
+        this.listenerMaps.push(this.autoBind(this.bus, 'toggleMenu', this._toggleMenu));
     }
 
     /**

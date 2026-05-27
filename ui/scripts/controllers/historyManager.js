@@ -36,6 +36,14 @@ export class HistoryManager extends IManager {
         this._initListeners();
     }
 
+    get history() {
+        return this._history;
+    }
+
+    get undoHistory() {
+        return this._undoHistory;
+    }
+
     /** @private */
     _onEvent() {
         this.bus.on('log', (evt) => {
@@ -97,6 +105,11 @@ export class HistoryManager extends IManager {
         }
 
         historyItem.redo();
+    }
+
+    clear() {
+        this._history = [];
+        this._undoHistory = [];
     }
 }
 

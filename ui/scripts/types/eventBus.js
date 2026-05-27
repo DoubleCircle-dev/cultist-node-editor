@@ -10,11 +10,47 @@ export class EventBus extends IEventTarget {
      * 订阅（监听）事件
      *
      * @param {string} eventName - 事件名称
-     * @param {(e: CustomEvent) => void} listener - 回调函数
+     * @param {EventListenerOrEventListenerObject | null} listener - 回调函数
      */
     on(eventName, listener) {
-        // @ts-expect-error CustomEvent 回调与 EventListener 不兼容，但运行时安全
         this.addEventListener(eventName, listener);
+        return listener;
+    }
+
+    /**
+     * 订阅（监听）事件
+     *
+     * @param {string} eventName - 事件名称 (例如 "click:node:success")
+     * @param {EventListenerOrEventListenerObject | null} listener - 回调函数
+     */
+    addEventListener(eventName, listener) {
+        const nameList = eventName.split(':');
+        const [action, target, status] = nameList;
+        const message = new StandardMessage(action, target, status);
+
+        let finalListener = listener;
+
+        if (message.checkValid()) {
+            console.log(`EventBus: 监听事件 ${eventName} 为标准事件`);
+            finalListener = (e) => {
+                /** @type {EventListener} */ (listener)(/** @type {CustomEvent} */ (e));
+            };
+        } else {
+            console.log(`EventBus: 监听事件 ${eventName} 为非标准事件`);
+        }
+
+        super.addEventListener(eventName, /** @type {EventListener} */ (finalListener));
+    }
+
+    /**
+     * 取消订阅事件
+     * 
+     * @param {string} eventName - 事件名称 (例如 "click:node:success")
+     * @param {EventListenerOrEventListenerObject | null} listener - 回调函数
+     */
+    removeEventListener(eventName, listener) {
+        console.log(`EventBus: 取消监听事件 ${eventName}`)
+        super.removeEventListener(eventName, listener);
     }
 
     /**
@@ -26,29 +62,33 @@ export class EventBus extends IEventTarget {
     once(eventName, listener) {
         const onceListener = (/** @type {Event} */ e) => {
             listener(e);
+            console.log(`EventBus: 一次性事件 ${eventName} 触发`)
             this.removeEventListener(eventName, onceListener);
         };
         this.addEventListener(eventName, onceListener);
+
+        // 返回函数
+        return onceListener;
     }
 
     /**
      * 取消订阅事件
      *
      * @param {string} eventName - 事件名称
-     * @param {(e: CustomEvent) => void} listener - 回调函数
+     * @param {EventListenerOrEventListenerObject | null} listener - 回调函数
      */
     off(eventName, listener) {
-        // @ts-expect-error CustomEvent 回调与 EventListener 不兼容，但运行时安全
         this.removeEventListener(eventName, listener);
     }
+
 
     /**
      * 订阅两个互斥事件，当其中一个事件触发时，另一个事件将不再触发
      *
      * @param {string} eventA - 事件A名称
      * @param {string} eventB - 事件B名称
-     * @param {(e: CustomEvent) => void} handlerA - 事件A的回调函数
-     * @param {(e: CustomEvent) => void} handlerB - 事件B的回调函数
+     * @param {EventListenerOrEventListenerObject | null} handlerA - 事件A的回调函数
+     * @param {EventListenerOrEventListenerObject | null} handlerB - 事件B的回调函数
      */
     onceExclusive(eventA, eventB, handlerA, handlerB) {
         let cleaned = false;
@@ -60,14 +100,16 @@ export class EventBus extends IEventTarget {
             this.off(eventB, wrapperB);
         };
 
-        const wrapperA = (/** @type {CustomEvent} */ e) => {
+        const wrapperA = (/** @type {Event} */ e) => {
             cleanup();
-            handlerA(e);
+            /** @type {EventListener} */
+            (handlerA)(e);
         };
 
-        const wrapperB = (/** @type {CustomEvent} */ e) => {
+        const wrapperB = (/** @type {Event} */ e) => {
             cleanup();
-            handlerB(e);
+            /** @type {EventListener} */
+            (handlerB)(e);
         };
 
         this.on(eventA, wrapperA);
@@ -106,10 +148,10 @@ export class EventBus extends IEventTarget {
      *
      * @param {string} type
      * @param {string} targetType
-     * @param {string} status
      * @param {any} data
      * @param {Function | null} undoFunction
      * @param {Function | null} redoFunction
+     * @param {string} status
      */
     standardEmitDetail(type, targetType, data, undoFunction = null, redoFunction = null, status = 'finished') {
         const detail = new StandardDetail(type, targetType, data, status);

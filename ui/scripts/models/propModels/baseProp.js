@@ -50,6 +50,10 @@ export class BaseProp extends IEventTarget {
         this._parentNode = newVal;
     }
 
+    get isConnected() {
+        return false
+    }
+
     /** @param {any} newVal */
     changeValue(newVal) {
         const oldVal = this._value;

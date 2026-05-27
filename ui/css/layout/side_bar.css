@@ -9,6 +9,7 @@
     flex-direction: row;
     min-width: 60px;
     height: 100%;
+    width: 100%;
 
     overflow-y: auto;
     overflow-x: visible;
@@ -156,6 +157,8 @@
 .bottom-expand-panel-container.hidden {
     display: none;
 }
+
+
 
 @keyframes slideUp {
     0% {

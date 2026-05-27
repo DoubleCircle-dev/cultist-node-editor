@@ -1,7 +1,7 @@
 import { BaseProp } from "../models/propModels/baseProp.js";
 import { PortProp } from "../models/propModels/portProp.js";
 import { PortModel } from "../models/portModel.js";
-import { PropGenerator, PropRenderer } from "../generators/propGenerator.js";
+import { PropGenerator, PropRenderer } from "./propGenerator.js";
 import { NodeTypeRegistry } from "../types/nodeTypes.js";
 import { HubProp } from "../models/propModels/hubProp.js";
 import { ViewProp } from "../models/propModels/viewProp.js";
@@ -239,7 +239,6 @@ export class PropView {
 
         return dom;
     }
-
 
 }
 

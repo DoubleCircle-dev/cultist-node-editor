@@ -9,7 +9,7 @@ export class IEventTarget extends EventTarget {
     // 重写 addEventListener
     /**
      * @param {string} type
-     * @param {EventListener} listener
+     * @param {EventListenerOrEventListenerObject | null} listener
      * @param {boolean | AddEventListenerOptions} [options]
      */
     addEventListener(type, listener, options = {}) {
@@ -21,15 +21,14 @@ export class IEventTarget extends EventTarget {
         const listenerSet = this._listenersMap.get(type);
         listenerSet.add({
             listener,
-            options:
-                typeof options === 'object' ? options : { capture: options },
+            options: typeof options === 'object' ? options : { capture: options },
         });
     }
 
     // 重写 removeEventListener
     /**
      * @param {string} type
-     * @param {EventListener} listener
+     * @param {EventListenerOrEventListenerObject | null} listener
      * @param {{ capture?: boolean }} options
      */
     removeEventListener(type, listener, options = {}) {
@@ -39,13 +38,7 @@ export class IEventTarget extends EventTarget {
         if (listenerSet) {
             // 移除匹配的 listener（注意要比较函数引用）
             for (const item of listenerSet) {
-                if (
-                    item.listener === listener &&
-                    item.options.capture ===
-                        (typeof options === 'object'
-                            ? options.capture
-                            : options)
-                ) {
+                if (item.listener === listener && item.options.capture === (typeof options === 'object' ? options.capture : options)) {
                     listenerSet.delete(item);
                     break;
                 }
@@ -73,9 +66,7 @@ export class IEventTarget extends EventTarget {
     // 去除所有已注册的监听器（可指定事件类型）
     /** @param {string | null} type */
     removeAllEventListeners(type = null) {
-        const typesToRemove = type
-            ? [type]
-            : Array.from(this._listenersMap.keys());
+        const typesToRemove = type ? [type] : Array.from(this._listenersMap.keys());
 
         for (const currentType of typesToRemove) {
             const listenerSet = this._listenersMap.get(currentType);

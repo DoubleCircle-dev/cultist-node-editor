@@ -81,36 +81,19 @@ interface HubPropType extends PropType {
 }
 
 interface NodeConfig {
-  title: string;
-  label?: string;
-  color: string;
-  icon: string;
-  active?: boolean;
-  width?: number;
-  height?: number;
-  content?: string;
-  modelType?: "Node" | "Variable" | "InlineNode"; //基本逻辑节点 | 变量节点 | 内联节点
-  inputs?: PortPropConfig[];
-  outputs?: PortPropConfig[];
-  properties?: Array<NodePropConfig>;
-  exProperties?: Record<string, Array<NodePropConfig>>;
+    title: string;
+    label?: string;
+    color: string;
+    icon: string;
+    active?: boolean;
+    width?: number;
+    height?: number;
+    content?: string;
+    modelType?: 'Node' | 'Variable' | 'InlineNode'; //基本逻辑节点 | 变量节点 | 内联节点
+    inputs?: PortPropConfig[];
+    outputs?: PortPropConfig[];
+    properties?: Array<NodePropConfig>;
+    modeProperties?: Record<string, Array<NodePropConfig>>;
+    exProperties?: Array<NodePropConfig>;
 }
 
-/** 节点类型定义 */
-interface NodeType extends EventTarget {
-  id: NodeID;
-  title: string;
-  label?: string;
-  color: string;
-  icon: string;
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  content?: string;
-  modelType?: "Node" | "Variable" | "InlineNode"; //基本逻辑节点 | 变量节点 | 内联节点
-  inputs?: PortPropType[];
-  outputs?: PortPropType[];
-  properties?: PropType[];
-  exProperties?: PropType[];
-}

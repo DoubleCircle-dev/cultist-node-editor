@@ -7,7 +7,6 @@ import { BaseNodeModel } from '../models/nodeModels/baseNodeModel.js';
 import { BaseProp } from '../models/propModels/baseProp.js';
 import { NodeGenerator } from '../generators/nodeGenerator.js';
 
-
 /**
  * 节点管理器类，用于管理画布上的节点 该类负责处理节点的创建、删除、更新等操作
  *
@@ -248,7 +247,6 @@ export class NodeManager extends IManager {
             this.bus.emit('drag:port:end', { ...ce.detail, node: nodeModel });
         });
 
-
         nodeModel.addEventListener('change:property:success', (e) => {
             const ce = /** @type {CustomEvent} */ (e);
             this.bus.standardEmitDetail(
@@ -264,7 +262,6 @@ export class NodeManager extends IManager {
             );
         });
 
-
         nodeModel.addEventListener('append:property', (e) => {
             const ce = /** @type {CustomEvent} */ (e);
 
@@ -276,6 +273,7 @@ export class NodeManager extends IManager {
 
             if (nodeModel instanceof NodeModel) {
                 const panel = this._createNodePropertyPanel(nodeModel, props);
+
                 this.bus.emit('toggleMenu', {
                     menu: panel,
                     menuId: panel.id,
@@ -283,6 +281,8 @@ export class NodeManager extends IManager {
                 });
             }
         });
+
+        nodeModel.addEventListener('delete:property', (e) => {});
     }
 
     /**
@@ -301,7 +301,28 @@ export class NodeManager extends IManager {
             optEl.textContent = prop.label || prop.name;
             optEl.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
-                nodeModel.appendExtendProp(prop.id);
+                if (nodeModel.appendExtendProp(prop.id)) {
+                    this.bus.standardEmitDetail(
+                        'append',
+                        'property',
+                        { propId: prop.id },
+                        (data) => {
+                            nodeModel.removeExtendProp(data.propId);
+                            nodeModel.emit('redraw', {});
+                            panel.appendChild(optEl);
+                        },
+                        (data) => {
+                            nodeModel.appendExtendProp(data.propId);
+                            nodeModel.emit('redraw', {});
+                            optEl.remove();
+                        }
+                    );
+                    nodeModel.emit('redraw', {});
+                    optEl.remove();
+                } else {
+                    nodeModel.emit('append:property:failed', { propId: prop.id });
+                }
+
                 this.bus.emit('toggleMenu', { menuId: panel.id });
             });
             panel.appendChild(optEl);
@@ -384,15 +405,18 @@ export class NodeManager extends IManager {
 
         this.idGenerator.release(nodeId);
 
-        this.nodeViews.get(nodeId)?.element.remove();
-        this.nodeViews.delete(nodeId);
+        const view = this.nodeViews.get(nodeId);
+        if (view) {
+            view.removeListeners();
+            view.element.remove();
+            this.nodeViews.delete(nodeId);
+        }
 
         this.nodes.delete(nodeId);
     }
 
     /** @param {NodeID} nodeId */
     deleteNode(nodeId) {
-
         this.deleteNodes([nodeId]);
     }
 
@@ -597,5 +621,3 @@ class BitmapIdGenerator {
         this.nextId = 1;
     }
 }
-
-

@@ -1,5 +1,8 @@
 interface listenerMap {
   listener: EventListenerOrEventListenerObject;
-  target: HTMLElement;
+  target: HTMLElement | EventTarget;
   type: string;
 }
+
+
+

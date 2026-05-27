@@ -1,7 +1,7 @@
 import { BaseProp } from './baseProp.js';
+import { PortProp } from './portProp.js';
 
 export class HubProp extends BaseProp {
-
     /**
      * @param {string} id
      * @param {string} label
@@ -39,15 +39,16 @@ export class HubProp extends BaseProp {
         return this._properties.findIndex((p) => p.id === id);
     }
 
-    findPropToPop(id) {
+    extractProp(id) {
         const index = this.findPropIndex(id);
         return index >= 0 ? this._properties.splice(index, 1)[0] : null;
     }
 
+    get isConnected() {
+        return this.properties.some((/** @type {BaseProp} */ prop) => prop instanceof PortProp && prop.isConnected);
+    }
 
-    /**
-     * @returns {BaseProp[]}
-     */
+    /** @returns {BaseProp[]} */
     get detailProperties() {
         return this.properties.flatMap((prop) => (prop instanceof HubProp ? prop.detailProperties : prop));
     }

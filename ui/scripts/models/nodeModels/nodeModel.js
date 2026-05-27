@@ -17,9 +17,10 @@ export class NodeModel extends BaseNodeModel {
      * @param {number} y - 节点在画布上的y坐标
      * @param {NodeConfig} config - 节点的配置信息
      * @param {BaseProp[]} properties - 节点的属性列表
-     * @param {Record<string, HubProp>} exProperties - 节点的扩展属性列表
+     * @param {Record<string, HubProp>} modeProperties - 节点的可变属性列表
+     * @param {{ active: HubProp | null; pool: HubProp | null }} extendedProperties - 节点的扩展属性列表
      */
-    constructor(uid, id, type, x, y, config, properties = [], exProperties = {}) {
+    constructor(uid, id, type, x, y, config, properties = [], modeProperties = {}, extendedProperties = { active: null, pool: null }) {
         super(id, type, x, y, config); // 调用父类的构造函数，传入配置参数
         this.uid = uid; // 设置节点的唯一标识符
 
@@ -29,13 +30,9 @@ export class NodeModel extends BaseNodeModel {
 
         super.properties = properties;
 
-        this.exProperties = exProperties;
+        this.modeProperties = modeProperties;
 
-        this.extendButton = new BaseProp(`${this.id}:extendButton`, '添加属性', 'button', '');
-        this.extendProperties = new HubProp(`${this.id}:extendProperties`, '扩展属性', [this.extendButton], 'single');
-
-        /** @type {OptionsProp | null} */
-        this.modeSwitcher = null;
+        this.extendedProperties = extendedProperties;
 
         if (this.properties.length !== 0) {
             this.initialize();
@@ -50,14 +47,14 @@ export class NodeModel extends BaseNodeModel {
      */
     get properties() {
         const result = [this.portHub, ...super.properties];
-        const ex = this.exProperties;
+        const ex = this.modeProperties;
 
         if (ex[this.currentMode]) {
             result.push(ex[this.currentMode]);
         }
 
-        if (999 in ex) {
-            result.push(this.extendProperties);
+        if (this.extendedProperties.active) {
+            result.push(this.extendedProperties.active);
         }
 
         return result;
@@ -81,13 +78,30 @@ export class NodeModel extends BaseNodeModel {
         return hub;
     }
 
-    /**
-     * @param {string} propId 
-     */
+    /** @param {string} propId */
     appendExtendProp(propId) {
-        const prop = this.exProperties[999].findPropToPop(propId);
+
+        if (!this.extendedProperties.active) return false;
+
+        if (!this.extendedProperties.pool) return false;
+
+        const prop = this.extendedProperties.pool.extractProp(propId);
         if (prop) {
-            this.extendProperties.addProp(prop);
+            this.extendedProperties.active.addProp(prop);
+            return true;
+        }
+    }
+
+    /** @param {string} propId */
+    removeExtendProp(propId) {
+        if (!this.extendedProperties.active) return false
+
+        if (!this.extendedProperties.pool) return false;
+
+        const prop = this.extendedProperties.active.extractProp(propId);
+        if (prop) {
+            this.extendedProperties.pool.addProp(prop);
+            return true;
         }
     }
 
@@ -100,50 +114,44 @@ export class NodeModel extends BaseNodeModel {
         this.portHub = this._createPortHub();
     }
 
-    /** @param {Record<string, HubProp>} exProperties */
-    setExProps(exProperties) {
-        this.exProperties = exProperties;
+    /** @param {Record<string, HubProp>} modeProperties */
+    setModeProps(modeProperties) {
+        this.modeProperties = modeProperties;
     }
 
     // 模式切换逻辑（带连接检查）
     /** @param {any} newMode */
     switchMode(newMode) {
-        if (!this.modeSwitcher) {
-            console.error('没有找到模式切换器');
-            return;
-        }
-
         if (this.currentMode === newMode) return;
 
-        const hasConnected = this.exProperties[this.currentMode].properties.some(
-            (/** @type {BaseProp} */ prop) => prop instanceof PortProp && prop.isConnected
-        );
-
-
-        if (hasConnected) {
+        if (this.modeProperties[this.currentMode].isConnected) {
             // alert('存在连接，无法切换模式');
             console.warn('存在连接，无法切换模式');
-            this.modeSwitcher.updateValue(this.currentMode);
-            this.emit('change:property:failed', {propId: this.modeSwitcher.id, value: this.currentMode});
             return false;
         }
 
-        const oldID = `${this.id}:exHub-${this.currentMode}`;
-
-        if (this.exProperties ? this.exProperties[newMode] : false) {
-            this.properties.forEach((prop) => {
-                if (prop.id === oldID) {
-                    this.properties.splice(this.properties.indexOf(prop), 1, this.exProperties[newMode]);
-                }
-            });
+        if (this.modeProperties && this.modeProperties[newMode]) {
+            this.currentMode = newMode;
+            return true;
         } else {
             console.error('没有找到对应的模式', newMode);
-            return;
+            return false;
         }
+    }
 
-        this.currentMode = newMode;
-        this.emit('change:mode', newMode);
-        return true;
+    get hasConnected() {
+        return this.properties.some((prop) => prop.isConnected);
+    }
+
+    /**
+     * 设置节点的扩展属性
+     *
+     * @param {HubProp} active
+     * @param {HubProp} pool
+     */
+    setExtendProps(active, pool) {
+        this.extendedProperties.active = active;
+        this.extendedProperties.pool = pool;
     }
 
     toJSON() {

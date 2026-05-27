@@ -5,6 +5,19 @@ import { IManager } from './manager.js';
 import { ConnectionModel } from '../models/connectionModel.js';
 import { StandardDetail } from '../types/standardDetail.js';
 export class ConnectionManager extends IManager {
+    static get initDragState() {
+        return {
+            isDragging: false,
+            canConnectToTarget: true,
+            initialX: 0,
+            initialY: 0,
+            startPos: { x: 0, y: 0 },
+            endPos: { x: 0, y: 0 },
+            /** @type {listenerMap[]} */
+            listeners: [],
+        };
+    }
+
     /**
      * @param {EventBus} bus
      * @param {HTMLElement} viewport
@@ -26,14 +39,7 @@ export class ConnectionManager extends IManager {
         /** @type {Map<string, ConnectionModel[]>} */
         this.toNodeIndex = new Map();
 
-        this.dragState = {
-            isDragging: false,
-            canConnectToTarget: true,
-            initialX: 0,
-            initialY: 0,
-            startPos: { x: 0, y: 0 },
-            endPos: { x: 0, y: 0 },
-        };
+        this.dragState = ConnectionManager.initDragState;
 
         this.startNode = null;
         this.targetNode = null;
@@ -44,11 +50,6 @@ export class ConnectionManager extends IManager {
         this.targetPort = null;
 
         this.tempLine = null;
-
-        this.setTargetPortF = this.setTargetPort.bind(this);
-        this.checkTargetF = this.checkTarget.bind(this);
-        this.handlePortDragMoveF = this._handlePortDragMove.bind(this);
-        this.handlePortDragEndF = this._handlePortDragEnd.bind(this);
 
         this._onEvents();
     }
@@ -71,10 +72,10 @@ export class ConnectionManager extends IManager {
 
     /** @private */
     _onEvents() {
-        this.bus.on('drag:port:start', this._onPortDragStart.bind(this));
-        this.bus.on('drag:node:running', this._updateMovingConnections.bind(this));
-        this.bus.standardOn('drag', 'node', 'end', this._updateConnections.bind(this));
-        this.bus.standardOn('delete', 'node', 'finished', this._deleteNodeConnections.bind(this));
+        this.registerListener(this.bus, 'drag:port:start', this._onPortDragStart);
+        this.registerListener(this.bus, 'drag:node:running', this._updateConnections);
+        this.registerListener(this.bus, 'drag:node:end', this._updateConnections);
+        this.registerListener(this.bus, 'delete:node:finished', this._deleteNodeConnections);
     }
 
     /**
@@ -94,14 +95,24 @@ export class ConnectionManager extends IManager {
         this.startNode = e.detail.node;
         this.startPort = e.detail.port;
 
-        this.bus.once('drag:port:end', this.setTargetPortF);
-        this.bus.once('canNotConnected:port', this.checkTargetF);
+        const onceListenerEnd = this.bus.once('drag:port:end', this.setTargetPort.bind(this));
+        this.dragState.listeners.push({
+            target: this.bus,
+            type: 'drag:port:end',
+            listener: onceListenerEnd
+        });
+        const onceListenerFailed = this.bus.once('connect:port:failed', this.checkTarget.bind(this));
 
+        this.dragState.listeners.push({
+            target: this.bus,
+            type: 'connect:port:failed',
+            listener: onceListenerFailed,
+        });
         try {
             this._createTempLine(e);
 
-            document.addEventListener('mousemove', this.handlePortDragMoveF);
-            document.addEventListener('mouseup', this.handlePortDragEndF);
+            this.dragState.listeners.push(this.autoBind(document, 'mousemove', this._handlePortDragMove));
+            this.dragState.listeners.push(this.autoBind(document, 'mouseup', this._handlePortDragEnd));
         } catch (error) {
             console.error('端口拖动错误', error);
             this.cleanupPortDrag();
@@ -114,9 +125,10 @@ export class ConnectionManager extends IManager {
      */
     /**
      * @private
-     * @param {StandardDetail} detail
+     * @param {CustomEvent} ce
      */
-    _deleteNodeConnections(detail) {
+    _deleteNodeConnections(ce) {
+        const detail = ce.detail;
         const nodeIds = detail.data.nodeIds;
 
         if (!nodeIds) {
@@ -691,22 +703,8 @@ export class ConnectionManager extends IManager {
         // 清除高亮
         // this.clearHighlights();
 
-        // 移除全局事件监听
-        document.removeEventListener('mousemove', this.handlePortDragMoveF);
-        document.removeEventListener('mouseup', this.handlePortDragEndF);
-        this.bus.off('drag-end:port', this.setTargetPortF);
-        this.bus.off('canNotConnected:port', this.checkTargetF);
-
         // 重置状态
-        this.dragState = {
-            isDragging: false,
-            canConnectToTarget: true,
-            initialX: 0,
-            initialY: 0,
-            startPos: { x: 0, y: 0 },
-            endPos: { x: 0, y: 0 },
-        };
-
+        this._resetDragState();
         this.startNode = null;
         this.targetNode = null;
 
@@ -728,14 +726,7 @@ export class ConnectionManager extends IManager {
             this.SVG_layer.innerHTML = '';
         }
 
-        this.dragState = {
-            isDragging: false,
-            canConnectToTarget: true,
-            initialX: 0,
-            initialY: 0,
-            startPos: { x: 0, y: 0 },
-            endPos: { x: 0, y: 0 },
-        };
+        this._resetDragState();
 
         this.startNode = null;
         this.targetNode = null;
@@ -746,5 +737,13 @@ export class ConnectionManager extends IManager {
         this.targetPort = null;
 
         this.tempLine = null;
+    }
+
+    /** @private */
+    _resetDragState() {
+        this.dragState.listeners.forEach((listenerMap) => {
+            listenerMap.target.removeEventListener(listenerMap.type, listenerMap.listener);
+        });
+        this.dragState = ConnectionManager.initDragState;
     }
 }

@@ -1,6 +1,7 @@
 export class StandardMessage {
     static STATUS = {
         // 表示事件阶段
+        NOTICE: 'notice',
         START: 'start',
         RUNNING: 'running',
         END: 'end',
@@ -12,10 +13,12 @@ export class StandardMessage {
 
     static ACTION_TYPE = {
         CREATE: 'create',
+        APPEND: 'append',
         DELETE: 'delete',
         UPDATE: 'update', // 表示自模型改变视图
         CHANGE: 'change', // 表示自视图改变模型
         DRAG: 'drag',
+        CONNECT: 'connect',
         SELECT: 'select',
     };
 
@@ -23,6 +26,7 @@ export class StandardMessage {
         NODE: 'node',
         CONNECTION: 'connection',
         PROPERTY: 'property',
+        PORT: 'port',
     };
 
     static TARGET_TYPE = {
@@ -45,6 +49,7 @@ export class StandardMessage {
         this.targetType = targetType;
         this.status = status;
     }
+    
 
     checkValid() {
         const actionTypeCheck = Object.values(StandardMessage.ACTION_TYPE).includes(this.actionType);

@@ -116,7 +116,7 @@ export class ControllerCore {
     }
 
     clearCanvas() {
-        // this.historyManager.clear();
+        this.historyManager.clear();
 
         this.nodeManager.clear();
         this.connectionManager.clear();
@@ -171,12 +171,20 @@ export class ControllerCore {
                     case 'S':
                         // this.save();
                         break;
+                    case 'A':
+                        this.nodes.forEach((node) => {
+                            node.setSelected(true);
+                        });
+                        break;
                     default:
                         break;
                 }
             }
 
             switch (key) {
+                case 'DELETE':
+                    this.nodeManager.deleteNodes(this.selectedNodes.map((node) => node.id));
+                    break;
                 case 'H':
                     this.setMode('select');
                     break;

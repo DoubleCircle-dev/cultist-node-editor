@@ -128,7 +128,7 @@ export class PortModel extends IEventTarget {
         }
 
         if (!this.canConnected()) {
-            this.parentProp.onPortEvent('canNotConnected:port', detail);
+            this.parentProp.onPortEvent('connect:port:failed', detail);
             return;
         }
 

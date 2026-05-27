@@ -1,5 +1,5 @@
 import { NodeModel } from '../models/nodeModels/nodeModel.js';
-import { PropView } from './propView.js';
+import { PropView } from '../generators/propViewGenerator.js';
 
 export class NodeView {
     /**
@@ -76,14 +76,9 @@ export class NodeView {
         this.model.transmit(e);
     };
 
-    /**
-     * @private
-     * @param {KeyboardEvent} e
-     */
-    _onNodeDelete = (e) => {
-        if (e.key === 'Delete') {
-            this.model.emit('delete', { target: this.model.id });
-        }
+    /** @private */
+    _redraw = () => {
+        this.redraw();
     };
 
     /** @private */
@@ -92,16 +87,20 @@ export class NodeView {
         this.model.addEventListener('change:property', this._onPropertyChange);
         this.model.addEventListener('change:select', this._onSelectChange);
         this.model.addEventListener('change:rect', this._onRectChange);
-        this.model.addEventListener('change:mode', this._onModeChange);
+        this.model.addEventListener('update:mode', this._onModeChange);
+        this.model.addEventListener('redraw', this._redraw);
         this.element.addEventListener('mousedown', this._onMouseDown);
-        this.element.addEventListener('keydown', this._onNodeDelete);
     }
 
     // 卸载所有监听器
-    /** @private */
-    _removeListeners() {
+    removeListeners() {
         this.element.removeEventListener('mousedown', this._onMouseDown);
-        this.element.removeEventListener('keydown', this._onNodeDelete);
+        this.model.removeEventListener('change:position', this._onPositionChange);
+        this.model.removeEventListener('change:property', this._onPropertyChange);
+        this.model.removeEventListener('change:select', this._onSelectChange);
+        this.model.removeEventListener('change:rect', this._onRectChange);
+        this.model.removeEventListener('update:mode', this._onModeChange);
+        this.model.removeEventListener('redraw', this._redraw);
         this.propListeners.forEach((l) => {
             l.target.removeEventListener(l.type, l.listener);
         });
@@ -236,8 +235,11 @@ export class NodeView {
 
     redraw() {
         const world = this.element.parentElement;
-        this.element.remove();
+        
         this._removeListeners();
+        this.element.remove();
+        this.propListeners = [];
+
         this.element = this._createDOM();
         this._initListeners();
         world?.appendChild(this.element);

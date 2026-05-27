@@ -31,7 +31,7 @@ export class NodeActionManager extends IManager {
 
     /** @private */
     _onEvents() {
-        this.bus.on('drag:node:start', this._onNodeDragStart.bind(this));
+        this.listenerMaps.push(this.autoBind(this.bus, 'drag:node:start', this._onNodeDragStart));
     }
 
     /**

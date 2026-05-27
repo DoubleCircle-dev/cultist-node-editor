@@ -1,8 +1,9 @@
 import { EditorConfig } from './constant.js';
 import { ControllerCore } from './controllerCore.js';
 import { EventBus } from '../types/eventBus.js';
+import { IManager } from './manager.js';
 
-export class CanvasManager {
+export class CanvasManager extends IManager {
     /**
      * @param {EventBus} bus
      * @param {HTMLElement} viewport
@@ -10,11 +11,9 @@ export class CanvasManager {
      * @param {ControllerCore} coreSpace
      */
     constructor(bus, viewport, world, coreSpace) {
-        this.bus = bus;
-        this.viewport = viewport;
-        this.world = world;
+        super(bus, viewport, world, coreSpace);
+
         this.statusBar = document.getElementById('status-bar-under');
-        this.coreSpace = coreSpace;
 
         if (!this.viewport || !this.world) {
             console.error('无法找到 canvas-container 或 canvas界面 元素');
@@ -47,20 +46,25 @@ export class CanvasManager {
 
         this.mode = 'select';
 
-        this._initListeners();
+        /**
+         * @type {listenerMap[]}
+         */
+        this.listenerMaps = this._initListeners();
     }
 
     /** @private */
     _initListeners() {
-        this.viewport.addEventListener('wheel', this.handleWheel.bind(this), {
-            passive: false,
-        });
-        this.viewport.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        const listenerMaps = [];
 
-        this.viewport.addEventListener('mousemove', this.handleMouseMove.bind(this));
-        this.viewport.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+        listenerMaps.push(this.autoBind(this.viewport, 'wheel', this.handleWheel));
+        listenerMaps.push(this.autoBind(this.viewport, 'mousedown', this.handleMouseDown));
+        listenerMaps.push(this.autoBind(this.viewport, 'mousemove', this.handleMouseMove));
+        listenerMaps.push(this.autoBind(this.viewport, 'mouseleave', this.handleMouseLeave));
 
+        return listenerMaps;
     }
+
+
 
     /**
      * 处理滚轮缩放：核心算法 目标：以鼠标指针为中心进行缩放，鼠标下的点在缩放前后位置不变
@@ -190,8 +194,6 @@ export class CanvasManager {
             worldY: 0,
         });
     }
-
-    
 
     /** @param {string} mode */
     setMode(mode) {

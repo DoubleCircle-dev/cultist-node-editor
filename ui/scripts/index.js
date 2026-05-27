@@ -257,6 +257,7 @@ function initWebview(callback) {
             core = new ControllerCore(world, viewport);
             // updateStatus("已连接"); // 可恢复
             console.log('核心控制器初始化成功');
+            win.controlCore = core;
             if (callback) callback(null, core);
         } catch (error) {
             console.error('初始化失败:', error);
@@ -298,6 +299,8 @@ win.setScale = setScale;
 win.fitView = fitView;
 win.changeMode = changeMode;
 win.toggleConnections = toggleConnections;
+
+win.controlCore = core;
 
 
 win.generateTest = generateTest;

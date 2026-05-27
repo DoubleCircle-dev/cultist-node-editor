@@ -26,15 +26,22 @@ export class NodeGenerator {
 
         const nodeRef = new WeakRef(nodeModel);
 
+        nodeModel.setPorts(this.createPortProps(id, nodeTypeConfig.inputs, nodeTypeConfig.outputs, nodeRef));
+
         nodeModel.appendProps(this.createProps(id, nodeTypeConfig.properties, nodeRef));
 
-        nodeModel.setExProps(this.createRecordProps(id, nodeTypeConfig.exProperties, nodeRef));
+        nodeModel.setModeProps(this.createModeProps(id, nodeTypeConfig.modeProperties, nodeRef));
 
-        nodeModel.setPorts(this.createPortProps(id, nodeTypeConfig.inputs, nodeTypeConfig.outputs, nodeRef));
+        if (nodeTypeConfig.exProperties) {
+            if (nodeTypeConfig.exProperties.length > 0) {
+                const { active: activeHub, pool: poolHub } = this.createExtendProps(id, nodeTypeConfig.exProperties, nodeRef);
+                nodeModel.setExtendProps(activeHub, poolHub);
+            }
+        }
 
         nodeModel.initialize();
 
-        this._bindNodeListeners(nodeModel);
+         this._bindNodeListeners(nodeModel);
 
         return nodeModel;
     }
@@ -47,13 +54,6 @@ export class NodeGenerator {
         if (nodeModel instanceof NodeModel) {
             this._onPropertyChange(nodeModel);
             this._onModeSwitcher(nodeModel);
-
-            if (999 in nodeModel.exProperties) {
-                nodeModel.extendButton.addEventListener('mousedown', (e) => {
-                    const oe = e.detail.originalEvent;
-                    nodeModel.emit('append:property', { props: nodeModel.exProperties[999].properties, position: { x: oe.clientX, y: oe.clientY } });
-                });
-            }
         }
     }
 
@@ -85,31 +85,30 @@ export class NodeGenerator {
      */
     static _onModeSwitcher(nodeModel) {
         for (let prop of nodeModel.properties) {
-            if (prop instanceof OptionsProp) {
-                if (prop.isModeSwitcher) {
-                    nodeModel.modeSwitcher = prop;
-                    nodeModel.currentMode = prop.value;
+            if (prop instanceof OptionsProp && prop.isModeSwitcher) {
+                nodeModel.currentMode = prop.value;
 
-                    prop.addEventListener('change:property', (e) => {
-                        const ce = /** @type {CustomEvent} */ e;
-                        if (nodeModel.switchMode(ce.detail.value)) {
-                            nodeModel.emit('change:property:success', ce.detail);
-                        } else {
-                            nodeModel.emit('change:property:failed', { propId: prop.id });
-                        }
-                    });
+                prop.addEventListener('change:property', (e) => {
+                    const ce = /** @type {CustomEvent} */ e;
+                    if (nodeModel.switchMode(ce.detail.value)) {
+                        nodeModel.emit('change:property:success', ce.detail);
+                        nodeModel.emit('update:mode', { mode: nodeModel.currentMode });
+                    } else {
+                        nodeModel.emit('change:property:failed', { propId: prop.id, value: ce.detail.value });
+                    }
+                });
 
-                    prop.addEventListener('update', (/** @type {Event} */ e) => {
-                        const ce = /** @type {CustomEvent} */ e;
-                        if (nodeModel.switchMode(ce.detail.value)) {
-                            nodeModel.emit('update:property:success', ce.detail);
-                        } else {
-                            nodeModel.emit('update:property:failed', { propId: prop.id });
-                        }
-                    });
+                prop.addEventListener('update', (/** @type {Event} */ e) => {
+                    const ce = /** @type {CustomEvent} */ e;
+                    if (nodeModel.switchMode(ce.detail.value)) {
+                        nodeModel.emit('update:property:success', ce.detail);
+                        nodeModel.emit('update:mode', { mode: nodeModel.currentMode });
+                    } else {
+                        nodeModel.emit('update:property:failed', { propId: prop.id, value: ce.detail.value });
+                    }
+                });
 
-                    break;
-                }
+                break;
             }
         }
     }
@@ -181,13 +180,57 @@ export class NodeGenerator {
 
     /**
      * @param {NodeID} nodeID
+     * @param {PropConfig[] | undefined} properties
+     * @param {WeakRef<NodeModel>} node
+     */
+    static createExtendProps(nodeID, properties, node) {
+        const extendButton = new BaseProp(`${nodeID}:extendButton`, '添加属性', 'button', '');
+
+        this._onExtendButtonClick(extendButton, node);
+
+        const activeHub = new HubProp(`${nodeID}:activeHub`, '当前属性', [extendButton], 'single');
+
+        const pool = NodeGenerator.createProps(nodeID, properties, node);
+
+        const poolHub = new HubProp(`${nodeID}:poolHub`, '属性池', pool, 'single');
+
+        return {
+            active: activeHub,
+            pool: poolHub,
+        };
+    }
+
+    /**
+     * @private
+     * @param {BaseProp} prop
+     * @param {WeakRef<NodeModel>} node
+     */
+    static _onExtendButtonClick(prop, node) {
+        prop.addEventListener('mousedown', (e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            const oe = ce.detail.originalEvent;
+            // 使用弱引用获取真实的 nodeModel
+            const nodeModel = node.deref();
+            if (nodeModel && nodeModel.extendedProperties?.pool) {
+                // 将 Prop 级别的物理事件，翻译为 Node 级别的意图事件向外抛出
+                nodeModel.emit('append:property', {
+                    props: nodeModel.extendedProperties.pool.properties,
+                    position: { x: oe.clientX, y: oe.clientY },
+                });
+            }
+        });
+    }
+
+    /**
+     * @param {NodeID} nodeID
      * @param {Record<string, PropConfig[]> | undefined} properties
      * @param {WeakRef<BaseNodeModel>} node
      * @returns {Record<string, HubProp>}
      */
-    static createRecordProps(nodeID, properties, node) {
+    static createModeProps(nodeID, properties, node) {
         /** @type {Record<string, HubProp>} */
         const exProps = {};
+
         for (let key in properties) {
             const hub = PropGenerator.createProp(
                 `${nodeID}:exHub-${key}`,
