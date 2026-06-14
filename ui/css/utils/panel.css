@@ -1,3 +1,28 @@
+.panel {
+    background: #1e2432;
+    border-left: 1px solid #334155;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
+.panel.expand {
+    width: 340px;
+    height: 100%;
+}
+
+.panel.expand.exit {
+    animation: expand 0.3s ease-out;    
+}
+
+.panel.bottom {
+    bottom: 0;
+    width: 100%;
+    right: 0;
+    height: 320px;
+}
+
 .expand-panel {
     width: 340px;
     height: 100%;
@@ -9,8 +34,11 @@
 }
 
 .panel-header {
-    display: inline;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 16px 10px;
     border-bottom: 1px solid #334155;
+    flex-shrink: 0;
 }
 
 .panel-header h3 {
@@ -233,4 +261,351 @@
 
 .bottom-panel .execute-btn:hover {
     background: #7c3aed;
+}
+
+/* 向右扩展面板 */
+.expand-panel-container {
+    background: #252534;
+    /* border-radius: 18px; */
+    min-width: 300px;
+    padding: 14px 12px;
+    margin: 0 0 0 0;
+    border-left: 4px solid #5f8db5;
+    box-shadow: inset 0 1px 3px #0b0b12, 0 6px 10px rgba(0, 0, 0, 0.3);
+    animation: panelExpand 0.15s ease-out;
+    pointer-events: auto;
+}
+
+.expand-panel-container.exit {
+    animation: panelCollapse 0.15s ease-out forwards;
+}
+
+.expand-panel-container.hidden {
+    display: none;
+}
+
+@keyframes panelCollapse {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    100% {
+        opacity: 0.5;
+        transform: translateX(-6px);
+    }
+}
+
+@keyframes panelExpand {
+    0% {
+        opacity: 0.5;
+        transform: translateX(-6px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+
+/* 向下扩展面板（帮助/快捷键） */
+.bottom-expand-panel-container {
+    background: #1f1f2e;
+    padding: 14px 12px;
+    width: 100%;
+    height: auto;
+    margin-top: auto;
+    border-top: 3px solid #b58a5f;
+    box-shadow: inset 0 1px 3px #0b0b12, 0 -4px 8px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.15s;
+    pointer-events: auto;
+}
+
+.bottom-expand-panel-container.hidden {
+    display: none;
+}
+
+@keyframes slideUp {
+    0% {
+        opacity: 0.5;
+        transform: translateY(6px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.expand-panel {
+    display: flex;
+}
+
+/* 面板标题 */
+.panel-title {
+    color: #ffddbb;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 10px 0;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px dashed #5a6a7a;
+    padding-bottom: 6px;
+}
+
+/* 节点按钮网格 */
+.node-type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.btn-node-type {
+    background: #3a3a50;
+    border: 1px solid #5f6f8a;
+    color: #f0f0f0;
+    padding: 8px 4px;
+    border-radius: 24px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.1s;
+    font-weight: 500;
+    text-align: center;
+}
+
+.btn-node-type:hover {
+    background: #4f6080;
+    border-color: #8aa0c0;
+}
+
+/* 调试区域 */
+.debug-section {
+    margin-top: 8px;
+    background: #1b1b28;
+    border-radius: 16px;
+    padding: 10px 8px;
+}
+
+.debug-title {
+    color: #ffaa00;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.debug-row {
+    display: flex;
+    gap: 6px;
+}
+
+#debugNodeSelect {
+    flex: 1;
+    padding: 8px 6px;
+    background: #2a2a3c;
+    color: #eee;
+    border: 1px solid #6a6a88;
+    border-radius: 24px;
+    font-size: 12px;
+}
+
+.btn-debug-add {
+    background: #3f3f5a;
+    border: none;
+    color: #eee;
+    padding: 6px 14px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: 0.1s;
+}
+
+.btn-debug-add:hover {
+    background: #5f6f8f;
+}
+
+.debug-hint {
+    font-size: 11px;
+    color: #9a9ab0;
+    margin-top: 6px;
+}
+
+.panel-footnote {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #aac8ff;
+}
+
+/* 查找面板 */
+.search-box {
+    width: 100%;
+    padding: 10px 12px;
+    background: #1e1e2e;
+    border: 1px solid #6a7a94;
+    border-radius: 40px;
+    color: white;
+    font-size: 13px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.search-results {
+    max-height: 160px;
+    overflow-y: auto;
+    font-size: 12px;
+    color: #bbb;
+    background: #20202e;
+    border-radius: 14px;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+.search-item {
+    padding: 6px 8px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.1s;
+}
+
+.search-item:hover {
+    background: #3a5a7a;
+    color: white;
+}
+
+.search-placeholder {
+    color: #888;
+    padding: 8px;
+    text-align: center;
+}
+
+.btn-search-global {
+    width: 100%;
+    background: #3f3f5a;
+    border: none;
+    color: #eee;
+    padding: 10px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: 0.1s;
+}
+
+.btn-search-global:hover {
+    background: #5f6f8f;
+}
+
+/* ==========================================
+   PanelView 生成的结构样式
+   ========================================== */
+
+/* 面板内容包裹器 */
+.panel-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* 面板可滚动内容区 */
+.panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #1e2432;
+}
+
+/* 空数据提示 */
+.empty-tip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    color: #64748b;
+    font-size: 0.85rem;
+    text-align: center;
+    user-select: none;
+}
+
+/* ==========================================
+   树形目录结构
+   ========================================== */
+
+/* 整棵目录树的根容器 */
+.dir-tree {
+    font-size: 0.88rem;
+    color: #e2e8f0;
+}
+
+/* 单个目录分类块 */
+.dir-category {
+    margin-bottom: 2px;
+}
+
+/* 目录标题行（可点击折叠/展开） */
+.dir-category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.dir-category-header:hover {
+    background: #2d3748;
+}
+
+/* 折叠/展开指示图标 */
+.toggle-icon {
+    font-size: 0.7rem;
+    width: 16px;
+    text-align: center;
+    color: #94a3b8;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+/* 目录名称 */
+.category-name {
+    font-weight: 500;
+    color: #cbd5e1;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 文件列表（默认折叠隐藏） */
+.dir-file-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+}
+
+.dir-file-list.open {
+    max-height: 2000px;
+}
+
+/* 单个文件条目 */
+.dir-file-item {
+    padding: 8px 12px 8px 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 0.83rem;
+    transition: all 0.12s;
+}
+
+.dir-file-item:hover {
+    background: #252b3b;
+    color: #f1f5f9;
+    transform: translateX(2px);
 }

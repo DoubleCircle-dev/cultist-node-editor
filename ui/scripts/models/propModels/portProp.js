@@ -1,5 +1,5 @@
 import { BaseProp } from './baseProp.js';
-import { PortModel } from '../portModel.js';
+import { PortModel } from './portModel.js';
 
 export class PortProp extends BaseProp {
     static layoutTypes = {

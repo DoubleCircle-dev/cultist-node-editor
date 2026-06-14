@@ -1,8 +1,8 @@
 import { EventBus } from '../types/eventBus.js';
 import { ControllerCore } from './controllerCore.js';
-import { PortModel } from '../models/portModel.js';
+import { PortModel } from '../models/propModels/portModel.js';
 import { IManager } from './manager.js';
-import { ConnectionModel } from '../models/connectionModel.js';
+import { ConnectionModel } from '../models/connectionModels/connectionModel.js';
 import { StandardDetail } from '../types/standardDetail.js';
 export class ConnectionManager extends IManager {
     static get initDragState() {
@@ -38,6 +38,9 @@ export class ConnectionManager extends IManager {
 
         /** @type {Map<string, ConnectionModel[]>} */
         this.toNodeIndex = new Map();
+
+        /** @type {Map<string, {svgLine: SVGElement, listeners: Array}>} */
+        this.connectionLines = new Map();
 
         this.dragState = ConnectionManager.initDragState;
 
@@ -206,14 +209,28 @@ export class ConnectionManager extends IManager {
         if (conn) {
             conn.remove();
 
+            const lineData = this.connectionLines.get(connId);
+            if (lineData) {
+                const { svgLine, listeners } = lineData;
+                listeners.forEach(({ element, target, event, handler }) => {
+                    if (element) {
+                        element.removeEventListener(event, handler);
+                    } else if (target) {
+                        target.removeEventListener(event, handler);
+                    }
+                });
+                svgLine.remove();
+                this.connectionLines.delete(connId);
+            }
+
             let arr = this.fromNodeIndex.get(conn.fromNodeId);
             if (arr) {
                 const index = arr.indexOf(conn);
 
                 if (index !== -1) {
-                    arr.splice(index, 1); // 删除模型
+                    arr.splice(index, 1);
                     if (arr.length === 0) {
-                        this.fromNodeIndex.delete(conn.fromNodeId); // 数组为空时可选删除该键
+                        this.fromNodeIndex.delete(conn.fromNodeId);
                     }
                 }
             }
@@ -223,9 +240,9 @@ export class ConnectionManager extends IManager {
                 const index = arr.indexOf(conn);
 
                 if (index !== -1) {
-                    arr.splice(index, 1); // 删除模型
+                    arr.splice(index, 1);
                     if (arr.length === 0) {
-                        this.toNodeIndex.delete(conn.toNodeId); // 数组为空时可选删除该键
+                        this.toNodeIndex.delete(conn.toNodeId);
                     }
                 }
             }
@@ -656,33 +673,50 @@ export class ConnectionManager extends IManager {
         );
         svgLine.setAttribute('d', path);
 
-        // 添加悬停效果
-        svgLine.addEventListener('mouseenter', () => {
+        const listeners = [];
+
+        const mouseenterHandler = () => {
             svgLine.classList.add('connection-hover');
-        });
-
-        svgLine.addEventListener('mouseleave', () => {
+        };
+        const mouseleaveHandler = () => {
             svgLine.classList.remove('connection-hover');
-        });
-
-        // 双击断开连接
-        svgLine.addEventListener('dblclick', (e) => {
+        };
+        const dblclickHandler = (e) => {
             e.stopPropagation();
             this.deleteConnection(connection.id);
-        });
+        };
 
-        connection.addEventListener('delete:connection', () => {
+        svgLine.addEventListener('mouseenter', mouseenterHandler);
+        svgLine.addEventListener('mouseleave', mouseleaveHandler);
+        svgLine.addEventListener('dblclick', dblclickHandler);
+
+        listeners.push(
+            { element: svgLine, event: 'mouseenter', handler: mouseenterHandler },
+            { element: svgLine, event: 'mouseleave', handler: mouseleaveHandler },
+            { element: svgLine, event: 'dblclick', handler: dblclickHandler }
+        );
+
+        const deleteConnectionHandler = () => {
             svgLine.remove();
-        });
-
-        connection.addEventListener('change:connection', (/** @type {CustomEvent} */ e) => {
+        };
+        const changeConnectionHandler = (/** @type {CustomEvent} */ e) => {
             const path = this.createCurvedPath(e.detail.startX, e.detail.startY, e.detail.endX, e.detail.endY);
             if (!path) {
                 console.error('无法创建路径，参数不准确', e.detail.startX, e.detail.startY, e.detail.endX, e.detail.endY);
                 return;
             }
             svgLine.setAttribute('d', path);
-        });
+        };
+
+        connection.addEventListener('delete:connection', deleteConnectionHandler);
+        connection.addEventListener('change:connection', changeConnectionHandler);
+
+        listeners.push(
+            { target: connection, event: 'delete:connection', handler: deleteConnectionHandler },
+            { target: connection, event: 'change:connection', handler: changeConnectionHandler }
+        );
+
+        this.connectionLines.set(connection.id, { svgLine, listeners });
 
         if (this.tempLine) {
             this.tempLine.remove();
@@ -718,9 +752,20 @@ export class ConnectionManager extends IManager {
     }
 
     clear() {
+        this.connectionLines.forEach(({ listeners }) => {
+            listeners.forEach(({ element, target, event, handler }) => {
+                if (element) {
+                    element.removeEventListener(event, handler);
+                } else if (target) {
+                    target.removeEventListener(event, handler);
+                }
+            });
+        });
+
         this.connections.clear();
         this.fromNodeIndex.clear();
         this.toNodeIndex.clear();
+        this.connectionLines.clear();
 
         if (this.SVG_layer) {
             this.SVG_layer.innerHTML = '';
@@ -739,11 +784,8 @@ export class ConnectionManager extends IManager {
         this.tempLine = null;
     }
 
-    /** @private */
-    _resetDragState() {
-        this.dragState.listeners.forEach((listenerMap) => {
-            listenerMap.target.removeEventListener(listenerMap.type, listenerMap.listener);
-        });
-        this.dragState = ConnectionManager.initDragState;
+    destroy() {
+        this.clear();
+        super.destroy();
     }
 }

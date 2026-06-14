@@ -1601,4 +1601,14 @@ export class NodeTypeRegistry {
     static getColor(key) {
         return this.nodeColorVars[key] || this.nodeColorVars['blank'];
     }
+
+    static get allTypesList() {
+        return Object.entries(this.nodeTypes)
+            .filter(([, config]) => config.active)
+            .map(([key, config]) => ({ ...config, type: key }));
+    }
+
+    static get allColors() {
+        return Object.keys(this.nodeColorVars);
+    }
 }

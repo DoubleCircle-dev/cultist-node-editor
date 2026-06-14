@@ -1,18 +1,25 @@
 import { NodeModel } from '../models/nodeModels/nodeModel.js';
 import { PropView } from '../generators/propViewGenerator.js';
+import { IView } from '../types/IView.js';
 
-export class NodeView {
+export class NodeView extends IView {
     /**
      * 构造函数，初始化节点模型和DOM元素，并设置模型变化的监听器
      *
      * @param {NodeModel} model
      */
     constructor(model) {
-        /** @type {listenerMap[]} */
-        this.propListeners = [];
+        super(model);
 
         // 初始化节点模型
         this.model = model;
+
+        /** @type {listenerMap[]} */
+        this.propListeners = [];
+
+        /** @type {Array<{element: Element, event: string, handler: Function}>} */
+        this.domListeners = [];
+
         // 创建DOM元素并赋值给实例属性
         this.element = this._createDOM();
 
@@ -94,16 +101,29 @@ export class NodeView {
 
     // 卸载所有监听器
     removeListeners() {
+        super.removeListeners();
+        if (this.model) {
+            this.model.removeEventListener('change:position', this._onPositionChange);
+            this.model.removeEventListener('change:property', this._onPropertyChange);
+            this.model.removeEventListener('change:select', this._onSelectChange);
+            this.model.removeEventListener('change:rect', this._onRectChange);
+            this.model.removeEventListener('update:mode', this._onModeChange);
+            this.model.removeEventListener('redraw', this._redraw);
+        }
         this.element.removeEventListener('mousedown', this._onMouseDown);
-        this.model.removeEventListener('change:position', this._onPositionChange);
-        this.model.removeEventListener('change:property', this._onPropertyChange);
-        this.model.removeEventListener('change:select', this._onSelectChange);
-        this.model.removeEventListener('change:rect', this._onRectChange);
-        this.model.removeEventListener('update:mode', this._onModeChange);
-        this.model.removeEventListener('redraw', this._redraw);
         this.propListeners.forEach((l) => {
-            l.target.removeEventListener(l.type, l.listener);
+            if (l.target && l.listener) {
+                l.target.removeEventListener(l.type, l.listener);
+            }
         });
+        this.propListeners = [];
+
+        this.domListeners.forEach(({ element, event, handler }) => {
+            if (element) {
+                element.removeEventListener(event, handler);
+            }
+        });
+        this.domListeners = [];
     }
 
     // 创建节点DOM元素
@@ -144,16 +164,26 @@ export class NodeView {
         titleInput.value = this.model.title;
         titleInput.placeholder = '节点标题';
 
-        titleInput.addEventListener('mousedown', (e) => e.stopPropagation());
-        titleInput.addEventListener('keydown', (e) => {
+        const titleMousedownHandler = (e) => e.stopPropagation();
+        const titleKeydownHandler = (e) => {
             if (e.key === 'Enter') {
                 titleInput.blur();
             }
-        });
-        titleInput.addEventListener('change', (e) => {
+        };
+        const titleChangeHandler = (e) => {
             const target = /** @type {HTMLInputElement} */ (e.target);
             this.model.title = target?.value;
-        });
+        };
+
+        titleInput.addEventListener('mousedown', titleMousedownHandler);
+        titleInput.addEventListener('keydown', titleKeydownHandler);
+        titleInput.addEventListener('change', titleChangeHandler);
+
+        this.domListeners.push(
+            { element: titleInput, event: 'mousedown', handler: titleMousedownHandler },
+            { element: titleInput, event: 'keydown', handler: titleKeydownHandler },
+            { element: titleInput, event: 'change', handler: titleChangeHandler }
+        );
 
         title.appendChild(titleInput);
 
@@ -171,16 +201,27 @@ export class NodeView {
         labelInput.className = 'node-label-input';
         labelInput.value = this.model.label;
         labelInput.placeholder = '标签（label:游戏内显示的名称）';
-        labelInput.addEventListener('mousedown', (e) => e.stopPropagation());
-        labelInput.addEventListener('keydown', (e) => {
+
+        const labelMousedownHandler = (e) => e.stopPropagation();
+        const labelKeydownHandler = (e) => {
             if (e.key === 'Enter') {
                 labelInput.blur();
             }
-        });
-        labelInput.addEventListener('change', (e) => {
+        };
+        const labelChangeHandler = (e) => {
             const target = /** @type {HTMLInputElement} */ (e.target);
             this.model.label = target?.value;
-        });
+        };
+
+        labelInput.addEventListener('mousedown', labelMousedownHandler);
+        labelInput.addEventListener('keydown', labelKeydownHandler);
+        labelInput.addEventListener('change', labelChangeHandler);
+
+        this.domListeners.push(
+            { element: labelInput, event: 'mousedown', handler: labelMousedownHandler },
+            { element: labelInput, event: 'keydown', handler: labelKeydownHandler },
+            { element: labelInput, event: 'change', handler: labelChangeHandler }
+        );
 
         label.appendChild(labelInput);
         header.appendChild(label);
@@ -235,7 +276,7 @@ export class NodeView {
 
     redraw() {
         const world = this.element.parentElement;
-        
+
         this._removeListeners();
         this.element.remove();
         this.propListeners = [];

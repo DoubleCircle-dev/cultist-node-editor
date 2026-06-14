@@ -65,11 +65,16 @@ export class IManager {
         this.listenerMaps.forEach((listenerMap) => {
             listenerMap.target.removeEventListener(listenerMap.type, listenerMap.listener);
         });
+        this.listenerMaps = [];
     }
 
     checkValid() {
         if (this.viewport == null || this.world == null || this.bus == null || this.coreSpace == null) {
             throw new Error(`创建管理器失败，id: ${this.id}`);
         }
+    }
+
+    destroy() {
+        this.removeListeners();
     }
 }

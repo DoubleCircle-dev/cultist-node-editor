@@ -1,5 +1,5 @@
-import { IEventTarget } from '../types/IEventTarget.js';
-import { PortModel } from './portModel.js';
+import { IEventTarget } from '../../types/IEventTarget.js';
+import { PortModel } from '../propModels/portModel.js';
 
 export class ConnectionModel extends IEventTarget {
 

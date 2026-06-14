@@ -35,6 +35,9 @@ export class NodeManager extends IManager {
         this.nodeViews = new Map();
         this.maxIndex = 0;
 
+        /** @type {Map<NodeID, Array>} */
+        this.nodeModelListeners = new Map();
+
         this._initListeners();
 
         this._onEvent();
@@ -45,8 +48,16 @@ export class NodeManager extends IManager {
 
     /** @private */
     _onEvent() {
-        this.bus.on('canvas:click', this.clearNodeSelected.bind(this));
-        this.bus.on('addNode', this._addNode.bind(this));
+        const canvasClickListener = this.clearNodeSelected.bind(this);
+        const addNodeListener = this._addNode.bind(this);
+
+        this.bus.on('canvas:click', canvasClickListener);
+        this.bus.on('addNode', addNodeListener);
+
+        this.listenerMaps.push(
+            { target: this.bus, type: 'canvas:click', listener: canvasClickListener },
+            { target: this.bus, type: 'addNode', listener: addNodeListener }
+        );
     }
 
     get SelectedNodes() {
@@ -189,11 +200,16 @@ export class NodeManager extends IManager {
 
     /**
      * @private
-     * @param {import('./nodeActionManager.js').BaseNodeModel} nodeModel
+     * @param {BaseNodeModel} nodeModel
      */
     _bindModelListeners(nodeModel) {
-        nodeModel.addEventListener('delete', this._deleteNode.bind(this));
-        nodeModel.addEventListener('mousedown', (e) => {
+        const listeners = [];
+
+        const deleteHandler = this._deleteNode.bind(this);
+        nodeModel.addEventListener('delete', deleteHandler);
+        listeners.push({ event: 'delete', handler: deleteHandler });
+
+        const mousedownHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
             const originalEvent = ce.detail.originalEvent;
 
@@ -219,10 +235,7 @@ export class NodeManager extends IManager {
                 case 'drag':
                     this.clearNodeSelected();
                     return;
-                // break;
                 case 'focus':
-                    break;
-                default:
                     break;
             }
 
@@ -234,20 +247,26 @@ export class NodeManager extends IManager {
                 originalEvent,
                 selectedNodes: this.coreSpace.selectedNodes,
             });
-        });
+        };
+        nodeModel.addEventListener('mousedown', mousedownHandler);
+        listeners.push({ event: 'mousedown', handler: mousedownHandler });
 
-        nodeModel.addEventListener('mousedown:port', (e) => {
+        const mousedownPortHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
             this.setNodeSelected(nodeModel, true);
             this.bus.emit('drag:port:start', { ...ce.detail, node: nodeModel });
-        });
+        };
+        nodeModel.addEventListener('mousedown:port', mousedownPortHandler);
+        listeners.push({ event: 'mousedown:port', handler: mousedownPortHandler });
 
-        nodeModel.addEventListener('mouseup:port', (e) => {
+        const mouseupPortHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
             this.bus.emit('drag:port:end', { ...ce.detail, node: nodeModel });
-        });
+        };
+        nodeModel.addEventListener('mouseup:port', mouseupPortHandler);
+        listeners.push({ event: 'mouseup:port', handler: mouseupPortHandler });
 
-        nodeModel.addEventListener('change:property:success', (e) => {
+        const changePropertyHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
             this.bus.standardEmitDetail(
                 'change',
@@ -260,11 +279,12 @@ export class NodeManager extends IManager {
                     nodeModel.setPropValue(data.propId, data.newValue);
                 }
             );
-        });
+        };
+        nodeModel.addEventListener('change:property:success', changePropertyHandler);
+        listeners.push({ event: 'change:property:success', handler: changePropertyHandler });
 
-        nodeModel.addEventListener('append:property', (e) => {
+        const appendPropertyHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
-
             const props = ce.detail.props;
 
             if (!props || props.length === 0) {
@@ -280,9 +300,11 @@ export class NodeManager extends IManager {
                     position: ce.detail.position,
                 });
             }
-        });
+        };
+        nodeModel.addEventListener('append:property', appendPropertyHandler);
+        listeners.push({ event: 'append:property', handler: appendPropertyHandler });
 
-        nodeModel.addEventListener('delete:property', (e) => {});
+        this.nodeModelListeners.set(String(nodeModel.id), listeners);
     }
 
     /**
@@ -397,6 +419,15 @@ export class NodeManager extends IManager {
         }
 
         node.setSelected(false);
+
+        const listeners = this.nodeModelListeners.get(nodeId);
+        if (listeners) {
+            listeners.forEach(({ event, handler }) => {
+                node.removeEventListener(event, handler);
+            });
+            this.nodeModelListeners.delete(nodeId);
+        }
+
         node.removeAllEventListeners();
 
         if (node instanceof NodeModel) {
@@ -473,6 +504,7 @@ export class NodeManager extends IManager {
 
         this.nodes.clear();
         this.nodeViews.clear();
+        this.nodeModelListeners.clear();
         this.idGenerator.reset();
         this.uidGenerator.reset();
         this.highlightCache = {
@@ -481,6 +513,11 @@ export class NodeManager extends IManager {
         };
 
         this.bus.emit('ClearOver:nodeManager', {});
+    }
+
+    destroy() {
+        this.clear();
+        super.destroy();
     }
 }
 

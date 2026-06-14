@@ -1,6 +1,6 @@
 import { BaseProp } from "../models/propModels/baseProp.js";
 import { PortProp } from "../models/propModels/portProp.js";
-import { PortModel } from "../models/portModel.js";
+import { PortModel } from "../models/propModels/portModel.js";
 import { PropGenerator, PropRenderer } from "./propGenerator.js";
 import { NodeTypeRegistry } from "../types/nodeTypes.js";
 import { HubProp } from "../models/propModels/hubProp.js";

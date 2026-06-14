@@ -12,8 +12,8 @@ export class StandardMessage {
     };
 
     static ACTION_TYPE = {
-        CREATE: 'create',
-        APPEND: 'append',
+        CREATE: 'create', // 表示从无到有
+        APPEND: 'append', // 表示添加副本或记录
         DELETE: 'delete',
         UPDATE: 'update', // 表示自模型改变视图
         CHANGE: 'change', // 表示自视图改变模型
@@ -27,6 +27,7 @@ export class StandardMessage {
         CONNECTION: 'connection',
         PROPERTY: 'property',
         PORT: 'port',
+        PANEL: 'panel'
     };
 
     static TARGET_TYPE = {
