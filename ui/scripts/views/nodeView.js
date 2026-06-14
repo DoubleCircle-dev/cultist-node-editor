@@ -17,7 +17,7 @@ export class NodeView extends IView {
         /** @type {listenerMap[]} */
         this.propListeners = [];
 
-        /** @type {Array<{element: Element, event: string, handler: Function}>} */
+        /** @type {{ element: Element; event: string; handler: Function }[]} */
         this.domListeners = [];
 
         // 创建DOM元素并赋值给实例属性
@@ -30,7 +30,7 @@ export class NodeView extends IView {
      * @private
      * @param {Event} evt
      */
-    _onPositionChange = (evt) => {
+    _onPositionUpdate = (evt) => {
         const e = /** @type {CustomEvent<{ x: number | string; y: number | string }>} */ (evt);
         const { x, y } = e.detail;
         this.element.style.left = x + 'px';
@@ -41,7 +41,7 @@ export class NodeView extends IView {
      * @private
      * @param {Event} evt
      */
-    _onPropertyChange = (evt) => {
+    _onPropertyUpdate = (evt) => {
         const e = /** @type {CustomEvent<{ key: string; value: any }>} */ (evt);
         this._updateInputDisplay(e.detail.key, e.detail.value);
     };
@@ -50,7 +50,7 @@ export class NodeView extends IView {
      * @private
      * @param {Event} evt
      */
-    _onSelectChange = (evt) => {
+    _onSelectUpdate = (evt) => {
         const e = /** @type {CustomEvent<{ isSelected: boolean }>} */ (evt);
         if (e.detail.isSelected) {
             this.element.classList.add('selected');
@@ -63,14 +63,14 @@ export class NodeView extends IView {
      * @private
      * @param {Event} evt
      */
-    _onRectChange = (evt) => {
+    _onRectUpdate = (evt) => {
         const e = /** @type {CustomEvent<{ width: number; height: number }>} */ (evt);
         this.element.style.width = e.detail.width + 'px';
         this.element.style.height = e.detail.height + 'px';
     };
 
     /** @private */
-    _onModeChange = () => {
+    _onModeUpdate = () => {
         this.redraw();
     };
 
@@ -90,11 +90,11 @@ export class NodeView extends IView {
 
     /** @private */
     _initListeners() {
-        this.model.addEventListener('change:position', this._onPositionChange);
-        this.model.addEventListener('change:property', this._onPropertyChange);
-        this.model.addEventListener('change:select', this._onSelectChange);
-        this.model.addEventListener('change:rect', this._onRectChange);
-        this.model.addEventListener('update:mode', this._onModeChange);
+        this.model.addEventListener('update:position', this._onPositionUpdate);
+        this.model.addEventListener('update:property', this._onPropertyUpdate);
+        this.model.addEventListener('update:select', this._onSelectUpdate);
+        this.model.addEventListener('update:rect', this._onRectUpdate);
+        this.model.addEventListener('update:mode', this._onModeUpdate);
         this.model.addEventListener('redraw', this._redraw);
         this.element.addEventListener('mousedown', this._onMouseDown);
     }
@@ -103,11 +103,11 @@ export class NodeView extends IView {
     removeListeners() {
         super.removeListeners();
         if (this.model) {
-            this.model.removeEventListener('change:position', this._onPositionChange);
-            this.model.removeEventListener('change:property', this._onPropertyChange);
-            this.model.removeEventListener('change:select', this._onSelectChange);
-            this.model.removeEventListener('change:rect', this._onRectChange);
-            this.model.removeEventListener('update:mode', this._onModeChange);
+            this.model.removeEventListener('update:position', this._onPositionUpdate);
+            this.model.removeEventListener('update:property', this._onPropertyUpdate);
+            this.model.removeEventListener('update:select', this._onSelectUpdate);
+            this.model.removeEventListener('update:rect', this._onRectUpdate);
+            this.model.removeEventListener('update:mode', this._onModeUpdate);
             this.model.removeEventListener('redraw', this._redraw);
         }
         this.element.removeEventListener('mousedown', this._onMouseDown);
@@ -172,7 +172,12 @@ export class NodeView extends IView {
         };
         const titleChangeHandler = (e) => {
             const target = /** @type {HTMLInputElement} */ (e.target);
-            this.model.title = target?.value;
+            const newTitle = target?.value;
+            if (!newTitle) {
+                this.model.emit('change:title:empty', {});
+            }
+            this.model.title = newTitle;
+            this.model.emit('change:title:success', {});
         };
 
         titleInput.addEventListener('mousedown', titleMousedownHandler);
@@ -210,7 +215,10 @@ export class NodeView extends IView {
         };
         const labelChangeHandler = (e) => {
             const target = /** @type {HTMLInputElement} */ (e.target);
-            this.model.label = target?.value;
+            const newLabel = target?.value;
+
+            this.model.label = newLabel;
+            this.model.emit('change:label:success', {});
         };
 
         labelInput.addEventListener('mousedown', labelMousedownHandler);

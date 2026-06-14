@@ -7,7 +7,7 @@ export class PanelModel extends IEventTarget {
      * @param {string} title - 面板标题
      * @param {Object} [options] - 可选的交互配置
      * @param {boolean} [options.hasSearch=false] - 是否拥有搜索栏. Default is `false`
-     * @param {'none' | 'list' | 'tree'} [options.dataType='none'] - 面板持有的数据结构类型. Default is `'none'`
+     * @param {'none' | 'list' | 'tree' | 'help' | 'shortcuts'} [options.dataType='none'] - 面板持有的数据结构类型. Default is `'none'`
      * @param {string} [options.icon=''] - 面板图标
      */
     constructor(id, type,title, options = {}) {

@@ -24,6 +24,7 @@ export class BaseNodeModel extends IEventTarget {
         this._properties = properties;
 
         this.color = config.color || '#ffffff';
+
         this.title = config.title || 'Base Node';
         this.label = '';
         this.icon = config.icon || '⚡';
@@ -35,9 +36,7 @@ export class BaseNodeModel extends IEventTarget {
         this.y = y;
         this.width = config.width || 300;
         this.height = config.height || 0;
-
     }
-
 
     /**
      * 获取对象的ID属性 将内部ID转换为字符串形式返回
@@ -118,7 +117,7 @@ export class BaseNodeModel extends IEventTarget {
     setPosition(x, y) {
         this.x = x;
         this.y = y;
-        this.emit('change:position', { x, y });
+        this.emit('update:position', { x, y });
     }
 
     /**
@@ -130,7 +129,7 @@ export class BaseNodeModel extends IEventTarget {
     moveBy(dx, dy) {
         this.x += dx;
         this.y += dy;
-        this.emit('change:position', { x: this.x, y: this.y });
+        this.emit('update:position', { x: this.x, y: this.y });
     }
 
     /**
@@ -142,7 +141,7 @@ export class BaseNodeModel extends IEventTarget {
     setRect(width, height) {
         this.width = width;
         this.height = height;
-        this.emit('change:rect', { width, height });
+        this.emit('update:rect', { width, height });
     }
 
     /**
@@ -152,18 +151,18 @@ export class BaseNodeModel extends IEventTarget {
      */
     setSelected(isSelected) {
         this.selected = isSelected; // 更新当前选中状态
-        this.emit('change:select', { isSelected }); // 触发选中状态变更事件，传递新的选中状态
+        this.emit('update:select', { isSelected }); // 触发选中状态变更事件，传递新的选中状态
     }
 
     /** @param {number} index */
     setZIndex(index) {
-        this.emit('change:zIndex', { index });
+        this.emit('update:zIndex', { index });
     }
 
     /** @param {boolean} isCollapsed */
     setCollapsed(isCollapsed) {
         this.collapsed = isCollapsed;
-        this.emit('change:collapsed', { isCollapsed });
+        this.emit('update:collapsed', { isCollapsed });
     }
 
     /** 序列化：用于保存到 JSON 或发送给 VSCode 后端 */

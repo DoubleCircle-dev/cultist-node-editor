@@ -304,6 +304,12 @@ export class NodeManager extends IManager {
         nodeModel.addEventListener('append:property', appendPropertyHandler);
         listeners.push({ event: 'append:property', handler: appendPropertyHandler });
 
+        const changeTitleHandler = () => {
+            this.bus.emit('change:title:success', { nodeId: nodeModel.id });
+        };
+        nodeModel.addEventListener('change:title:success', changeTitleHandler);
+        listeners.push({ event: 'change:title:success', handler: changeTitleHandler });
+
         this.nodeModelListeners.set(String(nodeModel.id), listeners);
     }
 

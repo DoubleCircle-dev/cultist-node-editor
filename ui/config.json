@@ -1,0 +1,31 @@
+{
+  "shortcuts": [
+    { "id": "node_delete", "key": "Delete", "action": "删除选中节点", "category": "节点操作", "editable": false },
+    { "id": "node_copy", "key": "Ctrl+C", "action": "复制选中节点", "category": "节点操作", "editable": true },
+    { "id": "node_paste", "key": "Ctrl+V", "action": "粘贴节点", "category": "节点操作", "editable": true },
+    { "id": "undo", "key": "Ctrl+Z", "action": "撤销上一步操作", "category": "编辑", "editable": false },
+    { "id": "redo", "key": "Ctrl+Y", "action": "重做已撤销操作", "category": "编辑", "editable": false },
+    { "id": "select_all", "key": "Ctrl+A", "action": "全选画布节点", "category": "选择", "editable": true },
+    { "id": "focus_node", "key": "F", "action": "聚焦到选中节点", "category": "视图", "editable": true },
+    { "id": "canvas_drag", "key": "Space+拖拽", "action": "临时切换拖动画布模式", "category": "视图", "editable": false },
+    { "id": "zoom", "key": "鼠标滚轮", "action": "缩放画布", "category": "视图", "editable": false },
+    { "id": "help", "key": "F1", "action": "打开帮助面板", "category": "面板", "editable": true },
+    { "id": "save", "key": "Ctrl+S", "action": "保存当前更改", "category": "文件", "editable": true },
+    { "id": "find_node", "key": "Ctrl+F", "action": "搜索节点", "category": "搜索", "editable": true }
+  ],
+  "settings": {
+    "theme": "dark",
+    "language": "zh-cn",
+    "autoSave": false,
+    "autoSaveInterval": 300,
+    "gridSize": 20,
+    "snapToGrid": true,
+    "defaultZoom": 1.0,
+    "minZoom": 0.1,
+    "maxZoom": 3.0,
+    "animationSpeed": 200,
+    "connectionStyle": "bezier",
+    "showGrid": true,
+    "showMiniMap": false
+  }
+}

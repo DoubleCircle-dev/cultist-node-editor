@@ -5,6 +5,7 @@ import { PanelModel } from '../models/panelModels/panelModel.js';
 import { PanelView } from '../views/panelView.js';
 import { NodeTypeRegistry } from '../types/nodeTypes.js';
 import { ExpandPanelModel } from '../models/panelModels/expandPanelModel.js';
+import { BottomPanelModel } from '../models/panelModels/bottomPanelModel.js';
 
 // 管理展示面板
 export class PanelManager extends IManager {
@@ -61,17 +62,19 @@ export class PanelManager extends IManager {
         this.registerListener(this.bus, 'create:node:finished', this._onNodesChanged);
         this.registerListener(this.bus, 'delete:node:finished', this._onNodesChanged);
         this.registerListener(this.bus, 'delete:all_node:success', this._onNodesChanged);
+        this.registerListener(this.bus, 'change:title:success', this._onNodesChanged);
     }
 
     /** @private */
     _initPanels() {
+        // 添加节点面板
         const addNodesPanel = new ExpandPanelModel('addNodesPanel', '添加节点', {
             hasSearch: true,
             dataType: 'list',
         });
         addNodesPanel.rawData = NodeTypeRegistry.allTypesList;
         addNodesPanel.dataActionHandlers.set('click-node-item', (type, id, path) => {
-            this.bus.emit('addNode',{
+            this.bus.emit('addNode', {
                 type,
                 id,
                 path,
@@ -80,6 +83,7 @@ export class PanelManager extends IManager {
         this._attachPanelEventListener(addNodesPanel);
         this.panels.set(addNodesPanel.id, { model: addNodesPanel, view: null });
 
+        // 查找节点面板
         const findNodesPanel = new ExpandPanelModel('findNodesPanel', '查找节点', {
             hasSearch: true,
             dataType: 'list',
@@ -90,12 +94,13 @@ export class PanelManager extends IManager {
                 type,
                 id,
                 path,
-            })
-        })
+            });
+        });
         this._refreshFindNodesPanel();
         this._attachPanelEventListener(findNodesPanel);
         this.panels.set(findNodesPanel.id, { model: findNodesPanel, view: null });
 
+        // 打开文件面板
         const openFilePanel = new ExpandPanelModel('openFilePanel', '打开文件', {
             hasSearch: true,
             dataType: 'tree',
@@ -128,6 +133,75 @@ export class PanelManager extends IManager {
 
         this._attachPanelEventListener(openFilePanel);
         this.panels.set(openFilePanel.id, { model: openFilePanel, view: null });
+
+        // 底部帮助面板
+        const helpPanel = new BottomPanelModel('helpPanel', '帮助', {
+            dataType: 'help',
+            icon: '❓',
+        });
+
+        const helpController = new AbortController();
+        this.fetchControllers.set('helpPanel', helpController);
+
+        fetch('./help.json', { signal: helpController.signal })
+            .then((response) => {
+                if (!response.ok) throw new Error(`HTTP错误！状态码：${response.status}`);
+                return response.json();
+            })
+            .then((data) => {
+                helpPanel.rawData = data;
+            })
+            .catch((error) => {
+                if (error.name !== 'AbortError') {
+                    console.error('读取帮助JSON出错：', error);
+                }
+            });
+
+        this.panels.set(helpPanel.id, { model: helpPanel, view: null });
+
+        // 底部快捷键面板
+        const shortcutsPanel = new BottomPanelModel('shortcutsPanel', '快捷键', {
+            dataType: 'shortcuts',
+            icon: '⌨️',
+        });
+
+        /** @type {any} */
+        this._configData = null;
+
+        const configController = new AbortController();
+        this.fetchControllers.set('shortcutsPanel', configController);
+
+        fetch('./config.json', { signal: configController.signal })
+            .then((response) => {
+                if (!response.ok) throw new Error(`HTTP错误！状态码：${response.status}`);
+                return response.json();
+            })
+            .then((data) => {
+                this._configData = data;
+                shortcutsPanel.rawData = data.shortcuts || [];
+            })
+            .catch((error) => {
+                if (error.name !== 'AbortError') {
+                    console.error('读取配置JSON出错：', error);
+                }
+            });
+
+        // 快捷键修改处理
+        shortcutsPanel.dataActionHandlers.set('shortcut-changed', (type, id, newKey) => {
+            if (!this._configData || !this._configData.shortcuts) return;
+            const item = this._configData.shortcuts.find((s) => s.id === id);
+            if (item) {
+                item.key = newKey;
+            }
+        });
+
+        // 保存快捷键配置
+        shortcutsPanel.dataActionHandlers.set('save-shortcuts', () => {
+            this._saveConfig();
+        });
+
+        this.panels.set(shortcutsPanel.id, { model: shortcutsPanel, view: null });
+        
     }
 
     /**
@@ -139,9 +213,8 @@ export class PanelManager extends IManager {
             const { action, type, id, path } = e.detail;
 
             if (panelModel.dataActionHandlers.has(action)) {
-
                 const handler = panelModel.dataActionHandlers.get(action);
-                if (!handler){
+                if (!handler) {
                     console.error(`未找到面板${panelModel.id}的点击事件处理函数${action}`);
                     return;
                 }
@@ -253,6 +326,44 @@ export class PanelManager extends IManager {
         const nodes = this.coreSpace.nodes;
         this.findNodesPanel.rawData = nodes;
         this.findNodesPanel.emit('data:changed', { data: nodes });
+    }
+
+    /**
+     * @private 保存配置到 config.json
+     * 在 VS Code 环境中通过 postMessage 保存，浏览器环境中尝试下载
+     */
+    _saveConfig() {
+        if (!this._configData) {
+            console.error('没有配置数据可保存');
+            return;
+        }
+
+        const jsonStr = JSON.stringify(this._configData, null, 2);
+
+        // VS Code 插件环境
+        if (typeof acquireVsCodeApi === 'function') {
+            const vscode = acquireVsCodeApi();
+            vscode.postMessage({
+                command: 'saveConfig',
+                data: jsonStr,
+            });
+            console.log('✅ 已发送保存配置请求到 VS Code');
+            return;
+        }
+
+        // 普通浏览器环境：触发下载
+        try {
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'config.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log('✅ 已下载配置文件');
+        } catch (err) {
+            console.error('保存配置失败:', err);
+        }
     }
 
     destroy() {

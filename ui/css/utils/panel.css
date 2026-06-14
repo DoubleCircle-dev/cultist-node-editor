@@ -7,20 +7,51 @@
     z-index: 1000;
 }
 
+.panel.hidden {
+    display: none;
+}
+
 .panel.expand {
     width: 340px;
     height: 100%;
 }
 
 .panel.expand.exit {
-    animation: expand 0.3s ease-out;    
+    animation: expandExit 0.3s ease-out forwards;
 }
 
 .panel.bottom {
-    bottom: 0;
     width: 100%;
-    right: 0;
-    height: 320px;
+    height: 100%;
+    border-left: none;
+    border-top: 1px solid #334155;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.panel.bottom.exit {
+    animation: bottomExit 0.25s ease-out forwards;
+}
+
+@keyframes bottomExit {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+}
+
+@keyframes expandExit {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(6px);
+    }
 }
 
 .expand-panel {
@@ -311,19 +342,46 @@
 
 /* 向下扩展面板（帮助/快捷键） */
 .bottom-expand-panel-container {
+    position: absolute;
+    left: 64px;
+    bottom: 0;
+    right: 0;
+    height: 320px;
+    z-index: 1001;
     background: #1f1f2e;
-    padding: 14px 12px;
-    width: 100%;
-    height: auto;
-    margin-top: auto;
+    padding: 0;
     border-top: 3px solid #b58a5f;
-    box-shadow: inset 0 1px 3px #0b0b12, 0 -4px 8px rgba(0, 0, 0, 0.2);
-    animation: slideUp 0.15s;
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.15s ease-out;
     pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: left 0.25s ease;
+}
+
+/* expand 面板可见时，底部面板自动右移 */
+.expand-panel-container:not(.hidden):not(.exit) ~ .bottom-expand-panel-container {
+    left: 432px;
+}
+
+.bottom-expand-panel-container.exit {
+    animation: slideDown 0.2s ease-out forwards;
 }
 
 .bottom-expand-panel-container.hidden {
     display: none;
+}
+
+@keyframes slideDown {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(100%);
+    }
 }
 
 @keyframes slideUp {
@@ -331,7 +389,6 @@
         opacity: 0.5;
         transform: translateY(6px);
     }
-
     100% {
         opacity: 1;
         transform: translateY(0);
@@ -608,4 +665,267 @@
     background: #252b3b;
     color: #f1f5f9;
     transform: translateX(2px);
+}
+
+/* ==========================================
+   帮助面板
+   ========================================== */
+
+.help-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.help-section {
+    background: #1a1e2b;
+    border: 1px solid #2a3040;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+}
+
+.help-section:hover {
+    border-color: #3a4a60;
+}
+
+.help-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: #1e2432;
+    transition: background 0.12s;
+}
+
+.help-section-header:hover {
+    background: #252d3d;
+}
+
+.help-section-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.help-section-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+}
+
+.help-section-arrow {
+    font-size: 0.65rem;
+    color: #64748b;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.help-section.collapsed .help-section-arrow {
+    transform: rotate(-90deg);
+}
+
+.help-section.collapsed .help-section-body {
+    display: none;
+}
+
+.help-section-body {
+    padding: 4px 14px 14px;
+}
+
+.help-paragraph {
+    color: #b0bec5;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    padding: 4px 0;
+}
+
+.help-items {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 2px;
+}
+
+.help-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    transition: background 0.1s;
+}
+
+.help-item:hover {
+    background: #232b38;
+}
+
+.help-item-title {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: #c8d6e5;
+    margin-bottom: 2px;
+}
+
+.help-item-desc {
+    font-size: 0.78rem;
+    color: #8899aa;
+    line-height: 1.55;
+}
+
+/* 快捷键条目 */
+.shortcut-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 10px;
+}
+
+.help-key {
+    display: inline-block;
+    background: #2a3040;
+    color: #ffd966;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 5px;
+    border: 1px solid #3a4a60;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.help-key-desc {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    text-align: right;
+    flex: 1;
+}
+
+/* ==========================================
+   快捷键面板（可编辑）
+   ========================================== */
+
+.shortcuts-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.shortcuts-category {
+    margin-bottom: 8px;
+}
+
+.shortcuts-category-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #8b9dc3;
+    padding: 8px 10px 6px;
+    border-bottom: 1px solid #2a3040;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.shortcut-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    transition: background 0.12s;
+    gap: 16px;
+}
+
+.shortcut-row:hover {
+    background: #202636;
+}
+
+.shortcut-action-label {
+    font-size: 0.82rem;
+    color: #c8d6e5;
+    flex: 1;
+}
+
+.shortcut-key-badge {
+    display: inline-block;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.78rem;
+    padding: 4px 12px;
+    border-radius: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.shortcut-key-badge.editable {
+    background: #2a3040;
+    color: #ffd966;
+    border: 1px solid #3a4a60;
+    cursor: pointer;
+}
+
+.shortcut-key-badge.editable:hover {
+    background: #3a4560;
+    border-color: #5a7aaa;
+    color: #ffe08a;
+    box-shadow: 0 0 6px rgba(100, 140, 200, 0.3);
+}
+
+.shortcut-key-badge.readonly {
+    background: #1e2430;
+    color: #8899aa;
+    border: 1px solid #2a3040;
+    cursor: default;
+}
+
+.shortcut-key-badge.capturing {
+    background: #4a3050;
+    color: #ffb8ff;
+    border: 2px dashed #a060c0;
+    animation: pulse-capture 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse-capture {
+    0%, 100% { box-shadow: 0 0 4px rgba(160, 96, 192, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(160, 96, 192, 0.7); }
+}
+
+.shortcuts-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding: 12px 6px 4px;
+    border-top: 1px solid #334155;
+    gap: 12px;
+}
+
+.btn-save-shortcuts {
+    background: linear-gradient(135deg, #6d5acf, #8b5cf6);
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(107, 90, 207, 0.3);
+}
+
+.btn-save-shortcuts:hover {
+    background: linear-gradient(135deg, #7c6ae0, #9b6dff);
+    box-shadow: 0 4px 14px rgba(107, 90, 207, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-save-shortcuts:active {
+    transform: translateY(0);
+}
+
+.shortcuts-hint {
+    font-size: 0.72rem;
+    color: #64748b;
+    text-align: right;
 }
