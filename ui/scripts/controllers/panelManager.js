@@ -58,6 +58,9 @@ export class PanelManager extends IManager {
 
         this._initPanels();
 
+        // 初始化拖拽调整面板尺寸
+        this._initResizers();
+
         // 监听节点变化，自动刷新「查找节点」面板
         this.registerListener(this.bus, 'create:node:finished', this._onNodesChanged);
         this.registerListener(this.bus, 'delete:node:finished', this._onNodesChanged);
@@ -285,6 +288,133 @@ export class PanelManager extends IManager {
      */
     _toggleBottomPanel(panelView) {
         this.bottomPanelContainer.toggle(panelView);
+    }
+
+    // ==========================================
+    // 拖拽调整面板尺寸
+    // ==========================================
+
+    /** @private */
+    _initResizers() {
+        this._expandWidth = 340;   // expand 面板内容宽度
+        this._bottomHeight = 320;  // bottom 面板高度
+
+        const root = document.documentElement;
+        root.style.setProperty('--expand-width', this._expandWidth + 'px');
+        root.style.setProperty('--bottom-height', this._bottomHeight + 'px');
+
+        this._createExpandResizer();
+        this._createBottomResizer();
+    }
+
+    /** @private 获取画布可视区域边界，用于限制面板最大尺寸 */
+    _getCanvasBounds() {
+        const vp = this.viewport;
+        const vpW = vp ? vp.clientWidth : window.innerWidth;
+        const vpH = vp ? vp.clientHeight : window.innerHeight;
+
+        return {
+            maxExpandWidth: Math.max(340, vpW - 64 - 100),
+            maxBottomHeight: Math.max(320, vpH - 80),
+        };
+    }
+
+    /** @private 创建 expand 面板右边界拖拽手柄 */
+    _createExpandResizer() {
+        const handle = document.createElement('div');
+        handle.className = 'panel-resizer panel-resizer-v';
+        handle.title = '拖拽调整侧面板宽度';
+
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+        sidebar.appendChild(handle);
+
+        /** @param {MouseEvent} e */
+        const onDown = (e) => {
+            e.preventDefault();
+            const startX = e.clientX;
+            const startWidth = this._expandWidth;
+
+            const bounds = this._getCanvasBounds();
+            const minW = 340;
+            const maxW = bounds.maxExpandWidth;
+
+            handle.classList.add('active');
+            document.body.classList.add('resizing-active');
+
+            /** @param {MouseEvent} ev */
+            const onMove = (ev) => {
+                const dx = ev.clientX - startX;
+                const newWidth = Math.max(minW, Math.min(maxW, startWidth + dx));
+                this._expandWidth = newWidth;
+
+                const root = document.documentElement;
+                root.style.setProperty('--expand-width', newWidth + 'px');
+            };
+
+            /** @param {MouseEvent} ev */
+            const onUp = (ev) => {
+                handle.classList.remove('active');
+                document.body.classList.remove('resizing-active');
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        };
+
+        handle.addEventListener('mousedown', onDown);
+        this.listenerMaps.push({ target: handle, type: 'mousedown', listener: onDown });
+    }
+
+    /** @private 创建 bottom 面板上边界拖拽手柄 */
+    _createBottomResizer() {
+        const handle = document.createElement('div');
+        handle.className = 'panel-resizer panel-resizer-h';
+        handle.title = '拖拽调整底部面板高度';
+
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+        sidebar.appendChild(handle);
+
+        /** @param {MouseEvent} e */
+        const onDown = (e) => {
+            e.preventDefault();
+            const startY = e.clientY;
+            const startHeight = this._bottomHeight;
+
+            const bounds = this._getCanvasBounds();
+            const minH = 120;
+            const maxH = bounds.maxBottomHeight;
+
+            handle.classList.add('active');
+            document.body.classList.add('resizing-active');
+
+            /** @param {MouseEvent} ev */
+            const onMove = (ev) => {
+                const dy = startY - ev.clientY;
+                const newHeight = Math.max(minH, Math.min(maxH, startHeight + dy));
+                this._bottomHeight = newHeight;
+
+                const root = document.documentElement;
+                root.style.setProperty('--bottom-height', newHeight + 'px');
+            };
+
+            /** @param {MouseEvent} ev */
+            const onUp = (ev) => {
+                handle.classList.remove('active');
+                document.body.classList.remove('resizing-active');
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        };
+
+        handle.addEventListener('mousedown', onDown);
+        this.listenerMaps.push({ target: handle, type: 'mousedown', listener: onDown });
     }
 
     /**

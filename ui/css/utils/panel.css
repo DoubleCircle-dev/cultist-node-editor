@@ -12,7 +12,7 @@
 }
 
 .panel.expand {
-    width: 340px;
+    width: 100%;
     height: 100%;
 }
 
@@ -55,7 +55,7 @@
 }
 
 .expand-panel {
-    width: 340px;
+    width: 100%;
     height: 100%;
     background: #1e2432;
     border-left: 1px solid #334155;
@@ -205,7 +205,6 @@
 .bottom-panel {
     bottom: 0;
     width: 100%;
-    /* 从侧边栏右侧开始，宽度=340px */
     right: 0;
     height: 320px;
     /* 高度可按需调整 */
@@ -296,9 +295,11 @@
 
 /* 向右扩展面板 */
 .expand-panel-container {
+    position: relative;
+    z-index: 1002;
+    box-sizing: border-box;
     background: #252534;
-    /* border-radius: 18px; */
-    min-width: 300px;
+    min-width: var(--expand-width, 340px);
     padding: 14px 12px;
     margin: 0 0 0 0;
     border-left: 4px solid #5f8db5;
@@ -346,7 +347,7 @@
     left: 64px;
     bottom: 0;
     right: 0;
-    height: 320px;
+    height: var(--bottom-height, 320px);
     z-index: 1001;
     background: #1f1f2e;
     padding: 0;
@@ -360,9 +361,14 @@
     transition: left 0.25s ease;
 }
 
-/* expand 面板可见时，底部面板自动右移 */
+/* 拖拽期间禁用过渡动画 */
+.resizing-active .bottom-expand-panel-container {
+    transition: none;
+}
+
+/* expand 面板可见时，底部面板左边界藏在 expand 面板下方 */
 .expand-panel-container:not(.hidden):not(.exit) ~ .bottom-expand-panel-container {
-    left: 432px;
+    left: calc(64px + var(--expand-width, 340px) - 4px);
 }
 
 .bottom-expand-panel-container.exit {
@@ -928,4 +934,76 @@
     font-size: 0.72rem;
     color: #64748b;
     text-align: right;
+}
+
+/* ==========================================
+   面板拖拽调整尺寸手柄
+   ========================================== */
+
+.panel-resizer {
+    position: absolute;
+    background: transparent;
+    transition: background 0.15s;
+    pointer-events: auto;
+}
+
+.panel-resizer:hover,
+.panel-resizer.active {
+    background: rgba(139, 92, 246, 0.35);
+}
+
+/* 垂直手柄 — 在 expand 面板右边界上方 */
+.panel-resizer-v {
+    z-index: 1003;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    left: calc(64px + var(--expand-width, 340px));
+    transform: translateX(-50%);
+}
+
+.panel-resizer-v::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 40px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0);
+    transition: background 0.15s;
+}
+
+.panel-resizer-v:hover::after {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* 水平手柄 — 在 bottom 面板上方、expand 面板下方 */
+.panel-resizer-h {
+    z-index: 1001;
+    left: 64px;
+    right: 0;
+    height: 6px;
+    cursor: row-resize;
+    bottom: var(--bottom-height, 320px);
+    transform: translateY(50%);
+}
+
+.panel-resizer-h::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0);
+    transition: background 0.15s;
+}
+
+.panel-resizer-h:hover::after {
+    background: rgba(255, 255, 255, 0.5);
 }
