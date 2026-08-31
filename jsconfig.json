@@ -3,7 +3,9 @@
     "module": "Node16",
     "target": "ES2022",
     "checkJs": true /* Typecheck .js files. */,
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "strict": false,
+    "noImplicitAny": false /* 关闭大部分隐式 any 检查，仅保留少数需要类型守卫的错误 */
   },
 	"exclude": [
 		"node_modules"
