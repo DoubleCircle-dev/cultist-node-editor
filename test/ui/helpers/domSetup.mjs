@@ -58,6 +58,7 @@ for (const key of GLOBALS) {
 // PanelManager 会 fetch('./help.json' / './config.json' / './json-manifest.json')，
 // jsdom/undici 无法解析这类相对 URL。这里拦截 fetch 返回空对象，
 // 让 JSON 加载代码路径正常执行（不报错、不刷错误日志）。
-globalThis.fetch = () => Promise.resolve({ ok: true, json: async () => ({}) });
+globalThis.fetch = () =>
+  Promise.resolve(/** @type {any} */ ({ ok: true, json: async () => ({}) }));
 
 export { window };

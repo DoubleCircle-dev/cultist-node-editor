@@ -81,7 +81,7 @@ function collectModelProps(model) {
     }
   };
   if (model.portHub) walk(model.portHub);
-  (model._properties || []).forEach(walk);
+  (model['_properties'] || []).forEach(walk);
   Object.values(model.modeProperties || {}).forEach(walk);
   if (model.extendedProperties?.active) walk(model.extendedProperties.active);
   if (model.extendedProperties?.pool) walk(model.extendedProperties.pool);

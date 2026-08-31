@@ -2,6 +2,7 @@ import './helpers/domSetup.mjs';
 import { describe, it } from 'mocha';
 import assert from 'node:assert/strict';
 import { NodeGenerator } from '../../ui/scripts/generators/nodeGenerator.js';
+import { HubProp } from '../../ui/scripts/models/propModels/hubProp.js';
 
 /**
  * 节点模型生命周期：releaseListeners（软释放，保留数据）与
@@ -93,7 +94,7 @@ describe('节点模型 dispose / releaseListeners 责任链', () => {
     m.dispose();
 
     assert.equal(totalListeners(m), 0);
-    assert.equal(m._properties.length, 0, '普通属性应清空');
+    assert.equal(m['_properties'].length, 0, '普通属性应清空');
     assert.equal(m.portHub, null, 'portHub 应置空');
     assert.equal(m.inputs, null);
     assert.equal(m.outputs, null);
@@ -107,17 +108,17 @@ describe('节点模型 dispose / releaseListeners 责任链', () => {
     m.dispose();
     m.dispose();
     assert.equal(totalListeners(m), 0);
-    assert.equal(m._properties.length, 0);
+    assert.equal(m['_properties'].length, 0);
   });
 
   it('dispose 后属性对象上的监听器也已清空（递归到 prop/port）', () => {
     const m = NodeGenerator.createNode('1', 1, 'test', 0, 0);
     // 取一个端口 prop 验证其 PortModel 监听器在 dispose 后为空
     const somePort = m.portHub.properties
-      .flatMap((hub) => hub.properties || [])
-      .find((p) => p.inputPort || p.outputPort);
+      .flatMap((hub) => (hub instanceof HubProp ? hub.properties : []))
+      .find((p) => /** @type {any} */ (p).inputPort || /** @type {any} */ (p).outputPort);
     assert.ok(somePort, '测试节点应存在端口属性');
-    const portModel = somePort.inputPort || somePort.outputPort;
+    const portModel = (/** @type {any} */ (somePort)).inputPort || (/** @type {any} */ (somePort)).outputPort;
 
     m.dispose();
 
@@ -130,6 +131,7 @@ describe('节点模型 dispose / releaseListeners 责任链', () => {
     m.releaseListeners();
     const h = () => {};
     m.addEventListener('update:position', h);
-    assert.equal(m.getAllEventListeners('update:position').length, 1);
+    const listeners = /** @type {Function[]} */ (m.getAllEventListeners('update:position'));
+    assert.equal(listeners.length, 1);
   });
 });

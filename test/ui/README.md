@@ -19,7 +19,7 @@ npm run test:ui:memory
 ## 文件结构
 
 | 文件 | 覆盖内容 |
-|---|---|
+| --- | --- |
 | `eventBus.test.mjs` | L1 根因：`on/off/once/onceExclusive` 按引用移除，不累积 |
 | `iEventTarget.test.mjs` | 监听器登记/移除、`removeAllEventListeners`（含 L6 修复） |
 | `disposeChain.test.mjs` | 模型 `releaseListeners`（软释放）/`dispose`（全量销毁）责任链 |
@@ -70,5 +70,6 @@ npm run test:ui:memory
 `WeakRef.deref()` + `global.gc()` 在本环境**不可靠**：单对象基线（无任何强引用）在
 `gc()` 后 `deref()` 仍返回对象（V8 伪影），而数组场景可正常回收。
 因此套件不把 WeakRef 作为断言依据，改为：
+
 - **确定性断言**：删除后索引/监听器/DOM 全部释放；
 - **可测量验证**：独立 `memory-check.mjs` 证明堆内存平坦（实测 1000→4000 节点仅 +0.14MB）。

@@ -69,7 +69,7 @@ describe('IEventTarget 监听器管理', () => {
     const t = new IEventTarget();
     let got = null;
     t.addEventListener('x', (e) => {
-      got = e.detail;
+      got = /** @type {CustomEvent} */ (e).detail;
     });
     t.emit('x', { foo: 1 });
     assert.deepEqual(got, { foo: 1 });

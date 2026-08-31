@@ -104,9 +104,10 @@ describe('EventBus 监听器生命周期（L1 根因修复）', () => {
   });
 
   it('事件分发能把 detail 传给监听器', () => {
+    /** @type {any} */
     let got = null;
     bus.on('create:node:finished', (e) => {
-      got = e.detail;
+      got = /** @type {CustomEvent} */ (e).detail;
     });
     bus.emit('create:node:finished', { nodes: [1, 2] });
     assert.ok(got);
