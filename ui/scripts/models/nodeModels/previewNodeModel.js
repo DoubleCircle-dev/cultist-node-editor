@@ -27,7 +27,7 @@ export class PreviewNodeModel extends BaseNodeModel {
         /** 被预览的节点（referenceNode） */
         this.referenceNode = null;
 
-        /** @type {((targetId: string) => import('./baseNodeModel.js').BaseNodeModel | null) | null} 按 ID 查找目标节点的引用器（NodeManager 注入） */
+        /** @private @type {((targetId: string) => import('./baseNodeModel.js').BaseNodeModel | null) | null} 按 ID 查找目标节点的引用器（NodeManager 注入） */
         this._targetFinder = null;
     }
 

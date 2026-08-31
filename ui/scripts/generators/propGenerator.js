@@ -20,7 +20,7 @@ export class PropGenerator {
         // 根据类型预处理参数
         let args;
         switch (type) {
-            case 'hub':
+            case 'hub': {
                 /** @type {BaseProp[]} */
                 const hubProps = [];
                 propConfig.properties.forEach((/** @type {PropConfig} */ p, /** @type {number} */ index) => {
@@ -29,6 +29,7 @@ export class PropGenerator {
                 args = [id, propConfig.label, hubProps, propConfig.layout];
                 propClass = HubProp;
                 break;
+            }
             case 'range':
                 args = [id, propConfig.label, 'slider', propConfig.default, propConfig.min, propConfig.max];
                 propClass = NumericProp;
@@ -564,7 +565,7 @@ export class PropRenderer {
         const listeners = [];
 
         switch (type) {
-            case 'textarea':
+            case 'textarea': {
                 const textInput = this.createElement('textarea', {
                     value: prop.value ?? '',
                     placeholder: '输入文本内容...',
@@ -575,6 +576,7 @@ export class PropRenderer {
                 listeners.push({ target: textInput, type: 'mousedown', listener: textareaMousedownListener });
                 preView.appendChild(textInput);
                 break;
+            }
             case 'icon': {
                 const placeholder = this.getPlaceholderImage();
                 const icon = /** @type {HTMLImageElement} */ (this.createElement('img', {
@@ -610,7 +612,7 @@ export class PropRenderer {
                 break;
             }
 
-            case 'table':
+            case 'table': {
                 const tableWrapper = this.createElement('div', {}, 'table-wrapper');
 
                 const table = this.createElement('table', {}, 'prop-table');
@@ -643,6 +645,7 @@ export class PropRenderer {
                 tableWrapper.appendChild(table);
                 preView.appendChild(tableWrapper);
                 break;
+            }
         }
 
         return { element: preView, listeners: listeners };

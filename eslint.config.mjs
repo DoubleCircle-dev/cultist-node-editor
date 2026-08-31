@@ -5,6 +5,10 @@ import js from '@eslint/js';
 import prettierConfig from 'eslint-config-prettier';
 
 export default [
+    {
+        // 临时工作区（agent-scratch）与依赖目录不进 lint：与 .gitignore 一致
+        ignores: ['agent-scratch/**'],
+    },
     js.configs.recommended,
     prettierConfig,
     {

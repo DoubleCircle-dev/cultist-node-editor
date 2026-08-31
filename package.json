@@ -11,8 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "*",
-    "onCustomEditor:cultist-node-editor.jsonPreview"
+    "*"    
   ],
   "main": "./extension.js",
   "contributes": {
