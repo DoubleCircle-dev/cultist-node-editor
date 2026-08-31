@@ -151,7 +151,7 @@ function createTestPanel(testTypes = []) {
     panel.rawData = testTypes;
 
     panel.addEventListener('data:action:click', (e) => {
-        const { action, type, id, path } = e.detail;
+        const { action, type, id, path } = /** @type {CustomEvent} */ (e).detail;
         if (action === 'click-node-item') {
             testTypes.forEach((test) => {
                 if (test.type === type) {

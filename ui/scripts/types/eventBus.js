@@ -191,7 +191,7 @@ export class EventBus extends IEventTarget {
         }
         this.on(message.eventName, (e) => {
             if (execFunction) {
-                execFunction(e.detail);
+                execFunction(/** @type {CustomEvent} */ (e).detail);
             }
         });
     }

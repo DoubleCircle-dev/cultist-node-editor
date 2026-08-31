@@ -43,12 +43,12 @@ export class ExpandPanelModel extends PanelModel {
 
     // 可以在这里编写专属 Expand 面板的过滤算法（如树的前序遍历过滤）
     getFilteredData() {
-        if (!this._searchQuery) return this._rawData;
+        if (!this.searchQuery) return this.rawData;
 
-        const query = this._searchQuery.toLowerCase();
+        const query = this.searchQuery.toLowerCase();
 
         if (this.dataType === 'list') {
-            return (this._rawData || []).filter((item) => {
+            return (this.rawData || []).filter((item) => {
                 const searchStr = [
                     item.title,
                     item.label,
@@ -66,7 +66,7 @@ export class ExpandPanelModel extends PanelModel {
 
         if (this.dataType === 'tree') {
             const filtered = {};
-            for (const [category, files] of Object.entries(this._rawData || {})) {
+            for (const [category, files] of Object.entries(this.rawData || {})) {
                 if (!Array.isArray(files)) continue;
                 const matchCategory = category.toLowerCase().includes(query);
                 const matchFiles = files.filter(
@@ -79,6 +79,6 @@ export class ExpandPanelModel extends PanelModel {
             return Object.keys(filtered).length > 0 ? filtered : null;
         }
 
-        return this._rawData;
+        return this.rawData;
     }
 }

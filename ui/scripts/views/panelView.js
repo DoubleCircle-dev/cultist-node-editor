@@ -1,4 +1,5 @@
 import { PanelModel } from '../models/panelModels/panelModel.js';
+import { ExpandPanelModel } from '../models/panelModels/expandPanelModel.js';
 import { IView } from '../types/IView.js';
 
 export class PanelView extends IView {
@@ -127,6 +128,10 @@ export class PanelView extends IView {
      * @param {string} rootName
      */
     _renderTree(treeData, rootName = 'root') {
+        // 类型守卫：只有 ExpandPanelModel 才具备 expandedNodes
+        if (!(this.model instanceof ExpandPanelModel)) {
+            return;
+        }
         const body = this.element.querySelector('.panel-body');
         if (!treeData || Object.keys(treeData).length === 0) {
             body.innerHTML = '<div class="empty-tip">📭 目录无有效数据</div>';
@@ -335,10 +340,7 @@ export class PanelView extends IView {
      * @private 根据当前 model 的 rawData 和 dataType 重新渲染内容区
      */
     _refreshContent() {
-        const data =
-            typeof this.model.getFilteredData === 'function'
-                ? this.model.getFilteredData()
-                : this.model.rawData;
+        const data = this.model instanceof ExpandPanelModel ? this.model.getFilteredData() : this.model.rawData;
 
         if (this.model.dataType === 'list') {
             this._renderDataList(data);
@@ -365,7 +367,7 @@ export class PanelView extends IView {
             // 树节点的折叠/展开由 View 直接处理，不走事件总线
             if (action === 'toggle-folder') {
                 const path = target.getAttribute('data-path');
-                if (this.model.toggleNodeExpand) {
+                if (this.model instanceof ExpandPanelModel) {
                     this.model.toggleNodeExpand(path);
                 }
                 // 重新渲染树以反映折叠状态变化
@@ -492,7 +494,7 @@ export class PanelView extends IView {
         // 点击其他地方取消编辑
         /** @param {MouseEvent} e */
         this._shortcutBlurHandler = (e) => {
-            if (this._editingShortcutEl && !this._editingShortcutEl.contains(e.target)) {
+            if (this._editingShortcutEl && !this._editingShortcutEl.contains(/** @type {Node} */ (e.target))) {
                 this._cancelShortcutEdit();
             }
         };

@@ -213,7 +213,7 @@ export class PanelManager extends IManager {
      */
     _attachPanelEventListener(panelModel) {
         panelModel.addEventListener('data:action:click', (e) => {
-            const { action, type, id, path } = e.detail;
+            const { action, type, id, path } = /** @type {CustomEvent} */ (e).detail;
 
             if (panelModel.dataActionHandlers.has(action)) {
                 const handler = panelModel.dataActionHandlers.get(action);

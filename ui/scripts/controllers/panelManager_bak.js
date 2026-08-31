@@ -308,7 +308,7 @@ export class PanelManager extends IManager {
         // 如果传入了自定义回调，直接挂载在 DOM 对象属性上。
         // 当 panel 被销毁时，这个属性随之销毁，不会导致外部长生命周期对象引用它。
         if (onClick) {
-            panel._customOnClick = onClick;
+            /** @type {any} */ (panel)._customOnClick = onClick;
         }
 
         // 生成 DOM 结构
@@ -384,7 +384,7 @@ export class PanelManager extends IManager {
                 this._toggleExpandPanel(this.openFilePanel);
                 break;
             case 'testPanel':
-                this._toggleBottomPanel(this.testPanel);
+                this._toggleBottomPanel(/** @type {any} */ (this).testPanel);
                 break;
             default:
                 console.error('找不到对应面板', panel);

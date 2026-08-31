@@ -48,9 +48,8 @@ export class HistoryManager extends IManager {
     _onEvent() {
         // 通过 registerListener 登记到 listenerMaps，destroy()/removeListeners()
         // 才能将其移除；原实现直接 this.bus.on(...) 无登记，会随实例一起泄漏
-        this.registerListener(this.bus, 'log', (evt) => {
-            const ce = /** @type {CustomEvent} */ (evt);
-            this.registerHistory(ce.detail.eventName, ce.detail.data);
+        this.registerListener(this.bus, 'log', (/** @type {CustomEvent} */ evt) => {
+            this.registerHistory(evt.detail.eventName, evt.detail.data);
         });
     }
 
