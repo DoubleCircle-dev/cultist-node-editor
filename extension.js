@@ -182,7 +182,7 @@ function createNodeEditorPanel(context) {
     }
 }
 
-function getWebviewContent(panel, context) {
+function getWebviewContent(panel, context, options = {}) {
     const uiDir = path.join(context.extensionPath, 'ui');
 
     try {
@@ -204,6 +204,10 @@ function getWebviewContent(panel, context) {
             const placeholderPath = path.join(uiDir, 'assets', 'img', 'placeholder.png');
             if (fs.existsSync(placeholderPath)) {
                 config.placeholderImage = panel.webview.asWebviewUri(vscode.Uri.file(placeholderPath)).toString();
+            }
+            // 预览模式（customEditor「打开方式」）：仅查看当前 json，前端隐藏侧边栏/顶栏等功能
+            if (options.previewMode) {
+                config.previewMode = true;
             }
             htmlContent = injectConfigData(htmlContent, config);
         }
@@ -532,25 +536,8 @@ function handleOpenJsonPreview(panel) {
         })
         .then((files) => {
             if (!files || !files[0]) return;
-            const filePath = files[0].fsPath;
-            const result = modConverter.singleFileToData(filePath);
-            if (result.error) {
-                vscode.window.showErrorMessage(`预览失败: ${result.error}`);
-                return;
-            }
-            const count = Object.values(result.categories).reduce((n, list) => n + list.length, 0);
-            vscode.window.showInformationMessage(`✅ 预览 ${result.fileName}（${count} 个节点，引用可能缺失，仅作预览）`);
-            panel.webview.postMessage({
-                command: 'jsonPreviewLoaded',
-                data: {
-                    fileName: result.fileName,
-                    category: result.category,
-                    namespace: result.namespace,
-                    source: result.source,
-                    categories: result.categories,
-                    count,
-                },
-            });
+            // 用「打开方式」打开自定义编辑器 → 精简预览模式（仅查看，无侧边栏/顶栏）
+            vscode.commands.executeCommand('vscode.openWith', files[0], 'cultist-node-editor.jsonPreview');
         });
 }
 
@@ -607,8 +594,17 @@ class JsonPreviewEditorProvider {
      * @param {import('vscode').CancellationToken} token
      */
     resolveCustomTextEditor(document, webviewPanel, token) {
-        // 复用现有 webview 内容（把 custom editor 的 webviewPanel 当普通 panel 处理）
-        webviewPanel.webview.html = getWebviewContent(webviewPanel, this.context);
+        // ⚠️ 自定义编辑器创建的 webview 默认 enableScripts=false 且 localResourceRoots
+        // 仅限 media/node_modules；必须显式放行脚本与扩展资源（ui/** 的 css/js），
+        // 否则页面只剩静态结构、JS 不执行（按钮失效/无法交互）、preview.css 也无法加载。
+        webviewPanel.webview.options = {
+            enableScripts: true,
+            retainContextWhenHidden: true,
+            localResourceRoots: [this.context.extensionUri],
+        };
+        // 复用现有 webview 内容（把 custom editor 的 webviewPanel 当普通 panel 处理）；
+        // 预览模式：仅查看当前 json，前端隐藏侧边栏/顶栏等功能
+        webviewPanel.webview.html = getWebviewContent(webviewPanel, this.context, { previewMode: true });
 
         const filePath = document.uri.fsPath;
 
@@ -646,5 +642,6 @@ class JsonPreviewEditorProvider {
 
 module.exports = {
     activate,
-    deactivate
+    deactivate,
+    getWebviewContent,
 };

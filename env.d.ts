@@ -7,6 +7,7 @@ declare function acquireVsCodeApi(): any;
 interface Window {
     NODE_EDITOR_CONFIG?: {
         placeholderImage?: string;
+        previewMode?: boolean;
         [key: string]: any;
     };
 }

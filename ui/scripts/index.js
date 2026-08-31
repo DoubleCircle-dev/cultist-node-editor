@@ -321,6 +321,47 @@ export function customCheck() {
 }
 
 
+/**
+ * 预览模式（customEditor「打开方式」）：仅查看当前 json 文件。
+ * 由后端注入 NODE_EDITOR_CONFIG.previewMode 触发，隐藏侧边栏/顶栏等编辑功能。
+ */
+const PREVIEW_MODE = !!(
+    typeof window !== 'undefined' &&
+    window.NODE_EDITOR_CONFIG &&
+    window.NODE_EDITOR_CONFIG.previewMode
+);
+if (PREVIEW_MODE) {
+    document.body.classList.add('preview-mode');
+}
+
+if (PREVIEW_MODE) {
+    // 预览模式：改标签页标题便于识别（开发宿主中可直接看到是否生效）
+    document.title = '节点编辑器 · 预览模式（仅查看）';
+    console.log('[预览模式] 已启用：仅查看当前 json');
+
+    // 预览仅查看：节点内容只读，禁止编辑（节点拖动保留，由 select 模式支持）
+    // 文本类输入 readOnly（可选中复制）；按钮/下拉/开关/滑杆禁用
+    const applyPreviewReadOnly = () => {
+        document
+            .querySelectorAll('#canvas-world input[type="text"], #canvas-world input[type="number"], #canvas-world textarea')
+            .forEach((el) => {
+                if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) el.readOnly = true;
+            });
+        document
+            .querySelectorAll('#canvas-world input[type="radio"], #canvas-world input[type="checkbox"], #canvas-world input[type="range"], #canvas-world select, #canvas-world button')
+            .forEach((el) => {
+                // disabled 仅存在于表单元素（input/select/button），HTMLElement 无此属性
+                if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLButtonElement) {
+                    el.disabled = true;
+                }
+            });
+    };
+    applyPreviewReadOnly();
+    // 节点视图可能重建/新增（redraw、铺图、数据选择器），用 MutationObserver 持续保持只读
+    const previewRo = new MutationObserver(applyPreviewReadOnly);
+    previewRo.observe(document.body, { childList: true, subtree: true });
+}
+
 // 初始化函数
 function initWebview(callback) {
     console.log('初始化Webview');
@@ -346,6 +387,12 @@ function initWebview(callback) {
             // updateStatus("已连接"); // 可恢复
             console.log('核心控制器初始化成功');
             win.controlCore = core;
+
+            if (PREVIEW_MODE) {
+                // 预览仅查看：用 select 模式（点击节点可选中并拖动整理布局）；
+                // 注意不能用 drag 模式——nodeManager 在 drag 模式下对节点 mousedown 直接清选并 return，节点无法拖动。
+                core.canvasManager.setMode('select');
+            }
 
             // 通知后端 webview 已就绪（自定义编辑器「打开方式」依赖此信号发送预览数据）
             if (vscode) {
