@@ -2,3 +2,7 @@ node_modules
 .vscode-test/
 *.vsix
 .env
+
+# Agent 临时工作区：优化方案文档与 agent 运行时产生的临时脚本/调试文件
+# （不进版本库，避免污染仓库）
+agent-scratch/

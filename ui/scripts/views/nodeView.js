@@ -285,13 +285,30 @@ export class NodeView extends IView {
     redraw() {
         const world = this.element.parentElement;
 
-        this._removeListeners();
+        // 修复：原代码调用不存在的 this._removeListeners()，必然抛 TypeError
+        // 改为 removeListeners()，统一清理模型/DOM/prop 三层监听器后再重建
+        this.removeListeners();
         this.element.remove();
         this.propListeners = [];
+        this.domListeners = [];
 
         this.element = this._createDOM();
         this._initListeners();
         world?.appendChild(this.element);
+        // 重建后重新测量尺寸，保证 model.width/height 与 DOM 一致
+        this.onMounted();
+    }
+
+    /**
+     * 节点视图销毁：移除全部监听器、从 DOM 摘除、切断模型引用
+     * 由 NodeManager 在节点删除/清空画布时调用，一次性释放视图资源
+     */
+    dispose() {
+        this.removeListeners();
+        this.element?.remove();
+        // 置空引用，打破 view ↔ model 的强引用环，加速 GC
+        this.model = /** @type {any} */ (null);
+        this.element = /** @type {any} */ (null);
     }
 
     onMounted() {

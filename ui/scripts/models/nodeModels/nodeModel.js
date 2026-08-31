@@ -154,6 +154,42 @@ export class NodeModel extends BaseNodeModel {
         this.extendedProperties.pool = pool;
     }
 
+    /**
+     * 释放节点模型监听器（保留数据，供 undo/redo 复用模型）。
+     * portHub 内部已包含 inputs/outputs 两个 Hub，释放 portHub 即释放端口监听器。
+     */
+    releaseListeners() {
+        this.portHub?.releaseListeners();
+        Object.values(this.modeProperties).forEach((hub) => hub?.releaseListeners());
+        this.extendedProperties?.active?.releaseListeners();
+        this.extendedProperties?.pool?.releaseListeners();
+        super.releaseListeners();
+    }
+
+    /**
+     * 永久释放节点模型：端口、普通属性、模式属性、扩展属性 + 自身监听器。
+     * 注意：
+     * - portHub 内部已包含 inputs/outputs 两个 Hub，释放 portHub 即释放端口，
+     *   因此这里先断开 inputs/outputs 引用避免重复释放。
+     * - 连接拆除由 ConnectionManager 负责，这里不处理 port.links。
+     */
+    dispose() {
+        this.portHub?.dispose();
+        this.inputs = null;
+        this.outputs = null;
+        this.portHub = null;
+
+        Object.values(this.modeProperties).forEach((hub) => hub?.dispose());
+        this.modeProperties = {};
+
+        this.extendedProperties?.active?.dispose();
+        this.extendedProperties?.pool?.dispose();
+        this.extendedProperties = { active: null, pool: null };
+
+        // 释放普通属性 + 节点自身监听器
+        super.dispose();
+    }
+
     toJSON() {
         const base = super.toJSON();
         return {

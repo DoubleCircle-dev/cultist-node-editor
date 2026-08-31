@@ -53,6 +53,23 @@ export class HubProp extends BaseProp {
         return this.properties.flatMap((prop) => (prop instanceof HubProp ? prop.detailProperties : prop));
     }
 
+    /**
+     * 递归释放子属性监听器（保留数据，供 undo 复用）
+     */
+    releaseListeners() {
+        this._properties.forEach((prop) => prop.releaseListeners());
+        super.releaseListeners();
+    }
+
+    /**
+     * 递归释放：先释放全部子属性，再清空自身监听器与子引用
+     */
+    dispose() {
+        this._properties.forEach((prop) => prop.dispose());
+        this._properties = [];
+        super.dispose();
+    }
+
     toModJSON() {
         return {
             ...this.properties.map((p) => p.toModJSON()),

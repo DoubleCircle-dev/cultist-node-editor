@@ -36,20 +36,24 @@ export default [
 
             'myRules/enforce-private': 'warn',
 
-            // // 强制在运算符（&&, || 等）之后换行
-            // 'operator-linebreak': [
-            //     'error',
-            //     'after',
-            //     {
-            //         overrides: {
-            //             // 三元运算符选择 "ignore" 或 "before"
-            //             // 设置为 "ignore" 可以让 ESLint 不去强制三元运算符换行，
-            //             // 从而配合 Prettier 的 printWidth 尽量保持在同一行。
-            //             '?': 'ignore',
-            //             ':': 'ignore',
-            //         },
-            //     },
-            // ],
+
+        },
+    },
+    {
+        // UI 单元测试（.mjs）在 Node 环境运行，提供 Node/mocha 全局变量。
+        // 注意：主配置的 files 是 **/*.js，不含 .mjs，因此需单独覆盖
+        // js.configs.recommended 的 no-undef（error → warn）并补充全局。
+        files: ['test/ui/**/*.mjs'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+                ...globals.mocha,
+            },
+            ecmaVersion: 2022,
+            sourceType: 'module',
+        },
+        rules: {
+            'no-undef': 'warn',
         },
     },
 ];

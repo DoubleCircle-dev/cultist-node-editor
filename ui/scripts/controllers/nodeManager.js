@@ -82,8 +82,10 @@ export class NodeManager extends IManager {
             console.error('节点UID格式不对', typeof id, id);
             return;
         }
-        if (typeof id === 'string') {
-            id = parseInt(id, 10);
+        // 修复：nodes Map 统一以字符串为键（见 _createNode / _removeNode）。
+        // 原实现把字符串 parseInt 成数字，导致 has(数字) 永远找不到而抛错。
+        if (typeof id === 'number') {
+            id = String(id);
         }
 
         // 检查节点是否存在
@@ -304,8 +306,22 @@ export class NodeManager extends IManager {
         nodeModel.addEventListener('append:property', appendPropertyHandler);
         listeners.push({ event: 'append:property', handler: appendPropertyHandler });
 
-        const changeTitleHandler = () => {
-            this.bus.emit('change:title:success', { nodeId: nodeModel.id });
+        const changeTitleHandler = (e) => {
+            const oldTitle = nodeModel.title;
+            nodeModel.title = e.detail.newTitle;
+            this.bus.standardEmitDetail(
+                'change',
+                'title',
+                { nodeId: nodeModel.id, oldTitle, newTitle: e.detail.newTitle},
+                (data) => {
+                    nodeModel.title = data.oldTitle;
+                    this.bus.emit('change:title:success');
+                },
+                (data) => {
+                    nodeModel.title = data.newTitle;
+                    this.bus.emit('change:title:success');
+                }
+            );
         };
         nodeModel.addEventListener('change:title:success', changeTitleHandler);
         listeners.push({ event: 'change:title:success', handler: changeTitleHandler });
@@ -426,6 +442,7 @@ export class NodeManager extends IManager {
 
         node.setSelected(false);
 
+        // 1. 移除 NodeManager 绑定在模型上的业务监听器
         const listeners = this.nodeModelListeners.get(nodeId);
         if (listeners) {
             listeners.forEach(({ event, handler }) => {
@@ -434,21 +451,23 @@ export class NodeManager extends IManager {
             this.nodeModelListeners.delete(nodeId);
         }
 
-        node.removeAllEventListeners();
+        // 2. 释放模型监听器（软释放：保留模型数据，undo/redo 恢复时 `_createNode` 复用同一模型）
+        node.releaseListeners();
 
+        // 3. 回收 ID
         if (node instanceof NodeModel) {
             this.uidGenerator.release(node.uid);
         }
-
         this.idGenerator.release(nodeId);
 
+        // 4. 销毁视图（移除监听器 + 摘除 DOM）
         const view = this.nodeViews.get(nodeId);
         if (view) {
-            view.removeListeners();
-            view.element.remove();
+            view.dispose();
             this.nodeViews.delete(nodeId);
         }
 
+        // 5. 从索引移除
         this.nodes.delete(nodeId);
     }
 
@@ -496,10 +515,17 @@ export class NodeManager extends IManager {
     // 删除所有节点
     clear() {
         if (this.coreSpace.setting.quickClear) {
+            // 清理不受 NodeManager 追踪的测试节点 DOM
             const test_nodes = this.world.querySelectorAll('.test-node');
             test_nodes.forEach((node) => node.remove());
-            const nodes = this.world.querySelectorAll('.node');
-            nodes.forEach((node) => node.remove());
+
+            // 快速清理：不触发 undo 记录，但必须释放模型/视图，
+            // 否则 model 上累积的监听器（含闭包持有的 NodeManager/DOM）会形成泄漏
+            this.nodes.forEach((node) => {
+                const view = this.nodeViews.get(String(node.id));
+                view?.dispose();
+                node.dispose();
+            });
 
             this.bus.emit('delete:all_node:success');
         } else {

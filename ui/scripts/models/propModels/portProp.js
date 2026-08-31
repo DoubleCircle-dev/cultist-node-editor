@@ -65,6 +65,26 @@ export class PortProp extends BaseProp {
         return (this.inputPort && this.inputPort.isConnected) || (this.outputPort && this.outputPort.isConnected);
     }
 
+    /**
+     * 释放端口属性监听器（保留数据，供 undo 复用）
+     */
+    releaseListeners() {
+        this.inputPort?.releaseListeners();
+        this.outputPort?.releaseListeners();
+        super.releaseListeners();
+    }
+
+    /**
+     * 释放端口属性：先释放两侧 PortModel，再释放自身监听器
+     */
+    dispose() {
+        this.inputPort?.dispose();
+        this.inputPort = null;
+        this.outputPort?.dispose();
+        this.outputPort = null;
+        super.dispose();
+    }
+
     toJSON() {
         const result = super.toJSON();
 

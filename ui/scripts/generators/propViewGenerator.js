@@ -81,15 +81,17 @@ export class PropView {
     static createHub(propModel) {
         const hub = PropRenderer.createHub('hub', propModel.layout);
 
+        /** @type {listenerMap[]} */
         const listeners = [];
 
         propModel.properties.forEach((/** @type {BaseProp} */ prop) => {
             const renderResult = this.renderProp(prop);
             hub.appendChild(renderResult.element);
+            // 关键：子属性的监听器必须逐层向上汇总，否则销毁/重绘时无法移除
             listeners.push(...renderResult.listeners);
         })
 
-        return { element: hub, listeners: [] };
+        return { element: hub, listeners: listeners };
     }
 
     /**
@@ -125,13 +127,18 @@ export class PropView {
         const row = document.createElement('div');
         row.className = `prop-row type-${propModel.type}`;
 
+        /** @type {listenerMap[]} */
+        const listeners = [];
+
         // 1. 左槽位 (处理所有输入端点)
         const leftSlot = document.createElement('div');
         leftSlot.className = 'port-slot';
         if (propModel instanceof PortProp) {
 
             if (propModel.inputPort) {
-                leftSlot.appendChild(this.createPortDom(propModel.inputPort));
+                const { element: portDom, listeners: portListeners } = this.createPortDom(propModel.inputPort);
+                leftSlot.appendChild(portDom);
+                listeners.push(...portListeners);
             }
 
             if (propModel.layout === PortProp.layoutTypes.noLeft ||
@@ -148,8 +155,9 @@ export class PropView {
         content.className = 'prop-content';
         // content.style.border = '1px solid white';
 
-        const { element: contentElement, listeners: listeners } = PropRenderer.render(propModel);
+        const { element: contentElement, listeners: contentListeners } = PropRenderer.render(propModel);
         content.appendChild(contentElement);
+        listeners.push(...contentListeners);
 
         this.createHint(propModel, content);
 
@@ -161,7 +169,9 @@ export class PropView {
         
         if (propModel instanceof PortProp) {
             if (propModel.outputPort) {
-                rightSlot.appendChild(this.createPortDom(propModel.outputPort));
+                const { element: portDom, listeners: portListeners } = this.createPortDom(propModel.outputPort);
+                rightSlot.appendChild(portDom);
+                listeners.push(...portListeners);
             }
 
             if (propModel.layout === PortProp.layoutTypes.noRight ||
@@ -172,21 +182,25 @@ export class PropView {
         }
         row.appendChild(rightSlot);
 
-
-
         return { element: row, listeners: listeners };
     }
 
     /**
+     * 创建端口 DOM 并返回其全部监听器（含 portModel 模型监听器）
+     *
      * @param {PortModel} portModel
+     * @returns {{ element: HTMLElement, listeners: listenerMap[] }}
      */
     static createPortDom(portModel) {
         const dom = document.createElement('div');
         dom.className = `port-dot ${portModel.portType} ${portModel.pos}`;
         dom.style.backgroundColor = NodeTypeRegistry.getColor(portModel.dataType);
 
-        // 测量port元素
-        portModel.addEventListener('getRect', (e) => {
+        /** @type {listenerMap[]} */
+        const listeners = [];
+
+        // —— portModel 模型监听器 ——
+        const getRectListener = () => {
             portModel.width = dom.offsetWidth;
             portModel.height = dom.offsetHeight;
 
@@ -194,27 +208,22 @@ export class PropView {
 
             portModel.x = rect.x + rect.width / 2;
             portModel.y = rect.y + rect.height / 2;
-
-        })
-
-        portModel.addEventListener('dragging', (e) => {
+        };
+        const draggingListener = () => {
             dom.classList.add('dragging');
-        })
-
-        portModel.addEventListener('connected', (e) => {
+        };
+        const connectedListener = () => {
             dom.classList.add('connected');
-        })
-
-        portModel.addEventListener('disconnected', (e) => {
+        };
+        const disconnectedListener = () => {
             dom.classList.remove('connected');
-        })
+        };
 
-        dom.addEventListener('mouseenter', () => {
+        // —— DOM 监听器 ——
+        const mouseEnterListener = () => {
             dom.classList.add('hover');
-        });
-
-
-        dom.addEventListener('mousedown', (e) => {
+        };
+        const mouseDownListener = (e) => {
             e.stopPropagation();
 
             if (!portModel.parentProp) {
@@ -223,9 +232,8 @@ export class PropView {
             }
 
             portModel.triggerEvent('mousedown:port', e);
-        });
-
-        dom.addEventListener('mouseup', (e) => {
+        };
+        const mouseUpListener = (e) => {
             // e.stopPropagation();
 
             if (!portModel.parentProp) {
@@ -234,10 +242,28 @@ export class PropView {
             }
 
             portModel.triggerEvent('mouseup:port', e);
-        })
+        };
 
+        portModel.addEventListener('getRect', getRectListener);
+        portModel.addEventListener('dragging', draggingListener);
+        portModel.addEventListener('connected', connectedListener);
+        portModel.addEventListener('disconnected', disconnectedListener);
 
-        return dom;
+        dom.addEventListener('mouseenter', mouseEnterListener);
+        dom.addEventListener('mousedown', mouseDownListener);
+        dom.addEventListener('mouseup', mouseUpListener);
+
+        listeners.push(
+            { target: portModel, type: 'getRect', listener: getRectListener },
+            { target: portModel, type: 'dragging', listener: draggingListener },
+            { target: portModel, type: 'connected', listener: connectedListener },
+            { target: portModel, type: 'disconnected', listener: disconnectedListener },
+            { target: dom, type: 'mouseenter', listener: mouseEnterListener },
+            { target: dom, type: 'mousedown', listener: mouseDownListener },
+            { target: dom, type: 'mouseup', listener: mouseUpListener }
+        );
+
+        return { element: dom, listeners };
     }
 
 }

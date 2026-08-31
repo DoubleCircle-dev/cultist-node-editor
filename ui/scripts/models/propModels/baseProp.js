@@ -1,5 +1,6 @@
 import { IEventTarget } from '../../types/IEventTarget.js';
-import { BaseNodeModel } from '../nodeModels/baseNodeModel.js';
+
+/** @typedef {import('../nodeModels/baseNodeModel.js').BaseNodeModel} BaseNodeModel */
 
 export class BaseProp extends IEventTarget {
     /**
@@ -89,6 +90,24 @@ export class BaseProp extends IEventTarget {
         }
 
         this.parentNode.deref()?.emit(event, detail);
+    }
+
+    /**
+     * 释放全部监听器（保留数据）。
+     * 节点删除且可被 undo 恢复时调用 —— 模型对象会被 `_createNode` 复用，
+     * 因此只清监听器、不清数据。
+     */
+    releaseListeners() {
+        this.removeAllEventListeners();
+    }
+
+    /**
+     * 释放属性资源：清空自身全部监听器、切断父节点弱引用。
+     * 由节点销毁流程调用（见 NodeModel.dispose），数据不再被复用。
+     */
+    dispose() {
+        this.releaseListeners();
+        this._parentNode = null;
     }
 
     toJSON() {

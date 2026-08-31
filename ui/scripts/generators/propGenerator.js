@@ -261,11 +261,14 @@ export class PropRenderer {
             e.stopPropagation();
         };
 
-        prop.addEventListener('update', (e) => {
+        /** @param {Event} e */
+        const updateListener = (e) => {
             if (e instanceof CustomEvent) {
                 input.value = e.detail.value;
             }
-        });
+        };
+
+        prop.addEventListener('update', updateListener);
 
         input.addEventListener('change', changeValueListener);
 
@@ -274,6 +277,8 @@ export class PropRenderer {
         const listeners = [
             { listener: changeValueListener, target: input, type: 'change' },
             { listener: mousedownListener, target: input, type: 'mousedown' },
+            // 挂在 prop 模型上的监听器也必须登记，否则 redraw/销毁时无法移除
+            { listener: updateListener, target: prop, type: 'update' },
         ];
 
         return { element: input, listeners: listeners };
@@ -386,7 +391,8 @@ export class PropRenderer {
             };
             input.addEventListener('change', changeValueListener);
 
-            prop.addEventListener('update', (e) => {
+            /** @param {Event} e */
+            const updateListener = (e) => {
                 if (e instanceof CustomEvent) {
                     const eventValue = e.detail.value;
                     if (boolFlag) {
@@ -402,12 +408,20 @@ export class PropRenderer {
                         }
                     }
                 }
-            });
+            };
+
+            prop.addEventListener('update', updateListener);
 
             listeners.push({
                 target: input,
                 type: 'change',
                 listener: changeValueListener,
+            });
+            // 登记 prop 模型上的 update 监听器，便于销毁/重绘时移除
+            listeners.push({
+                target: prop,
+                type: 'update',
+                listener: updateListener,
             });
 
             // 创建一个span元素作为标签文本，类名为'radio-option-label'
@@ -465,11 +479,14 @@ export class PropRenderer {
 
         s.addEventListener('change', changeListener);
 
-        p.addEventListener('update', (e) => {
+        /** @param {Event} e */
+        const updateListener = (e) => {
             if (e instanceof CustomEvent) {
                 s.value = e.detail.value;
             }
-        });
+        };
+
+        p.addEventListener('update', updateListener);
 
         s.appendChild(fragment);
 
@@ -478,6 +495,8 @@ export class PropRenderer {
             listeners: [
                 { target: s, type: 'mousedown', listener: mousedownListener },
                 { target: s, type: 'change', listener: changeListener },
+                // 登记 prop 模型上的 update 监听器，便于销毁/重绘时移除
+                { target: p, type: 'update', listener: updateListener },
             ],
         };
     }

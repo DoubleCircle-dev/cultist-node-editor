@@ -1,5 +1,7 @@
 import { NodeTypeRegistry } from './types/nodeTypes.js';
 import { addNode } from './index.js';
+import { PanelModel } from './models/panelModels/panelModel.js';
+import { BottomPanelModel } from './models/panelModels/bottomPanelModel.js';
 
 // 填充调试下拉选择框
 export function populateDebugSelect() {
@@ -48,9 +50,11 @@ export function addSelectedDebugNode() {
     addNode(selectedType);
 }
 
+/** @type {BottomPanelModel | null} */
+let panel = null;
+
 export function testList() {
     const core = win.controlCore;
-    let panel = document.getElementById('debugPanel');
     if (!panel) {
         panel = createTestPanel(testTypes);
     }
@@ -60,15 +64,15 @@ export function testList() {
 
 const testTypes = [
     {
-        value: 'generateTest',
+        type: 'generateTest',
         label: '生成压力测试',
         func: () => {
             generateTest();
             console.log('生成压力测试执行完成');
-        }
+        },
     },
     {
-        value: 'history_Memory',
+        type: 'history_Memory',
         label: '历史记录内存测试',
         func: () => {
             history_Memory();
@@ -79,110 +83,83 @@ const testTypes = [
 
 function generateTest() {
     const core = win.controlCore;
-    
 
     for (let index = 0; index < 1000; index++) {
-        setTimeout(()=>{
-            core.addNode('test')
-        }, index*10);
+        setTimeout(() => {
+            core.addNode('test');
+        }, index * 10);
     }
 
-    setTimeout(()=>{
+    setTimeout(() => {
         core.nodeManager.clear();
         // core.clearCanvas();
-        setTimeout(()=>{
+        setTimeout(() => {
             core.forceRepaint();
         }, 100);
-
     }, 10000);
 }
-
 
 function history_Memory() {
     const core = win.controlCore;
 
-    core.addNode('test')
+    core.addNode('test');
 
-    for (let index = 0; index < 1000; index++) {
-        core.undo();
-        core.redo();
+    // 分批执行，每批中间 yield 给 GC 机会
+    const batchSize = 100;
+    let index = 0;
+
+    function nextBatch() {
+        for (let i = 0; i < batchSize && index < 1000; i++, index++) {
+            core.undo();
+            core.redo();
+        }
+
+        if (index < 1000) {
+            setTimeout(nextBatch, 0);
+        } else {
+            finish();
+        }
     }
 
+    function finish() {
+        const history = core.historyManager.history;
+        console.log(`历史记录长度：${history.length}`);
+        console.log(`历史记录内存占用：${JSON.stringify(history)}`);
 
-    const history = core.historyManager.history;
-    console.log(`历史记录长度：${history.length}`);
-    console.log(`历史记录内存占用：${JSON.stringify(history)}`);
+        core.undo();
 
-    core.undo();
+        console.log(`历史记录长度：${history.length}`);
+        console.log(`历史记录内存占用：${JSON.stringify(history)}`);
+        console.log(`undo历史内存占用：${JSON.stringify(core.historyManager.undoHistory)}`);
 
-    //  core.addNode('test');
+        console.log('历史记录内存测试执行完成');
+    }
 
-    console.log(`历史记录长度：${history.length}`);
-    console.log(`历史记录内存占用：${JSON.stringify(history)}`);
-    console.log(`undo历史内存占用：${JSON.stringify(core.historyManager.undoHistory)}`)
-
-    console.log('历史记录内存测试执行完成');
-
-    // core.clearCanvas();
+    nextBatch();
 }
 
 /**
  * 创建底部测试执行面板
  *
- * @param {{ value: string; label: string; func: Function }[]} testTypes
- * @returns {HTMLDivElement} 面板元素（已挂载 show/hide 方法）
+ * @param {{ type: string; label: string; func: Function }[]} testTypes
+ * @returns {BottomPanelModel} 面板
  */
 function createTestPanel(testTypes = []) {
     // 主面板容器
-    const panel = document.createElement('div');
-    panel.className = 'bottom-panel';
-    panel.id = 'debugPanel';
+    const panel = new BottomPanelModel('debugPanel', '测试执行', { dataType: 'list' });
 
-    // 头部：标题 + 关闭按钮
-    const header = document.createElement('div');
-    header.className = 'panel-header';
+    panel.rawData = testTypes;
 
-    const title = document.createElement('span');
-    title.textContent = '测试执行';
-    header.appendChild(title);
-
-    panel.appendChild(header);
-
-    // 测试类型选项（单选）
-    const options = document.createElement('div');
-    options.className = 'panel-options';
-
-    testTypes.forEach((test, index) => {
-        const label = document.createElement('label');
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = 'test-type';
-        radio.value = test.value;
-        radio.func = test.func;
-        if (index === 0) radio.checked = true; // 默认选中第一项
-
-        label.appendChild(radio);
-        label.appendChild(document.createTextNode(' ' + test.label));
-        options.appendChild(label);
-        options.appendChild(document.createElement('br'));
-    });
-
-    panel.appendChild(options);
-
-    // 执行按钮
-    const executeBtn = document.createElement('button');
-    executeBtn.textContent = '执行测试';
-    executeBtn.className = 'execute-btn';
-    executeBtn.onclick = () => {
-        const selectedRadio = panel.querySelector('input[name="test-type"]:checked');
-        if (selectedRadio) {
-            const labelText = selectedRadio.nextSibling?.textContent?.trim() || selectedRadio.value;
-            console.log(`开始执行：${labelText}`);
-            // 这里替换为实际的测试执行逻辑
-            selectedRadio.func();
+    panel.addEventListener('data:action:click', (e) => {
+        const { action, type, id, path } = e.detail;
+        if (action === 'click-node-item') {
+            testTypes.forEach((test) => {
+                if (test.type === type) {
+                    test.func();
+                }
+            });
         }
-    };
-    panel.appendChild(executeBtn);
+    });
 
     return panel;
 }

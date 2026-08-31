@@ -20,26 +20,20 @@ export class EventBus extends IEventTarget {
     /**
      * 订阅（监听）事件
      *
+     * 注意：这里【不能】包装 listener。
+     * 一旦包装成新函数，调用方再用原始 listener 调 removeEventListener/off 时
+     * 由于函数引用不一致，永远无法移除 → 造成监听器累积的内存泄漏。
+     * 标准事件的校验/日志在下方单独完成，不影响注册引用。
+     *
      * @param {string} eventName - 事件名称 (例如 "click:node:success")
      * @param {EventListenerOrEventListenerObject | null} listener - 回调函数
      */
     addEventListener(eventName, listener) {
-        const nameList = eventName.split(':');
-        const [action, target, status] = nameList;
-        const message = new StandardMessage(action, target, status);
-
-        let finalListener = listener;
-
-        if (message.checkValid()) {
-            console.log(`EventBus: 监听事件 ${eventName} 为标准事件`);
-            finalListener = (e) => {
-                /** @type {EventListener} */ (listener)(/** @type {CustomEvent} */ (e));
-            };
-        } else {
-            console.log(`EventBus: 监听事件 ${eventName} 为非标准事件`);
-        }
-
-        super.addEventListener(eventName, /** @type {EventListener} */ (finalListener));
+        // 保持引用一致，使 removeEventListener/off 能按引用精确移除。
+        // 注意：这里不做 listener 包装、不打日志 —— 原实现里每次事件注册都会
+        // console.log（每次节点 mousedown / once / onceExclusive 都触发），
+        // 高频交互下会刷屏并拖慢性能，已移除。
+        super.addEventListener(eventName, /** @type {EventListener} */ (listener));
     }
 
     /**
@@ -49,7 +43,6 @@ export class EventBus extends IEventTarget {
      * @param {EventListenerOrEventListenerObject | null} listener - 回调函数
      */
     removeEventListener(eventName, listener) {
-        console.log(`EventBus: 取消监听事件 ${eventName}`)
         super.removeEventListener(eventName, listener);
     }
 
@@ -62,7 +55,6 @@ export class EventBus extends IEventTarget {
     once(eventName, listener) {
         const onceListener = (/** @type {Event} */ e) => {
             listener(e);
-            console.log(`EventBus: 一次性事件 ${eventName} 触发`)
             this.removeEventListener(eventName, onceListener);
         };
         this.addEventListener(eventName, onceListener);

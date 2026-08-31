@@ -183,5 +183,25 @@ export class BaseNodeModel extends IEventTarget {
      */
     static fromJSON(json) {}
 
+    /**
+     * 释放全部属性与自身监听器（保留数据）。
+     * 节点删除且可被 undo 恢复时调用 —— 模型对象会被 `_createNode` 复用，
+     * 因此只清监听器、不清数据。
+     */
+    releaseListeners() {
+        this._properties.forEach((prop) => prop.releaseListeners());
+        this.removeAllEventListeners();
+    }
+
+    /**
+     * 释放节点模型资源：递归释放全部属性（含 Hub/端口）并清空自身监听器。
+     * 由 NodeManager 在节点永久删除 / 清空画布时统一调用。
+     * 子类（NodeModel）如需释放端口、模式属性、扩展属性，应覆写并调用 super.dispose()。
+     */
+    dispose() {
+        this.releaseListeners();
+        this._properties = [];
+    }
+
     toModJSON() {}
 }

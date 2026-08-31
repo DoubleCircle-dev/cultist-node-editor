@@ -26,6 +26,8 @@ export class StandardMessage {
         NODE: 'node',
         CONNECTION: 'connection',
         PROPERTY: 'property',
+        TITLE: 'title',
+        LABEL: 'label',
         PORT: 'port',
         PANEL: 'panel'
     };

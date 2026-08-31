@@ -52,7 +52,9 @@ export class IEventTarget extends EventTarget {
     // 获取所有已注册的监听器（可指定事件类型）
     /** @param {string | null} type */
     getAllEventListeners(type = null) {
-        if (type !== undefined) {
+        // 修复：原判断 `type !== undefined` 对默认值 null 恒为 true，
+        // 导致无参调用永远进入「按类型」分支而返回 []，无法取到全部监听器。
+        if (type != null) {
             const set = this._listenersMap.get(type);
             return set ? Array.from(set).map((item) => item.listener) : [];
         }
@@ -77,10 +79,10 @@ export class IEventTarget extends EventTarget {
             for (const { listener, options } of listenersCopy) {
                 // 调用原生 removeEventListener 真正从 EventTarget 内部移除
                 super.removeEventListener(currentType, listener, options);
-                // 同时从记录的 Set 中删除（其实在循环结束后一次性清空更高效，但直接 delete 也可以）
-                listenerSet.delete({ listener, options });
             }
-            // 清空该类型对应的 Set
+            // 直接清空整个 Set 并删除类型键（原实现里 listenerSet.delete({...})
+            // 是新建对象按引用删除，永远匹配不上，属于无效代码）
+            listenerSet.clear();
             this._listenersMap.delete(currentType);
         }
     }

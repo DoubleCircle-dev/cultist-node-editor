@@ -149,7 +149,9 @@ export class ControllerCore {
      * @private
      */
     _bindShortCut() {
-        document.addEventListener('keydown', (e) => {
+        // 保存引用，便于 destroy() 时移除 —— 避免重复初始化（如 webview 重载）
+        // 时 document 级监听器不断累积，且旧闭包持续持有整个 ControllerCore
+        this._shortcutHandler = (e) => {
             // 处理键盘事件--快捷键设置
             if (e.target) {
                 if (e.target instanceof HTMLElement) {
@@ -198,6 +200,35 @@ export class ControllerCore {
                     break;
                 default:
                     break;
+            }
+        };
+        document.addEventListener('keydown', this._shortcutHandler);
+    }
+
+    /**
+     * 销毁核心控制器：移除全局监听器并销毁全部管理器。
+     * Webview 关闭 / 重新初始化前应调用，避免 document 级监听器与
+     * EventBus 上的监听器（闭包持有本实例）形成泄漏。
+     */
+    destroy() {
+        if (this._shortcutHandler) {
+            document.removeEventListener('keydown', this._shortcutHandler);
+            this._shortcutHandler = null;
+        }
+
+        // 注意：UIManager 不是 IManager 子类，没有 destroy()，需做能力判断
+        [
+            this.historyManager,
+            this.nodeManager,
+            this.canvasManager,
+            this.uiManager,
+            this.nodeActionManager,
+            this.connectionManager,
+            this.menuManager,
+            this.panelManager,
+        ].forEach((m) => {
+            if (m && typeof m.destroy === 'function') {
+                m.destroy();
             }
         });
     }

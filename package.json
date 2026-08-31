@@ -26,6 +26,8 @@
     "lint": "eslint .",
     "pretest": "npm run lint",
     "test": "vscode-test",
+    "test:ui": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000 \"test/ui/**/*.test.mjs\"",
+    "test:ui:memory": "node --expose-gc test/ui/memory-check.mjs",
     "check:webview": "node scripts/check-webview.js"
   },
   "devDependencies": {
@@ -40,6 +42,7 @@
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^62.9.0",
+    "jsdom": "^29.1.1",
     "mocha": "^11.3.0",
     "prettier": "^3.8.3",
     "prettier-eslint": "^16.4.2",

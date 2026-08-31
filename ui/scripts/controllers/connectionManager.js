@@ -726,6 +726,19 @@ export class ConnectionManager extends IManager {
         this.SVG_layer.appendChild(svgLine);
     }
 
+    // 重置端口拖拽状态
+    // 修复：该方法此前被 cleanupPortDrag()/clear() 调用但从未定义，导致
+    // 端口拖拽清理与 clear()/destroy() 直接抛 TypeError；同时 dragState.listeners
+    // 里临时注册的监听器（document mousemove/mouseup、bus once）从不移除，
+    // 每次端口拖拽都会泄漏 2 个 document 级监听器。此处一并修复。
+    /** @private */
+    _resetDragState() {
+        this.dragState.listeners.forEach(({ target, type, listener }) => {
+            target?.removeEventListener(type, listener);
+        });
+        this.dragState = ConnectionManager.initDragState;
+    }
+
     // 清理拖拽状态
     cleanupPortDrag() {
         // 移除临时连接线

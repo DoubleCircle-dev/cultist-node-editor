@@ -1,5 +1,6 @@
 import { IEventTarget } from "../../types/IEventTarget.js";
-import { PortProp } from "./portProp.js";
+
+/** @typedef {import("./portProp.js").PortProp } PortProp */
 
 export class PortModel extends IEventTarget {
     /**
@@ -157,6 +158,23 @@ export class PortModel extends IEventTarget {
             links: this.links,
             parentProp: this.parentProp
         }
+    }
+
+    /**
+     * 释放端口监听器（保留数据，供 undo 复用）
+     */
+    releaseListeners() {
+        this.removeAllEventListeners();
+    }
+
+    /**
+     * 释放端口：清空监听器、切断归属引用。
+     * 注意：不主动清空 links —— 连接的拆除由 ConnectionManager 负责，
+     * 此处若擅自清空会破坏仍存活节点的端口连接索引。
+     */
+    dispose() {
+        this.releaseListeners();
+        this.parentProp = null;
     }
 
     /**
