@@ -538,12 +538,19 @@ export class PropRenderer {
     static createPreView(type, prop, columns = []) {
         const preView = this.createElement('div', {}, 'prop-card');
 
+        /** @type {listenerMap[]} */
+        const listeners = [];
+
         switch (type) {
             case 'textarea':
                 const textInput = this.createElement('textarea', {
                     value: prop.value ?? '',
                     placeholder: '输入文本内容...',
                 });
+                // 阻止 mousedown 冒泡，避免在文本框中编辑时触发节点拖动
+                const textareaMousedownListener = (/** @type {Event} */ e) => e.stopPropagation();
+                textInput.addEventListener('mousedown', textareaMousedownListener);
+                listeners.push({ target: textInput, type: 'mousedown', listener: textareaMousedownListener });
                 preView.appendChild(textInput);
                 break;
             case 'icon':
@@ -596,7 +603,7 @@ export class PropRenderer {
                 break;
         }
 
-        return { element: preView, listeners: [] };
+        return { element: preView, listeners: listeners };
     }
 
     /**
