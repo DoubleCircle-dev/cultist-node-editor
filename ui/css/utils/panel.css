@@ -952,6 +952,11 @@
     background: rgba(139, 92, 246, 0.35);
 }
 
+/* 手柄默认隐藏，仅当对应面板打开时才显示（由 panelManager 切换 hidden 类） */
+.panel-resizer.hidden {
+    display: none;
+}
+
 /* 垂直手柄 — 在 expand 面板右边界上方 */
 .panel-resizer-v {
     z-index: 1003;

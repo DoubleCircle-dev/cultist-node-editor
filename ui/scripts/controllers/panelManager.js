@@ -280,6 +280,7 @@ export class PanelManager extends IManager {
      */
     _toggleExpandPanel(panelView) {
         this.expandPanelContainer.toggle(panelView);
+        this._syncResizerVisibility();
     }
 
     /**
@@ -288,6 +289,7 @@ export class PanelManager extends IManager {
      */
     _toggleBottomPanel(panelView) {
         this.bottomPanelContainer.toggle(panelView);
+        this._syncResizerVisibility();
     }
 
     // ==========================================
@@ -305,6 +307,9 @@ export class PanelManager extends IManager {
 
         this._createExpandResizer();
         this._createBottomResizer();
+
+        // 初始化时面板均为关闭状态，隐藏所有调整手柄
+        this._syncResizerVisibility();
     }
 
     /** @private 获取画布可视区域边界，用于限制面板最大尺寸 */
@@ -319,6 +324,16 @@ export class PanelManager extends IManager {
         };
     }
 
+    /** @private 根据面板显隐状态同步手柄显隐，面板未打开时不显示调整手柄 */
+    _syncResizerVisibility() {
+        if (this._expandResizer) {
+            this._expandResizer.classList.toggle('hidden', !this.expandPanelContainer.isVisible);
+        }
+        if (this._bottomResizer) {
+            this._bottomResizer.classList.toggle('hidden', !this.bottomPanelContainer.isVisible);
+        }
+    }
+
     /** @private 创建 expand 面板右边界拖拽手柄 */
     _createExpandResizer() {
         const handle = document.createElement('div');
@@ -328,6 +343,7 @@ export class PanelManager extends IManager {
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
         sidebar.appendChild(handle);
+        this._expandResizer = handle;
 
         /** @param {MouseEvent} e */
         const onDown = (e) => {
@@ -377,6 +393,7 @@ export class PanelManager extends IManager {
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
         sidebar.appendChild(handle);
+        this._bottomResizer = handle;
 
         /** @param {MouseEvent} e */
         const onDown = (e) => {

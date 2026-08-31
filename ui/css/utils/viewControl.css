@@ -16,6 +16,11 @@
     /* 让背景不拦截鼠标事件，按钮自身可点击 */
 }
 
+/* 底部面板打开时，控制面板整体上移，避免被底部面板遮挡 */
+.editor-area:has(.bottom-expand-panel-container:not(.hidden)) .view-controls {
+    bottom: calc(28px + var(--bottom-height, 320px));
+}
+
 .view-controls * {
     pointer-events: auto;
 }
