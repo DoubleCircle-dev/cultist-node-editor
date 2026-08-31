@@ -597,10 +597,9 @@ class JsonPreviewEditorProvider {
         // ⚠️ 自定义编辑器创建的 webview 默认 enableScripts=false 且 localResourceRoots
         // 仅限 media/node_modules；必须显式放行脚本与扩展资源（ui/** 的 css/js），
         // 否则页面只剩静态结构、JS 不执行（按钮失效/无法交互）、preview.css 也无法加载。
-        // 注意：webview.options 仅接受 WebviewOptions；retainContextWhenHidden 属
-        // WebviewPanelOptions，已在 registerCustomEditorProvider 的 webviewOptions 设置。
         webviewPanel.webview.options = {
             enableScripts: true,
+            retainContextWhenHidden: true,
             localResourceRoots: [this.context.extensionUri],
         };
         // 复用现有 webview 内容（把 custom editor 的 webviewPanel 当普通 panel 处理）；
@@ -609,7 +608,11 @@ class JsonPreviewEditorProvider {
 
         const filePath = document.uri.fsPath;
 
+        /** 幂等开关：防止 webviewReady 与 setTimeout 兜底、或 webview 重载时重复发送预览数据（前端会重复铺图） */
+        let previewSent = false;
         const sendPreview = () => {
+            if (previewSent) return;
+            previewSent = true;
             try {
                 const result = modConverter.singleFileToData(filePath);
                 const count = Object.values(result.categories || {}).reduce((n, list) => n + list.length, 0);

@@ -102,8 +102,15 @@ export function openJsonPreview() {
  * @param {string} label - 来源描述（用于状态提示）
  * @param {{ namespace: string, source: string, categories: Record<string, any[]>, count?: number }} data
  */
+/** 已预览过的命名空间集合（jsonPreviewLoaded 去重用，防止画布重复铺图） */
+const __previewedNamespaces = new Set();
+
 function registerData(label, data) {
     if (!data || !data.categories || typeof data.categories !== 'object') return;
+    // 防御：同一命名空间重复加载时先卸载旧数据，避免数据池累积（如重复读取 mod / 预览）
+    if (data.namespace && ModDataRegistry.sources[data.namespace]) {
+        ModDataRegistry.unregister(data.namespace);
+    }
     const registered = ModDataRegistry.register(data);
     // 加载后自动把数据转换为可查看的节点（铺到画布，受规模上限限制；超出保留在数据池）
     const created = core ? core.autoLayoutLoadedData(data.namespace) : 0;
@@ -131,9 +138,17 @@ function handleVscodeMessage(event) {
             }
             break;
         }
-        case 'jsonPreviewLoaded':
+        case 'jsonPreviewLoaded': {
+            const ns = message.data.namespace;
+            // 防御：同一预览命名空间重复加载时忽略，避免画布重复铺图（后端已幂等发送，此为兜底）
+            if (ns && __previewedNamespaces.has(ns)) {
+                console.warn(`[预览] 忽略重复加载: ${ns}`);
+                break;
+            }
+            if (ns) __previewedNamespaces.add(ns);
             registerData(`预览:${message.data.fileName}`, message.data);
             break;
+        }
         case 'modCreated':
             updateStatus(`✅ 已创建 mod: ${message.data.synopsisPath}`);
             break;
