@@ -287,14 +287,19 @@ export class NodeManager extends IManager {
 
         const appendPropertyHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
-            const props = ce.detail.props;
 
-            if (!props || props.length === 0) {
+            // 可选属性 = 当前已激活的 + 属性池中的；两者都为空则不弹面板
+            const activeHub = nodeModel.extendedProperties?.active;
+            const poolHub = nodeModel.extendedProperties?.pool;
+            const hasActive = (activeHub?.properties || []).some((p) => p.type !== 'button');
+            const hasPool = (poolHub?.properties || []).length > 0;
+
+            if (!hasActive && !hasPool) {
                 return;
             }
 
             if (nodeModel instanceof NodeModel) {
-                const panel = this._createNodePropertyPanel(nodeModel, props);
+                const panel = this._createNodePropertyPanel(nodeModel, ce.detail.props);
 
                 this.bus.emit('toggleMenu', {
                     menu: panel,
@@ -339,38 +344,111 @@ export class NodeManager extends IManager {
         panel.classList.add('node-extend-property-panel');
         panel.id = `${nodeModel.id}-extend-property-panel`;
 
-        props.forEach((prop) => {
-            const optEl = document.createElement('div');
-            optEl.className = 'extend-prop-option';
-            optEl.textContent = prop.label || prop.name;
-            optEl.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                if (nodeModel.appendExtendProp(prop.id)) {
-                    this.bus.standardEmitDetail(
-                        'append',
-                        'property',
-                        { propId: prop.id },
-                        (data) => {
-                            nodeModel.removeExtendProp(data.propId);
-                            nodeModel.emit('redraw', {});
-                            panel.appendChild(optEl);
-                        },
-                        (data) => {
-                            nodeModel.appendExtendProp(data.propId);
-                            nodeModel.emit('redraw', {});
-                            optEl.remove();
-                        }
-                    );
-                    nodeModel.emit('redraw', {});
-                    optEl.remove();
-                } else {
-                    nodeModel.emit('append:property:failed', { propId: prop.id });
-                }
+        const activeHub = nodeModel.extendedProperties?.active;
+        const poolHub = nodeModel.extendedProperties?.pool;
 
-                this.bus.emit('toggleMenu', { menuId: panel.id });
+        const activeProps = (activeHub?.properties || []).filter((p) => p.type !== 'button');
+        const poolProps = poolHub?.properties || [];
+
+        /**
+         * @param {BaseProp} prop
+         * @param {boolean} isActive
+         */
+        const renderOption = (prop, isActive) => {
+            const optEl = document.createElement('label');
+            optEl.className = 'extend-prop-option';
+            optEl.dataset.propId = prop.id;
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = isActive;
+
+            // 有连接的已激活属性：锁定，不可取消勾选（即不可删除）
+            const connected = isActive && !!prop.isConnected;
+            if (connected) {
+                checkbox.disabled = true;
+                optEl.classList.add('connected-locked');
+            }
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'option-name';
+            nameSpan.textContent = prop.label || prop.name || prop.id;
+
+            optEl.appendChild(checkbox);
+            optEl.appendChild(nameSpan);
+
+            if (connected) {
+                const lock = document.createElement('span');
+                lock.className = 'lock-tag';
+                lock.textContent = '已连接';
+                optEl.appendChild(lock);
+            }
+
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    // 勾选：添加属性
+                    if (nodeModel.appendExtendProp(prop.id)) {
+                        this.bus.standardEmitDetail(
+                            'append',
+                            'property',
+                            { propId: prop.id },
+                            (data) => {
+                                nodeModel.removeExtendProp(data.propId);
+                                nodeModel.emit('redraw', {});
+                            },
+                            (data) => {
+                                nodeModel.appendExtendProp(data.propId);
+                                nodeModel.emit('redraw', {});
+                            }
+                        );
+                        nodeModel.emit('redraw', {});
+                    } else {
+                        checkbox.checked = false;
+                        nodeModel.emit('append:property:failed', { propId: prop.id });
+                    }
+                } else {
+                    // 取消勾选：删除属性（有连接不可删除）
+                    if (prop.isConnected) {
+                        checkbox.checked = true;
+                        nodeModel.emit('remove:property:failed', { propId: prop.id, reason: 'connected' });
+                        return;
+                    }
+                    if (nodeModel.removeExtendProp(prop.id)) {
+                        this.bus.standardEmitDetail(
+                            'delete',
+                            'property',
+                            { propId: prop.id },
+                            (data) => {
+                                nodeModel.appendExtendProp(data.propId);
+                                nodeModel.emit('redraw', {});
+                            },
+                            (data) => {
+                                nodeModel.removeExtendProp(data.propId);
+                                nodeModel.emit('redraw', {});
+                            }
+                        );
+                        nodeModel.emit('redraw', {});
+                    } else {
+                        checkbox.checked = true;
+                    }
+                }
             });
-            panel.appendChild(optEl);
-        });
+
+            return optEl;
+        };
+
+        activeProps.forEach((prop) => panel.appendChild(renderOption(prop, true)));
+        poolProps.forEach((prop) => panel.appendChild(renderOption(prop, false)));
+
+        if (panel.children.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-tip';
+            empty.textContent = '无可选属性';
+            panel.appendChild(empty);
+        }
+
+        // 面板内点击不关闭菜单，便于连续勾选
+        panel.addEventListener('mousedown', (e) => e.stopPropagation());
 
         return panel;
     }

@@ -96,3 +96,39 @@
     color: var(--accent-purple);
     font-size: 14px;
 }
+
+/* 可选属性勾选面板（修改可选属性） */
+.extend-prop-option input[type='checkbox'] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    accent-color: var(--accent-purple);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.extend-prop-option .option-name {
+    flex: 1;
+    min-width: 0;
+}
+
+/* 有连接不可删除的选项 */
+.extend-prop-option.connected-locked {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.extend-prop-option.connected-locked input[type='checkbox'] {
+    cursor: not-allowed;
+}
+
+.lock-tag {
+    flex-shrink: 0;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #ff8a80;
+    background: rgba(244, 67, 54, 0.15);
+    border: 1px solid rgba(244, 67, 54, 0.4);
+    padding: 1px 7px;
+    border-radius: 10px;
+}

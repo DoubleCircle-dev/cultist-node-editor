@@ -454,6 +454,33 @@
     pointer-events: none;
 }
 
+/* 「修改可选属性」按钮：独特样式，区别于其他属性按钮 */
+.prop-content .button.simple {
+    border-style: dashed;
+    border-color: var(--accent-purple);
+    background: rgba(156, 39, 176, 0.12);
+    color: var(--accent-purple);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.prop-content .button.simple:hover {
+    background: rgba(156, 39, 176, 0.25);
+    border-color: var(--accent-purple);
+}
+
+/* 「修改可选属性」按钮始终位于节点最下方（active hub 纵向 flex，按钮 order 置底） */
+.node-properties .prop-hub.single:has(.prop-row.type-button) {
+    display: flex;
+    flex-direction: column;
+    /* 覆盖 .prop-hub 的 align-items:start，让子行撑满整宽 */
+    align-items: stretch;
+}
+
+.node-properties .prop-hub.single:has(.prop-row.type-button) > .prop-row.type-button {
+    order: 1000;
+}
+
 /* 4. 提示框样式 */
 
 

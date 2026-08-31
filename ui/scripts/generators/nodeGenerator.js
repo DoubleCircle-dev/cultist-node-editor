@@ -188,7 +188,7 @@ export class NodeGenerator {
      * @param {WeakRef<NodeModel>} node
      */
     static createExtendProps(nodeID, properties, node) {
-        const extendButton = new BaseProp(`${nodeID}:extendButton`, '添加属性', 'button', '');
+        const extendButton = new BaseProp(`${nodeID}:extendButton`, '修改可选属性', 'button', '');
 
         this._onExtendButtonClick(extendButton, node);
 
