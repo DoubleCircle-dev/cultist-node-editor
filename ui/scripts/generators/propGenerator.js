@@ -34,6 +34,7 @@ export class PropGenerator {
                 break;
             case 'number':
             case 'integer':
+            case 'int':
             case 'slider':
                 args = [id, propConfig.label, propConfig.type, propConfig.default, propConfig.min, propConfig.max];
                 propClass = NumericProp;
@@ -183,6 +184,7 @@ export class PropRenderer {
     static RenderMap = {
         text: (p) => this.createInput('text', p, { placeholder: p.placeholder || p.label }),
         integer: (p) => this.createInput('number', p, { placeholder: p.placeholder || p.label }),
+        int: (p) => this.createInput('number', p, { placeholder: p.placeholder || p.label }),
         number: (p) => this.createNumber('number', p),
         range: (p) =>
             this.createInput('range', p, {
@@ -203,6 +205,8 @@ export class PropRenderer {
         'table-button': (p) => this.createButton('table', p),
         'table-preview': (p) => this.createPreView('table', p, p.columns),
         'textarea-preview': (p) => this.createPreView('textarea', p),
+        node: (p) => this.createInput('text', p, { placeholder: '节点引用/ID' }),
+        'text-preview': (p) => this.createPreView('textarea', p),
         port: (p) => this.createButton('port', p),
         selectPort: (p) => this.createButton('selectPort', p),
     };

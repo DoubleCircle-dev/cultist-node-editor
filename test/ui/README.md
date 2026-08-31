@@ -24,9 +24,29 @@ npm run test:ui:memory
 | `iEventTarget.test.mjs` | 监听器登记/移除、`removeAllEventListeners`（含 L6 修复） |
 | `disposeChain.test.mjs` | 模型 `releaseListeners`（软释放）/`dispose`（全量销毁）责任链 |
 | `nodeLifecycle.test.mjs` | 创建/删除/undo/clear/redraw 全生命周期 + 监听器不累积 |
+| `propRendering.test.mjs` | 全节点类型 × 全属性渲染检测（含扩展属性池/模式属性/端口） |
 | `memory-check.mjs` | 独立内存检查：批量创建/删除后堆内存平坦 |
 | `helpers/domSetup.mjs` | jsdom 全局环境（document/Event/CustomEvent/EventTarget…） |
 | `helpers/env.mjs` | 构建 webview 骨架 + 创建/销毁 `ControllerCore` |
+
+## 属性渲染检测（propRendering）
+
+对 `NodeTypeRegistry` 全部节点类型做全量扫描：
+
+- **配置层**：`properties` / `modeProperties` / `exProperties`（含 `hub` 子属性）里的
+  每个 `type` 都必须能解析到渲染器。注意 `range→slider`、`table→table-preview` 会
+  在 `PropGenerator.createProp` 里被转换，判定时需先解析。
+- **模型层**：`NodeGenerator.createNode` 后递归收集属性（**端口 hub + 普通属性 +
+  全部模式属性 + 扩展属性池**；注意 `detailProperties` 不含扩展属性池，必须单独枚举
+  `extendedProperties.pool`），逐个 `PropView.renderProp` 断言不抛错、不回退
+  `.prop-error`、元素/监听器有效。
+- **类型映射**：`int`→`NumericProp`、`node`/`text-preview`→`BaseProp`（可渲染兜底）、
+  select 模式切换器→`OptionsProp`。
+- **渲染结构**：PortProp 走 `createRow` 含 `.port-slot`/`.port-dot`；`ViewProp`
+  （`extends PortProp`，table/image/textarea 预览）走 `createView`，根元素即 `.prop-card`。
+
+> 检测脚本 `agent-scratch/check-prop-rendering.mjs`（gitignored）可单独跑出覆盖报表：
+> `command node agent-scratch/check-prop-rendering.mjs`。
 
 ## 关键约定
 
@@ -39,6 +59,11 @@ npm run test:ui:memory
   一律用 `core.nodeManager.nodes.keys().next().value`，不要假设递增。
 - 节点模型/端口的监听器数量用 `getAllEventListeners()` 统计（确定性），
   这是本代码库泄漏的主要表现（监听器累积）。
+- `PropView.renderProp` 返回的 `listeners` 由**调用方负责移除**（`NodeView.redraw`
+  先 `removeListeners()` 再重建）；重复渲染前若不先移除会累积，属预期行为，
+  测试需模拟调用方职责。
+- `ViewProp` 继承 `PortProp`，但走 `createView` 路径（`.prop-card`，无端口槽位），
+  判定端口 DOM 时需排除 `ViewProp`。
 
 ## 关于 WeakRef / GC 探针
 
