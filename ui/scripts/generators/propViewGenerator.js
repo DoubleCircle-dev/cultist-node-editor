@@ -193,8 +193,16 @@ export class PropView {
      */
     static createPortDom(portModel) {
         const dom = document.createElement('div');
-        dom.className = `port-dot ${portModel.portType} ${portModel.pos}`;
-        dom.style.backgroundColor = NodeTypeRegistry.getColor(portModel.dataType);
+        // 容量形状：单连接（maxLinks===1）用三角形，多连接用圆形
+        const capacityClass = portModel.maxLinks === 1 ? 'single' : 'multi';
+        dom.className = `port-dot ${portModel.portType} ${portModel.pos} ${capacityClass}`;
+        // 用 CSS 变量承载端口颜色，供空心（描边）/实心（填充）样式统一取色
+        dom.style.setProperty('--port-color', NodeTypeRegistry.getColor(portModel.dataType));
+
+        // 恢复加载时若端口已连接，直接标记实心样式
+        if (portModel.isConnected) {
+            dom.classList.add('connected');
+        }
 
         /** @type {listenerMap[]} */
         const listeners = [];

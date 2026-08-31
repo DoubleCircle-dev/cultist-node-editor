@@ -145,13 +145,15 @@ export class NodeGenerator {
     static createPortProps(nodeID, inputPorts, outputPorts, node) {
         const inputHub = new HubProp(`${nodeID}:inputHub`, '输入端口', [], 'single');
         if (inputPorts) {
-            inputPorts.forEach((/** @type {{ label: string; default: any; name: any; requireType: any }} */ port, /** @type {any} */ index) => {
+            inputPorts.forEach((/** @type {{ label: string; default: any; name: any; requireType: any; multiConnect: boolean; connectNum: number }} */ port, /** @type {any} */ index) => {
+                const maxLinks = port.multiConnect ? port.connectNum || Infinity : 1;
                 const portProp = new PortProp(`${nodeID}:input-${index}`, port.label, 'port', port.default, {
                     name: port.name,
                     layout: 'no-right',
                     inputPort: {
                         id: `${nodeID}:input_port-${index}`,
                         dataType: port.requireType,
+                        maxLinks: maxLinks,
                     },
                 });
                 portProp.parentNode = node;
@@ -161,13 +163,15 @@ export class NodeGenerator {
 
         const outputHub = new HubProp(`${nodeID}:outputHub`, '输出端口', [], 'single');
         if (outputPorts) {
-            outputPorts.forEach((/** @type {{ label: string; default: any; name: any; returnType: any }} */ port, /** @type {any} */ index) => {
+            outputPorts.forEach((/** @type {{ label: string; default: any; name: any; returnType: any; multiConnect: boolean; connectNum: number }} */ port, /** @type {any} */ index) => {
+                const maxLinks = port.multiConnect ? port.connectNum || Infinity : 1;
                 const portProp = new PortProp(`${nodeID}:output-${index}`, port.label, 'port', port.default, {
                     name: port.name,
                     layout: 'no-left',
                     outputPort: {
                         id: `${nodeID}:output_port-${index}`,
                         dataType: port.returnType,
+                        maxLinks: maxLinks,
                     },
                 });
                 portProp.parentNode = node;
