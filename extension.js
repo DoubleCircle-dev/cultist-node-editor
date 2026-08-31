@@ -1,5 +1,7 @@
 const modReader = require('./core/readMod');
 const modReaderJSON5 = require('./core/readModJSON5');
+const modConverter = require('./core/modConverter');
+const modLoad = require('./core/modLoad');
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
@@ -18,6 +20,45 @@ function activate(context) {
     });
 
     context.subscriptions.push(openEditorCommand);
+
+    // 功能4（右键打开方式）：自定义编辑器，json 文件「打开方式」→ 节点编辑器 JSON 预览
+    context.subscriptions.push(
+        vscode.window.registerCustomEditorProvider(
+            'cultist-node-editor.jsonPreview',
+            new JsonPreviewEditorProvider(context),
+            { webviewOptions: { retainContextWhenHidden: true } }
+        )
+    );
+
+    // 功能2：加载 mod（检测工作区 synopsis.json，无则询问文件位置）
+    const loadModCommand = vscode.commands.registerCommand('cultist-node-editor.loadMod', () => {
+        if (currentPanel) {
+            handleReadMod(currentPanel);
+        } else {
+            vscode.window.showInformationMessage('请先打开节点编辑器');
+        }
+    });
+    context.subscriptions.push(loadModCommand);
+
+    // 功能3：新建 mod 基础结构（synopsis.json + content/）
+    const newModCommand = vscode.commands.registerCommand('cultist-node-editor.newMod', () => {
+        if (currentPanel) {
+            handleNewMod(currentPanel);
+        } else {
+            vscode.window.showInformationMessage('请先打开节点编辑器');
+        }
+    });
+    context.subscriptions.push(newModCommand);
+
+    // 功能4：打开单个 mod json 文件作为节点预览
+    const openJsonPreviewCommand = vscode.commands.registerCommand('cultist-node-editor.openJsonPreview', () => {
+        if (currentPanel) {
+            handleOpenJsonPreview(currentPanel);
+        } else {
+            vscode.window.showInformationMessage('请先打开节点编辑器');
+        }
+    });
+    context.subscriptions.push(openJsonPreviewCommand);
 
     // 添加一些测试命令来验证扩展是否工作
     const testCommand = vscode.commands.registerCommand('node-editor.test', () => {
@@ -99,7 +140,13 @@ function createNodeEditorPanel(context) {
                         return;
                     case 'readMod':
                         handleReadMod(panel);
-                        break;
+                        return;
+                    case 'newMod':
+                        handleNewMod(panel);
+                        return;
+                    case 'openJsonPreview':
+                        handleOpenJsonPreview(panel);
+                        return;
                     case 'test':
                         vscode.window.showInformationMessage('Webview通信正常！');
                         return;
@@ -123,6 +170,9 @@ function createNodeEditorPanel(context) {
                 command: 'init',
                 message: '节点编辑器已准备就绪'
             });
+
+            // 功能1：预加载游戏基础内容节点（可在设置中关闭）
+            preloadOrigin(panel);
         }, 500);
 
         console.log('✅ 节点编辑器面板创建成功');
@@ -150,6 +200,11 @@ function getWebviewContent(panel, context) {
         const configPath = path.join(uiDir, 'webview-config.json');
         if (fs.existsSync(configPath)) {
             const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            // 图片渲染失败时的回退占位图（webview URI，需在 localResourceRoots 内）
+            const placeholderPath = path.join(uiDir, 'assets', 'img', 'placeholder.png');
+            if (fs.existsSync(placeholderPath)) {
+                config.placeholderImage = panel.webview.asWebviewUri(vscode.Uri.file(placeholderPath)).toString();
+            }
             htmlContent = injectConfigData(htmlContent, config);
         }
 
@@ -350,42 +405,181 @@ function handleLoadGraph(panel) {
 
 function handleReadMod(panel) {
     console.log('📂 读取mod请求');
+    const wsRoot =
+        vscode.workspace.rootPath ||
+        (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]
+            ? vscode.workspace.workspaceFolders[0].uri.fsPath
+            : undefined);
 
-    vscode.window.showOpenDialog({
-        filters: { 'JSON文件': ['json'] },
-        canSelectMany: false
-    }).then(files => {
-        if (files && files[0]) {
-            try {
-                console.log(files[0].fsPath);
-                // 如果文件名不是synopsis.json，则提示用户选择正确的文件
-                if (!files[0].fsPath.endsWith('synopsis.json')) {
-                    throw new Error('请选择正确的synopsis文件');
-                }
+    // 功能2：优先检测工作区中的 synopsis.json（mod 入口）
+    let synopsisPath = modLoad.findSynopsisInFolder(wsRoot || '');
 
-                const content = fs.readFileSync(files[0].fsPath, 'utf8');
-                const synopsisData = JSON.parse(content);
-
-                if (!synopsisData.name) {
-                    vscode.window.showInformationMessage(`你还未给MOD命名！`);
-                } else {
-                    vscode.window.showInformationMessage(`✅ MOD已加载: ${synopsisData.name}`);
-                }
-
-                // TODO 处理MOD文件数据
-                modReaderJSON5.analyzeModJSON5(files[0].fsPath.replace("synopsis.json", ""))
-                    .then(data => console.log(data))
-                    .catch(err => console.error(err));
-            } catch (error) {
-                console.log(error);
-                vscode.window.showErrorMessage(`❌ 加载失败: ${error.message}`);
-                panel.webview.postMessage({
-                    command: 'error',
-                    message: error.message
-                });
-            }
+    const doLoad = (synPath) => {
+        if (!synPath) {
+            vscode.window.showErrorMessage('未找到 synopsis.json，无法加载 mod');
+            return;
         }
-    });
+        const modPath = path.dirname(synPath);
+        vscode.window.showInformationMessage(`📂 读取 mod: ${synPath}`);
+
+        modReaderJSON5
+            .analyzeModJSON5(modPath)
+            .then((modInfo) => {
+                if (!modInfo) {
+                    vscode.window.showErrorMessage('读取 mod 失败：无数据');
+                    return;
+                }
+                if (!modInfo.content || modInfo.content.length === 0) {
+                    vscode.window.showWarningMessage('mod 中没有可加载的 content 数据');
+                }
+
+                // 后端转换：mod 原始数据 → 前端数据池（按类别，供基础类型实例化；替代前端 toModJSON）
+                const modName = (modInfo.synopsis && modInfo.synopsis.name) || path.basename(modPath);
+                const namespace = `mod:${modName}`;
+                const data = modConverter.contentFilesToData(modInfo.content, {
+                    source: 'mod',
+                    modId: modName,
+                    namespace,
+                });
+                const count = Object.values(data.categories).reduce((n, list) => n + list.length, 0);
+
+                panel.webview.postMessage({
+                    command: 'modLoaded',
+                    data: {
+                        synopsis: modInfo.synopsis || null,
+                        modPath,
+                        namespace,
+                        source: data.source,
+                        categories: data.categories,
+                        count,
+                        errors: modInfo.errors || [],
+                    },
+                });
+            })
+            .catch((err) => {
+                vscode.window.showErrorMessage(`读取 mod 失败: ${err.message}`);
+                panel.webview.postMessage({ command: 'error', message: err.message });
+            });
+    };
+
+    if (synopsisPath) {
+        doLoad(synopsisPath);
+        return;
+    }
+
+    // 工作区没有 synopsis.json，则询问文件位置
+    vscode.window
+        .showOpenDialog({
+            canSelectMany: false,
+            filters: { 'JSON 文件': ['json'] },
+            openLabel: '选择 synopsis.json',
+        })
+        .then((files) => {
+            if (!files || !files[0]) return;
+            synopsisPath = files[0].fsPath;
+            if (!synopsisPath.endsWith('synopsis.json')) {
+                vscode.window.showWarningMessage('⚠️ 建议选择名为 synopsis.json 的文件');
+            }
+            doLoad(synopsisPath);
+        });
+}
+
+/** 功能3：新建 synopsis.json 等 mod 基础设置 */
+function handleNewMod(panel) {
+    console.log('🆕 新建 mod 请求');
+    let modName = '';
+
+    vscode.window
+        .showInputBox({
+            prompt: '输入新 mod 的名称',
+            placeHolder: 'My New Mod',
+            validateInput: (v) => (!v || !v.trim() ? '名称不能为空' : undefined),
+        })
+        .then((name) => {
+            if (name === undefined) return null; // 用户取消
+            modName = name.trim();
+            return vscode.window.showOpenDialog({
+                canSelectMany: false,
+                canSelectFolders: true,
+                canSelectFiles: false,
+                openLabel: '在此目录内创建 mod 结构',
+            });
+        })
+        .then((folders) => {
+            if (!folders || !folders[0]) return;
+            const result = modLoad.createModStructure(folders[0].fsPath, { name: modName || 'My New Mod' });
+            if (result.errors && result.errors.length) {
+                vscode.window.showErrorMessage(`创建 mod 失败: ${result.errors.join('; ')}`);
+                return;
+            }
+            vscode.window.showInformationMessage(`✅ 已创建 mod: ${result.synopsisPath}`);
+            panel.webview.postMessage({
+                command: 'modCreated',
+                data: { synopsisPath: result.synopsisPath, files: result.files },
+            });
+        });
+}
+
+/** 功能4：打开单个 mod json 文件作为节点预览（引用可能缺失，仅作预览） */
+function handleOpenJsonPreview(panel) {
+    console.log('👁️ 打开 mod json 预览请求');
+
+    vscode.window
+        .showOpenDialog({
+            canSelectMany: false,
+            filters: { 'JSON 文件': ['json'] },
+            openLabel: '选择要预览的 json 文件',
+        })
+        .then((files) => {
+            if (!files || !files[0]) return;
+            const filePath = files[0].fsPath;
+            const result = modConverter.singleFileToData(filePath);
+            if (result.error) {
+                vscode.window.showErrorMessage(`预览失败: ${result.error}`);
+                return;
+            }
+            const count = Object.values(result.categories).reduce((n, list) => n + list.length, 0);
+            vscode.window.showInformationMessage(`✅ 预览 ${result.fileName}（${count} 个节点，引用可能缺失，仅作预览）`);
+            panel.webview.postMessage({
+                command: 'jsonPreviewLoaded',
+                data: {
+                    fileName: result.fileName,
+                    category: result.category,
+                    namespace: result.namespace,
+                    source: result.source,
+                    categories: result.categories,
+                    count,
+                },
+            });
+        });
+}
+
+/** 功能1：预加载游戏基础内容节点（可在设置中关闭） */
+function preloadOrigin(panel) {
+    try {
+        const cfg = vscode.workspace.getConfiguration('cultistNodeEditor');
+        const enabled = cfg.get('preloadOrigin', true);
+        if (!enabled) {
+            console.log('⏭️ 已关闭游戏基础内容预加载（设置 cultistNodeEditor.preloadOrigin）');
+            return;
+        }
+
+        const originDir = path.join(__dirname, 'core', 'origin_resources', 'StreamingAssets', 'content', 'core');
+        if (!fs.existsSync(originDir)) {
+            console.log('⚠️ 未找到 origin_resources 内容目录，跳过预加载');
+            return;
+        }
+
+        const { categories } = modConverter.loadOriginData(originDir);
+        const count = Object.values(categories).reduce((n, list) => n + list.length, 0);
+        console.log(`🎮 预加载游戏基础内容: ${count} 条数据`);
+        panel.webview.postMessage({
+            command: 'originLoaded',
+            data: { namespace: 'origin', source: 'origin', categories, count },
+        });
+    } catch (error) {
+        console.error('预加载 origin 内容失败:', error);
+    }
 }
 
 // 处理文件夹的
@@ -394,6 +588,59 @@ function deactivate() {
     console.log('👋 Node Editor 扩展已停用');
     if (currentPanel) {
         currentPanel.dispose();
+    }
+}
+
+/**
+ * 自定义编辑器 Provider：json 文件右键「打开方式」→ 节点编辑器 JSON 预览（功能4）。
+ * 复用现有 webUI.html，打开后把当前文档转为数据池（modConverter.singleFileToData）。
+ */
+class JsonPreviewEditorProvider {
+    /** @param {import('vscode').ExtensionContext} context */
+    constructor(context) {
+        this.context = context;
+    }
+
+    /**
+     * @param {import('vscode').TextDocument} document
+     * @param {import('vscode').WebviewPanel} webviewPanel
+     * @param {import('vscode').CancellationToken} token
+     */
+    resolveCustomTextEditor(document, webviewPanel, token) {
+        // 复用现有 webview 内容（把 custom editor 的 webviewPanel 当普通 panel 处理）
+        webviewPanel.webview.html = getWebviewContent(webviewPanel, this.context);
+
+        const filePath = document.uri.fsPath;
+
+        const sendPreview = () => {
+            try {
+                const result = modConverter.singleFileToData(filePath);
+                const count = Object.values(result.categories || {}).reduce((n, list) => n + list.length, 0);
+                if (result.error) {
+                    webviewPanel.webview.postMessage({ command: 'error', message: `预览失败: ${result.error}` });
+                    return;
+                }
+                webviewPanel.webview.postMessage({
+                    command: 'jsonPreviewLoaded',
+                    data: {
+                        fileName: result.fileName,
+                        category: result.category,
+                        namespace: result.namespace,
+                        source: result.source,
+                        categories: result.categories,
+                        count,
+                    },
+                });
+            } catch (e) {
+                webviewPanel.webview.postMessage({ command: 'error', message: `预览失败: ${e.message}` });
+            }
+        };
+
+        // 前端就绪（webviewReady）后发送；并兜底延时发送一次（幂等，覆盖前端慢加载）
+        webviewPanel.webview.onDidReceiveMessage((message) => {
+            if (message.command === 'webviewReady') sendPreview();
+        });
+        setTimeout(sendPreview, 800);
     }
 }
 

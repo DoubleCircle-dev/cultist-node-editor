@@ -24,13 +24,17 @@ export class NumericProp extends PortProp {
      * @param {number} v - 要设置的值
      */
     setValue(v) {
-        // 如果v小于this.min，则取this.min；如果v大于this.max，则取this.max；否则取v本身
-        const value = Math.max(this.config.min, Math.min(this.config.max, v));
+        // 仅当配置了 min/max 时做边界钳制（未配置则直接取值，避免 NaN）
+        let value = v;
+        if (this.config.min != null) value = Math.max(this.config.min, value);
+        if (this.config.max != null) value = Math.min(this.config.max, value);
         super.setValue(value);
     }
 
     updateValue(v) {
-        const value = Math.max(this.config.min, Math.min(this.config.max, v));
-        super.updateValue(value);        
+        let value = v;
+        if (this.config.min != null) value = Math.max(this.config.min, value);
+        if (this.config.max != null) value = Math.min(this.config.max, value);
+        super.updateValue(value);
     }
 }

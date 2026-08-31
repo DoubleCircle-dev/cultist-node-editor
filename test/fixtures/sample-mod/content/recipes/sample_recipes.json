@@ -1,0 +1,19 @@
+{
+  "recipes": [
+    {
+      "id": "sample_study",
+      "label": "示例研习",
+      "actionId": "study",
+      "startdescription": "这是一个示例配方（从开发宿主工作区加载）。",
+      "description": "示例配方描述",
+      "warmup": 10,
+      "craftable": false,
+      "effects": {
+        "fragmentmoth": 1
+      },
+      "requirements": {
+        "fragmentmoth": 1
+      }
+    }
+  ]
+}

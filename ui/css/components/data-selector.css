@@ -1,0 +1,121 @@
+/* 数据选择器（modal）—— 从基础类型数据池选择条目实例化节点 */
+.data-selector-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.data-selector {
+    width: min(520px, 90vw);
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel-bg, #1e2430);
+    border: 1px solid var(--panel-border, #3a4152);
+    border-radius: 8px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.data-selector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: var(--text-primary, #e8e8e8);
+    border-bottom: 1px solid var(--panel-border, #3a4152);
+}
+
+.data-selector-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #9aa);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+}
+
+.data-selector-close:hover {
+    color: var(--text-primary, #e8e8e8);
+}
+
+.data-selector-search {
+    margin: 10px 14px 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--panel-border, #3a4152);
+    background: var(--input-bg, #161b24);
+    color: var(--text-primary, #e8e8e8);
+    outline: none;
+}
+
+.data-selector-search:focus {
+    border-color: var(--accent, #4a9eff);
+}
+
+.data-selector-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px 10px;
+}
+
+.data-selector-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-primary, #e8e8e8);
+}
+
+.data-selector-item:hover {
+    background: rgba(74, 158, 255, 0.12);
+}
+
+.data-selector-item-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-selector-item-badge.origin {
+    background: rgba(120, 200, 120, 0.18);
+    color: #7dd87d;
+}
+
+.data-selector-item-badge.mod {
+    background: rgba(120, 158, 255, 0.18);
+    color: #7da8ff;
+}
+
+.data-selector-item-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.data-selector-item-id {
+    font-size: 11px;
+    color: var(--text-secondary, #9aa);
+    flex-shrink: 0;
+    max-width: 40%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.data-selector-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-secondary, #9aa);
+}

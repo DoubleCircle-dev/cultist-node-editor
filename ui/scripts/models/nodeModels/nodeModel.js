@@ -200,8 +200,13 @@ export class NodeModel extends BaseNodeModel {
         };
     }
 
+    /**
+     * ⚠️ 已迁移后端：转换为实际 mod 字段由 core/modConverter.js（snapshotToMod）承担。
+     * 前端只负责 toJSON() 持久化快照，经 exportMod 消息交由后端转换后写回 mod 文件。
+     * @see agent-scratch/modjson-persistence-conversion-design.md
+     * @deprecated 待 P3 阶段移除（前端不再维护 mod 语义序列化）
+     */
     toModJSON() {
-        console.log(this.properties.map((prop) => prop.toModJSON()));
         return {
             id: this.title + '#' + this.id,
             label: this.label,

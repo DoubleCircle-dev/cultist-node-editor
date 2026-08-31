@@ -7,12 +7,26 @@
   "configurations": [
 
     {
-      "name": "运行扩展",
+      "name": "运行扩展（项目根）",
       "type": "extensionHost",
       "request": "launch",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": ["${workspaceFolder}/**/*.js"],
+      "skipFiles": ["<node_internals>/**"]
       // "preLaunchTask": "${defaultBuildTask}"
+    },
+
+    {
+      "name": "运行扩展（示例 Mod 工作区）",
+      "type": "extensionHost",
+      "request": "launch",
+      // 开发宿主直接打开示例 mod 作为工作区，便于测试「检测工作区 synopsis.json / 加载 mod」
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "${workspaceFolder}/test/fixtures/sample-mod"
+      ],
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "skipFiles": ["<node_internals>/**"]
     }
   ]
 }

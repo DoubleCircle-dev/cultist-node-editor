@@ -10,6 +10,8 @@ import { PanelManager } from './panelManager.js';
 import { HistoryManager } from './historyManager.js';
 import { MenuManager } from './MenuManager.js';
 import { StandardMessage } from '../types/standardDetail.js';
+import { DataSelector } from '../views/dataSelector.js';
+import { ModDataRegistry } from '../modDataRegistry.js';
 
 export class ControllerCore {
     /**
@@ -28,6 +30,7 @@ export class ControllerCore {
             quickDelete: true,
             historyMaxLength: 20,
             undoHistoryMaxLength: 20,
+            autoLayoutLimit: 200, // 数据加载后自动铺图的最大节点数（超出保留在数据池）
         };
 
         this.historyManager = new HistoryManager(this.bus, this.viewport, this.world, this);
@@ -105,6 +108,52 @@ export class ControllerCore {
      */
     addNode(nodeType, Px = null, Py = null) {
         this.nodeManager.addNode(nodeType, Px, Py);
+    }
+
+    /**
+     * 打开数据选择器：从基础类型的数据池选择条目，实例化节点（类型保持为基础类型）。
+     *
+     * @param {string} type - 基础类型（recipes/elements/...）
+     */
+    openDataSelector(type) {
+        const entries = ModDataRegistry.getEntries(type);
+        if (!entries.length) {
+            console.warn(`[数据选择器] 类型 ${type} 暂无数据源`);
+            return;
+        }
+        const selector = new DataSelector({
+            category: type,
+            entries,
+            onSelect: (entry) => this.nodeManager.addNodeFromData(type, entry),
+        });
+        document.body.appendChild(selector.element);
+    }
+
+    /**
+     * 数据加载后自动转换为可查看的节点（铺到画布，受 autoLayoutLimit 规模限制）。
+     * 按类别均衡取样，保证各类别都有节点可见；超出的数据留在数据池，
+     * 可经「添加节点 → 数据选择器」手动创建。
+     *
+     * @param {string} namespace
+     * @returns {number} 实际创建的节点数
+     */
+    autoLayoutLoadedData(namespace) {
+        if (!namespace) return 0;
+        const all = ModDataRegistry.getEntriesByNamespace(namespace);
+        if (!all.length) return 0;
+        const limit = this.setting.autoLayoutLimit || 200;
+
+        // 按类别分组，每类均取一部分，避免前 N 条集中在某一类
+        const byCat = {};
+        all.forEach((e) => {
+            const key = e.category || 'misc';
+            (byCat[key] = byCat[key] || []).push(e);
+        });
+        const perCat = Math.max(1, Math.floor(limit / Object.keys(byCat).length));
+        const items = [];
+        Object.entries(byCat).forEach(([, list]) => items.push(...list.slice(0, perCat)));
+
+        return this.nodeManager.addNodesFromData(items, { limit });
     }
 
     /**

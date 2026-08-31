@@ -178,6 +178,149 @@ export class NodeManager extends IManager {
     }
 
     /**
+     * 从数据池条目创建「基础类型」节点实例（origin/mod 数据 → 节点）。
+     *
+     * 类型保持不变（recipes/elements/...，不注册动态类型），数据按模板属性名填充：
+     *   - 标量字段（fields）按 name 匹配填充模板属性；
+     *   - 对象字段（refs，如 effects/requirements）暂不连线，作为只读文本保留；
+     *   - 模板未覆盖的多余字段：
+     *       · origin 来源 → 新增 custom prop 保留显示；
+     *       · 用户 mod 来源 → 不允许建立多余词条（忽略并警告）。
+     *
+     * @param {string} type - 基础类型（recipes/elements/...）
+     * @param {any} entry - ModDataRegistry 中的数据条目
+     * @param {number | null} [Px]
+     * @param {number | null} [Py]
+     * @returns {BaseNodeModel | null}
+     */
+    addNodeFromData(type, entry, Px = null, Py = null) {
+        /** @type {number | null} */
+        let id = null;
+        let uid = null;
+
+        let x = Px == null ? 0 : Px;
+        let y = Py == null ? 0 : Py;
+        if (Px == null || Py == null) {
+            ({ x, y } = this.coreSpace.ViewCenter);
+            x = x + Math.random() * 300 - 150;
+            y = y + Math.random() * 100 - 100;
+        }
+
+        try {
+            id = this.idGenerator.generate();
+            uid = this.uidGenerator.generate() || 0;
+            if (!id) {
+                throw new Error('节点数量已达到最大值');
+            }
+
+            const nodeModel = NodeGenerator.createNode(String(id), uid, type, x, y);
+            this._createNode(nodeModel);
+            this._fillNodeFromData(nodeModel, entry);
+            return nodeModel;
+        } catch (error) {
+            console.error('从数据创建节点失败:', error);
+            if (id) this.idGenerator.release(id);
+            if (uid) this.uidGenerator.release(uid);
+            return null;
+        }
+    }
+
+    /**
+     * 批量从数据池创建基础类型节点并网格布局（「加载后转换为可查看的节点」）。
+     * 布局以视野中心为起点，按行排列，避免节点重叠。
+     *
+     * @param {Array<any>} entries - 数据条目（每条含 category/source）
+     * @param {{ limit?: number, perRow?: number, gapX?: number, gapY?: number }} [opts]
+     * @returns {number} 成功创建的节点数
+     */
+    addNodesFromData(entries, opts = {}) {
+        if (!Array.isArray(entries) || !entries.length) return 0;
+        const limit = opts.limit || entries.length;
+        const items = entries.slice(0, limit);
+        const perRow = opts.perRow || 6;
+        const gapX = opts.gapX || 340;
+        const gapY = opts.gapY || 260;
+        const { x: cx, y: cy } = this.coreSpace.ViewCenter;
+        const startX = cx - (Math.min(items.length, perRow) * gapX) / 2;
+        const startY = cy - 40;
+
+        let created = 0;
+        items.forEach((entry, i) => {
+            const row = Math.floor(i / perRow);
+            const col = i % perRow;
+            const model = this.addNodeFromData(entry.category, entry, startX + col * gapX, startY + row * gapY);
+            if (model) created++;
+        });
+        return created;
+    }
+
+    /**
+     * @private 用数据条目填充基础类型节点实例
+     * @param {BaseNodeModel} nodeModel
+     * @param {any} entry
+     */
+    _fillNodeFromData(nodeModel, entry) {
+        if (!entry) return;
+
+        // 标题/标签 = 数据 label
+        if (entry.title) {
+            nodeModel.title = entry.title;
+            nodeModel.label = entry.title;
+        }
+
+        const detailProps = nodeModel.detailProperties;
+        /** @type {Array<{name: string, value: any}>} */
+        const extras = [];
+
+        /** 按名填充（大小写不敏感），找不到对应模板属性返回 false */
+        const fillField = (name, value) => {
+            const prop = detailProps.find(
+                (p) => p.name && String(p.name).toLowerCase() === String(name).toLowerCase()
+            );
+            if (!prop) return false;
+            // 端口/引用类：以只读文本保留数据（连线留待后续迭代）
+            if (prop.type === 'port' || prop.type === 'hub') {
+                const text = value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
+                prop.updateValue(text);
+            } else {
+                prop.updateValue(value);
+            }
+            return true;
+        };
+
+        // 1. 标量字段 → 按名填充模板属性（label 已用作标题/标签，跳过以免多余词条）
+        Object.entries(entry.fields || {}).forEach(([name, value]) => {
+            if (name.toLowerCase() === 'label') return;
+            if (!fillField(name, value)) {
+                extras.push({ name, value: value && typeof value === 'object' ? JSON.stringify(value) : value });
+            }
+        });
+        // 2. 对象字段（引用，如 effects/requirements）暂不连线 → 保留为只读文本
+        Object.entries(entry.refs || {}).forEach(([name, value]) => {
+            extras.push({ name, value: JSON.stringify(value) });
+        });
+
+        // 3. 多余字段处理：origin 保留为 custom prop；用户 mod 不允许多余词条（忽略）
+        if (extras.length > 0) {
+            if (entry.source === 'origin') {
+                extras.forEach((ex, i) => {
+                    const prop = new BaseProp(`${nodeModel.id}:custom:${i}`, `保留字段:${ex.name}`, 'custom', ex.value);
+                    prop.parentNode = new WeakRef(nodeModel);
+                    nodeModel.addProperty(prop);
+                });
+            } else {
+                console.warn(
+                    `[数据池] ${entry.source === 'mod' ? '用户 mod' : '数据'}「${entry.id}」存在模板未覆盖字段（按规则忽略，不允许多余词条）:`,
+                    extras.map((e) => e.name)
+                );
+            }
+        }
+
+        // 4. 通知视图重绘（NodeView 监听模型 'redraw'）
+        nodeModel.emit('redraw');
+    }
+
+    /**
      * @private
      * @param {Event} e
      */

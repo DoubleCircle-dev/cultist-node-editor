@@ -79,6 +79,11 @@ export class PropGenerator {
                 args = [id, propConfig.label, 'checkbox', propConfig.default];
                 propClass = BaseProp;
                 break;
+            case 'custom':
+                // 只读文本展示（origin 多余字段保留用），由数据实例化时创建
+                args = [id, propConfig.label, 'custom', propConfig.default];
+                propClass = BaseProp;
+                break;
             case 'select':
                 args = [id, propConfig.label, 'select', propConfig.default, propConfig.options, propConfig.isModeSwitcher];
                 propClass = OptionsProp;
@@ -136,6 +141,8 @@ export class PropGenerator {
 
         if (result instanceof BaseProp) {
             result.description = propConfig.description;
+            // 修复：把模板属性名（name）传给 prop 实例，供「数据填充」按名匹配
+            result.name = propConfig.name || propConfig.label;
             if (!(result instanceof HubProp)) {
                 result.parentNode = node;
             }
@@ -209,6 +216,7 @@ export class PropRenderer {
         'textarea-preview': (p) => this.createPreView('textarea', p),
         node: (p) => this.createInput('text', p, { placeholder: '节点引用/ID' }),
         'text-preview': (p) => this.createPreView('textarea', p),
+        custom: (p) => this.createInput('text', p, { readonly: true, placeholder: '只读（origin 保留字段）' }),
         port: (p) => this.createButton('port', p),
         selectPort: (p) => this.createButton('selectPort', p),
     };
@@ -530,6 +538,16 @@ export class PropRenderer {
     }
 
     /**
+     * 获取图片加载失败时的回退占位图 URI（优先后端注入的 webview URI，其次浏览器相对路径）
+     *
+     * @returns {string}
+     */
+    static getPlaceholderImage() {
+        const cfg = typeof window !== 'undefined' ? window.NODE_EDITOR_CONFIG : null;
+        return (cfg && cfg.placeholderImage) || 'assets/img/placeholder.png';
+    }
+
+    /**
      * 创建预览组件
      *
      * @param {string} type
@@ -557,20 +575,40 @@ export class PropRenderer {
                 listeners.push({ target: textInput, type: 'mousedown', listener: textareaMousedownListener });
                 preView.appendChild(textInput);
                 break;
-            case 'icon':
-                const icon = this.createElement('img', {
-                    src: prop.value || '../../../test/img/placeholder.png',
+            case 'icon': {
+                const placeholder = this.getPlaceholderImage();
+                const icon = /** @type {HTMLImageElement} */ (this.createElement('img', {
+                    src: prop.value || placeholder,
+                }));
+                // 图片加载失败（src 无效/404）时回退占位图，仅回退一次
+                let fallbackApplied = false;
+                icon.addEventListener('error', () => {
+                    if (!fallbackApplied) {
+                        fallbackApplied = true;
+                        icon.src = placeholder;
+                    }
                 });
                 preView.appendChild(icon);
                 preView.classList.add('icon');
                 break;
+            }
 
-            case 'image':
-                const img = this.createElement('img', {
-                    src: prop.value || '../../../test/img/placeholder.png',
+            case 'image': {
+                const placeholder = this.getPlaceholderImage();
+                const img = /** @type {HTMLImageElement} */ (this.createElement('img', {
+                    src: prop.value || placeholder,
+                }));
+                // 图片加载失败（src 无效/404）时回退占位图，仅回退一次
+                let fallbackApplied = false;
+                img.addEventListener('error', () => {
+                    if (!fallbackApplied) {
+                        fallbackApplied = true;
+                        img.src = placeholder;
+                    }
                 });
                 preView.appendChild(img);
                 break;
+            }
 
             case 'table':
                 const tableWrapper = this.createElement('div', {}, 'table-wrapper');

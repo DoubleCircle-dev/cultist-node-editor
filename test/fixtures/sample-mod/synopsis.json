@@ -1,0 +1,7 @@
+{
+  "name": "示例 Mod",
+  "author": "dev",
+  "version": "1.0.0",
+  "description": "用于扩展开发宿主调试的示例 mod（含 synopsis.json 入口，供「检测工作区」测试）",
+  "description_long": ""
+}

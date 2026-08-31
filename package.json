@@ -11,7 +11,8 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "*",
+    "onCustomEditor:cultist-node-editor.jsonPreview"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -19,6 +20,39 @@
       {
         "command": "cultist-node-editor.openEditor",
         "title": "打开密教模拟器节点编辑器"
+      },
+      {
+        "command": "cultist-node-editor.loadMod",
+        "title": "加载 Mod（检测/选择 synopsis.json）"
+      },
+      {
+        "command": "cultist-node-editor.newMod",
+        "title": "新建 Mod 基础结构（synopsis.json）"
+      },
+      {
+        "command": "cultist-node-editor.openJsonPreview",
+        "title": "预览单个 Mod JSON 文件为节点"
+      }
+    ],
+    "configuration": {
+      "title": "密教模拟器节点编辑器",
+      "properties": {
+        "cultistNodeEditor.preloadOrigin": {
+          "type": "boolean",
+          "default": true,
+          "description": "打开编辑器时预加载游戏基础内容（origin_resources）为可拖拽节点"
+        }
+      }
+    },
+    "customEditors": [
+      {
+        "viewType": "cultist-node-editor.jsonPreview",
+        "displayName": "节点编辑器 JSON 预览",
+        "selector": [
+          {
+            "filenamePattern": "**/*.json"
+          }
+        ]
       }
     ]
   },

@@ -3,6 +3,7 @@ import { NodeModel } from './models/nodeModels/nodeModel.js';
 import { NodeTypeRegistry } from "./types/nodeTypes.js";
 import { NodeGenerator } from "./generators/nodeGenerator.js"
 import { NodeView } from './views/nodeView.js';
+import { ModDataRegistry } from './modDataRegistry.js';
 
 
 let vscode = null;
@@ -39,28 +40,115 @@ export function updateStatus(text) {
 
 export function readMod() {
     updateStatus("读取mod中，请选择synopsis.json，如果mod文件夹内项目过多，读取时间可能较长");
-
+    if (vscode) {
+        vscode.postMessage({ command: 'readMod' });
+    } else {
+        console.warn('非 VSCode 环境，无法读取 mod');
+    }
 }
 
-// todo 保存图表
+/** 保存图表（经 VSCode 后端写入文件） */
 export function saveGraph() {
+    updateStatus("保存图表...");
+    if (!vscode) {
+        console.warn('非 VSCode 环境，无法保存图表');
+        return;
+    }
     const graphData = {
-        nodes: [],
+        nodes: (core ? core.nodes : []).map((node) => node.toJSON()),
         connections: [],
         metadata: {
             created: new Date().toISOString(),
             version: "1.0",
         },
     };
-
-    updateStatus("保存图表...");
-
+    vscode.postMessage({ command: 'saveGraph', data: graphData });
 }
 
-// todo 加载图表
+/** 加载图表（从 JSON 文件恢复） */
 export function loadGraph() {
     updateStatus("加载图表...");
+    if (vscode) {
+        vscode.postMessage({ command: 'loadGraph' });
+    } else {
+        console.warn('非 VSCode 环境，无法加载图表');
+    }
+}
 
+/** 新建 mod 基础结构（synopsis.json + content/） */
+export function newMod() {
+    updateStatus("新建 mod 基础结构...");
+    if (vscode) {
+        vscode.postMessage({ command: 'newMod' });
+    } else {
+        console.warn('非 VSCode 环境，无法新建 mod');
+    }
+}
+
+/** 打开单个 mod json 文件作为节点预览 */
+export function openJsonPreview() {
+    updateStatus("打开 json 预览...");
+    if (vscode) {
+        vscode.postMessage({ command: 'openJsonPreview' });
+    } else {
+        console.warn('非 VSCode 环境，无法预览 json');
+    }
+}
+
+/**
+ * 把后端加载的数据注册进数据池（按类别，供基础类型实例化时选择）。
+ * 注意：节点类型始终是基础类型（recipes/elements/...），这里不注册任何动态类型。
+ *
+ * @param {string} label - 来源描述（用于状态提示）
+ * @param {{ namespace: string, source: string, categories: Record<string, any[]>, count?: number }} data
+ */
+function registerData(label, data) {
+    if (!data || !data.categories || typeof data.categories !== 'object') return;
+    const registered = ModDataRegistry.register(data);
+    // 加载后自动把数据转换为可查看的节点（铺到画布，受规模上限限制；超出保留在数据池）
+    const created = core ? core.autoLayoutLoadedData(data.namespace) : 0;
+    updateStatus(`✅ ${label}：已加载 ${registered} 条数据，铺图 ${created} 个节点`);
+    console.log(`[数据池] ${label} 加载 ${registered} 条（来源: ${data.source}），自动铺图 ${created} 个`);
+}
+
+/** 接收 VSCode 后端消息 */
+function handleVscodeMessage(event) {
+    const message = event.data;
+    if (!message || !message.command) return;
+
+    switch (message.command) {
+        case 'init':
+            updateStatus(message.message || '已就绪');
+            break;
+        case 'originLoaded':
+            registerData('游戏基础内容', message.data);
+            break;
+        case 'modLoaded': {
+            const name = (message.data.synopsis && message.data.synopsis.name) || '';
+            registerData(`Mod:${name}`, message.data);
+            if (message.data.errors && message.data.errors.length) {
+                console.warn('[modLoaded] 读取告警:', message.data.errors);
+            }
+            break;
+        }
+        case 'jsonPreviewLoaded':
+            registerData(`预览:${message.data.fileName}`, message.data);
+            break;
+        case 'modCreated':
+            updateStatus(`✅ 已创建 mod: ${message.data.synopsisPath}`);
+            break;
+        case 'saveConfirmed':
+            updateStatus(`✅ 图表已保存到: ${message.path}`);
+            break;
+        case 'graphLoaded':
+            updateStatus(`✅ 图表已加载（${message.data ? message.data.nodes?.length || 0 : 0} 个节点）`);
+            break;
+        case 'error':
+            updateStatus(`❌ ${message.message || '发生错误'}`);
+            break;
+        default:
+            break;
+    }
 }
 
 // todo 清空画布
@@ -258,6 +346,12 @@ function initWebview(callback) {
             // updateStatus("已连接"); // 可恢复
             console.log('核心控制器初始化成功');
             win.controlCore = core;
+
+            // 通知后端 webview 已就绪（自定义编辑器「打开方式」依赖此信号发送预览数据）
+            if (vscode) {
+                vscode.postMessage({ command: 'webviewReady' });
+            }
+
             if (callback) callback(null, core);
         } catch (error) {
             console.error('初始化失败:', error);
@@ -294,6 +388,11 @@ win.addNode = addNode;
 win.addBlankNode = addBlankNode;
 win.addTestNode = addTestNode;
 
+win.readMod = readMod;
+win.saveGraph = saveGraph;
+win.loadGraph = loadGraph;
+win.newMod = newMod;
+win.openJsonPreview = openJsonPreview;
 
 win.setScale = setScale;
 win.fitView = fitView;
@@ -305,3 +404,7 @@ win.controlCore = core;
 
 win.generateTest = generateTest;
 win.customCheck = customCheck;
+
+// 接收 VSCode 后端消息（init / originLoaded / modLoaded / jsonPreviewLoaded / modCreated ...）
+// 浏览器环境也挂载，便于用 window.postMessage 调试；真实 webview 中后端消息同样走该事件。
+window.addEventListener('message', handleVscodeMessage);

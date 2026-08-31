@@ -6,6 +6,7 @@ import { PanelView } from '../views/panelView.js';
 import { NodeTypeRegistry } from '../types/nodeTypes.js';
 import { ExpandPanelModel } from '../models/panelModels/expandPanelModel.js';
 import { BottomPanelModel } from '../models/panelModels/bottomPanelModel.js';
+import { ModDataRegistry } from '../modDataRegistry.js';
 
 // 管理展示面板
 export class PanelManager extends IManager {
@@ -75,8 +76,13 @@ export class PanelManager extends IManager {
             hasSearch: true,
             dataType: 'list',
         });
-        addNodesPanel.rawData = NodeTypeRegistry.allTypesList;
+        addNodesPanel.setData(NodeTypeRegistry.allTypesList);
         addNodesPanel.dataActionHandlers.set('click-node-item', (type, id, path) => {
+            // 该基础类型已有数据源（origin/mod 数据池）→ 打开数据选择器，从数据实例化节点
+            if (ModDataRegistry.hasEntries(type)) {
+                this.coreSpace.openDataSelector(type);
+                return;
+            }
             this.bus.emit('addNode', {
                 type,
                 id,
