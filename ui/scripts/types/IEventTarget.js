@@ -50,7 +50,10 @@ export class IEventTarget extends EventTarget {
     }
 
     // 获取所有已注册的监听器（可指定事件类型）
-    /** @param {string | null} type */
+    /**
+     * @param {string | null} type
+     * @returns {Function[] | Record<string, Function[]>}
+     */
     getAllEventListeners(type = null) {
         // 修复：原判断 `type !== undefined` 对默认值 null 恒为 true，
         // 导致无参调用永远进入「按类型」分支而返回 []，无法取到全部监听器。
@@ -59,6 +62,7 @@ export class IEventTarget extends EventTarget {
             return set ? Array.from(set).map((item) => item.listener) : [];
         }
         // 返回所有类型的监听器，格式：{ type: [listener1, listener2], ... }
+        /** @type {Record<string, Function[]>} */
         const all = {};
         for (const [t, set] of this._listenersMap.entries()) {
             all[t] = Array.from(set).map((item) => item.listener);

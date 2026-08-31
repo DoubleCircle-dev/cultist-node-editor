@@ -8,6 +8,7 @@ export class BaseProp extends IEventTarget {
      * @param {string} label - 属性的显示名称
      * @param {string} type - 属性的类型
      * @param {any} value - 属性的值
+     * @param {string | null} description - 属性的说明文字（默认 null 表示无说明）
      */
     constructor(id, label, type, value, description = null, config = { placeholder: '', name: 'undefined', layout: 'normal' }) {
         super();
@@ -18,6 +19,7 @@ export class BaseProp extends IEventTarget {
         this._value = value;
 
         this.layout = config.layout;
+        /** @type {Record<string, any>} */
         this.config = {};
 
         this.name = config.name || label;
@@ -60,6 +62,15 @@ export class BaseProp extends IEventTarget {
         const oldVal = this._value;
         this.value = newVal;
         this.onEvent('change:property', { value: this._value, oldValue: oldVal, newValue: newVal, propId: this.id });
+    }
+
+    /**
+     * 设置值（语义同 changeValue，供子类覆写后调用 super.setValue）。
+     *
+     * @param {any} newVal
+     */
+    setValue(newVal) {
+        this.changeValue(newVal);
     }
 
     /** @param {any} newVal */

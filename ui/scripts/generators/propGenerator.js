@@ -11,7 +11,7 @@ export class PropGenerator {
      * @param {any} id
      * @param {any} type
      * @param {any} propConfig
-     * @param {WeakRef<BaseNodeModel>} [node=null] Default is `null`
+     * @param {WeakRef<BaseNodeModel> | null} [node=null] Default is `null`
      * @returns {BaseProp | PortProp}
      */
     static createProp(id, type, propConfig, node = null) {
@@ -21,6 +21,7 @@ export class PropGenerator {
         let args;
         switch (type) {
             case 'hub':
+                /** @type {BaseProp[]} */
                 const hubProps = [];
                 propConfig.properties.forEach((/** @type {PropConfig} */ p, /** @type {number} */ index) => {
                     hubProps.push(PropGenerator.createProp(`${id}_hub:${propConfig.label}-${index}`, p.type, p, node));
@@ -127,7 +128,8 @@ export class PropGenerator {
 
         if (!propClass) {
             console.error(`未知属性类型: ${type}`);
-            return new BaseProp(null, null, null, null);
+            // 兜底占位：构造参数故意传 null（未知属性类型）
+            return Reflect.construct(BaseProp, [null, null, null, null]);
         }
 
         const result = Reflect.construct(propClass, args);
@@ -139,7 +141,7 @@ export class PropGenerator {
             }
         } else {
             console.error('注册属性失败', propClass, args);
-            return new BaseProp(null, null, null, null);
+            return Reflect.construct(BaseProp, [null, null, null, null]);
         }
 
         return result;
@@ -215,6 +217,8 @@ export class PropRenderer {
      * 辅助工具：创建 DOM 元素并分配属性
      *
      * @param {string} tagName
+     * @param {Record<string, any>} props
+     * @param {string} className
      */
     static createElement(tagName, props = {}, className = '') {
         const el = document.createElement(tagName);

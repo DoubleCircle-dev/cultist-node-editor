@@ -17,7 +17,7 @@ export class NodeView extends IView {
         /** @type {listenerMap[]} */
         this.propListeners = [];
 
-        /** @type {{ element: Element; event: string; handler: Function }[]} */
+        /** @type {{ element: Element; event: string; handler: EventListenerOrEventListenerObject }[]} */
         this.domListeners = [];
 
         // 创建DOM元素并赋值给实例属性
