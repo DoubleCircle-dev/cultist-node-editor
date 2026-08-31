@@ -227,7 +227,7 @@ export class ControllerCore {
             this.menuManager,
             this.panelManager,
         ].forEach((m) => {
-            if (m && typeof m.destroy === 'function') {
+            if (m && 'destroy' in m && typeof m.destroy === 'function') {
                 m.destroy();
             }
         });

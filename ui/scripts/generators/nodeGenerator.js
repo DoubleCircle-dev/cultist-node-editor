@@ -70,9 +70,9 @@ export class NodeGenerator {
     static _onPropertyChange(nodeModel) {
         // 监听节点模型的属性外部更改事件
         nodeModel.addEventListener('change:property', (/** @type {Event} */ e) => {
-            const ce = /** @type {CustomEvent} */ e;
+            const ce = /** @type {CustomEvent} */ (e);
             // 检查更新属性是否为模式切换器
-            if (ce.detail.propId === nodeModel.modeSwitcher?.id) {
+            if (ce.detail.propId === /** @type {any} */ (nodeModel).modeSwitcher?.id) {
                 return; // 如果是模式切换器则直接返回，不执行后续操作
             }
             nodeModel.emit('change:property:success', ce.detail);
@@ -89,7 +89,7 @@ export class NodeGenerator {
                 nodeModel.currentMode = prop.value;
 
                 prop.addEventListener('change:property', (e) => {
-                    const ce = /** @type {CustomEvent} */ e;
+                    const ce = /** @type {CustomEvent} */ (e);
                     if (nodeModel.switchMode(ce.detail.value)) {
                         nodeModel.emit('change:property:success', ce.detail);
                         nodeModel.emit('update:mode', { mode: nodeModel.currentMode });
@@ -99,7 +99,7 @@ export class NodeGenerator {
                 });
 
                 prop.addEventListener('update', (/** @type {Event} */ e) => {
-                    const ce = /** @type {CustomEvent} */ e;
+                    const ce = /** @type {CustomEvent} */ (e);
                     if (nodeModel.switchMode(ce.detail.value)) {
                         nodeModel.emit('update:property:success', ce.detail);
                         nodeModel.emit('update:mode', { mode: nodeModel.currentMode });

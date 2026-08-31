@@ -3,15 +3,8 @@ import { BaseNodeModel } from "./baseNodeModel.js";
 export class InlineNodeModel extends BaseNodeModel {
 
     constructor() {
-        const config = {
-            id: "inlineNode",
-            type: "inlineNode",
-            x: 0,
-            y: 0,
-            config: {},
-            properties: []
-        }
-        super(config);
+        // BaseNodeModel 构造签名：(id, type, x, y, config, properties)
+        super('inlineNode', 'inlineNode', 0, 0, /** @type {NodeConfig} */ ({}));
 
         // 包含的子节点
         this.subNodes = new Map();

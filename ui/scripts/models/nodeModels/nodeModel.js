@@ -26,6 +26,7 @@ export class NodeModel extends BaseNodeModel {
 
         this.inputs = null;
         this.outputs = null;
+        /** @type {HubProp | null} */
         this.portHub = this._createPortHub();
 
         super.properties = properties;

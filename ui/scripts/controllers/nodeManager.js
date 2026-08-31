@@ -35,7 +35,7 @@ export class NodeManager extends IManager {
         this.nodeViews = new Map();
         this.maxIndex = 0;
 
-        /** @type {Map<NodeID, Array>} */
+        /** @type {Map<NodeID, Array<{ event: string; handler: EventListenerOrEventListenerObject }>>} */
         this.nodeModelListeners = new Map();
 
         this._initListeners();
@@ -288,6 +288,11 @@ export class NodeManager extends IManager {
         const appendPropertyHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
 
+            // 类型守卫：仅 NodeModel 具备扩展属性（active/pool），其他模型不弹面板
+            if (!(nodeModel instanceof NodeModel)) {
+                return;
+            }
+
             // 可选属性 = 当前已激活的 + 属性池中的；两者都为空则不弹面板
             const activeHub = nodeModel.extendedProperties?.active;
             const poolHub = nodeModel.extendedProperties?.pool;
@@ -298,15 +303,13 @@ export class NodeManager extends IManager {
                 return;
             }
 
-            if (nodeModel instanceof NodeModel) {
-                const panel = this._createNodePropertyPanel(nodeModel, ce.detail.props);
+            const panel = this._createNodePropertyPanel(nodeModel, ce.detail.props);
 
-                this.bus.emit('toggleMenu', {
-                    menu: panel,
-                    menuId: panel.id,
-                    position: ce.detail.position,
-                });
-            }
+            this.bus.emit('toggleMenu', {
+                menu: panel,
+                menuId: panel.id,
+                position: ce.detail.position,
+            });
         };
         nodeModel.addEventListener('append:property', appendPropertyHandler);
         listeners.push({ event: 'append:property', handler: appendPropertyHandler });
