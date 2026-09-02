@@ -42,6 +42,9 @@ export class ConnectionManager extends IManager {
         /** @type {Map<string, {svgLine: SVGElement, listeners: Array}>} */
         this.connectionLines = new Map();
 
+        /** @type {Map<string, Function>} 文本变量同步：connectionId → cleanup */
+        this.textBindings = new Map();
+
         this.dragState = ConnectionManager.initDragState;
 
         this.startNode = null;
@@ -248,6 +251,9 @@ export class ConnectionManager extends IManager {
             }
 
             this.connections.delete(connId);
+
+            // 连接被删除 → 解除文本同步监听
+            this._unbindTextSync(connId);
         }
     }
 
@@ -365,6 +371,10 @@ export class ConnectionManager extends IManager {
 
     // 创建曲线路径
     createCurvedPath(startX, startY, endX, endY, startPortDirect = 'output', endDirect = 'input', tempFlag = false) {
+        if (!tempFlag && this.coreSpace.setting.connectionStyle === 'straight') {
+            return `M ${startX} ${startY} L ${endX} ${endY}`;
+        }
+
         // 计算垂直和水平距离
         const verticalDistance = Math.abs(endY - startY);
         const verticalDirect = endY - startY > 0 ? 1 : -1;
@@ -596,6 +606,9 @@ export class ConnectionManager extends IManager {
 
         // 创建连接线
         this.createConnectionLine(connection);
+
+        // 文本变量节点 ↔ 文本输入框：建立双向文本同步
+        this._bindTextSync(connection);
     }
 
     // 创建永久连接
@@ -650,6 +663,44 @@ export class ConnectionManager extends IManager {
         }
     }
 
+    /**
+     * 程序化创建连接（数据驱动连线，如 mod 引用展示；不走拖拽状态）。
+     * 由 ConnectionModel + _createConnection 完成：模型连线 + 注册索引 + 生成 SVG 连接线。
+     *
+     * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} fromModel
+     * @param {import('../models/propModels/portModel.js').PortModel} fromPort
+     * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} toModel
+     * @param {import('../models/propModels/portModel.js').PortModel} toPort
+     * @returns {import('../models/connectionModels/connectionModel.js').ConnectionModel | null}
+     */
+    createProgrammaticConnection(fromModel, fromPort, toModel, toPort) {
+        try {
+            if (!fromModel || !toModel || !fromPort || !toPort || fromPort === toPort) return null;
+            if (!fromPort.canConnectTo(toPort)) return null;
+            const fromNodeId = String(fromModel.id);
+            const toNodeId = String(toModel.id);
+            const connectionId = `conn-${fromNodeId}+${fromPort.id}+${toNodeId}+${toPort.id}`;
+            if (this.connections.has(connectionId)) return null;
+
+            // 端点位置：端口 DOM 世界坐标（未挂载/异常时回退节点坐标）
+            let startPos = { x: fromModel.x || 0, y: fromModel.y || 0 };
+            let endPos = { x: toModel.x || 0, y: toModel.y || 0 };
+            try {
+                startPos = this.getPortDotPosition(fromPort);
+            } catch { /* 端口未挂载，用节点坐标兜底 */ }
+            try {
+                endPos = this.getPortDotPosition(toPort);
+            } catch { /* 同上 */ }
+
+            const connection = new ConnectionModel(connectionId, fromNodeId, toNodeId, fromPort, toPort, startPos, endPos);
+            this._createConnection(connection);
+            return connection;
+        } catch (error) {
+            console.error('程序化创建连接失败:', error);
+            return null;
+        }
+    }
+
     // 创建永久连接线
     createConnectionLine(connection) {
         if (!this.SVG_layer) {
@@ -700,7 +751,15 @@ export class ConnectionManager extends IManager {
             svgLine.remove();
         };
         const changeConnectionHandler = (/** @type {CustomEvent} */ e) => {
-            const path = this.createCurvedPath(e.detail.startX, e.detail.startY, e.detail.endX, e.detail.endY);
+            // 重建路径必须带上端口方向（与创建时一致），否则控制点方向错误、线从错误侧伸出
+            const path = this.createCurvedPath(
+                e.detail.startX,
+                e.detail.startY,
+                e.detail.endX,
+                e.detail.endY,
+                connection.startPort.direction,
+                connection.targetPort.direction
+            );
             if (!path) {
                 console.error('无法创建路径，参数不准确', e.detail.startX, e.detail.startY, e.detail.endX, e.detail.endY);
                 return;
@@ -764,6 +823,131 @@ export class ConnectionManager extends IManager {
         this.bus.emit('toggle:connections');
     }
 
+    // ============ 文本变量节点 ↔ 文本输入框 双向同步 ============
+
+    /** @private 端口所在节点（port → prop → node，经弱引用解析） */
+    _portOwnerNode(port) {
+        const prop = port && port.parentProp;
+        if (!prop) return null;
+        const node = prop.parentNode && prop.parentNode.deref ? prop.parentNode.deref() : null;
+        return node || null;
+    }
+
+    /** @private 端口所在 prop */
+    _portOwnerProp(port) {
+        return port && port.parentProp ? port.parentProp : null;
+    }
+
+    /** @private 文本变量节点里保存文本内容的值 prop（非端口类） */
+    _findTextContentProp(node) {
+        if (!node) return null;
+        const contentTypes = new Set(['textarea-preview', 'text', 'text-preview', 'custom']);
+        return (node.detailProperties || []).find((p) => p && contentTypes.has(p.type)) || null;
+    }
+
+    /**
+     * @private 判断连接是否为「文本变量节点输出 → 文本输入框」，是则建立双向同步。
+     *
+     * 同步规则：
+     *  - 任一方向值变化都会写回对方（updateValue，不产生额外历史）；
+     *  - 连接建立时先让双方一致（优先采用非空一侧，避免覆盖正在编辑的内容）。
+     *
+     * @param {import('../models/connectionModels/connectionModel.js').ConnectionModel} connection
+     */
+    _bindTextSync(connection) {
+        if (!connection || !connection.startPort || !connection.targetPort) return;
+        if (this.textBindings.has(connection.id)) return;
+
+        const endpoints = [connection.startPort, connection.targetPort]
+            .map((port) => ({ port, node: this._portOwnerNode(port) }))
+            .filter((e) => e && e.node);
+
+        // 文本变量节点（type:'text'）的输出端口那一侧
+        const variable = endpoints.find((e) => e.node.type === 'text' && e.port.direction === 'output');
+        if (!variable) return;
+        const field = endpoints.find((e) => e !== variable);
+        if (!field) return;
+
+        // 对端必须是文本输入框属性（type:'text' 的值字段）
+        const fieldProp = this._portOwnerProp(field.port);
+        if (!fieldProp || fieldProp.type !== 'text') return;
+
+        const contentProp = this._findTextContentProp(variable.node);
+        if (!contentProp || contentProp === fieldProp) return;
+
+        let syncing = false;
+        /** 单向把 from 的值写进 to（同步期间不再反向触发，避免回环） */
+        const push = (from, to) => {
+            if (syncing) return;
+            const v = String(from.value ?? '');
+            if (String(to.value ?? '') === v) return;
+            syncing = true;
+            try {
+                to.updateValue(v);
+            } finally {
+                syncing = false;
+            }
+        };
+
+        const contentChanged = () => push(contentProp, fieldProp);
+        const fieldChanged = () => push(fieldProp, contentProp);
+
+        // 实时同步：设置开启时，任一侧键入（DOM input → prop 'text:input'）立即写回对方
+        const isRealtime = () =>
+            !!(this.coreSpace && this.coreSpace.setting && this.coreSpace.setting.realtimeTextSync);
+        /** 监听 from 侧键入，实时把内容写进 to（不产生历史） */
+        const pushLive = (from, to) => (/** @type {Event} */ e) => {
+            if (!isRealtime()) return;
+            if (syncing) return;
+            const v = e instanceof CustomEvent ? String(e.detail?.value ?? '') : '';
+            if (String(to.value ?? '') === v) return;
+            syncing = true;
+            try {
+                to.updateValue(v);
+            } finally {
+                syncing = false;
+            }
+        };
+        const contentLive = pushLive(contentProp, fieldProp);
+        const fieldLive = pushLive(fieldProp, contentProp);
+
+        contentProp.addEventListener('update', contentChanged);
+        contentProp.addEventListener('change:property', contentChanged);
+        fieldProp.addEventListener('update', fieldChanged);
+        fieldProp.addEventListener('change:property', fieldChanged);
+        contentProp.addEventListener('text:input', contentLive);
+        fieldProp.addEventListener('text:input', fieldLive);
+
+        const cleanup = () => {
+            contentProp.removeEventListener('update', contentChanged);
+            contentProp.removeEventListener('change:property', contentChanged);
+            fieldProp.removeEventListener('update', fieldChanged);
+            fieldProp.removeEventListener('change:property', fieldChanged);
+            contentProp.removeEventListener('text:input', contentLive);
+            fieldProp.removeEventListener('text:input', fieldLive);
+        };
+        this.textBindings.set(connection.id, cleanup);
+
+        // 连接建立后让双方值一致：优先采用有内容的一侧，避免覆盖编辑中的内容
+        const contentV = String(contentProp.value ?? '');
+        const fieldV = String(fieldProp.value ?? '');
+        if (contentV === fieldV) return;
+        if (fieldV) {
+            push(fieldProp, contentProp);
+        } else if (contentV) {
+            push(contentProp, fieldProp);
+        }
+    }
+
+    /** @private 解除某连接建立的文本同步监听 */
+    _unbindTextSync(connectionId) {
+        const cleanup = this.textBindings.get(connectionId);
+        if (cleanup) {
+            cleanup();
+            this.textBindings.delete(connectionId);
+        }
+    }
+
     clear() {
         this.connectionLines.forEach(({ listeners }) => {
             listeners.forEach(({ element, target, event, handler }) => {
@@ -779,6 +963,10 @@ export class ConnectionManager extends IManager {
         this.fromNodeIndex.clear();
         this.toNodeIndex.clear();
         this.connectionLines.clear();
+
+        // 清空文本变量同步监听
+        this.textBindings.forEach((cleanup) => cleanup());
+        this.textBindings.clear();
 
         if (this.SVG_layer) {
             this.SVG_layer.innerHTML = '';

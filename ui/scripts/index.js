@@ -113,7 +113,16 @@ function registerData(label, data) {
     }
     const registered = ModDataRegistry.register(data);
     // 加载后自动把数据转换为可查看的节点（铺到画布，受规模上限限制；超出保留在数据池）
-    const created = core ? core.autoLayoutLoadedData(data.namespace) : 0;
+    const laid = core ? core.autoLayoutLoadedData(data.namespace) : { count: 0, created: [] };
+    const created = (laid && laid.count) || 0;
+    // 中间模型连接：mod JSON 中的引用 → 已铺图节点间展示连线（引用缺失/未铺图暂悬空）。
+    // 延迟一帧再连线：端口圆点 DOM 位置需等本轮布局完成才准确，否则连接线端点会画到未布局位置。
+    if (core && Array.isArray(data.links) && laid && laid.created && laid.created.length) {
+        requestAnimationFrame(() => {
+            const linked = core.connectDataLinks(data.links, laid.created);
+            if (linked > 0) console.log(`[数据池] 已展示 ${linked} 条引用连接`);
+        });
+    }
     updateStatus(`✅ ${label}：已加载 ${registered} 条数据，铺图 ${created} 个节点`);
     console.log(`[数据池] ${label} 加载 ${registered} 条（来源: ${data.source}），自动铺图 ${created} 个`);
 }
@@ -220,6 +229,165 @@ export function setScale(scale) {
 
 export function openFilesPage(){
 
+}
+
+/** ⚙️ 设置弹窗 */
+let settingsPopoverEl = null;
+let settingsOutsideHandler = null;
+
+const SETTINGS_STORAGE_KEY = 'nodeEditor.settings';
+
+/** @param {string} key @param {any} value */
+function saveSetting(key, value) {
+    if (!core || !core.setting) return;
+    core.setting[key] = value;
+    try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(core.setting));
+        // 保留旧 key，兼容实时同步功能已使用过的本地配置。
+        if (key === 'realtimeTextSync') localStorage.setItem('nodeEditor.realtimeTextSync', value ? '1' : '0');
+    } catch { /* 忽略存储不可用 */ }
+    applySetting(key, value);
+}
+
+/** @param {string} key @param {any} value */
+function applySetting(key, value) {
+    if (!core) return;
+    if (key === 'defaultZoom') {
+        core.canvasManager.setZoom(Number(value));
+    } else if (key === 'animationSpeed') {
+        document.documentElement.style.setProperty('--transition-fast', `${Number(value)}ms ease-in-out`);
+    } else if (key === 'connectionStyle') {
+        document.documentElement.dataset.connectionStyle = String(value);
+        core.connectionManager._updateConnections();
+    } else if (key === 'showGrid') {
+        document.body.classList.toggle('hide-canvas-grid', !value);
+    } else if (key === 'gridSize') {
+        document.documentElement.style.setProperty('--canvas-grid-size', `${Number(value)}px`);
+    } else if (key === 'theme') {
+        document.documentElement.dataset.theme = String(value);
+    } else if (key === 'language') {
+        document.documentElement.lang = String(value);
+    }
+}
+
+/** 将保存的可视设置应用到当前页面 */
+function applySavedSettings() {
+    if (!core || !core.setting) return;
+    ['theme', 'language', 'defaultZoom', 'animationSpeed', 'connectionStyle', 'gridSize', 'showGrid'].forEach((key) =>
+        applySetting(key, core.setting[key])
+    );
+}
+
+/** 读取 config.json 中的设置默认值；已有本地用户设置时优先保留用户选择。 */
+async function loadConfigSettings() {
+    try {
+        const response = await fetch('./config.json');
+        if (!response.ok) return;
+        const config = await response.json();
+        if (!config || !config.settings || !core || core.hasSavedSettings) return;
+        Object.assign(core.setting, config.settings);
+        applySavedSettings();
+    } catch {
+        // 浏览器离线或 Webview 资源加载失败时继续使用内置默认设置
+    }
+}
+
+/** 关闭设置弹窗 */
+function closeSettings() {
+    if (settingsPopoverEl) {
+        settingsPopoverEl.remove();
+        settingsPopoverEl = null;
+    }
+    if (settingsOutsideHandler) {
+        document.removeEventListener('mousedown', settingsOutsideHandler, true);
+        settingsOutsideHandler = null;
+    }
+}
+
+/** 打开/切换右上角 ⚙️ 设置弹窗 */
+export function openSettings() {
+    if (settingsPopoverEl) {
+        closeSettings();
+        return;
+    }
+    const btn = document.getElementById('settingBtn');
+    const popover = document.createElement('div');
+    popover.className = 'settings-popover';
+    popover.innerHTML = `
+        <div class="settings-popover-title">⚙️ 设置</div>
+        <section class="settings-section">
+            <div class="settings-section-title">通用</div>
+            <label class="settings-field">主题
+                <select data-setting="theme"><option value="dark">深色</option><option value="light">浅色</option></select>
+            </label>
+            <label class="settings-field">语言
+                <select data-setting="language"><option value="zh-cn">简体中文</option><option value="en">English</option></select>
+            </label>
+        </section>
+        <section class="settings-section">
+            <div class="settings-section-title">画布</div>
+            <label class="settings-field">默认缩放
+                <input data-setting="defaultZoom" type="number" min="0.1" max="5" step="0.1" />
+            </label>
+            <label class="settings-field">最小缩放
+                <input data-setting="minZoom" type="number" min="0.1" max="5" step="0.1" />
+            </label>
+            <label class="settings-field">最大缩放
+                <input data-setting="maxZoom" type="number" min="0.1" max="10" step="0.1" />
+            </label>
+            <label class="settings-field">网格大小
+                <input data-setting="gridSize" type="number" min="5" max="200" step="1" />
+            </label>
+            <label class="settings-option"><input data-setting="snapToGrid" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">对齐网格</span></span></label>
+            <label class="settings-option"><input data-setting="showGrid" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">显示网格</span></span></label>
+            <label class="settings-option"><input data-setting="showMiniMap" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">显示小地图</span></span></label>
+        </section>
+        <section class="settings-section">
+            <div class="settings-section-title">编辑</div>
+            <label class="settings-option"><input data-setting="realtimeTextSync" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">实时文本同步</span><span class="settings-option-desc">编辑文本输入框或文本变量节点时，每次键入立即同步到连接的文本节点</span></span></label>
+            <label class="settings-option"><input data-setting="autoSave" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">自动保存</span></span></label>
+            <label class="settings-field">自动保存间隔（秒）
+                <input data-setting="autoSaveInterval" type="number" min="10" max="3600" step="10" />
+            </label>
+            <label class="settings-field">动画时长（毫秒）
+                <input data-setting="animationSpeed" type="number" min="0" max="2000" step="50" />
+            </label>
+            <label class="settings-field">连接线样式
+                <select data-setting="connectionStyle"><option value="bezier">贝塞尔曲线</option><option value="straight">直线</option></select>
+            </label>
+        </section>
+    `;
+    popover.querySelectorAll('[data-setting]').forEach((/** @type {HTMLElement} */ control) => {
+        const key = control.dataset.setting;
+        if (!key || !core || !core.setting) return;
+        if (control instanceof HTMLInputElement && control.type === 'checkbox') {
+            control.checked = !!core.setting[key];
+        } else if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement) {
+            control.value = String(core.setting[key] ?? '');
+        }
+        control.addEventListener('change', () => {
+            const value = control instanceof HTMLInputElement && control.type === 'checkbox'
+                ? control.checked
+                : control instanceof HTMLInputElement && control.type === 'number'
+                    ? Number(control.value)
+                    : control.value;
+            saveSetting(key, value);
+        });
+    });
+    document.body.appendChild(popover);
+
+    // 定位在齿轮按钮正下方、右缘对齐
+    const rect = btn ? btn.getBoundingClientRect() : { bottom: 48, right: 280 };
+    popover.style.top = `${rect.bottom + 6}px`;
+    popover.style.right = `${window.innerWidth - rect.right}px`;
+
+    settingsPopoverEl = popover;
+    settingsOutsideHandler = (e) => {
+        if (settingsPopoverEl && !settingsPopoverEl.contains(e.target) && !(btn && btn.contains(e.target))) {
+            closeSettings();
+        }
+    };
+    document.addEventListener('mousedown', settingsOutsideHandler, true);
 }
 
 // 撤销上一次操作
@@ -402,6 +570,8 @@ function initWebview(callback) {
             // updateStatus("已连接"); // 可恢复
             console.log('核心控制器初始化成功');
             win.controlCore = core;
+            applySavedSettings();
+            loadConfigSettings();
 
             if (PREVIEW_MODE) {
                 // 预览仅查看：用 select 模式（点击节点可选中并拖动整理布局）；
@@ -443,6 +613,7 @@ win.vscode = vscode;
 win.toggleConsole = toggleConsole;
 
 win.openFilesPage = openFilesPage;
+win.openSettings = openSettings;
 win.togglePanel = togglePanel;
 
 win.clearCanvas = clearCanvas;

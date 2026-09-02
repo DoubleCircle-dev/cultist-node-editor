@@ -216,9 +216,166 @@ export class NodeManager extends IManager {
             const nodeModel = NodeGenerator.createNode(String(id), uid, type, x, y);
             this._createNode(nodeModel);
             this._fillNodeFromData(nodeModel, entry);
+            // 导入数据：超出一行的长文本字段 → 自动拆成文本变量节点并连接（所有导入路径）
+            this._externalizeLongTextFields(nodeModel);
             return nodeModel;
         } catch (error) {
             console.error('从数据创建节点失败:', error);
+            if (id) this.idGenerator.release(id);
+            if (uid) this.uidGenerator.release(uid);
+            return null;
+        }
+    }
+
+    /**
+     * 导入长文本 → 拆成文本变量节点（所有导入路径统一在 addNodeFromData 触发）。
+     *
+     * 规则：对每个「文本输入框」（type:'text' 且有输入端口、未连接）字段，
+     * 若其内容超出一行（与折叠按钮同一判定：内容含换行或折叠态 has-btn），
+     * 就新建一个 text 节点存放该文本并程序化连线，原字段仍保留同步内容（折叠显示）。
+     *
+     * @private
+     * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} nodeModel
+     * @returns {number} 创建的文本变量节点数
+     */
+    _externalizeLongTextFields(nodeModel) {
+        if (!nodeModel) return 0;
+        const view = this.nodeViews.get(String(nodeModel.id));
+        const nodeDom = view ? view.element : null;
+        const props = this._collectExternalizableTextProps(nodeModel, nodeDom);
+        if (!props.length) return 0;
+
+        let created = 0;
+        props.forEach((fieldProp, index) => {
+            const textModel = this._createTextVariableForField(nodeModel, fieldProp, index);
+            if (textModel) created++;
+        });
+        return created;
+    }
+
+    /**
+     * @private 收集需要外部化的长文本字段
+     * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} nodeModel
+     * @param {HTMLElement | null} nodeDom
+     * @returns {import('../models/propModels/baseProp.js').BaseProp[]}
+     */
+    _collectExternalizableTextProps(nodeModel, nodeDom) {
+        if (!nodeModel) return [];
+        /** @type {import('../models/propModels/baseProp.js').BaseProp[]} */
+        const result = [];
+        (nodeModel.detailProperties || []).forEach((prop) => {
+            if (!prop || prop.type !== 'text' || !prop.inputPort) return;
+            if (prop.inputPort.isConnected) return; // 已有文本源 → 不重复拆
+            const text = String(prop.value ?? '');
+            if (!text) return;
+            // 显式换行 → 一定多行
+            if (text.includes('\n')) {
+                result.push(prop);
+                return;
+            }
+            // “超一行”判定：用真实折叠容器宽度做换行测量（与折叠按钮同规则），
+            // 不依赖 has-btn（它在 fill 触发的 redraw 后需等 rAF 才刷新）
+            let width = 248;
+            if (nodeDom) {
+                const wrap = this._foldWrapOf(nodeDom, prop);
+                if (wrap && wrap.offsetWidth > 0) width = wrap.offsetWidth;
+            }
+            if (this._textExceedsWidth(text, width)) {
+                result.push(prop);
+            }
+        });
+        return result;
+    }
+
+    /** @private 定位文本字段对应的折叠容器 */
+    _foldWrapOf(nodeDom, prop) {
+        if (!nodeDom || !prop) return null;
+        const wrappers = nodeDom.querySelectorAll('.prop-fold-text');
+        for (const wrap of wrappers) {
+            const single = wrap.querySelector('.prop-input.single');
+            if (single && single.id === prop.id) return wrap;
+        }
+        return null;
+    }
+
+    /**
+     * @private 文本在给定列宽下是否超过一行（临时隐形元素测量，与折叠判定一致）
+     * @param {string} text
+     * @param {number} widthPx
+     * @returns {boolean}
+     */
+    _textExceedsWidth(text, widthPx) {
+        if (!text) return false;
+        if (typeof document === 'undefined' || !document.body || !(widthPx > 0)) {
+            return text.length > 80; // 无 DOM / 无真实布局（测试环境）粗判兜底
+        }
+        const style =
+            'position:absolute;visibility:hidden;pointer-events:none;left:-9999px;top:0;' +
+            `width:${widthPx}px;padding:4px 8px;box-sizing:border-box;white-space:pre-wrap;` +
+            'overflow-wrap:break-word;word-break:break-word;line-height:1.4;font-size:11px;' +
+            "font-family:-apple-system,'Segoe UI',Roboto,sans-serif;";
+        const probe = document.createElement('div');
+        probe.style.cssText = style;
+        probe.textContent = text;
+        const one = document.createElement('div');
+        one.style.cssText = style;
+        one.textContent = 'x';
+        document.body.appendChild(probe);
+        document.body.appendChild(one);
+        const exceeds = probe.offsetHeight > one.offsetHeight + 2;
+        probe.remove();
+        one.remove();
+        return exceeds;
+    }
+
+    /**
+     * @private 为某个长文本字段创建文本变量节点并连线
+     * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} parentModel
+     * @param {import('../models/propModels/baseProp.js').BaseProp} fieldProp
+     * @param {number} index
+     * @returns {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel | null}
+     */
+    _createTextVariableForField(parentModel, fieldProp, index) {
+        let id = null;
+        let uid = null;
+        try {
+            id = this.idGenerator.generate();
+            uid = this.uidGenerator.generate() || 0;
+            if (!id) {
+                throw new Error('节点数量已达到最大值');
+            }
+
+            // 定位：父节点右侧，多个字段向下排
+            const baseX = parentModel && parentModel.x != null ? parentModel.x : 0;
+            const baseY = parentModel && parentModel.y != null ? parentModel.y : 0;
+            const parentW = (parentModel && parentModel.width) || 300;
+            const x = baseX + parentW + 40;
+            const y = baseY + 20 + index * 220;
+
+            const textModel = NodeGenerator.createNode(String(id), uid, 'text', x, y);
+
+            // 先把文本写入变量内容，再挂视图（避免二次 redraw）
+            const contentProp = (textModel.detailProperties || []).find((p) => p && p.type === 'textarea-preview');
+            const value = String(fieldProp.value ?? '');
+            if (contentProp) {
+                contentProp.updateValue(value);
+            }
+            this._createNode(textModel);
+
+            // 连线：父节点该字段输入端口 → 文本节点输出端口
+            const fieldPort = fieldProp.inputPort;
+            const outProp = (textModel.detailProperties || []).find((p) => p && p.outputPort);
+            const outPort = outProp ? outProp.outputPort : null;
+            if (fieldPort && outPort && this.coreSpace && this.coreSpace.connectionManager) {
+                try {
+                    this.coreSpace.connectionManager.createProgrammaticConnection(parentModel, fieldPort, textModel, outPort);
+                } catch (error) {
+                    console.error('[文本变量] 连线失败:', error);
+                }
+            }
+            return textModel;
+        } catch (error) {
+            console.error('创建文本变量节点失败:', error);
             if (id) this.idGenerator.release(id);
             if (uid) this.uidGenerator.release(uid);
             return null;
@@ -231,10 +388,10 @@ export class NodeManager extends IManager {
      *
      * @param {Array<any>} entries - 数据条目（每条含 category/source）
      * @param {{ limit?: number, perRow?: number, gapX?: number, gapY?: number }} [opts]
-     * @returns {number} 成功创建的节点数
+     * @returns {{ count: number, created: Array<{ entry: any, model: import('../models/nodeModels/baseNodeModel.js').BaseNodeModel }> }} 铺图数(count) 与 entry→model 映射（供 connectDataLinks 连线）
      */
     addNodesFromData(entries, opts = {}) {
-        if (!Array.isArray(entries) || !entries.length) return 0;
+        if (!Array.isArray(entries) || !entries.length) return { count: 0, created: [] };
         const limit = opts.limit || entries.length;
         const items = entries.slice(0, limit);
         const perRow = opts.perRow || 6;
@@ -244,14 +401,19 @@ export class NodeManager extends IManager {
         const startX = cx - (Math.min(items.length, perRow) * gapX) / 2;
         const startY = cy - 40;
 
-        let created = 0;
+        /** @type {Array<{ entry: any, model: import('../models/nodeModels/baseNodeModel.js').BaseNodeModel }>} */
+        const created = [];
+        let count = 0;
         items.forEach((entry, i) => {
             const row = Math.floor(i / perRow);
             const col = i % perRow;
             const model = this.addNodeFromData(entry.category, entry, startX + col * gapX, startY + row * gapY);
-            if (model) created++;
+            if (model) {
+                created.push({ entry, model });
+                count++;
+            }
         });
-        return created;
+        return { count, created };
     }
 
     /**
@@ -262,11 +424,26 @@ export class NodeManager extends IManager {
     _fillNodeFromData(nodeModel, entry) {
         if (!entry) return;
 
-        // 标题/标签 = 数据 label
-        if (entry.title) {
-            nodeModel.title = entry.title;
-            nodeModel.label = entry.title;
+        // mod 数据：id 字段即 title（原本 mod 设计没有 id）
+        // - id 形如 "#数字"（如 #1）→ node editor 生成的标记，非真实 title，用 label 兜底
+        // - 否则（如 sample_study）→ 真实 mod id，作为节点 title
+        let title = '';
+        if (entry.source === 'mod' && entry.id) {
+            const rawId = String(entry.id);
+            if (/^#\d+$/.test(rawId)) {
+                title = entry.fields && entry.fields.label ? String(entry.fields.label) : '';
+            } else {
+                title = rawId;
+            }
         }
+        if (!title) title = entry.title || '';
+        if (title) {
+            nodeModel.title = title;
+            // label = mod 的 label 字段（游戏内显示名），无则用 title
+            const labelVal = entry.fields && entry.fields.label;
+            nodeModel.label = labelVal ? String(labelVal) : title;
+        }
+        // 节点 id 标签：一律用自动分配的 uid（origin / mod 均不显示数据 id）
 
         const detailProps = nodeModel.detailProperties;
         /** @type {Array<{name: string, value: any}>} */

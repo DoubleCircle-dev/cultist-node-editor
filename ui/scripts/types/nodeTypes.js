@@ -1405,7 +1405,7 @@ export class NodeTypeRegistry {
                     name: 'undefined',
                     label: '文本',
                     type: 'textarea-preview',
-                    default: '文本内容',
+                    default: '',
                 },
             ],
         },

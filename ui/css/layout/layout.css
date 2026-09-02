@@ -36,9 +36,13 @@
     overflow: hidden;
 
     transform-origin: 0 0;
-    background: linear-gradient(90deg, var(--bg-tertiary) 1px, transparent 1px) 0 0 / 20px 20px,
-        linear-gradient(var(--bg-tertiary) 1px, transparent 1px) 0 0 / 20px 20px;
+    background: linear-gradient(90deg, var(--bg-tertiary) 1px, transparent 1px) 0 0 / var(--canvas-grid-size, 20px) var(--canvas-grid-size, 20px),
+        linear-gradient(var(--bg-tertiary) 1px, transparent 1px) 0 0 / var(--canvas-grid-size, 20px) var(--canvas-grid-size, 20px);
 
+}
+
+body.hide-canvas-grid #canvas-viewport {
+    background-image: none;
 }
 
 #canvas-world {

@@ -84,7 +84,9 @@ export class CanvasManager extends IManager {
 
         // 计算新的缩放比例
         const factor = Math.exp(direction * zoomIntensity);
-        const newScale = Math.min(Math.max(this.transform.scale * factor, EditorConfig.ZOOM.MIN), EditorConfig.ZOOM.MAX);
+        const minZoom = this.coreSpace.setting.minZoom ?? EditorConfig.ZOOM.MIN;
+        const maxZoom = this.coreSpace.setting.maxZoom ?? EditorConfig.ZOOM.MAX;
+        const newScale = Math.min(Math.max(this.transform.scale * factor, minZoom), maxZoom);
 
         this.setZoom(newScale, false, e.clientX, e.clientY);
     }
@@ -216,6 +218,9 @@ export class CanvasManager extends IManager {
 
     /** @param {number} value */
     setZoom(value, keepCenter = true, clientX = 0, clientY = 0) {
+        const minZoom = this.coreSpace.setting.minZoom ?? EditorConfig.ZOOM.MIN;
+        const maxZoom = this.coreSpace.setting.maxZoom ?? EditorConfig.ZOOM.MAX;
+        value = Math.min(Math.max(Number(value), minZoom), maxZoom);
         const rect = this.viewport.getBoundingClientRect();
         let centerX = rect.width / 2;
         let centerY = rect.height / 2;
@@ -277,7 +282,8 @@ export class CanvasManager extends IManager {
         const scaleX = (viewportW - padding * 2) / (maxX - minX);
         const scaleY = (viewportH - padding * 2) / (maxY - minY);
         let newScale = Math.min(scaleX, scaleY);
-        newScale = Math.max(0, newScale);
+        newScale = Math.max(this.coreSpace.setting.minZoom ?? 0, newScale);
+        newScale = Math.min(this.coreSpace.setting.maxZoom ?? Infinity, newScale);
 
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;

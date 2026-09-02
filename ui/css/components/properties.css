@@ -102,6 +102,110 @@
     box-shadow: 0 0 0 1px var(--accent-primary-shadow);
 }
 
+/* ============ 可折叠文本输入（长文本自动换行） ============ */
+.prop-fold-text {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.prop-fold-text .single,
+.prop-fold-text .multi,
+.prop-fold-ghost {
+    font-family: var(--font-sans);
+    font-size: 11px;
+}
+
+/* 展开态的多行输入：随内容增高、自动换行 */
+.prop-fold-text .multi {
+    display: none;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4;
+    vertical-align: top;
+    /* 高度由 JS 按内容计算，不做过渡避免输入时抖动 */
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.prop-fold-text.expanded .single {
+    display: none;
+}
+
+.prop-fold-text.expanded .multi {
+    display: block;
+    padding-right: 24px;
+    /* 顶部右上角给折叠按钮留位 */
+}
+
+/* 折叠态：超行内容单行省略，右侧给按钮留位 */
+.prop-fold-text.collapsed.has-btn .single {
+    padding-right: 26px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 隐形测量层：同宽同排版，仅用于计算内容换行后的高度 */
+.prop-fold-ghost {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    visibility: hidden;
+    pointer-events: none;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+/* 折叠/展开按钮（用 span，避免预览模式禁用 button 的逻辑误伤） */
+.prop-fold-btn {
+    position: absolute;
+    top: 50%;
+    right: 2px;
+    transform: translateY(-50%);
+    z-index: 2;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s, background 0.2s;
+}
+
+.prop-fold-btn.visible {
+    display: inline-flex;
+}
+
+.prop-fold-text.expanded .prop-fold-btn {
+    top: 6px;
+    right: 6px;
+    transform: none;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.prop-fold-btn:hover {
+    color: var(--accent-primary);
+    background: var(--bg-tertiary);
+}
+
 /* 文本输入样式 */
 .prop-input .text {
     font-family: inherit;

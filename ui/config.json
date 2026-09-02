@@ -26,6 +26,7 @@
     "animationSpeed": 200,
     "connectionStyle": "bezier",
     "showGrid": true,
-    "showMiniMap": false
+    "showMiniMap": false,
+    "realtimeTextSync": false
   }
 }
