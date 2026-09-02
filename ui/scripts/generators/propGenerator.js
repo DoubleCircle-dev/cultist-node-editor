@@ -70,15 +70,15 @@ export class PropGenerator {
                 propClass = ViewProp;
                 break;
             case 'image-preview':
-                args = [id, propConfig.label, 'image-preview', propConfig.default];
+                args = [id, propConfig.label, 'image-preview', propConfig.default, [], [], 'images'];
                 propClass = ViewProp;
                 break;
             case 'textarea-preview':
-                args = [id, propConfig.label, 'textarea-preview', propConfig.default];
+                args = [id, propConfig.label, 'textarea-preview', propConfig.default, [], [], 'text'];
                 propClass = ViewProp;
                 break;
             case 'image-icon':
-                args = [id, propConfig.label, 'image-icon', propConfig.default];
+                args = [id, propConfig.label, 'image-icon', propConfig.default, [], [], 'images'];
                 propClass = ViewProp;
                 break;
             case 'bool':
@@ -860,6 +860,14 @@ export class PropRenderer {
                         icon.src = placeholder;
                     }
                 });
+                const iconUpdateListener = (/** @type {Event} */ e) => {
+                    if (e instanceof CustomEvent) {
+                        fallbackApplied = false;
+                        icon.src = e.detail?.value || placeholder;
+                    }
+                };
+                prop.addEventListener('update', iconUpdateListener);
+                listeners.push({ target: prop, type: 'update', listener: iconUpdateListener });
                 preView.appendChild(icon);
                 preView.classList.add('icon');
                 break;
@@ -878,6 +886,14 @@ export class PropRenderer {
                         img.src = placeholder;
                     }
                 });
+                const imageUpdateListener = (/** @type {Event} */ e) => {
+                    if (e instanceof CustomEvent) {
+                        fallbackApplied = false;
+                        img.src = e.detail?.value || placeholder;
+                    }
+                };
+                prop.addEventListener('update', imageUpdateListener);
+                listeners.push({ target: prop, type: 'update', listener: imageUpdateListener });
                 preView.appendChild(img);
                 break;
             }

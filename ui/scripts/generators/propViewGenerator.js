@@ -107,12 +107,30 @@ export class PropView {
         const view = renderResult.element;
         const listeners = renderResult.listeners;
 
-        const mousedownListener = (/**@type {Event}*/e) => e.stopPropagation();
-        view.addEventListener('mousedown', mousedownListener);
-        listeners.push({ listener: mousedownListener, target: view, type: 'mousedown' });
-        this.createHint(propModel, view);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'prop-view';
 
-        return { element: view, listeners: listeners };
+        const portWrap = document.createElement('div');
+        portWrap.className = 'prop-view-port';
+
+        if (propModel instanceof PortProp && propModel.inputPort) {
+            const { element: portDom, listeners: portListeners } = this.createPortDom(propModel.inputPort);
+            portWrap.appendChild(portDom);
+            listeners.push(...portListeners);
+        }
+
+        const contentWrap = document.createElement('div');
+        contentWrap.className = 'prop-view-content';
+        contentWrap.appendChild(view);
+
+        const mousedownListener = (/**@type {Event}*/e) => e.stopPropagation();
+        wrapper.addEventListener('mousedown', mousedownListener);
+        listeners.push({ listener: mousedownListener, target: wrapper, type: 'mousedown' });
+
+        wrapper.append(portWrap, contentWrap);
+        this.createHint(propModel, wrapper);
+
+        return { element: wrapper, listeners: listeners };
     }
 
     /**
@@ -159,6 +177,12 @@ export class PropView {
         content.appendChild(contentElement);
         listeners.push(...contentListeners);
 
+        if (propModel instanceof ViewProp) {
+            const stopPropagationListener = (e) => e.stopPropagation();
+            content.addEventListener('mousedown', stopPropagationListener);
+            listeners.push({ target: content, type: 'mousedown', listener: stopPropagationListener });
+        }
+
         this.createHint(propModel, content);
 
         row.appendChild(content);
@@ -172,6 +196,10 @@ export class PropView {
                 const { element: portDom, listeners: portListeners } = this.createPortDom(propModel.outputPort);
                 rightSlot.appendChild(portDom);
                 listeners.push(...portListeners);
+            }
+
+            if (propModel instanceof ViewProp && !propModel.outputPort) {
+                rightSlot.classList.add('hidden');
             }
 
             if (propModel.layout === PortProp.layoutTypes.noRight ||

@@ -48,6 +48,7 @@
 }
 
 .prop-row:hover .port-dot.implicit,
+.prop-view:hover .port-dot.implicit,
 .port-dot.connected {
     opacity: 1;
 }

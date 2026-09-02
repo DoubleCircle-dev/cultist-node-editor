@@ -247,17 +247,19 @@ describe('属性渲染全量检测', () => {
     assert.deepEqual(failures, [], `模式/扩展属性渲染失败 ${failures.length} 处`);
   });
 
-  it('端口（PortProp）渲染出左右槽位与端口点；ViewProp 渲染 .prop-card', () => {
+  it('端口（PortProp）渲染出左右槽位与端口点；ViewProp 渲染预览卡片与端口', () => {
     let portCount = 0;
     let viewCount = 0;
     renders.forEach(({ props }, typeKey) => {
       props.forEach((prop) => {
         if (prop instanceof ViewProp) {
-          // ViewProp（table/image/textarea 预览）走 createView 路径，根元素即 .prop-card
+          // ViewProp 以独立视图容器渲染，卡片和可连接输入端口均在容器内
           viewCount++;
           const { element } = PropView.renderProp(prop);
           if (isElement(element)) {
-            assert.ok(element.classList.contains('prop-card'), `${typeKey} ${prop.id} 根元素应为 .prop-card`);
+            assert.ok(element.classList.contains('prop-view'), `${typeKey} ${prop.id} 根元素应为 .prop-view`);
+            assert.ok(element.querySelector('.prop-card'), `${typeKey} ${prop.id} 应包含 .prop-card`);
+            assert.ok(element.querySelector('.port-dot'), `${typeKey} ${prop.id} 应包含 port-dot`);
           }
           return;
         }

@@ -42,8 +42,8 @@ export class ConnectionManager extends IManager {
         /** @type {Map<string, {svgLine: SVGElement, listeners: Array}>} */
         this.connectionLines = new Map();
 
-        /** @type {Map<string, Function>} 文本变量同步：connectionId → cleanup */
-        this.textBindings = new Map();
+        /** @type {Map<string, Function>} 变量同步：connectionId → cleanup */
+        this.syncBindings = new Map();
 
         this.dragState = ConnectionManager.initDragState;
 
@@ -253,7 +253,7 @@ export class ConnectionManager extends IManager {
             this.connections.delete(connId);
 
             // 连接被删除 → 解除文本同步监听
-            this._unbindTextSync(connId);
+                        this._unbindValueSync(connId);
         }
     }
 
@@ -608,7 +608,7 @@ export class ConnectionManager extends IManager {
         this.createConnectionLine(connection);
 
         // 文本变量节点 ↔ 文本输入框：建立双向文本同步
-        this._bindTextSync(connection);
+        this._bindValueSync(connection);
     }
 
     // 创建永久连接
@@ -838,15 +838,45 @@ export class ConnectionManager extends IManager {
         return port && port.parentProp ? port.parentProp : null;
     }
 
-    /** @private 文本变量节点里保存文本内容的值 prop（非端口类） */
-    _findTextContentProp(node) {
+    /** @private 变量节点里保存实际值的 prop（非端口类） */
+    _findSyncSourceProp(node) {
         if (!node) return null;
-        const contentTypes = new Set(['textarea-preview', 'text', 'text-preview', 'custom']);
-        return (node.detailProperties || []).find((p) => p && contentTypes.has(p.type)) || null;
+        const sourceTypes = new Set(['textarea-preview', 'text', 'text-preview', 'custom', 'number', 'image-preview', 'image-icon']);
+        return (node.detailProperties || []).find((p) => p && sourceTypes.has(p.type)) || null;
+    }
+
+    /** @private 根据变量节点类型匹配同步配置 */
+    _syncProfileByNodeType(nodeType) {
+        const profiles = {
+            text: {
+                fieldTypes: new Set(['text', 'textarea-preview', 'text-preview']),
+                liveEvents: new Set(['text:input']),
+                stringify: true,
+            },
+            number: {
+                fieldTypes: new Set(['number', 'integer', 'int', 'range', 'slider']),
+                liveEvents: new Set(),
+                stringify: false,
+            },
+            images: {
+                fieldTypes: new Set(['image-preview', 'image-icon']),
+                liveEvents: new Set(),
+                stringify: true,
+            },
+        };
+        return profiles[nodeType] || null;
+    }
+
+    /** @private 把同步值规范化成目标可接受的类型 */
+    _normalizeSyncValue(value, stringify) {
+        if (stringify) return String(value ?? '');
+        if (value === '' || value == null) return '';
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric : value;
     }
 
     /**
-     * @private 判断连接是否为「文本变量节点输出 → 文本输入框」，是则建立双向同步。
+    * @private 判断连接是否为「变量节点输出 → 可写字段」，是则建立双向同步。
      *
      * 同步规则：
      *  - 任一方向值变化都会写回对方（updateValue，不产生额外历史）；
@@ -854,33 +884,36 @@ export class ConnectionManager extends IManager {
      *
      * @param {import('../models/connectionModels/connectionModel.js').ConnectionModel} connection
      */
-    _bindTextSync(connection) {
+    _bindValueSync(connection) {
         if (!connection || !connection.startPort || !connection.targetPort) return;
-        if (this.textBindings.has(connection.id)) return;
+        if (this.syncBindings.has(connection.id)) return;
 
         const endpoints = [connection.startPort, connection.targetPort]
             .map((port) => ({ port, node: this._portOwnerNode(port) }))
             .filter((e) => e && e.node);
 
-        // 文本变量节点（type:'text'）的输出端口那一侧
-        const variable = endpoints.find((e) => e.node.type === 'text' && e.port.direction === 'output');
+        // 变量节点输出端那一侧
+        const variable = endpoints.find((e) => e.port.direction === 'output' && this._syncProfileByNodeType(e.node.type));
         if (!variable) return;
         const field = endpoints.find((e) => e !== variable);
         if (!field) return;
 
-        // 对端必须是文本输入框属性（type:'text' 的值字段）
-        const fieldProp = this._portOwnerProp(field.port);
-        if (!fieldProp || fieldProp.type !== 'text') return;
+        const profile = this._syncProfileByNodeType(variable.node.type);
+        if (!profile) return;
 
-        const contentProp = this._findTextContentProp(variable.node);
+        // 对端必须是该变量类型对应的可写字段
+        const fieldProp = this._portOwnerProp(field.port);
+        if (!fieldProp || !profile.fieldTypes.has(fieldProp.type)) return;
+
+        const contentProp = this._findSyncSourceProp(variable.node);
         if (!contentProp || contentProp === fieldProp) return;
 
         let syncing = false;
         /** 单向把 from 的值写进 to（同步期间不再反向触发，避免回环） */
         const push = (from, to) => {
             if (syncing) return;
-            const v = String(from.value ?? '');
-            if (String(to.value ?? '') === v) return;
+            const v = this._normalizeSyncValue(from.value, profile.stringify);
+            if (String(to.value ?? '') === String(v ?? '')) return;
             syncing = true;
             try {
                 to.updateValue(v);
@@ -892,41 +925,52 @@ export class ConnectionManager extends IManager {
         const contentChanged = () => push(contentProp, fieldProp);
         const fieldChanged = () => push(fieldProp, contentProp);
 
-        // 实时同步：设置开启时，任一侧键入（DOM input → prop 'text:input'）立即写回对方
-        const isRealtime = () =>
-            !!(this.coreSpace && this.coreSpace.setting && this.coreSpace.setting.realtimeTextSync);
-        /** 监听 from 侧键入，实时把内容写进 to（不产生历史） */
-        const pushLive = (from, to) => (/** @type {Event} */ e) => {
-            if (!isRealtime()) return;
-            if (syncing) return;
-            const v = e instanceof CustomEvent ? String(e.detail?.value ?? '') : '';
-            if (String(to.value ?? '') === v) return;
-            syncing = true;
-            try {
-                to.updateValue(v);
-            } finally {
-                syncing = false;
-            }
-        };
-        const contentLive = pushLive(contentProp, fieldProp);
-        const fieldLive = pushLive(fieldProp, contentProp);
-
         contentProp.addEventListener('update', contentChanged);
         contentProp.addEventListener('change:property', contentChanged);
         fieldProp.addEventListener('update', fieldChanged);
         fieldProp.addEventListener('change:property', fieldChanged);
-        contentProp.addEventListener('text:input', contentLive);
-        fieldProp.addEventListener('text:input', fieldLive);
+
+        // 实时同步：仅文本类字段启用，保持现有“输入即刷新”体验
+        const isRealtime = () =>
+            !!(this.coreSpace && this.coreSpace.setting && this.coreSpace.setting.realtimeTextSync);
+        const contentLive = (/** @type {Event} */ e) => {
+            if (!isRealtime() || !profile.liveEvents.has('text:input') || syncing) return;
+            const v = e instanceof CustomEvent ? String(e.detail?.value ?? '') : '';
+            if (String(fieldProp.value ?? '') === v) return;
+            syncing = true;
+            try {
+                fieldProp.updateValue(v);
+            } finally {
+                syncing = false;
+            }
+        };
+        const fieldLive = (/** @type {Event} */ e) => {
+            if (!isRealtime() || !profile.liveEvents.has('text:input') || syncing) return;
+            const v = e instanceof CustomEvent ? String(e.detail?.value ?? '') : '';
+            if (String(contentProp.value ?? '') === v) return;
+            syncing = true;
+            try {
+                contentProp.updateValue(v);
+            } finally {
+                syncing = false;
+            }
+        };
+        if (profile.liveEvents.has('text:input')) {
+            contentProp.addEventListener('text:input', contentLive);
+            fieldProp.addEventListener('text:input', fieldLive);
+        }
 
         const cleanup = () => {
             contentProp.removeEventListener('update', contentChanged);
             contentProp.removeEventListener('change:property', contentChanged);
             fieldProp.removeEventListener('update', fieldChanged);
             fieldProp.removeEventListener('change:property', fieldChanged);
-            contentProp.removeEventListener('text:input', contentLive);
-            fieldProp.removeEventListener('text:input', fieldLive);
+            if (profile.liveEvents.has('text:input')) {
+                contentProp.removeEventListener('text:input', contentLive);
+                fieldProp.removeEventListener('text:input', fieldLive);
+            }
         };
-        this.textBindings.set(connection.id, cleanup);
+        this.syncBindings.set(connection.id, cleanup);
 
         // 连接建立后让双方值一致：优先采用有内容的一侧，避免覆盖编辑中的内容
         const contentV = String(contentProp.value ?? '');
@@ -939,12 +983,12 @@ export class ConnectionManager extends IManager {
         }
     }
 
-    /** @private 解除某连接建立的文本同步监听 */
-    _unbindTextSync(connectionId) {
-        const cleanup = this.textBindings.get(connectionId);
+    /** @private 解除某连接建立的变量同步监听 */
+    _unbindValueSync(connectionId) {
+        const cleanup = this.syncBindings.get(connectionId);
         if (cleanup) {
             cleanup();
-            this.textBindings.delete(connectionId);
+            this.syncBindings.delete(connectionId);
         }
     }
 
@@ -965,8 +1009,8 @@ export class ConnectionManager extends IManager {
         this.connectionLines.clear();
 
         // 清空文本变量同步监听
-        this.textBindings.forEach((cleanup) => cleanup());
-        this.textBindings.clear();
+            this.syncBindings.forEach((cleanup) => cleanup());
+            this.syncBindings.clear();
 
         if (this.SVG_layer) {
             this.SVG_layer.innerHTML = '';
