@@ -1,19 +1,68 @@
 {
-  "recipes": [
-    {
-      "id": "sample_study",
-      "label": "示例研习",
-      "actionId": "study",
-      "startdescription": "这是一个示例配方（从开发宿主工作区加载）。",
-      "description": "示例配方描述",
-      "warmup": 10,
-      "craftable": false,
-      "effects": {
-        "fragmentmoth": 1
-      },
-      "requirements": {
-        "fragmentmoth": 1
-      }
-    }
-  ]
+    "recipes": [
+        {
+            "comments": "这一段是注释，不会出现在正常游戏流程中，recipes通过alt/linked连入下一个recipes，具体字段解释查看nodeTypes.js中对应的description",
+            "id": "sample_study0",
+            "label": "示例研习0",
+            "actionId": "study",
+            "startdescription": "这是一个示例配方，为初始节点，应该在warmup结束后进入示例研习1。",
+            "description": "示例配方描述",
+            "warmup": 10,
+            "craftable": true,
+            "effects": {
+                "fragmentmoth": 1
+            },
+            "requirements": {
+                "fragmentmoth": 1
+            },
+            "linked": [{ "id": "sample_study1" }]
+        },
+        {
+            "id": "sample_study1",
+            "label": "示例研习1",
+            "actionId": "study",
+            "startdescription": "应该在满足条件1进入示例结束1，在满足条件2进入示例结束2，进入条件由对应下一个recipe的requirements决定，按照顺序，第一个满足则进入第一个，以此类推。",
+            "description": "示例配方描述",
+            "warmup": 10,
+            "craftable": false,
+            "effects": {
+                "fragmentmoth": 1
+            },
+            "requirements": {
+                "fragmentmoth": 1
+            },
+            "alt": [{ "id": "sample_study1_end1" }, { "id": "sample_study1_end2" }]
+        },
+        {
+            "id": "sample_study1_end1",
+            "label": "示例结束1",
+            "actionId": "study",
+            "startdescription": "示例结束1",
+            "description": "示例结束1",
+            "warmup": 10,
+            "craftable": false,
+            "effects": {
+                "fragmentmoth": 1
+            },
+            "requirements": {
+                "fragmentmoth": 2
+            }
+        },
+        {
+            "id": "sample_study1_end2",
+            "label": "示例结束2",
+            "actionId": "study",
+            "startdescription": "示例结束2",
+            "description": "示例结束2",
+            "warmup": 10,
+            "craftable": false,
+            "effects": {
+                "fragmentmoth": 1
+            },
+            "requirements": {
+                "fragmentmoth": 0,
+                "fragmentlatern": 1
+            }
+        }
+    ]
 }

@@ -64,6 +64,17 @@ export function testList() {
 
 const testTypes = [
     {
+        type: 'communicationTest',
+        label: '通信测试',
+        func: () => {
+            if (win.vscode) {
+                win.vscode.postMessage({ command: 'test' });
+            } else {
+                console.warn('非 VS Code 环境，无法执行通信测试');
+            }
+        },
+    },
+    {
         type: 'generateTest',
         label: '生成压力测试',
         func: () => {
@@ -77,6 +88,17 @@ const testTypes = [
         func: () => {
             history_Memory();
             console.log('历史记录内存测试执行完成');
+        },
+    },
+    {
+        type: 'modLoad',
+        label: 'modLoad 读取测试',
+        func: () => {
+            if (win.vscode) {
+                win.vscode.postMessage({ command: 'testModLoad' });
+            } else {
+                console.warn('非 VS Code 环境，无法执行 modLoad 测试');
+            }
         },
     },
 ];

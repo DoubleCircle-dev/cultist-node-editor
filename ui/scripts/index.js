@@ -140,6 +140,8 @@ function handleVscodeMessage(event) {
             registerData('游戏基础内容', message.data);
             break;
         case 'modLoaded': {
+            //XXX :test-log: 打印后端输出数据
+            console.log(message.data);
             const name = (message.data.synopsis && message.data.synopsis.name) || '';
             registerData(`Mod:${name}`, message.data);
             if (message.data.errors && message.data.errors.length) {
@@ -258,7 +260,8 @@ function applySetting(key, value) {
         document.documentElement.style.setProperty('--transition-fast', `${Number(value)}ms ease-in-out`);
     } else if (key === 'connectionStyle') {
         document.documentElement.dataset.connectionStyle = String(value);
-        core.connectionManager._updateConnections();
+        // 通过动态属性访问兼容 ConnectionManager 的私有声明，并传入其必需参数。
+        core.connectionManager['_updateConnections'](undefined);
     } else if (key === 'showGrid') {
         document.body.classList.toggle('hide-canvas-grid', !value);
     } else if (key === 'gridSize') {
