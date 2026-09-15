@@ -15,9 +15,8 @@ agent-scratch/
 # 本地仍保留该目录；名字→路径映射见 core/origin_resources/image-index.json
 core/origin_resources/images/
 
-# ===== 后端代码：不在本仓库维护 =====
-# 由「同步后端（core → 本工作区）」任务（见 .vscode/tasks.json）从 core 工作区拷入，
-# 所以本仓库只跟踪前端。改后端请到 core 工作区改，然后在本工作区跑一次该任务。
+# ===== 后端代码：由「同步后端」任务拷入，不在本仓库维护 =====
+# 见 .vscode/tasks.json；后端改动先到 core 工作区提交，再在本工作区跑一次该任务即可。
 /core/
 /extension.js
 /frontend-host/index.js

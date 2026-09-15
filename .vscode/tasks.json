@@ -1,10 +1,7 @@
 {
     "version": "2.0.0",
-    // 前端线不维护后端代码（见 .gitignore）：core/**、extension.js、frontend-host/index.js 等
-    // 都由下面这个任务从 core 工作区拷进来，因此**永远不需要 merge core**。
-    //
-    // 路径按「worktree 目录与 core 相邻」的约定（E:/Code/js/{cultist-node-editor,cne-worktrees/*}）。
-    // core 放在别处时，改这里的 args 或加 --core <路径>。
+    // 把后端代码从 core 工作区拷进本工作区（见 .gitignore 里列出的那批路径）。
+    // 路径按「worktree 目录与 core 相邻」的约定；core 在别处时改这里的 args 或加 --core <路径>。
     "tasks": [
         {
             "label": "同步后端（core → 本工作区）",
