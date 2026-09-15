@@ -57,26 +57,35 @@ pnpm run package:vsix   # 打包成 vsix
 
 ### 分支结构与约定
 
-三线分工，后端与前端分开演进：
+四条线分工，后端与前端分开演进 —— **前端线不维护后端代码**：
 
 | 分支 | 内容 | 说明 |
 | --- | --- | --- |
-| `core` | 后端 + 契约层 | `core/**`、`extension.js`、`frontend-host/index.js`、`test/extension.test.js`。**不含 `ui/`，也不含任何前端宿主实现**（单独运行会显示「本分支不含前端实现」提示页） |
-| `vanilla-frontend` | core + vanilla 前端 | `ui/`（源码即运行时：扩展扫描目录注入资源）+ `frontend-host/vanilla.js` |
-| `vite-frontend` | core + Vite 前端 | `frontend/`（Vite 工程；开发走 dev server + HMR，发布读 `frontend/dist`）+ `frontend-host/vite.js` |
+| `core` | 后端 | `core/**`、`extension.js`、`frontend-host/index.js`（契约层）、`scripts/sync-backend.mjs`、集成测试。**不含任何前端**（单独运行会显示「本分支不含前端实现」提示页） |
+| `vanilla-frontend` | 前端（无构建） | `ui/` + `frontend-host/vanilla.js` + `test/ui/**`；源码即运行时（扩展扫描目录注入资源） |
+| `vite-vanilla` | 前端（Vite + 原生 JS） | `frontend/`（Vite 工程，源码在 `frontend/src/`）+ `frontend-host/vite.js`；开发走 dev server + HMR |
+| `vite-vue` | 前端（Vite + Vue 3） | 响应式重写，**骨架阶段、暂不用于发布**，见 `frontend/DESIGN.md` |
 
-- 后端改动**只在 `core` 上做**，前端线用 `git merge core` 取更新；`extension.js` 与 `frontend-host/index.js`
-  在三条线上逐字节一致，前端差异只体现在 `frontend-host/` 的具体实现里
-- ⚠️ 不要往 `core` 里加前端文件（`ui/`、`frontend/`、`frontend-host/*.js` 实现、`test/ui/**`）：
-  `core` 是上游，它的改动（包括删除）会传播到两条前端线
+**前端线不跟踪后端代码**：`core/**`、`extension.js`、`frontend-host/index.js` 等都在各前端线的 `.gitignore` 里，
+由 VS Code 任务从 core 工作区拷进来 —— 所以**永远不用 merge core**：
+
+```bash
+# 后端在 core 工作区改完并提交后，到前端线工作区跑：
+#   VS Code：Ctrl+Shift+B（任务「同步后端（core → 本工作区）」）
+#   命令行：node <core 工作区>/scripts/sync-backend.mjs .
+```
+
+- 同步同时会把 core `package.json` 里的扩展清单字段（`contributes` / `engines` / `main` / 依赖）合并给前端线
+- 前端线的 CI 与 Release 会「先拉 core 分支、再同步」，所以 **master 分支本身不含后端源码，但打包出的 vsix 仍然自包含**
+- ⚠️ 别往 `core` 里加前端文件（`ui/`、`frontend/`、`frontend-host/*.js` 实现、`test/ui/**`）：core 是后端，同步脚本也认不出它们
 - 图片资源（约 233 MB）不在本仓库，走 CDN：
   `cdn.jsdelivr.net/gh/DoubleCircle-dev/cultist-node-editor-assets@v1/`，
   名字 → 路径映射见 `core/origin_resources/image-index.json`
 
 ### 发布
 
-`master` 是**发布线**：谁被合并进 master，就发布谁 —— 但**只能合前端线**（`vanilla-frontend` / `vite-frontend`）。
-`core` 不带前端，合进 master 等于发布一个打不开编辑器的空壳。
+`master` 是**发布线**：谁被合并进 master，就发布谁 —— 但**只能合前端线**（`vanilla-frontend` / `vite-vanilla`）。
+`core` 不带前端，合进 master 等于发布一个打不开编辑器的空壳；`vite-vue` 仍在骨架阶段，暂不参与发布。
 
 ```bash
 git checkout master && git merge <要发布的分支>   # 先合并
@@ -90,14 +99,15 @@ git tag v0.0.1 && git push origin v0.0.1          # 版本号须与 package.json
 > **master 上只能有一套前端实现**（`frontend-host/` 的契约要求恰好一个实现，多一个会白屏）。
 > 当前发布的方案是 **vanilla**（`ui/` + `frontend-host/vanilla.js`）。
 >
-> - **切到 Vite 版**：`git checkout master && git merge vite-frontend`
+> - **切到 Vite 版**：`git checkout master && git merge vite-vanilla`
 >   —— vite 那条历史里删掉了 `ui/` 与 `frontend-host/vanilla.js`，合并会一并删除，结果干净。
 > - **从 Vite 切回 vanilla**：合并会把两套都留下 → 需要手动移除另一套
 >   （`git rm -r --cached` 掉 `frontend/`，并只保留一个 `frontend-host/*.js` 实现）。
 > - 合错了也不会发出去：`test/ui/frontendHost.test.mjs` 断言「实现恰好一个」，
 >   完整 CI 跑在 release 之前，会先把这类错误挡下来。
 
-更细的说明见各前端分支：`test/ui/README.md`（vanilla 线的前端单测）与 `frontend/README.md`（Vite 前端）。
+更细的说明见各前端分支：`test/ui/README.md`（vanilla 线的前端单测）、`frontend/README.md`（Vite 前端）
+与 `frontend/DESIGN.md`（vite-vue 的响应式设计）。
 
 ## 已知限制
 
