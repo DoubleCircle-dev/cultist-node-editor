@@ -1,15 +1,15 @@
 # vite-vue 响应式前端设计
 
-> **状态**：骨架阶段 —— 工程链路已通（`pnpm run build:ui` 可产出 `frontend/dist`），
-> 界面只有一个示例节点 + 只读属性面板，功能远未与 `vite-vanilla` 对齐。
+> **状态**：只有接口层 —— Vite 工程配置、入口 HTML、与扩展通信的 `src/host/bridge.js`、本设计。
+> **不含任何界面实现**（组件、状态、样式都还没写），界面按下面的设计从 `src/` 往下长。
 >
-> **本线暂不用于发布**：`master` 仍然走 `vanilla-frontend`。这条分支是「响应式改造」的设计与试验场。
+> **本线暂不用于发布**：`master` 仍然走 `vanilla-frontend`。
 
 ---
 
 ## 1. 为什么单开一条线
 
-`vite-vanilla` 把旧的 `ui/` 原样搬进了 Vite（`frontend/src-legacy/` 就是那份代码），
+`vite-vanilla` 把旧的 `ui/` 原样搬进了 Vite（`frontend/src/` 就是那份代码），
 **构建方式现代化了，但渲染方式还是「原生 JS 直接操作 DOM」**：
 
 - 节点、面板、连线各自持有 DOM 引用，靠 `eventBus` 手动同步；
@@ -24,20 +24,16 @@ vite-vue 要验证的是另一条路：**用 Vue 的响应式把「数据 → �
 ```
 frontend/
 ├─ index.html            入口：含 #app 的静态骨架（首屏不白 + 集成测试断言用）
-├─ src/                  ★ Vue 实现（参与构建）
-│  ├─ main.js            挂载：先 installHostBridge() 再 createApp().mount('#app')
-│  ├─ App.vue            布局：Toolbar + NodeCanvas + PropertyPanel
-│  ├─ components/        表现层组件（.vue）
-│  ├─ stores/            状态（目前只有 graph.js）
-│  ├─ host/bridge.js     与扩展宿主的通信桥（postMessage / NODE_EDITOR_CONFIG）
-│  └─ styles/index.css   全局样式入口 + CSS 变量
-├─ src-legacy/           旧的原生实现（**不参与构建**，留作迁移对照）
+├─ src/
+│  ├─ main.js            入口：目前只 installHostBridge()
+│  └─ host/bridge.js     ★ 与扩展宿主的接口（postMessage / NODE_EDITOR_CONFIG）
+├─ DESIGN.md             本文件
 └─ public/               运行时数据（config / help / json-manifest / webview-config / assets / error.html）
 ```
 
-> `index.html` 里的 `#app` 内部保留了静态骨架，原因有两个：脚本执行前不白屏；
-> 扩展宿主的集成测试会断言 `canvas-basic` / `canvas-viewport` 存在（`test/extension.test.js`）。
-> Vue 挂载后会把这块内容整体替换掉。
+> `index.html` 里的静态骨架有两个作用：脚本执行前不白屏；
+> 以及扩展宿主的集成测试要断言 `canvas-basic` / `canvas-viewport` 存在（`test/extension.test.js`）。
+> 界面实现接进来时从这些节点往下长。
 
 ## 3. 与扩展的边界（保持不变）
 
@@ -55,9 +51,10 @@ frontend/
 
 ## 4. 组件划分（对照旧实现）
 
-迁移时按「一个旧文件 → 一个组件 / 一个 composable」对照，避免凭空设计：
+实现时按「一个现有文件 → 一个组件 / 一个 composable」对照，避免凭空设计
+（“现有文件”指 `vite-vanilla` 的 `frontend/src/`）：
 
-| 旧实现（`src-legacy/`） | vite-vue 落点 |
+| 现有实现（vite-vanilla） | 本线落点 |
 | --- | --- |
 | `views/nodeView.js` | `components/GraphNode.vue` |
 | `controllers/nodeManager.js` | `stores/graph.js` + `composables/useNodes.js` |
@@ -73,7 +70,7 @@ frontend/
 
 ## 5. 状态管理
 
-骨架阶段用 `reactive` + `computed`（`stores/graph.js`），没有引入 Pinia。什么时候该升级：
+起步阶段 `reactive` + `computed` 就够（预计只有一个 `stores/graph.js`），不必急着引 Pinia。什么时候该升级：
 
 - ✅ 需要 devtools 时间旅行看状态变化；
 - ✅ store 之间开始互相依赖（历史记录要读图状态、数据池要被多个面板共享）；
@@ -91,22 +88,23 @@ frontend/
 2. **视口裁剪**：只渲染可视区域内的节点（`canvas-viewport` 的尺寸 + transform 反推）。
 3. **连线单层渲染**：一根线一个组件在千节点规模下会直接卡死，用一层 SVG/Canvas 统一画。
 4. **缩放走 CSS transform**，不要改每个节点的坐标（避免整树重排）。
-5. 用 `test/ui/memory-check.mjs` 的思路，给 Vue 版补一个「节点数增长 → GC 后堆内存不线性增长」的检查。
+5. 补一个「节点数增长 → GC 后堆内存不线性增长」的检查
+   （`vite-vanilla` 的 `test/ui/memory-check.mjs` 是现成的参考）。
 
 ## 7. 迁移计划
 
 | 阶段 | 内容 | 验收 |
 | --- | --- | --- |
-| 0 | ✅ 骨架：Vite + Vue 工程、静态骨架、示例节点、只读属性面板 | `pnpm run build:ui` 通过 |
-| 1 | 数据加载：`readMod` / 数据池 → 真实节点渲染 | 打开编辑器能看到 mod 里的条目 |
-| 2 | 属性面板：类型化控件 + 编辑回写 | 与旧实现字段覆盖一致 |
-| 3 | 连线：按 id 引用解析 + SVG 层绘制 | 引用关系与旧实现一致 |
-| 4 | 历史记录：撤销 / 重做（含 `dispose` 语义） | 旧单测 `disposeChain` / `nodeLifecycle` 的用例在新实现上等价通过 |
+| 0 | ✅ 接口层：Vite 工程、入口 HTML、宿主通信接口 | `pnpm run build:ui` 通过 |
+| 1 | 画布与数据：graph store + Vue 组件 + `readMod` / 数据池接入 | 打开编辑器能看到 mod 里的条目 |
+| 2 | 属性面板：类型化控件 + 编辑回写 | 与现有实现字段覆盖一致 |
+| 3 | 连线：按 id 引用解析 + SVG 层绘制 | 引用关系与现有实现一致 |
+| 4 | 历史记录：撤销 / 重做（含 `dispose` 语义） | `vite-vanilla` 的 `disposeChain` / `nodeLifecycle` 用例在新实现上等价通过 |
 | 5 | 多页面 tab、文本变量同步、设置面板 | 功能对齐 `vite-vanilla` |
 | 6 | 验收后决定是否让 `master` 切到本线 | 完整 CI + 手工验收 |
 
-**测试策略**：`test/ui/**` 现在的 jsdom 单测是针对旧实现写的（直接操作 DOM、断言 DOM 状态），
-Vue 版需要换成 `@vue/test-utils` + store 单测 —— 新测试与旧测试可以并存，但不要试图复用旧断言。
+**测试策略**：本线目前没有前端测试（原来那份 `test/ui/**` 断言的是「直接操作 DOM」的旧实现，已随之移除）。
+写实现时同步补 `@vue/test-utils` + store 单测，不要试图复用旧断言。
 
 ## 8. 风险与取舍
 

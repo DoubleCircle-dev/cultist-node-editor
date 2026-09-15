@@ -6,12 +6,12 @@
         <title>节点编辑器</title>
 
         <!--
-            样式与脚本都交给 Vite（入口见 src/main.js），这里不再手写资源列表。
+            样式与脚本都交给 Vite（入口见 src/main.js），这里不手写资源列表。
 
-            #app 里的**静态骨架**有两个作用：
-              1. 脚本尚未执行时先有结构，不白屏；
-              2. 扩展宿主的集成测试断言这些 id 存在（test/extension.test.js 里的 canvas-basic / canvas-viewport）。
-            Vue 挂载后会把 #app 的内容整体替换成组件渲染的结果。
+            #app 里的静态骨架有两个作用：
+              1. 脚本执行前先有结构，不白屏；
+              2. 扩展宿主的集成测试断言这些 id 存在（test/extension.test.js 的 canvas-basic / canvas-viewport）。
+            界面实现接进来后，从这些节点往下长。
         -->
     </head>
     <body>

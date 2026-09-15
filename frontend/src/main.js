@@ -1,16 +1,10 @@
 /**
- * Vue 入口（唯一入口）
+ * 入口（接口层）
  *
- * 入口只做三件事：引入全局样式、接上扩展宿主、挂载根组件。
- * src/ 下都是 .vue 组件 + 响应式 store；旧的原生实现见 src-legacy/（不参与构建）。
+ * 本线目前只保留与扩展对接的接口，**不含界面实现**：
+ * 接上宿主（读 NODE_EDITOR_CONFIG、注册消息监听）即完成。
+ * 界面怎么搭见 ../DESIGN.md，实现时从 host/ 往下长。
  */
-import { createApp } from 'vue';
-
-import './styles/index.css';
-import App from './App.vue';
 import { installHostBridge } from './host/bridge.js';
 
-// 先接上扩展宿主（读取 NODE_EDITOR_CONFIG、注册 postMessage 监听），再挂载界面
 installHostBridge();
-
-createApp(App).mount('#app');
