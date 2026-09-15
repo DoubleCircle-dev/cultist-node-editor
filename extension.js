@@ -1,6 +1,7 @@
 // mod 领域编排层（core/modLoad/handlers.js）：读 mod/新建/预览/预加载等命令与 webview 消息
 // 一律转发到 modHandlers.* 处理；具体纯函数（detect/parse/toData/...）由 handlers 内部按需 require。
 const modHandlers = require('./core/modLoad/handlers');
+const frontendHost = require('./frontend-host');
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
@@ -182,180 +183,31 @@ function createNodeEditorPanel(context) {
     }
 }
 
-/** 前端根目录（Vite 工程；vanilla 分支的 ui/ 已迁移至此） */
-const FRONTEND_DIR_NAME = 'frontend';
-/** 开启开发模式的环境变量：设为 1 用默认地址，或直接写 dev server 地址 */
-const DEV_SERVER_ENV = 'CNE_DEV_SERVER';
-const DEFAULT_DEV_SERVER = 'http://localhost:5173';
-
 /**
- * 读取开发服务器地址；未开启开发模式时返回 null。
- * @returns {string|null}
- */
-function getDevServerUrl() {
-    const raw = process.env[DEV_SERVER_ENV];
-    if (!raw) return null;
-    if (raw === '1' || raw === 'true') return DEFAULT_DEV_SERVER;
-    return raw.replace(/\/$/, '');
-}
-
-/**
- * 解析前端运行时文件：优先 dist 产物，回退 public 源码（便于未构建时也能启动）。
- * @param {import('vscode').ExtensionContext} context
- * @param {string} relPath 相对 frontend/ 的路径，如 'error.html'
- * @returns {string} 绝对路径
- */
-function resolveFrontendFile(context, relPath) {
-    const distPath = path.join(context.extensionPath, FRONTEND_DIR_NAME, 'dist', relPath);
-    if (fs.existsSync(distPath)) return distPath;
-    const publicPath = path.join(context.extensionPath, FRONTEND_DIR_NAME, 'public', relPath);
-    if (fs.existsSync(publicPath)) return publicPath;
-    return distPath;
-}
-
-/**
- * 仅为开发模式注入 CSP：放行 dev server（含 HMR 的 websocket）。
- * 生产模式不注入，保持与迁移前一致的行为。
- * @param {string} html
- * @param {import('vscode').Webview} webview
- * @param {string} devServerUrl
- * @returns {string}
- */
-function injectDevCsp(html, webview, devServerUrl) {
-    const wsUrl = devServerUrl.replace(/^http/, 'ws');
-    const policy = [
-        `default-src 'none'`,
-        `img-src ${webview.cspSource} ${devServerUrl} https: data: blob:`,
-        `media-src ${webview.cspSource} ${devServerUrl} data: blob:`,
-        `script-src ${webview.cspSource} ${devServerUrl} 'unsafe-inline'`,
-        `style-src ${webview.cspSource} ${devServerUrl} 'unsafe-inline'`,
-        `font-src ${webview.cspSource} ${devServerUrl} data:`,
-        `worker-src ${webview.cspSource} blob:`,
-        `connect-src ${webview.cspSource} ${devServerUrl} ${wsUrl}`,
-    ].join('; ');
-    const meta = `<meta http-equiv="Content-Security-Policy" content="${policy}">`;
-    return html.replace('<head>', `<head>\n        ${meta}`);
-}
-
-/**
- * 载入入口 HTML。
- * - 开发模式：读源码 frontend/index.html，把入口脚本指向 dev server（含 @vite/client 以启用 HMR）
- * - 生产模式：读 frontend/dist/index.html，把 ./assets/** 等相对引用换成 webview URI
+ * 渲染 webview 内容。
+ *
+ * 这里只做「把 vscode 的能力注入给前端宿主」这一件事：真正的加载逻辑在
+ * frontend-host/ 的可插拔实现里（core: vanilla.js / feat/vite-frontend: vite.js）。
+ * 因此本文件在 core 与各前端分支上保持完全一致，后端更新合并时不产生冲突。
  * @param {import('vscode').WebviewPanel} panel
  * @param {import('vscode').ExtensionContext} context
- * @param {string|null} devServerUrl
+ * @param {{previewMode?: boolean}} [options]
  * @returns {string}
  */
-function loadFrontendHtml(panel, context, devServerUrl) {
-    const frontendDir = path.join(context.extensionPath, FRONTEND_DIR_NAME);
-
-    if (devServerUrl) {
-        const srcHtml = path.join(frontendDir, 'index.html');
-        if (!fs.existsSync(srcHtml)) throw new Error('找不到 ' + srcHtml);
-        let html = fs.readFileSync(srcHtml, 'utf-8');
-        const entryTag = '<script type="module" src="/src/main.js"></script>';
-        if (!html.includes(entryTag)) {
-            throw new Error('frontend/index.html 里找不到 Vite 入口标签，无法切换到 dev server');
-        }
-        const devTags = [
-            `<script type="module" src="${devServerUrl}/@vite/client"></script>`,
-            `<script type="module" src="${devServerUrl}/src/main.js"></script>`
-        ].join('\n    ');
-        html = html.replace(entryTag, devTags);
-        console.log(`🔥 [dev] webview 加载 Vite dev server: ${devServerUrl}`);
-        return injectDevCsp(html, panel.webview, devServerUrl);
-    }
-
-    const distDir = path.join(frontendDir, 'dist');
-    const htmlPath = path.join(distDir, 'index.html');
-    if (!fs.existsSync(htmlPath)) {
-        throw new Error('找不到 ' + htmlPath + '，请先执行 npm run build:ui');
-    }
-    let html = fs.readFileSync(htmlPath, 'utf-8');
-    // Vite 产物（base:'./'）用相对路径引用资源，逐个换成 webview URI
-    html = html.replace(/(src|href)="(\.\/[^"]+)"/g, (match, attr, rel) => {
-        const filePath = path.join(distDir, rel.replace(/^\.\//, ''));
-        return fs.existsSync(filePath)
-            ? `${attr}="${panel.webview.asWebviewUri(vscode.Uri.file(filePath))}"`
-            : match;
-    });
-    return html;
-}
-
 function getWebviewContent(panel, context, options = {}) {
-    try {
-        const devServerUrl = getDevServerUrl();
-        let htmlContent = loadFrontendHtml(panel, context, devServerUrl);
-
-        const configPath = resolveFrontendFile(context, 'webview-config.json');
-        const config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
-
-        // 图片渲染失败时的回退占位图（webview URI，需在 localResourceRoots 内）
-        const placeholderPath = resolveFrontendFile(context, path.join('assets', 'img', 'placeholder.png'));
-        if (fs.existsSync(placeholderPath)) {
-            config.placeholderImage = panel.webview.asWebviewUri(vscode.Uri.file(placeholderPath)).toString();
-        }
-        // 开发模式标记：前端可据此显示额外调试信息
-        config.devServer = devServerUrl || undefined;
-        // 预览模式（customEditor「打开方式」）：仅查看当前 json，前端隐藏侧边栏/顶栏等功能
-        if (options.previewMode) {
-            config.previewMode = true;
-        }
-
-        return injectConfigData(htmlContent, config);
-    } catch (error) {
-        console.error('加载Webview内容失败:', error);
-        return getErrorHtml(context);
-    }
+    return frontendHost.renderWebviewHtml(
+        {
+            panel,
+            context,
+            toWebviewUri: (filePath) => panel.webview.asWebviewUri(vscode.Uri.file(filePath)).toString(),
+        },
+        options
+    );
 }
 
-// 说明：迁移到 Vite 后，原先的 getAllFiles / processResources / replaceResourceReferences
-// （扫描 ui/css、ui/scripts 再把资源标签注入 HTML）已整体移除 —— 资源由 Vite 打包，
-// 加载逻辑见上方 loadFrontendHtml()。
-
-function injectConfigData(htmlContent, config) {
-    // 将配置注入到JavaScript中
-    const configScript = `
-        <script>
-            // 注入配置数据
-            window.NODE_EDITOR_CONFIG = ${JSON.stringify(config, null, 2)};
-            
-            // 确保在DOM加载完成后初始化
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => {
-                    if (window.initWebview && typeof window.initWebview === 'function') {
-                        window.initWebview();
-                    }
-                });
-            } else {
-                // DOM已经加载完成
-                if (window.initWebview && typeof window.initWebview === 'function') {
-                    window.initWebview();
-                }
-            }
-        </script>
-    `;
-
-    // 将配置脚本插入到body结束前
-    return htmlContent.replace('</body>', `${configScript}\n</body>`);
-}
-
-
-/**
- * 加载失败时的兜底页面（frontend/public/error.html，构建后也会出现在 dist 里）。
- * @param {import('vscode').ExtensionContext} [context]
- * @returns {string|undefined}
- */
-function getErrorHtml(context) {
-    try {
-        const htmlPath = context
-            ? resolveFrontendFile(context, 'error.html')
-            : path.join(__dirname, FRONTEND_DIR_NAME, 'public', 'error.html');
-        return fs.readFileSync(htmlPath, 'utf-8');
-    } catch (error) {
-        console.error('读取错误页时出错:', error);
-    }
-}
+// 说明：原先前端相关的 getAllFiles / processResources / replaceResourceReferences /
+// injectConfigData / getErrorHtml 已全部搬到 frontend-host/（见该目录下 index.js 的接口说明）。
+// extension.js 不再包含任何前端加载细节，以便与各前端分支保持一致。
 
 // 消息处理函数
 function handleAddNode(panel, message) {
