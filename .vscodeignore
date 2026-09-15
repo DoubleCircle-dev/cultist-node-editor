@@ -8,3 +8,6 @@ vsc-extension-quickstart.md
 **/*.map
 **/eslint.config.mjs
 **/.vscode-test.*
+# origin 图片（~233MB）已由 CDN 托管，不进 VSIX；数据见 core/origin_resources/StreamingAssets
+core/origin_resources/images/**
+core/origin_resources/output.txt
