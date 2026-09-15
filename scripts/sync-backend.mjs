@@ -28,6 +28,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 /** 后端路径清单（相对仓库根）：整体覆盖到目标工作区 */
 const ENTRIES = [
+    // 项目级文档：分支约定写在这里，前端线不该有自己的一份副本（否则必然过时）
+    'README.md',
     'core',
     'extension.js',
     'types.d.ts',
