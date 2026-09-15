@@ -27,6 +27,34 @@
       ],
       "outFiles": ["${workspaceFolder}/**/*.js"],
       "skipFiles": ["<node_internals>/**"]
+    },
+
+    {
+      // webview 从 Vite dev server(:5173) 加载，改代码即时生效（HMR）。
+      // 先在另一个终端跑 `npm run dev`，再 F5 启动本配置。
+      // debugWebviews 默认就是 true：webview 里的脚本会自动挂到本调试会话，
+      // 配合 sourceMapPathOverrides，断点可直接打在前端源码 frontend/src/** 上。
+      "name": "运行扩展（Vite dev server + HMR）",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "skipFiles": ["<node_internals>/**"],
+      "env": { "CNE_DEV_SERVER": "1" },
+      "debugWebviews": true,
+      "sourceMapPathOverrides": {
+        "http://localhost:5173/*": "${workspaceFolder}/frontend/*"
+      }
+    },
+
+    {
+      // 纯前端调试：直接在浏览器里跑 dev server，断点打在 frontend/src/**（Vite 自带 sourcemap）。
+      // 不需要 VS Code 扩展宿主，适合调 UI/CSS/交互；需要先在终端跑 `npm run dev`。
+      "name": "调试前端（Chrome + dev server）",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend"
     }
   ]
 }

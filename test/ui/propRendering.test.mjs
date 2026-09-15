@@ -1,16 +1,16 @@
 import './helpers/domSetup.mjs';
 import { describe, it, beforeEach, afterEach } from 'mocha';
 import assert from 'node:assert/strict';
-import { NodeTypeRegistry } from '../../ui/scripts/types/nodeTypes.js';
-import { NodeGenerator } from '../../ui/scripts/generators/nodeGenerator.js';
-import { PropView } from '../../ui/scripts/generators/propViewGenerator.js';
-import { PropRenderer } from '../../ui/scripts/generators/propGenerator.js';
-import { HubProp } from '../../ui/scripts/models/propModels/hubProp.js';
-import { BaseProp } from '../../ui/scripts/models/propModels/baseProp.js';
-import { NumericProp } from '../../ui/scripts/models/propModels/numericProp.js';
-import { ViewProp } from '../../ui/scripts/models/propModels/viewProp.js';
-import { PortProp } from '../../ui/scripts/models/propModels/portProp.js';
-import { OptionsProp } from '../../ui/scripts/models/propModels/optionsProp.js';
+import { NodeTypeRegistry } from '../../frontend/src/types/nodeTypes.js';
+import { NodeGenerator } from '../../frontend/src/generators/nodeGenerator.js';
+import { PropView } from '../../frontend/src/generators/propViewGenerator.js';
+import { PropRenderer } from '../../frontend/src/generators/propGenerator.js';
+import { HubProp } from '../../frontend/src/models/propModels/hubProp.js';
+import { BaseProp } from '../../frontend/src/models/propModels/baseProp.js';
+import { NumericProp } from '../../frontend/src/models/propModels/numericProp.js';
+import { ViewProp } from '../../frontend/src/models/propModels/viewProp.js';
+import { PortProp } from '../../frontend/src/models/propModels/portProp.js';
+import { OptionsProp } from '../../frontend/src/models/propModels/optionsProp.js';
 
 /**
  * 全量属性渲染检测
@@ -62,8 +62,8 @@ function collectConfigTypes(nodeType, config, into = new Map()) {
 
 /**
  * 递归收集节点模型上的全部属性（按对象身份去重）
- * @param {import('../../ui/scripts/models/nodeModels/nodeModel.js').NodeModel} model
- * @returns {import('../../ui/scripts/models/propModels/baseProp.js').BaseProp[]}
+ * @param {import('../../frontend/src/models/nodeModels/nodeModel.js').NodeModel} model
+ * @returns {import('../../frontend/src/models/propModels/baseProp.js').BaseProp[]}
  */
 function collectModelProps(model) {
   const props = [];

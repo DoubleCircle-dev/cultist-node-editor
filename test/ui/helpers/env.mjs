@@ -29,10 +29,10 @@ export function createSkeleton() {
 /**
  * 创建一个全新的 ControllerCore（每个测试独立，隔离状态）。
  *
- * @returns {Promise<{ core: import('../../../ui/scripts/controllers/controllerCore.js').ControllerCore, viewport: HTMLElement, world: HTMLElement }>}
+ * @returns {Promise<{ core: import('../../../frontend/src/controllers/controllerCore.js').ControllerCore, viewport: HTMLElement, world: HTMLElement }>}
  */
 export async function createCore() {
-  const { ControllerCore } = await import('../../../ui/scripts/controllers/controllerCore.js');
+  const { ControllerCore } = await import('../../../frontend/src/controllers/controllerCore.js');
   const { viewport, world } = createSkeleton();
   const core = new ControllerCore(world, viewport);
   return { core, viewport, world };
@@ -41,7 +41,7 @@ export async function createCore() {
 /**
  * 销毁核心（移除 document 全局监听器 + 级联销毁 8 个管理器）。
  *
- * @param {import('../../../ui/scripts/controllers/controllerCore.js').ControllerCore} core
+ * @param {import('../../../frontend/src/controllers/controllerCore.js').ControllerCore} core
  */
 export function destroyCore(core) {
   if (core && typeof core.destroy === 'function') {

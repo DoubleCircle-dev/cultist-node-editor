@@ -1,7 +1,7 @@
 import './helpers/domSetup.mjs';
 import { describe, it } from 'mocha';
 import assert from 'node:assert/strict';
-import { IEventTarget } from '../../ui/scripts/types/IEventTarget.js';
+import { IEventTarget } from '../../frontend/src/types/IEventTarget.js';
 
 /**
  * IEventTarget 监听器登记/移除（含 L6 修复：removeAllEventListeners 的

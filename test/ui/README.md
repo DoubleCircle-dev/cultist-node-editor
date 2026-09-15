@@ -1,6 +1,6 @@
 # UI 单元测试（jsdom + mocha）
 
-针对 `ui/scripts/**`（webview 前端）的单元与集成测试，重点覆盖
+针对 `frontend/src/**`（webview 前端）的单元与集成测试，重点覆盖
 **节点生命周期**与**内存泄漏**相关的修复。
 
 ## 运行

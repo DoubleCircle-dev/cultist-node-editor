@@ -61,7 +61,11 @@
     "test": "vscode-test",
     "test:ui": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000 \"test/ui/**/*.test.mjs\"",
     "test:ui:memory": "node --expose-gc test/ui/memory-check.mjs",
-    "check:webview": "node scripts/check-webview.js"
+    "dev": "vite",
+    "build:ui": "vite build",
+    "build:ui:watch": "vite build --watch",
+    "preview:ui": "vite preview",
+    "vscode:prepublish": "npm run build:ui"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -78,6 +82,7 @@
     "jsdom": "^29.1.1",
     "mocha": "^11.3.0",
     "prettier": "^3.8.3",
+    "vite": "^7.1.5",
     "prettier-eslint": "^16.4.2",
     "prettier-plugin-jsdoc": "^1.8.0",
     "typescript": "^6.0.3"

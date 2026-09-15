@@ -1,32 +1,29 @@
 import { ControllerCore } from './controllers/controllerCore.js';
 import { NodeModel } from './models/nodeModels/nodeModel.js';
-import { NodeTypeRegistry } from "./types/nodeTypes.js";
-import { NodeGenerator } from "./generators/nodeGenerator.js"
+import { NodeTypeRegistry } from './types/nodeTypes.js';
+import { NodeGenerator } from './generators/nodeGenerator.js';
 import { NodeView } from './views/nodeView.js';
 import { ModDataRegistry } from './modDataRegistry.js';
-
 
 let vscode = null;
 
 // 创建全局管理器实例
-/**
- * @type {ControllerCore}
- */
+/** @type {ControllerCore} */
 let core = null;
 
-console.log(navigator.userAgent)
+console.log(navigator.userAgent);
 const isVsCodeWebview = typeof acquireVsCodeApi === 'function';
 
 if (isVsCodeWebview) {
-    console.log("当前处于 VS Code 插件环境");
+    console.log('当前处于 VS Code 插件环境');
     vscode = acquireVsCodeApi();
 } else {
-    console.log("当前处于 普通浏览器环境");
+    console.log('当前处于 普通浏览器环境');
 }
 // 更新状态显示
 export function updateStatus(text) {
-    const statusElement = document.getElementById("status");
-    const statusTextElement = document.getElementById("status-text");
+    const statusElement = document.getElementById('status');
+    const statusTextElement = document.getElementById('status-text');
 
     if (statusElement) {
         statusElement.innerHTML = text;
@@ -39,7 +36,7 @@ export function updateStatus(text) {
 }
 
 export function readMod() {
-    updateStatus("读取mod中，请选择synopsis.json，如果mod文件夹内项目过多，读取时间可能较长");
+    updateStatus('读取mod中，请选择synopsis.json，如果mod文件夹内项目过多，读取时间可能较长');
     if (vscode) {
         vscode.postMessage({ command: 'readMod' });
     } else {
@@ -49,7 +46,7 @@ export function readMod() {
 
 /** 保存图表（经 VSCode 后端写入文件） */
 export function saveGraph() {
-    updateStatus("保存图表...");
+    updateStatus('保存图表...');
     if (!vscode) {
         console.warn('非 VSCode 环境，无法保存图表');
         return;
@@ -59,7 +56,7 @@ export function saveGraph() {
         connections: [],
         metadata: {
             created: new Date().toISOString(),
-            version: "1.0",
+            version: '1.0',
         },
     };
     vscode.postMessage({ command: 'saveGraph', data: graphData });
@@ -67,7 +64,7 @@ export function saveGraph() {
 
 /** 加载图表（从 JSON 文件恢复） */
 export function loadGraph() {
-    updateStatus("加载图表...");
+    updateStatus('加载图表...');
     if (vscode) {
         vscode.postMessage({ command: 'loadGraph' });
     } else {
@@ -77,7 +74,7 @@ export function loadGraph() {
 
 /** 新建 mod 基础结构（synopsis.json + content/） */
 export function newMod() {
-    updateStatus("新建 mod 基础结构...");
+    updateStatus('新建 mod 基础结构...');
     if (vscode) {
         vscode.postMessage({ command: 'newMod' });
     } else {
@@ -87,7 +84,7 @@ export function newMod() {
 
 /** 打开单个 mod json 文件作为节点预览 */
 export function openJsonPreview() {
-    updateStatus("打开 json 预览...");
+    updateStatus('打开 json 预览...');
     if (vscode) {
         vscode.postMessage({ command: 'openJsonPreview' });
     } else {
@@ -96,11 +93,10 @@ export function openJsonPreview() {
 }
 
 /**
- * 把后端加载的数据注册进数据池（按类别，供基础类型实例化时选择）。
- * 注意：节点类型始终是基础类型（recipes/elements/...），这里不注册任何动态类型。
+ * 把后端加载的数据注册进数据池（按类别，供基础类型实例化时选择）。 注意：节点类型始终是基础类型（recipes/elements/...），这里不注册任何动态类型。
  *
  * @param {string} label - 来源描述（用于状态提示）
- * @param {{ namespace: string, source: string, categories: Record<string, any[]>, count?: number }} data
+ * @param {{ namespace: string; source: string; categories: Record<string, any[]>; count?: number }} data
  */
 /** 已预览过的命名空间集合（jsonPreviewLoaded 去重用，防止画布重复铺图） */
 const __previewedNamespaces = new Set();
@@ -140,7 +136,7 @@ function handleVscodeMessage(event) {
             registerData('游戏基础内容', message.data);
             break;
         case 'modLoaded': {
-            //XXX :test-log: 打印后端输出数据
+            //: 打印后端输出数据
             console.log(message.data);
             const name = (message.data.synopsis && message.data.synopsis.name) || '';
             registerData(`Mod:${name}`, message.data);
@@ -179,10 +175,9 @@ function handleVscodeMessage(event) {
 
 // todo 清空画布
 export function clearCanvas() {
-
     core.clearCanvas();
 
-    updateStatus("画布已清空");
+    updateStatus('画布已清空');
 }
 
 // 添加测试节点（直接在Webview中）
@@ -191,9 +186,7 @@ export function addTestNode() {
 }
 
 // 添加节点
-/**
- * @param {string} type
- */
+/** @param {string} type */
 export function addNode(type) {
     core.addNode(type);
 }
@@ -202,36 +195,27 @@ export function addBlankNode() {
     addNode('blank');
 }
 
-
 export function toggleConnections() {
     core.connectionManager.toggleConnections();
 }
 
-/**
- * @param {string} mode
- */
+/** @param {string} mode */
 export function changeMode(mode) {
-
-
     core.canvasManager.setMode(mode);
-    updateStatus("模式已切换为" + mode);
+    updateStatus('模式已切换为' + mode);
 }
 
 export function fitView() {
     core.canvasManager.fitView();
 }
 
-/**
- * @param {number} scale
- */
+/** @param {number} scale */
 export function setScale(scale) {
-    updateStatus("缩放比例已设置为" + scale);
+    updateStatus('缩放比例已设置为' + scale);
     core.canvasManager.setZoom(scale);
 }
 
-export function openFilesPage(){
-
-}
+export function openFilesPage() {}
 
 /** ⚙️ 设置弹窗 */
 let settingsPopoverEl = null;
@@ -247,7 +231,9 @@ function saveSetting(key, value) {
         localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(core.setting));
         // 保留旧 key，兼容实时同步功能已使用过的本地配置。
         if (key === 'realtimeTextSync') localStorage.setItem('nodeEditor.realtimeTextSync', value ? '1' : '0');
-    } catch { /* 忽略存储不可用 */ }
+    } catch {
+        /* 忽略存储不可用 */
+    }
     applySetting(key, value);
 }
 
@@ -276,9 +262,7 @@ function applySetting(key, value) {
 /** 将保存的可视设置应用到当前页面 */
 function applySavedSettings() {
     if (!core || !core.setting) return;
-    ['theme', 'language', 'defaultZoom', 'animationSpeed', 'connectionStyle', 'gridSize', 'showGrid'].forEach((key) =>
-        applySetting(key, core.setting[key])
-    );
+    ['theme', 'language', 'defaultZoom', 'animationSpeed', 'connectionStyle', 'gridSize', 'showGrid'].forEach((key) => applySetting(key, core.setting[key]));
 }
 
 /** 读取 config.json 中的设置默认值；已有本地用户设置时优先保留用户选择。 */
@@ -369,11 +353,12 @@ export function openSettings() {
             control.value = String(core.setting[key] ?? '');
         }
         control.addEventListener('change', () => {
-            const value = control instanceof HTMLInputElement && control.type === 'checkbox'
-                ? control.checked
-                : control instanceof HTMLInputElement && control.type === 'number'
-                    ? Number(control.value)
-                    : control.value;
+            const value =
+                control instanceof HTMLInputElement && control.type === 'checkbox'
+                    ? control.checked
+                    : control instanceof HTMLInputElement && control.type === 'number'
+                      ? Number(control.value)
+                      : control.value;
             saveSetting(key, value);
         });
     });
@@ -394,51 +379,43 @@ export function openSettings() {
 }
 
 // 撤销上一次操作
-export function undoLastAction() {
-}
+export function undoLastAction() {}
 
 // 重做上一次撤销的操作
-export function redoLastAction() {
+export function redoLastAction() {}
 
-}
+export function testCommunication() {}
 
-export function testCommunication() {
-
-}
-
-function printMemoryUsed(postMessage=''){
+function printMemoryUsed(postMessage = '') {
     if (performance.memory) {
         console.log(postMessage, {
             // 已分配的堆内存总量
-            totalHeapSize: performance.memory.totalJSHeapSize / 1024 / 1024 + " MB",
+            totalHeapSize: performance.memory.totalJSHeapSize / 1024 / 1024 + ' MB',
             // 当前正在使用的堆内存
-            usedHeapSize: performance.memory.usedJSHeapSize / 1024 / 1024 + " MB",
+            usedHeapSize: performance.memory.usedJSHeapSize / 1024 / 1024 + ' MB',
             // 内存限制（上限）
-            jsHeapSizeLimit: performance.memory.jsHeapSizeLimit / 1024 / 1024 + " MB"
+            jsHeapSizeLimit: performance.memory.jsHeapSizeLimit / 1024 / 1024 + ' MB',
         });
     }
 }
 
 export function generateTest() {
-    
     printMemoryUsed('初始内存');
 
     for (let index = 0; index < 1000; index++) {
-        setTimeout(()=>{
+        setTimeout(() => {
             addTestNode();
-        }, index*10);
+        }, index * 10);
     }
 
-    setTimeout(()=>{
+    setTimeout(() => {
         printMemoryUsed('分配后内存');
 
         clearCanvas();
-        setTimeout(()=>{
+        setTimeout(() => {
             core.forceRepaint();
             printMemoryUsed('回收后内存');
         }, 100);
-
-        
     }, 10000);
 }
 
@@ -450,9 +427,7 @@ export function toggleConsole() {
         eruda.show();
     }
 }
-/**
- * @param {string} panel
- */
+/** @param {string} panel */
 export function togglePanel(panel) {
     core.panelManager.togglePanel(panel);
 }
@@ -474,10 +449,9 @@ export function customCheck() {
     nodeView.style.left = '50px';
     nodeView.style.width = '240px';
     nodeView.style.height = '240px';
-    nodeView.style.boxShadow = '0 0 12px #ffffff'
+    nodeView.style.boxShadow = '0 0 12px #ffffff';
 
     const world = document.getElementById('canvas');
-
 
     world.appendChild(nodeView);
     // world.appendChild(nodeView.element);
@@ -491,9 +465,8 @@ export function customCheck() {
         nodeView = null;
     }, 10);
 
-
     // 稍后（例如在 setTimeout 中）检查
-    console.log('检查释放')
+    console.log('检查释放');
     setInterval(() => {
         const recovered = weakRef.deref();
         if (recovered) {
@@ -501,21 +474,11 @@ export function customCheck() {
         } else {
             console.log('对象已经被释放（或即将被释放）');
         }
-
     }, 5000);
-
 }
 
-
-/**
- * 预览模式（customEditor「打开方式」）：仅查看当前 json 文件。
- * 由后端注入 NODE_EDITOR_CONFIG.previewMode 触发，隐藏侧边栏/顶栏等编辑功能。
- */
-const PREVIEW_MODE = !!(
-    typeof window !== 'undefined' &&
-    window.NODE_EDITOR_CONFIG &&
-    window.NODE_EDITOR_CONFIG.previewMode
-);
+/** 预览模式（customEditor「打开方式」）：仅查看当前 json 文件。 由后端注入 NODE_EDITOR_CONFIG.previewMode 触发，隐藏侧边栏/顶栏等编辑功能。 */
+const PREVIEW_MODE = !!(typeof window !== 'undefined' && window.NODE_EDITOR_CONFIG && window.NODE_EDITOR_CONFIG.previewMode);
 if (PREVIEW_MODE) {
     document.body.classList.add('preview-mode');
 }
@@ -528,13 +491,13 @@ if (PREVIEW_MODE) {
     // 预览仅查看：节点内容只读，禁止编辑（节点拖动保留，由 select 模式支持）
     // 文本类输入 readOnly（可选中复制）；按钮/下拉/开关/滑杆禁用
     const applyPreviewReadOnly = () => {
+        document.querySelectorAll('#canvas-world input[type="text"], #canvas-world input[type="number"], #canvas-world textarea').forEach((el) => {
+            if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) el.readOnly = true;
+        });
         document
-            .querySelectorAll('#canvas-world input[type="text"], #canvas-world input[type="number"], #canvas-world textarea')
-            .forEach((el) => {
-                if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) el.readOnly = true;
-            });
-        document
-            .querySelectorAll('#canvas-world input[type="radio"], #canvas-world input[type="checkbox"], #canvas-world input[type="range"], #canvas-world select, #canvas-world button')
+            .querySelectorAll(
+                '#canvas-world input[type="radio"], #canvas-world input[type="checkbox"], #canvas-world input[type="range"], #canvas-world select, #canvas-world button'
+            )
             .forEach((el) => {
                 // disabled 仅存在于表单元素（input/select/button），HTMLElement 无此属性
                 if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLButtonElement) {
@@ -595,19 +558,17 @@ function initWebview(callback) {
     }, 100); // 假设初始化需要100ms
 }
 
-
 // 自动初始化
 if (document.readyState === 'loading') {
-    updateStatus("正在初始化...");
+    updateStatus('正在初始化...');
     console.log('正在初始化...');
     document.addEventListener('DOMContentLoaded', () => {
         initWebview();
     });
 } else {
     initWebview();
-    updateStatus("初始化完成");
+    updateStatus('初始化完成');
 }
-
 
 /** @type {any} */
 const win = window;
@@ -636,7 +597,6 @@ win.changeMode = changeMode;
 win.toggleConnections = toggleConnections;
 
 win.controlCore = core;
-
 
 win.generateTest = generateTest;
 win.customCheck = customCheck;

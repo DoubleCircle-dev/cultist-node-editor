@@ -6,8 +6,8 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default [
     {
-        // 临时工作区（agent-scratch）与依赖目录不进 lint：与 .gitignore 一致
-        ignores: ['agent-scratch/**'],
+        // 临时工作区（agent-scratch）、依赖目录与前端构建产物不进 lint：与 .gitignore 一致
+        ignores: ['agent-scratch/**', 'frontend/dist/**', 'frontend/node_modules/**'],
     },
     js.configs.recommended,
     prettierConfig,

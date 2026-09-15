@@ -14,3 +14,7 @@ agent-scratch/
 #   引用 https://cdn.jsdelivr.net/gh/DoubleCircle-dev/cultist-node-editor-assets@v1/
 # 本地仍保留该目录；名字→路径映射见 core/origin_resources/image-index.json
 core/origin_resources/images/
+
+# Vite 前端：构建产物与依赖（见 vite.config.mjs）
+frontend/dist/
+frontend/node_modules/

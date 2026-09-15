@@ -5,32 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>节点编辑器</title>
 
-        <!-- 根目录 CSS：变量、基础样式、布局 -->
-        <link rel="stylesheet" href="css/variables.css" />
-        <link rel="stylesheet" href="css/style.css" />
-
-        <!-- layout CSS -->
-        <link rel="stylesheet" href="css/layout/layout.css" />
-        <link rel="stylesheet" href="css/layout/side_bar.css" />
-        <link rel="stylesheet" href="css/layout/tab_bar.css" />
-        <link rel="stylesheet" href="css/layout/sub_bar.css" />
-
-        <!-- 工具类 CSS -->
-        <link rel="stylesheet" href="css/utils/panel.css" />
-        <link rel="stylesheet" href="css/utils/file_panel.css" />
-        <link rel="stylesheet" href="css/utils/buttons.css" />
-        <link rel="stylesheet" href="css/utils/status.css" />
-        <link rel="stylesheet" href="css/utils/viewControl.css" />
-
-        <!-- 组件 CSS（按需调整顺序） -->
-        <link rel="stylesheet" href="css/components/connections.css" />
-        <link rel="stylesheet" href="css/components/menus.css" />
-        <link rel="stylesheet" href="css/components/nodes.css" />
-        <link rel="stylesheet" href="css/components/other.css" />
-        <link rel="stylesheet" href="css/components/ports.css" />
-        <link rel="stylesheet" href="css/components/properties.css" />
-
-        <!-- 修复部分css -->
+        <!-- 样式与脚本由 Vite 处理（见 src/main.js 与 src/styles/index.css），此处不再手写资源列表 -->
     </head>
     <body>
         <div class="container">
@@ -140,22 +115,6 @@
             </div>
         </div>
     </body>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script>
-    eruda.init({
-      display: false,
-    });
-    eruda.get('entryBtn').hide();
-    eruda.hide();
-  </script> -->
-    <!-- <script type="importmap">
-        {
-            "imports": {
-                "weigh-js": "https://esm.sh/weigh-js@1.0.2"
-            }
-        }
-    </script> -->
-    <script type="module" src="scripts/index.js"></script>
-    <script type="module" src="scripts/debug.js"></script>
-    <!-- <script src="scripts/webview.js"></script> -->
+    <!-- Vite 入口：样式由 src/styles/index.css 统一引入，应用逻辑由 src/index.js 自启动 -->
+    <script type="module" src="/src/main.js"></script>
 </html>

@@ -182,123 +182,137 @@ function createNodeEditorPanel(context) {
     }
 }
 
-function getWebviewContent(panel, context, options = {}) {
-    const uiDir = path.join(context.extensionPath, 'ui');
+/** 前端根目录（Vite 工程；vanilla 分支的 ui/ 已迁移至此） */
+const FRONTEND_DIR_NAME = 'frontend';
+/** 开启开发模式的环境变量：设为 1 用默认地址，或直接写 dev server 地址 */
+const DEV_SERVER_ENV = 'CNE_DEV_SERVER';
+const DEFAULT_DEV_SERVER = 'http://localhost:5173';
 
-    try {
-        const htmlPath = path.join(uiDir, 'webUI.html');
-        if (!fs.existsSync(htmlPath)) throw new Error('HTML文件不存在: ' + htmlPath);
-
-        let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
-
-        // 这里的调用去掉了 config 参数，直接传入 uiDir
-        const resources = processResources(panel, uiDir);
-
-        htmlContent = replaceResourceReferences(htmlContent, resources);
-
-        // 保持原来的配置注入逻辑
-        const configPath = path.join(uiDir, 'webview-config.json');
-        if (fs.existsSync(configPath)) {
-            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            // 图片渲染失败时的回退占位图（webview URI，需在 localResourceRoots 内）
-            const placeholderPath = path.join(uiDir, 'assets', 'img', 'placeholder.png');
-            if (fs.existsSync(placeholderPath)) {
-                config.placeholderImage = panel.webview.asWebviewUri(vscode.Uri.file(placeholderPath)).toString();
-            }
-            // 预览模式（customEditor「打开方式」）：仅查看当前 json，前端隐藏侧边栏/顶栏等功能
-            if (options.previewMode) {
-                config.previewMode = true;
-            }
-            htmlContent = injectConfigData(htmlContent, config);
-        }
-
-        return htmlContent;
-    } catch (error) {
-        console.error('加载Webview内容失败:', error);
-        return getErrorHtml();
-    }
+/**
+ * 读取开发服务器地址；未开启开发模式时返回 null。
+ * @returns {string|null}
+ */
+function getDevServerUrl() {
+    const raw = process.env[DEV_SERVER_ENV];
+    if (!raw) return null;
+    if (raw === '1' || raw === 'true') return DEFAULT_DEV_SERVER;
+    return raw.replace(/\/$/, '');
 }
 
 /**
- * 递归获取目录下所有指定后缀的文件路径
- * @param {string} dirPath 物理目录路径
- * @param {string} extension 文件后缀（如 '.js'）
- * @returns {string[]} 文件的绝对路径列表
+ * 解析前端运行时文件：优先 dist 产物，回退 public 源码（便于未构建时也能启动）。
+ * @param {import('vscode').ExtensionContext} context
+ * @param {string} relPath 相对 frontend/ 的路径，如 'error.html'
+ * @returns {string} 绝对路径
  */
-function getAllFiles(dirPath, extension, arrayOfFiles = []) {
-    const files = fs.readdirSync(dirPath);
+function resolveFrontendFile(context, relPath) {
+    const distPath = path.join(context.extensionPath, FRONTEND_DIR_NAME, 'dist', relPath);
+    if (fs.existsSync(distPath)) return distPath;
+    const publicPath = path.join(context.extensionPath, FRONTEND_DIR_NAME, 'public', relPath);
+    if (fs.existsSync(publicPath)) return publicPath;
+    return distPath;
+}
 
-    files.forEach((file) => {
-        const fullPath = path.join(dirPath, file);
-        if (fs.statSync(fullPath).isDirectory()) {
-            // 如果是目录，递归调用
-            arrayOfFiles = getAllFiles(fullPath, extension, arrayOfFiles);
-        } else if (file.endsWith(extension)) {
-            // 如果是目标文件，记录路径
-            arrayOfFiles.push(fullPath);
+/**
+ * 仅为开发模式注入 CSP：放行 dev server（含 HMR 的 websocket）。
+ * 生产模式不注入，保持与迁移前一致的行为。
+ * @param {string} html
+ * @param {import('vscode').Webview} webview
+ * @param {string} devServerUrl
+ * @returns {string}
+ */
+function injectDevCsp(html, webview, devServerUrl) {
+    const wsUrl = devServerUrl.replace(/^http/, 'ws');
+    const policy = [
+        `default-src 'none'`,
+        `img-src ${webview.cspSource} ${devServerUrl} https: data: blob:`,
+        `media-src ${webview.cspSource} ${devServerUrl} data: blob:`,
+        `script-src ${webview.cspSource} ${devServerUrl} 'unsafe-inline'`,
+        `style-src ${webview.cspSource} ${devServerUrl} 'unsafe-inline'`,
+        `font-src ${webview.cspSource} ${devServerUrl} data:`,
+        `worker-src ${webview.cspSource} blob:`,
+        `connect-src ${webview.cspSource} ${devServerUrl} ${wsUrl}`,
+    ].join('; ');
+    const meta = `<meta http-equiv="Content-Security-Policy" content="${policy}">`;
+    return html.replace('<head>', `<head>\n        ${meta}`);
+}
+
+/**
+ * 载入入口 HTML。
+ * - 开发模式：读源码 frontend/index.html，把入口脚本指向 dev server（含 @vite/client 以启用 HMR）
+ * - 生产模式：读 frontend/dist/index.html，把 ./assets/** 等相对引用换成 webview URI
+ * @param {import('vscode').WebviewPanel} panel
+ * @param {import('vscode').ExtensionContext} context
+ * @param {string|null} devServerUrl
+ * @returns {string}
+ */
+function loadFrontendHtml(panel, context, devServerUrl) {
+    const frontendDir = path.join(context.extensionPath, FRONTEND_DIR_NAME);
+
+    if (devServerUrl) {
+        const srcHtml = path.join(frontendDir, 'index.html');
+        if (!fs.existsSync(srcHtml)) throw new Error('找不到 ' + srcHtml);
+        let html = fs.readFileSync(srcHtml, 'utf-8');
+        const entryTag = '<script type="module" src="/src/main.js"></script>';
+        if (!html.includes(entryTag)) {
+            throw new Error('frontend/index.html 里找不到 Vite 入口标签，无法切换到 dev server');
         }
+        const devTags = [
+            `<script type="module" src="${devServerUrl}/@vite/client"></script>`,
+            `<script type="module" src="${devServerUrl}/src/main.js"></script>`
+        ].join('\n    ');
+        html = html.replace(entryTag, devTags);
+        console.log(`🔥 [dev] webview 加载 Vite dev server: ${devServerUrl}`);
+        return injectDevCsp(html, panel.webview, devServerUrl);
+    }
+
+    const distDir = path.join(frontendDir, 'dist');
+    const htmlPath = path.join(distDir, 'index.html');
+    if (!fs.existsSync(htmlPath)) {
+        throw new Error('找不到 ' + htmlPath + '，请先执行 npm run build:ui');
+    }
+    let html = fs.readFileSync(htmlPath, 'utf-8');
+    // Vite 产物（base:'./'）用相对路径引用资源，逐个换成 webview URI
+    html = html.replace(/(src|href)="(\.\/[^"]+)"/g, (match, attr, rel) => {
+        const filePath = path.join(distDir, rel.replace(/^\.\//, ''));
+        return fs.existsSync(filePath)
+            ? `${attr}="${panel.webview.asWebviewUri(vscode.Uri.file(filePath))}"`
+            : match;
     });
-
-    return arrayOfFiles;
+    return html;
 }
 
-function processResources(panel, uiDir) {
-    const resources = {
-        css: [],
-        scripts: []
-    };
+function getWebviewContent(panel, context, options = {}) {
+    try {
+        const devServerUrl = getDevServerUrl();
+        let htmlContent = loadFrontendHtml(panel, context, devServerUrl);
 
-    const cssDirPath = path.join(uiDir, 'css');
-    const scriptDirPath = path.join(uiDir, 'scripts');
+        const configPath = resolveFrontendFile(context, 'webview-config.json');
+        const config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
 
-    // 递归处理 CSS
-    if (fs.existsSync(cssDirPath)) {
-        const allCssFiles = getAllFiles(cssDirPath, '.css');
-        resources.css = allCssFiles.map(filePath => ({
-            // 将绝对路径转换为 Webview URI
-            uri: panel.webview.asWebviewUri(vscode.Uri.file(filePath)).toString()
-        }));
+        // 图片渲染失败时的回退占位图（webview URI，需在 localResourceRoots 内）
+        const placeholderPath = resolveFrontendFile(context, path.join('assets', 'img', 'placeholder.png'));
+        if (fs.existsSync(placeholderPath)) {
+            config.placeholderImage = panel.webview.asWebviewUri(vscode.Uri.file(placeholderPath)).toString();
+        }
+        // 开发模式标记：前端可据此显示额外调试信息
+        config.devServer = devServerUrl || undefined;
+        // 预览模式（customEditor「打开方式」）：仅查看当前 json，前端隐藏侧边栏/顶栏等功能
+        if (options.previewMode) {
+            config.previewMode = true;
+        }
+
+        return injectConfigData(htmlContent, config);
+    } catch (error) {
+        console.error('加载Webview内容失败:', error);
+        return getErrorHtml(context);
     }
-
-    // 递归处理 JS (Module)
-    if (fs.existsSync(scriptDirPath)) {
-        const allJsFiles = getAllFiles(scriptDirPath, '.js');
-        resources.scripts = allJsFiles.map(filePath => ({
-            uri: panel.webview.asWebviewUri(vscode.Uri.file(filePath)).toString()
-        }));
-    }
-
-    return resources;
 }
 
-function replaceResourceReferences(htmlContent, resources) {
-    let result = htmlContent;
+// 说明：迁移到 Vite 后，原先的 getAllFiles / processResources / replaceResourceReferences
+// （扫描 ui/css、ui/scripts 再把资源标签注入 HTML）已整体移除 —— 资源由 Vite 打包，
+// 加载逻辑见上方 loadFrontendHtml()。
 
-    // 1. 移除原有的硬编码资源引用（可选，建议保留以清理模板）
-    result = result.replace(/<link\s+rel="stylesheet"\s+href="[^"]*"\s*\/?>/g, '');
-    result = result.replace(/<script\s+[^>]*src="[^"]*"><\/script>/g, '');
-
-    // 2. 生成新的标签
-    const styleTags = resources.css.map(style =>
-        `<link rel="stylesheet" href="${style.uri}">`
-    ).join('\n\t');
-
-    console.log(styleTags)
-
-    const scriptTags = resources.scripts.map(script =>
-        `<script type="module" src="${script.uri}"></script>` // 关键：添加 type="module"
-    ).join('\n\t');
-
-    // 3. 注入到 HTML
-    if (styleTags) {
-        result = result.replace('</head>', `${styleTags}\n</head>`);
-    }
-    if (scriptTags) {
-        result = result.replace('</body>', `${scriptTags}\n</body>`);
-    }
-
-    return result;
-}
 function injectConfigData(htmlContent, config) {
     // 将配置注入到JavaScript中
     const configScript = `
@@ -327,14 +341,19 @@ function injectConfigData(htmlContent, config) {
 }
 
 
-function getErrorHtml() {
-    // 使用更简单可靠的HTML进行测试
+/**
+ * 加载失败时的兜底页面（frontend/public/error.html，构建后也会出现在 dist 里）。
+ * @param {import('vscode').ExtensionContext} [context]
+ * @returns {string|undefined}
+ */
+function getErrorHtml(context) {
     try {
-        const htmlPath = path.join(__dirname, 'ui', 'error.html');
-        let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
-        return htmlContent;
+        const htmlPath = context
+            ? resolveFrontendFile(context, 'error.html')
+            : path.join(__dirname, FRONTEND_DIR_NAME, 'public', 'error.html');
+        return fs.readFileSync(htmlPath, 'utf-8');
     } catch (error) {
-        console.error('读取文件时出错:', error);
+        console.error('读取错误页时出错:', error);
     }
 }
 

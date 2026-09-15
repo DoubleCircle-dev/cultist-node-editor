@@ -1,7 +1,7 @@
 import './helpers/domSetup.mjs';
 import { describe, it, beforeEach } from 'mocha';
 import assert from 'node:assert/strict';
-import { EventBus } from '../../ui/scripts/types/eventBus.js';
+import { EventBus } from '../../frontend/src/types/eventBus.js';
 
 /**
  * L1 根因修复验证：EventBus 曾把 listener 包装成新函数注册，
