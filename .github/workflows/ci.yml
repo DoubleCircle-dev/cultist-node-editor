@@ -4,6 +4,8 @@ name: CI
 on:
   pull_request:
   workflow_dispatch:
+  # 供 release.yml 复用：打 tag 发版前先跑完这套完整测试
+  workflow_call:
 
 concurrency:
   group: ci-${{ github.ref }}
