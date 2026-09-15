@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    // 前端线不维护后端代码（见 .gitignore）：core/**、extension.js、frontend-host/index.js 等
+    // 都由下面这个任务从 core 工作区拷进来，因此**永远不需要 merge core**。
+    //
+    // 路径按「worktree 目录与 core 相邻」的约定（E:/Code/js/{cultist-node-editor,cne-worktrees/*}）。
+    // core 放在别处时，改这里的 args 或加 --core <路径>。
+    "tasks": [
+        {
+            "label": "同步后端（core → 本工作区）",
+            "detail": "把 core 的后端代码与 package.json 清单字段拷进来",
+            "type": "shell",
+            "command": "node",
+            "args": [
+                "${workspaceFolder}/../../cultist-node-editor/scripts/sync-backend.mjs",
+                "${workspaceFolder}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        }
+    ]
+}
