@@ -14,7 +14,7 @@ const extension = require('../extension');
  *   · NODE_EDITOR_CONFIG 正常注入、previewMode 能透传
  *   · openEditor 命令真的能开出一个面板
  *
- * ⚠️ 断言刻意做成「实现无关」，这样同一份测试在 core(vanilla) 与 feat/vite-frontend 上都能跑。
+ * ⚠️ 断言刻意做成「实现无关」，这样同一份测试在 vanilla-frontend 与 vite-frontend 上都能跑。
  */
 
 const EXT_ROOT = path.resolve(__dirname, '..');

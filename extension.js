@@ -187,7 +187,7 @@ function createNodeEditorPanel(context) {
  * 渲染 webview 内容。
  *
  * 这里只做「把 vscode 的能力注入给前端宿主」这一件事：真正的加载逻辑在
- * frontend-host/ 的可插拔实现里（core: vanilla.js / feat/vite-frontend: vite.js）。
+ * frontend-host/ 的可插拔实现里（vanilla-frontend: vanilla.js / vite-frontend: vite.js）。
  * 因此本文件在 core 与各前端分支上保持完全一致，后端更新合并时不产生冲突。
  * @param {import('vscode').WebviewPanel} panel
  * @param {import('vscode').ExtensionContext} context
