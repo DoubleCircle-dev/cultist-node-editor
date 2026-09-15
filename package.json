@@ -60,8 +60,11 @@
     "pretest": "npm run lint",
     "test": "vscode-test",
     "test:ui": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000 \"test/ui/**/*.test.mjs\"",
+    "test:ui:file": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000",
+    "test:ui:watch": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000 --watch \"test/ui/**/*.test.mjs\"",
     "test:ui:memory": "node --expose-gc test/ui/memory-check.mjs",
-    "check:webview": "node scripts/check-webview.js"
+    "clean:vscode-test": "node -e \"require('node:fs').rmSync('.vscode-test', { recursive: true, force: true })\"",
+    "verify": "npm run lint && npm run test:ui"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
