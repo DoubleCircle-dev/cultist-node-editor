@@ -1,9 +1,9 @@
-# frontend —— Vite 前端（`feat/vite-frontend` 分支）
+# frontend —— Vite 前端（`vite-frontend` 分支）
 
-与 `vanilla` 分支（`master` / `vanila_js` / `feat/mod-data-node-preview`）是**同一套前端的两种实现**，
+与 `vanilla-frontend` 分支（发布线 `master` 用的就是它）是**同一套前端的两种实现**，
 共享 `core/`（mod 加载、数据池）与 `extension.js`，区别只在「前端怎么组织、怎么交给 webview」：
 
-|  | vanilla 分支 | 本分支（Vite） |
+|  | `vanilla-frontend` 线 | `vite-frontend` 线（本分支） |
 | --- | --- | --- |
 | 目录 | `ui/`（源码即运行时） | `frontend/`（`ui/` 已不存在） |
 | 入口 HTML | `ui/webUI.html`，手写 20 条 `<link>` + 2 条 `<script type="module">` | `frontend/index.html`，只有 1 条 `<script type="module" src="/src/main.js">` |

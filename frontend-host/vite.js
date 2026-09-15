@@ -1,5 +1,5 @@
 /**
- * frontend-host/vite.js —— **Vite 方案**的前端宿主实现（feat/vite-frontend 自带）
+ * frontend-host/vite.js —— **Vite 方案**的前端宿主实现（vite-frontend 自带）
  *
  * 前端放在 `frontend/`（Vite 工程）：
  *   - 生产：读 `frontend/dist/index.html`，把 `./assets/**` 换成 webview URI
