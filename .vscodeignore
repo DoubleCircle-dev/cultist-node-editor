@@ -1,6 +1,7 @@
 .vscode/**
 .vscode-test/**
 test/**
+.prettierrc
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md
@@ -8,6 +9,10 @@ vsc-extension-quickstart.md
 **/*.map
 **/eslint.config.mjs
 **/.vscode-test.*
+# 包管理器文件不进 VSIX（依赖由 vsce 自行收集）
+package-lock.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
 # origin 图片（~233MB）已由 CDN 托管，不进 VSIX；数据见 core/origin_resources/StreamingAssets
 core/origin_resources/images/**
 core/origin_resources/output.txt
