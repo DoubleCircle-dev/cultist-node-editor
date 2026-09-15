@@ -3,6 +3,7 @@
   "displayName": "cultist node editor",
   "description": "visible code editor by node for development of the mod about the game <cultist simulator>",
   "version": "0.0.1",
+  "publisher": "DoubleCircle",
   "engines": {
     "vscode": "^1.107.0"
   },
