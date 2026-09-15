@@ -34,14 +34,40 @@ frontend/
 
 ## 命令
 
+本分支**用 pnpm 管理**（`pnpm-lock.yaml`，已移除 `package-lock.json`）：
+
 ```bash
-npm run dev            # Vite dev server → http://localhost:5173（HMR）
-npm run build:ui       # 产出 frontend/dist（发布/VSIX 用）
-npm run build:ui:watch # 边改边构建
-npm run preview:ui     # 本地预览 dist 产物
+pnpm install           # 安装依赖
+pnpm run dev           # Vite dev server → http://localhost:5173（HMR）
+pnpm run build:ui      # 产出 frontend/dist（发布/VSIX 用）
+pnpm run build:ui:watch# 边改边构建
+pnpm run preview:ui    # 本地预览 dist 产物
+pnpm run test:ui       # 前端单元测试（jsdom + mocha）
+pnpm run lint          # ESLint
 ```
 
-`package.json` 里 `vscode:prepublish` 已指向 `build:ui`，因此打包 VSIX 前会自动构建。
+- `package.json` 的 `vscode:prepublish` 指向 `build:ui`，打包 VSIX 前会自动构建。
+- `pnpm-workspace.yaml` 里 `allowBuilds.esbuild: true` 是**必须的**：pnpm 10+ 默认不执行依赖的安装脚本，
+  而 esbuild 需要靠 postinstall 落地平台二进制，否则 `vite build` 直接失败。
+
+## 与后端主干 `core` 同步
+
+后端（`core/**`、`extension.js`、`frontend-host/index.js`）只在 `core` 分支上改，本分支通过 merge 获取：
+
+```bash
+git fetch
+git merge core          # 或 git merge origin/core
+```
+
+预期行为：
+- **只改 `core/**` 的提交** → 零冲突（前端代码各在各的目录里）。
+- `extension.js` / `frontend-host/index.js` **两边内容完全一致**（前端差异全在 `frontend-host/vite.js`），
+  所以正常情况下它们不会出现在冲突列表里 —— 一旦出现，说明有人往 `core` 里塞了 vanilla 专属逻辑。
+- ⚠️ **`package-lock.json` 会以 modify/delete 形式冲突**（本分支已删除它，而 `core` 还在用 npm 维护它）。
+  出现时这样解决：
+  ```bash
+  git rm -f package-lock.json && git add -A && git commit --no-edit
+  ```
 
 ## 两种运行模式（扩展侧）
 
