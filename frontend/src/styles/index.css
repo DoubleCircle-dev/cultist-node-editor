@@ -7,7 +7,6 @@
 
 /* 变量与基础样式 */
 @import './variables.css';
-@import './style.css';
 
 /* layout */
 @import './layout/layout.css';

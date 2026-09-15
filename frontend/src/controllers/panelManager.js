@@ -31,7 +31,7 @@ export class PanelManager extends IManager {
             EPContainer.classList.add('hidden');
             this.viewport.appendChild(EPContainer);
         }
-        this.expandPanelContainer = new ContainerView(EPContainer);
+        this.expandPanelContainer = new ContainerView(EPContainer, () => this._syncResizers());
 
         let BPContainer = document.getElementById('bottomPanelContainer');
         if (!BPContainer) {
@@ -43,7 +43,7 @@ export class PanelManager extends IManager {
             BPContainer.classList.add('hidden');
             this.viewport.appendChild(BPContainer);
         }
-        this.bottomPanelContainer = new ContainerView(BPContainer);
+        this.bottomPanelContainer = new ContainerView(BPContainer, () => this._syncResizers());
 
         if (!this.expandPanelContainer || !this.bottomPanelContainer) {
             console.error('未找到面板容器');
@@ -280,6 +280,7 @@ export class PanelManager extends IManager {
      */
     _toggleExpandPanel(panelView) {
         this.expandPanelContainer.toggle(panelView);
+        this._syncResizers();
     }
 
     /**
@@ -288,6 +289,7 @@ export class PanelManager extends IManager {
      */
     _toggleBottomPanel(panelView) {
         this.bottomPanelContainer.toggle(panelView);
+        this._syncResizers();
     }
 
     // ==========================================
@@ -299,12 +301,26 @@ export class PanelManager extends IManager {
         this._expandWidth = 340;   // expand 面板内容宽度
         this._bottomHeight = 320;  // bottom 面板高度
 
+        this._expandResizer = null;  // expand 面板右边界手柄
+        this._bottomResizer = null;  // bottom 面板上边界手柄
+
         const root = document.documentElement;
         root.style.setProperty('--expand-width', this._expandWidth + 'px');
         root.style.setProperty('--bottom-height', this._bottomHeight + 'px');
 
         this._createExpandResizer();
         this._createBottomResizer();
+
+        this._syncResizers();
+    }
+
+    /** @private 手柄只在对应面板展开时存在 */
+    _syncResizers() {
+        const expandVisible = this.expandPanelContainer?.isVisible ?? false;
+        const bottomVisible = this.bottomPanelContainer?.isVisible ?? false;
+
+        this._expandResizer?.classList.toggle('hidden', !expandVisible);
+        this._bottomResizer?.classList.toggle('hidden', !bottomVisible);
     }
 
     /** @private 获取画布可视区域边界，用于限制面板最大尺寸 */
@@ -328,6 +344,7 @@ export class PanelManager extends IManager {
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
         sidebar.appendChild(handle);
+        this._expandResizer = handle;
 
         /** @param {MouseEvent} e */
         const onDown = (e) => {
@@ -377,6 +394,7 @@ export class PanelManager extends IManager {
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
         sidebar.appendChild(handle);
+        this._bottomResizer = handle;
 
         /** @param {MouseEvent} e */
         const onDown = (e) => {
@@ -512,6 +530,12 @@ export class PanelManager extends IManager {
         this.expandPanelContainer.destroy();
         this.bottomPanelContainer.destroy();
 
+        // 移除拖拽手柄，避免重复创建时残留
+        this._expandResizer?.remove();
+        this._bottomResizer?.remove();
+        this._expandResizer = null;
+        this._bottomResizer = null;
+
         this.panels.clear();
 
         super.destroy();
@@ -519,10 +543,14 @@ export class PanelManager extends IManager {
 }
 
 export class ContainerView {
-    /** @param {HTMLElement} element - 静态容器 DOM（如 document.getElementById('expandPanel')） */
-    constructor(element) {
+    /**
+     * @param {HTMLElement} element - 静态容器 DOM（如 document.getElementById('expandPanel')）
+     * @param {(() => void) | null} [onVisibilityChange] - 容器显隐状态变化（挂载 / 退出动画结束）时的回调
+     */
+    constructor(element, onVisibilityChange = null) {
         this.element = element;
         this.currentView = null;
+        this.onVisibilityChange = typeof onVisibilityChange === 'function' ? onVisibilityChange : null;
 
         this.animationendHandler = null;
 
@@ -538,6 +566,8 @@ export class ContainerView {
 
                 this.element.innerHTML = '';
                 this.currentView = null;
+
+                this.onVisibilityChange?.();
             }
         };
         this.element.addEventListener('animationend', this.animationendHandler);
@@ -554,6 +584,8 @@ export class ContainerView {
         this.element.appendChild(panelView.element);
 
         this.element.classList.remove('hidden', 'exit');
+
+        this.onVisibilityChange?.();
     }
 
     /**
@@ -573,6 +605,8 @@ export class ContainerView {
             return;
         }
         this.element.classList.add('exit');
+
+        this.onVisibilityChange?.();
     }
 
     /** 获取当前容器的显隐状态 */
