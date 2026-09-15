@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
 /**
- * Vite 配置（vite-vue 分支 —— Vue 3 响应式实现，**暂不用于发布**）
+ * Vite 配置（Vue 3）
  *
  * 结构：
  *   frontend/index.html      入口（唯一 HTML，含 #app 的静态骨架）

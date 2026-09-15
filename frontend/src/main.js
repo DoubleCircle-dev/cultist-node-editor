@@ -1,9 +1,8 @@
 /**
  * Vue 入口（唯一入口）
  *
- * 与 vite-vanilla 的差异：那边是「原生 JS 直接操作 DOM」，这里是「Vue 声明式渲染」——
- * 同样交给 Vite 打包，但 src/ 下全部是 .vue 组件 + 响应式 store。
- * 旧实现留在 src-legacy/（不参与构建），对照与迁移计划见 ../DESIGN.md。
+ * 入口只做三件事：引入全局样式、接上扩展宿主、挂载根组件。
+ * src/ 下都是 .vue 组件 + 响应式 store；旧的原生实现见 src-legacy/（不参与构建）。
  */
 import { createApp } from 'vue';
 
