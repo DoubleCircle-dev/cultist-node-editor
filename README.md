@@ -79,6 +79,16 @@ git tag v0.0.1 && git push origin v0.0.1          # 版本号须与 package.json
 打包 vsix 并挂到 [Releases](https://github.com/DoubleCircle-dev/cultist-node-editor/releases)。
 上架 Marketplace 仍是手动的（从 Release 下载 vsix），CI 里不持有任何发布凭据。
 
+> **master 上只能有一套前端实现**（`frontend-host/` 的契约要求恰好一个实现，多一个会白屏）。
+> 当前发布的方案是 **vanilla**（`ui/` + `frontend-host/vanilla.js`）。
+>
+> - **切到 Vite 版**：`git checkout master && git merge feat/vite-frontend`
+>   —— vite 那条历史里删掉了 `ui/` 与 `frontend-host/vanilla.js`，合并会一并删除，结果干净。
+> - **从 Vite 切回 vanilla**：合并会把两套都留下 → 需要手动移除另一套
+>   （`git rm -r --cached` 掉 `frontend/`，并只保留一个 `frontend-host/*.js` 实现）。
+> - 合错了也不会发出去：`test/ui/frontendHost.test.mjs` 断言「实现恰好一个」，
+>   完整 CI 跑在 release 之前，会先把这类错误挡下来。
+
 更细的说明见 `test/ui/README.md`（前端单测）与 `frontend/README.md`（Vite 前端）。
 
 ## 已知限制
