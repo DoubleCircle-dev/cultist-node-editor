@@ -14,6 +14,9 @@ export default [
             // 不排除的话 `eslint .` 会把它们全部解析 → 堆爆（实测 exit 134 / V8 heap OOM）
             '.vscode-test/**',
             'coverage/**',
+            // Vite 前端产物与依赖（vite-vanilla / vite-vue 线；core 上没有这些目录，写了也不影响）
+            'frontend/dist/**',
+            'frontend/node_modules/**',
         ],
     },
     js.configs.recommended,
