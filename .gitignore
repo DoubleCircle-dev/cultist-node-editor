@@ -18,3 +18,21 @@ core/origin_resources/images/
 # Vite 前端：构建产物与依赖（见 vite.config.mjs）
 frontend/dist/
 frontend/node_modules/
+
+# ===== 后端代码：不在本仓库维护 =====
+# 由「同步后端（core → 本工作区）」任务（见 .vscode/tasks.json）从 core 工作区拷入，
+# 所以本仓库只跟踪前端。改后端请到 core 工作区改，然后在本工作区跑一次该任务。
+/core/
+/extension.js
+/frontend-host/index.js
+/types.d.ts
+/customInterface.d.ts
+/env.d.ts
+/jsconfig.json
+/eslint.config.mjs
+/.vscodeignore
+/myLint/
+/pnpm-workspace.yaml
+/test/extension.test.js
+/test/fixtures/
+/test/img/
