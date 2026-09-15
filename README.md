@@ -66,6 +66,19 @@ pnpm run package:vsix   # 打包成 vsix
   `cdn.jsdelivr.net/gh/DoubleCircle-dev/cultist-node-editor-assets@v1/`，
   名字 → 路径映射见 `core/origin_resources/image-index.json`
 
+### 发布
+
+`master` 是**发布线**：谁被合并进 master，就发布谁。
+
+```bash
+git checkout master && git merge <要发布的分支>   # 先合并
+git tag v0.0.1 && git push origin v0.0.1          # 版本号须与 package.json 的 version 一致
+```
+
+推 tag 后会自动：校验「tag 落在 master 上」+ 版本号一致 → 跑完整测试矩阵 →
+打包 vsix 并挂到 [Releases](https://github.com/DoubleCircle-dev/cultist-node-editor/releases)。
+上架 Marketplace 仍是手动的（从 Release 下载 vsix），CI 里不持有任何发布凭据。
+
 更细的说明见 `test/ui/README.md`（前端单测）与 `frontend/README.md`（Vite 前端）。
 
 ## 已知限制
