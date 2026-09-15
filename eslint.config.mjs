@@ -14,7 +14,7 @@ export default [
             // 不排除的话 `eslint .` 会把它们全部解析 → 堆爆（实测 exit 134 / V8 heap OOM）
             '.vscode-test/**',
             'coverage/**',
-            // Vite 前端产物与依赖（vite-vanilla / vite-vue 线；core 上没有这些目录，写了也不影响）
+            // Vite 生成物与依赖（没有这些目录时无影响）
             'frontend/dist/**',
             'frontend/node_modules/**',
         ],
@@ -22,7 +22,9 @@ export default [
     js.configs.recommended,
     prettierConfig,
     {
-        files: ['**/*.js'],
+        // .mjs / .cjs 也要列进来：flat config 默认会 lint 它们，但只有这里显式声明的 files
+        // 才会带上下面这些 globals —— 否则 scripts/*.mjs 里的 process / console 会被判成 no-undef
+        files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
         plugins: {
             jsdoc: jsdoc,
             myRules: myRules,

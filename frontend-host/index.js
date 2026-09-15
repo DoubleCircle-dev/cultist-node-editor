@@ -1,13 +1,10 @@
 /**
- * frontend-host —— 前端宿主「契约」层（`core` / 各前端分支共用，**不要在这里分叉**）
+ * frontend-host —— 前端宿主「契约」层：把「前端怎么加载」从 extension.js 抽出来，
+ * 交给同目录下的可插拔实现，扩展侧不必关心具体前端方案。
  *
- * 存在的意义：把「前端怎么加载」从 extension.js 抽出来做成可插拔实现，使
- * `extension.js` 与本文件在 core / vanilla-frontend / vite-frontend 三条线上完全一致 ——
- * 后端更新（只改 core/**）合并进前端分支时，不会在前端加载逻辑上产生冲突。
- *
- * 实现文件（每个分支只保留一个，core 上一个都没有）：
- *   vanilla.js —— 默认方案：读 ui/webUI.html + 扫描 ui/css、ui/scripts 再注入（vanilla-frontend 自带）
- *   vite.js    —— Vite 方案：读 frontend/dist 或 Vite dev server（vite-frontend 自带）
+ * 实现文件（同目录下必须**恰好存在一个**）：
+ *   vanilla.js —— 读 ui/webUI.html + 扫描 ui/css、ui/scripts 再注入
+ *   vite.js    —— 读 frontend/dist，或（开发时）指向 Vite dev server
  *
  * 本层**不依赖 vscode 模块**（便于在 jsdom 里做契约测试）：
  * webview URI 的转换由调用方通过 runtime.toWebviewUri 注入。
@@ -127,16 +124,13 @@ function renderWebviewHtml(runtime, options = {}) {
         return injectConfigData(html, config);
     } catch (error) {
         console.error('加载Webview内容失败:', error);
-        // 有实现时用它自己的兑底页；core（不带实现）则给出可读的提示页
+        // 实现自己的兑底页；连实现都没有时给一个可读提示页（而不是白屏）
         return impl ? impl.buildErrorHtml(runtime) : buildNoImplHtml(error);
     }
 }
 
 /**
- * 当前分支不带任何前端实现时的兑底页。
- *
- * `core` 是纯后端分支（前端在 `vanilla-frontend` / `vite-frontend` 上）：
- * 单独运行 core 时给出可读提示，而不是留一片白屏。
+ * 没有可用前端实现时的兑底页 —— 给出可读提示，而不是留一片白屏。
  * @param {Error} error 触发兑底的原因
  * @returns {string}
  */
@@ -145,14 +139,12 @@ function buildNoImplHtml(error) {
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
-    <title>节点编辑器 —— 本分支不含前端实现</title>
+    <title>节点编辑器 —— 没有可用的前端实现</title>
 </head>
 <body style="font-family: var(--vscode-font-family); padding: 2rem; line-height: 1.7; max-width: 46rem;">
-    <h2>本分支不含前端实现</h2>
-    <p><code>frontend-host/</code> 下没有可用的实现（<code>vanilla.js</code> 或 <code>vite.js</code>）。</p>
-    <p><code>core</code> 分支只有后端与契约层；前端分别在
-       <code>vanilla-frontend</code>（<code>ui/</code>）与 <code>vite-frontend</code>（<code>frontend/</code>）上。
-       请切换到对应分支后再运行本扩展。</p>
+    <h2>没有可用的前端实现</h2>
+    <p><code>frontend-host/</code> 下没有找到 <code>vanilla.js</code> 或 <code>vite.js</code>。</p>
+    <p>请在带有前端实现的工作区里运行本扩展；只跑后端时，这个提示页就是预期结果。</p>
     <p style="opacity:.6; font-size:.9em;">${error ? String(error.message || error) : ''}</p>
 </body>
 </html>`;

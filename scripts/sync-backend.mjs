@@ -1,24 +1,18 @@
 #!/usr/bin/env node
 /**
- * sync-backend —— 把 core（后端）的代码同步进某个前端线工作区。
+ * sync-backend —— 把本仓库的后端代码同步进一个前端工作区。
  *
- * 背景：前端线的仓库**不跟踪**后端代码（见各前端线的 `.gitignore` 与 `.vscode/tasks.json`）。
- * 开发、跑测试、打包之前先执行本脚本，把后端文件从 core 工作区拷进来，
- * 并把 core `package.json` 里的扩展清单字段、依赖合并给前端线 ——
- * 因此前端线**永远不需要 merge core**，core 改完跑一次任务即可。
+ * 前端工作区不跟踪后端代码，开发 / 测试 / 打包前跑一次本脚本：
+ * 覆盖 `ENTRIES` 列出的路径，并把 `package.json` 的扩展清单字段与依赖合并过去。
  *
  * 用法：
- *   node <core 根目录>/scripts/sync-backend.mjs [目标工作区] [--core <core 根目录>]
+ *   node scripts/sync-backend.mjs [目标工作区] [--core <本仓库根目录>]
  *
- *   · 目标工作区：默认为当前目录（在前端线仓库根执行时就不用传）
- *   · core 根目录：默认为本脚本所在仓库的根
+ *   · 目标工作区：默认为当前目录
+ *   · --core：默认为本脚本所在仓库的根
  *
- * 例（在 vite-vanilla 工作区里）：
- *   node E:/Code/js/cultist-node-editor/scripts/sync-backend.mjs .
- *
- * ⚠️ 本脚本只会**写**清单里的后端路径与 `package.json` 的共享字段，
- *    前端线的 `ui/`、`frontend/`、`frontend-host/vanilla.js|vite.js`、`test/ui/`、
- *    `scripts/`、`.vscode/`、`.gitignore`、`README.md` 都不会被碰。
+ * ⚠️ 只写 `ENTRIES` 里的路径与 `package.json` 的共享字段；
+ *    目标里其余文件（页面、组件、前端测试、`.vscode/`、`.gitignore` 等）一律不碰。
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -28,7 +22,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 /** 后端路径清单（相对仓库根）：整体覆盖到目标工作区 */
 const ENTRIES = [
-    // 项目级文档：分支约定写在这里，前端线不该有自己的一份副本（否则必然过时）
+    // README 描述的约定是全仓库共用的，各工作区不该拿不同副本
     'README.md',
     'core',
     'extension.js',

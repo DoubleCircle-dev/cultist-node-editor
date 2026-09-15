@@ -15,11 +15,11 @@ const frontendHost = require('../frontend-host');
  *   · NODE_EDITOR_CONFIG 正常注入、previewMode 能透传
  *   · openEditor 命令真的能开出一个面板
  *
- * ⚠️ 断言刻意做成「实现无关」，这样同一份测试在 core / vanilla-frontend / vite-frontend 上都能跑：
- * 凡是依赖前端实现的断言，都只在**本分支确实带实现**时执行（core 是纯后端，不带 ui/ 也不带宿主实现）。
+ * ⚠️ 断言刻意做成「实现无关」：依赖前端实现的断言只在**确实存在实现**时执行，
+ * 因此同一份测试在没有前端的工作区里也能通过。
  */
 
-/** 本分支是否带前端实现（core 不带；两条前端线各带一套） */
+/** 当前工作区是否存在前端实现（没有时只跑后端相关断言） */
 const HAS_FRONTEND = frontendHost.listImpls().length > 0;
 
 const EXT_ROOT = path.resolve(__dirname, '..');
@@ -88,11 +88,11 @@ suite('扩展宿主集成测试', () => {
             assert.ok(matched[1].length > 0, 'placeholderImage 不应为空');
         });
     } else {
-        test('本分支不含前端实现时，给出可读的提示页而不是白屏', () => {
+        test('没有前端实现时，给出可读的提示页而不是白屏', () => {
             const html = extension.getWebviewContent(makePanel(), makeContext());
 
             assert.ok(html.length > 0, '不应返回空串（那就是白屏）');
-            assert.ok(html.includes('不含前端实现'), '应说明本分支没有前端实现');
+            assert.ok(html.includes('没有可用的前端实现'), '应说明缺少前端实现');
         });
     }
 

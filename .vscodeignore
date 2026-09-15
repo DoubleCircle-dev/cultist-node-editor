@@ -22,7 +22,7 @@ pnpm-workspace.yaml
 # origin 图片（~233MB）已由 CDN 托管，不进 VSIX；数据见 core/origin_resources/StreamingAssets
 core/origin_resources/images/**
 core/origin_resources/output.txt
-# 前端（vite-vanilla / vite-vue 线）：只发布构建产物，源码与依赖不进 VSIX
+# 前端：只发布构建产物，源码与依赖不进 VSIX
 frontend/src/**
 frontend/dev/**
 frontend/node_modules/**
