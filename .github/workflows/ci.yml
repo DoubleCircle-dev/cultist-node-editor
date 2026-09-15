@@ -24,6 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 前端线不跟踪后端代码（见 .gitignore）：从 core 分支拉一份，用同一个脚本同步进来。
+      # 必须排在安装依赖之前 —— 同步会更新 package.json 里的依赖字段。
+      - name: 同步后端（core → 本工作区）
+        run: |
+          git clone --depth 1 --branch core https://github.com/${{ github.repository }}.git "${{ runner.temp }}/cne-core"
+          node "${{ runner.temp }}/cne-core/scripts/sync-backend.mjs" "${{ github.workspace }}"
+
       - uses: pnpm/action-setup@v6
         with:
           version: 11

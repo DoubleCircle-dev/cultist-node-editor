@@ -1,7 +1,7 @@
 name: Release
 
 # 发布模型：**master 是发布线** —— 谁被合并进 master，就发布谁。
-#   1. 先把要发的内容合并进 master（core / vanilla / vite 分支都往 master 合）
+#   1. 把要发布的前端线合并进 master（只合前端线；core 是纯后端，由 CI 里的同步步骤补进来）
 #   2. 在 master 上打 tag（tag 版本号必须与 package.json 的 version 一致）
 #   3. 本工作流校验「tag 确实落在 master 上」→ 跑完整 CI → 打包 vsix → 挂 GitHub Release
 #
@@ -57,6 +57,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
+      # 前端线不跟踪后端代码（见 .gitignore）：打包前同样要把 core 同步进来
+      - name: 同步后端（core → 本工作区）
+        run: |
+          git clone --depth 1 --branch core https://github.com/${{ github.repository }}.git "${{ runner.temp }}/cne-core"
+          node "${{ runner.temp }}/cne-core/scripts/sync-backend.mjs" "${{ github.workspace }}"
 
       - uses: pnpm/action-setup@v6
         with:
