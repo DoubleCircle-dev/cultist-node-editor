@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
 
 /**
- * Vite 配置（vite-frontend 分支）
+ * Vite 配置（vite-vue 分支 —— Vue 3 响应式实现，**暂不用于发布**）
  *
  * 结构：
- *   frontend/index.html      入口（唯一 HTML，样式/脚本由 main.js 引入）
- *   frontend/src/**          前端源码（原 ui/scripts + ui/css，已重排为 src/ 与 src/styles/）
+ *   frontend/index.html      入口（唯一 HTML，含 #app 的静态骨架）
+ *   frontend/src/**          Vue 实现：main.js / App.vue / components / stores / host
+ *   frontend/src-legacy/**   旧的原生 JS 实现（不参与构建，留作迁移对照）
  *   frontend/public/**       运行时数据（json-manifest / config / help / webview-config / assets / error.html）
  *   frontend/dist/**         构建产物（git 忽略；扩展在生产模式下加载它）
  *
@@ -15,6 +17,7 @@ import { defineConfig } from 'vite';
  */
 export default defineConfig({
     root: 'frontend',
+    plugins: [vue()],
     // 产物内部用相对路径（./assets/xxx），扩展侧再把它们换成 webview URI
     base: './',
     build: {

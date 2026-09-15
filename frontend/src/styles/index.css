@@ -1,38 +1,113 @@
 /**
- * 样式入口 —— 顺序即层叠顺序，与迁移前 webUI.html 里 <link> 的顺序一致。
+ * 全局样式入口（Vue 骨架版）
  *
- * 注意最后三个（data-selector / debug / preview）原先不在 HTML 的 <link> 列表里，
- * 是 vanilla 分支靠扩展扫描 ui/css/** 才被加载的；这里显式列出来，避免丢失。
+ * 骨架阶段只保留「布局站得住」所需的最小样式；
+ * 旧实现那套完整样式仍在 `src-legacy/styles/**`，迁移时按组件逐个搬过来（见 ../DESIGN.md）。
+ * 颜色一律走 VS Code 注入的 CSS 变量，保持与编辑器主题一致。
  */
 
-/* 变量与基础样式 */
-@import './variables.css';
-@import './style.css';
+:root {
+    --cne-bg: var(--vscode-editor-background, #1e1e1e);
+    --cne-fg: var(--vscode-editor-foreground, #d4d4d4);
+    --cne-panel: var(--vscode-sideBar-background, #252526);
+    --cne-border: var(--vscode-panel-border, #3c3c3c);
+    --cne-accent: var(--vscode-focusBorder, #007acc);
+}
 
-/* layout */
-@import './layout/layout.css';
-@import './layout/side_bar.css';
-@import './layout/tab_bar.css';
-@import './layout/sub_bar.css';
+html,
+body {
+    margin: 0;
+    height: 100%;
+}
 
-/* 工具类 */
-@import './utils/panel.css';
-@import './utils/file_panel.css';
-@import './utils/buttons.css';
-@import './utils/status.css';
-@import './utils/viewControl.css';
+body {
+    background: var(--cne-bg);
+    color: var(--cne-fg);
+    font-family: var(--vscode-font-family, sans-serif);
+    font-size: 13px;
+}
 
-/* 组件 */
-@import './components/connections.css';
-@import './components/menus.css';
-@import './components/nodes.css';
-@import './components/other.css';
-@import './components/ports.css';
-@import './components/properties.css';
+#app,
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
 
-/* 原先靠目录扫描加载的补充样式 */
-@import './components/data-selector.css';
-@import './utils/debug.css';
+.editor-area {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
 
-/* preview.css 是预览模式（customEditor 打开 json）的覆盖层，必须放最后 */
-@import './utils/preview.css';
+.canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.canvas-viewport {
+    position: absolute;
+    inset: 0;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--cne-border);
+    background: var(--cne-panel);
+}
+
+.editor-palette {
+    display: flex;
+    gap: 6px;
+}
+
+.toolbar__version {
+    margin-left: auto;
+    opacity: 0.6;
+}
+
+.btn {
+    padding: 3px 8px;
+    border: 1px solid var(--cne-border);
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.btn:hover {
+    border-color: var(--cne-accent);
+}
+
+.property-panel {
+    width: 280px;
+    padding: 12px;
+    border-left: 1px solid var(--cne-border);
+    background: var(--cne-panel);
+    overflow: auto;
+}
+
+.property-panel__title {
+    margin: 0 0 8px;
+    font-size: 13px;
+}
+
+.property-panel__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px dashed var(--cne-border);
+}
+
+.property-panel__key {
+    opacity: 0.7;
+}
+
+.property-panel__hint {
+    opacity: 0.6;
+}
