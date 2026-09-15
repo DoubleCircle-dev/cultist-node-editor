@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 /**
- * Vite 配置（vite-frontend 分支）
+ * Vite 配置（原生 JS，无框架）
  *
  * 结构：
  *   frontend/index.html      入口（唯一 HTML，样式/脚本由 main.js 引入）
