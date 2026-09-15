@@ -9,12 +9,25 @@
 # 单元 + 集成测试（含 --expose-gc）
 npm run test:ui
 
+# 只跑一个文件（或一个目录）：把路径接在 -- 后面
+npm run test:ui:file -- test/ui/eventBus.test.mjs
+npm run test:ui:file -- --grep "previewMode" test/ui/frontendHost.test.mjs
+
+# 改动时持续跑（watch）
+npm run test:ui:watch
+
 # 独立内存泄漏检查（干净进程，测量 GC 后堆内存随节点规模是否增长）
 npm run test:ui:memory
+
+# 提交前快速把关：lint + 全部前端测试
+npm run verify
 ```
 
 > 终端里 `node` 若被别名成 `winpty node.exe`（Git Bash），输出重定向会报
 > `stdout is not a tty`。请用 `command node` 或 `npm run`（npm 走 cmd，无此别名）。
+
+> 扩展宿主的集成测试（`test/extension.test.js`，会真的拉起一个 VS Code）是 `npm test`（vscode-test），
+> 与上面的前端单测是两套东西；`npm test` 的 `pretest` 会先跑 lint。
 
 ## 文件结构
 

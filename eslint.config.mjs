@@ -6,8 +6,18 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default [
     {
-        // 临时工作区（agent-scratch）、依赖目录与前端构建产物不进 lint：与 .gitignore 一致
-        ignores: ['agent-scratch/**', 'frontend/dist/**', 'frontend/node_modules/**'],
+        // 生成物与临时工作区不进 lint：与 .gitignore 对齐
+        ignores: [
+            'agent-scratch/**',
+            'node_modules/**',
+            // npm test（vscode-test）会把整个 VS Code 下载到这里（1GB+、几百个 js bundle），
+            // 不排除的话 `eslint .` 会把它们全部解析 → 堆爆（实测 exit 134 / V8 heap OOM）
+            '.vscode-test/**',
+            'coverage/**',
+            // Vite 产物与前端依赖
+            'frontend/dist/**',
+            'frontend/node_modules/**',
+        ],
     },
     js.configs.recommended,
     prettierConfig,
