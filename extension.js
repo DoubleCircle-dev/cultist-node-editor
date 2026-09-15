@@ -1,6 +1,7 @@
 // mod 领域编排层（core/modLoad/handlers.js）：读 mod/新建/预览/预加载等命令与 webview 消息
 // 一律转发到 modHandlers.* 处理；具体纯函数（detect/parse/toData/...）由 handlers 内部按需 require。
 const modHandlers = require('./core/modLoad/handlers');
+const frontendHost = require('./frontend-host');
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
@@ -182,161 +183,31 @@ function createNodeEditorPanel(context) {
     }
 }
 
-function getWebviewContent(panel, context, options = {}) {
-    const uiDir = path.join(context.extensionPath, 'ui');
-
-    try {
-        const htmlPath = path.join(uiDir, 'webUI.html');
-        if (!fs.existsSync(htmlPath)) throw new Error('HTML文件不存在: ' + htmlPath);
-
-        let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
-
-        // 这里的调用去掉了 config 参数，直接传入 uiDir
-        const resources = processResources(panel, uiDir);
-
-        htmlContent = replaceResourceReferences(htmlContent, resources);
-
-        // 保持原来的配置注入逻辑
-        const configPath = path.join(uiDir, 'webview-config.json');
-        if (fs.existsSync(configPath)) {
-            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            // 图片渲染失败时的回退占位图（webview URI，需在 localResourceRoots 内）
-            const placeholderPath = path.join(uiDir, 'assets', 'img', 'placeholder.png');
-            if (fs.existsSync(placeholderPath)) {
-                config.placeholderImage = panel.webview.asWebviewUri(vscode.Uri.file(placeholderPath)).toString();
-            }
-            // 预览模式（customEditor「打开方式」）：仅查看当前 json，前端隐藏侧边栏/顶栏等功能
-            if (options.previewMode) {
-                config.previewMode = true;
-            }
-            htmlContent = injectConfigData(htmlContent, config);
-        }
-
-        return htmlContent;
-    } catch (error) {
-        console.error('加载Webview内容失败:', error);
-        return getErrorHtml();
-    }
-}
-
 /**
- * 递归获取目录下所有指定后缀的文件路径
- * @param {string} dirPath 物理目录路径
- * @param {string} extension 文件后缀（如 '.js'）
- * @returns {string[]} 文件的绝对路径列表
+ * 渲染 webview 内容。
+ *
+ * 这里只做「把 vscode 的能力注入给前端宿主」这一件事：真正的加载逻辑在
+ * frontend-host/ 的可插拔实现里（core: vanilla.js / feat/vite-frontend: vite.js）。
+ * 因此本文件在 core 与各前端分支上保持完全一致，后端更新合并时不产生冲突。
+ * @param {import('vscode').WebviewPanel} panel
+ * @param {import('vscode').ExtensionContext} context
+ * @param {{previewMode?: boolean}} [options]
+ * @returns {string}
  */
-function getAllFiles(dirPath, extension, arrayOfFiles = []) {
-    const files = fs.readdirSync(dirPath);
-
-    files.forEach((file) => {
-        const fullPath = path.join(dirPath, file);
-        if (fs.statSync(fullPath).isDirectory()) {
-            // 如果是目录，递归调用
-            arrayOfFiles = getAllFiles(fullPath, extension, arrayOfFiles);
-        } else if (file.endsWith(extension)) {
-            // 如果是目标文件，记录路径
-            arrayOfFiles.push(fullPath);
-        }
-    });
-
-    return arrayOfFiles;
+function getWebviewContent(panel, context, options = {}) {
+    return frontendHost.renderWebviewHtml(
+        {
+            panel,
+            context,
+            toWebviewUri: (filePath) => panel.webview.asWebviewUri(vscode.Uri.file(filePath)).toString(),
+        },
+        options
+    );
 }
 
-function processResources(panel, uiDir) {
-    const resources = {
-        css: [],
-        scripts: []
-    };
-
-    const cssDirPath = path.join(uiDir, 'css');
-    const scriptDirPath = path.join(uiDir, 'scripts');
-
-    // 递归处理 CSS
-    if (fs.existsSync(cssDirPath)) {
-        const allCssFiles = getAllFiles(cssDirPath, '.css');
-        resources.css = allCssFiles.map(filePath => ({
-            // 将绝对路径转换为 Webview URI
-            uri: panel.webview.asWebviewUri(vscode.Uri.file(filePath)).toString()
-        }));
-    }
-
-    // 递归处理 JS (Module)
-    if (fs.existsSync(scriptDirPath)) {
-        const allJsFiles = getAllFiles(scriptDirPath, '.js');
-        resources.scripts = allJsFiles.map(filePath => ({
-            uri: panel.webview.asWebviewUri(vscode.Uri.file(filePath)).toString()
-        }));
-    }
-
-    return resources;
-}
-
-function replaceResourceReferences(htmlContent, resources) {
-    let result = htmlContent;
-
-    // 1. 移除原有的硬编码资源引用（可选，建议保留以清理模板）
-    result = result.replace(/<link\s+rel="stylesheet"\s+href="[^"]*"\s*\/?>/g, '');
-    result = result.replace(/<script\s+[^>]*src="[^"]*"><\/script>/g, '');
-
-    // 2. 生成新的标签
-    const styleTags = resources.css.map(style =>
-        `<link rel="stylesheet" href="${style.uri}">`
-    ).join('\n\t');
-
-    console.log(styleTags)
-
-    const scriptTags = resources.scripts.map(script =>
-        `<script type="module" src="${script.uri}"></script>` // 关键：添加 type="module"
-    ).join('\n\t');
-
-    // 3. 注入到 HTML
-    if (styleTags) {
-        result = result.replace('</head>', `${styleTags}\n</head>`);
-    }
-    if (scriptTags) {
-        result = result.replace('</body>', `${scriptTags}\n</body>`);
-    }
-
-    return result;
-}
-function injectConfigData(htmlContent, config) {
-    // 将配置注入到JavaScript中
-    const configScript = `
-        <script>
-            // 注入配置数据
-            window.NODE_EDITOR_CONFIG = ${JSON.stringify(config, null, 2)};
-            
-            // 确保在DOM加载完成后初始化
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => {
-                    if (window.initWebview && typeof window.initWebview === 'function') {
-                        window.initWebview();
-                    }
-                });
-            } else {
-                // DOM已经加载完成
-                if (window.initWebview && typeof window.initWebview === 'function') {
-                    window.initWebview();
-                }
-            }
-        </script>
-    `;
-
-    // 将配置脚本插入到body结束前
-    return htmlContent.replace('</body>', `${configScript}\n</body>`);
-}
-
-
-function getErrorHtml() {
-    // 使用更简单可靠的HTML进行测试
-    try {
-        const htmlPath = path.join(__dirname, 'ui', 'error.html');
-        let htmlContent = fs.readFileSync(htmlPath, 'utf-8');
-        return htmlContent;
-    } catch (error) {
-        console.error('读取文件时出错:', error);
-    }
-}
+// 说明：原先前端相关的 getAllFiles / processResources / replaceResourceReferences /
+// injectConfigData / getErrorHtml 已全部搬到 frontend-host/（见该目录下 index.js 的接口说明）。
+// extension.js 不再包含任何前端加载细节，以便与各前端分支保持一致。
 
 // 消息处理函数
 function handleAddNode(panel, message) {
