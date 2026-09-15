@@ -60,8 +60,8 @@ pnpm run package:vsix   # 打包成 vsix
 - 后端（`core/**`、`extension.js`、`frontend-host/index.js`）只在主干改，前端分支通过 merge 获取更新；
   `extension.js` 与 `frontend-host/index.js` 在各分支上保持一致，前端差异只体现在 `frontend-host/` 的具体实现里
 - 前端有两套并行实现，通过 `frontend-host/` 契约层插拔：
-  - `core` / `vanilla` 线：`ui/`，源码即运行时（扩展扫描目录注入资源）
-  - `feat/vite-frontend` 线：`frontend/`（Vite 工程；开发走 dev server + HMR，发布读 `frontend/dist`）
+  - `vanilla-frontend` 线：`ui/`，源码即运行时（扩展扫描目录注入资源）
+  - `vite-frontend` 线：`frontend/`（Vite 工程；开发走 dev server + HMR，发布读 `frontend/dist`）
 - 图片资源（约 233 MB）不在本仓库，走 CDN：
   `cdn.jsdelivr.net/gh/DoubleCircle-dev/cultist-node-editor-assets@v1/`，
   名字 → 路径映射见 `core/origin_resources/image-index.json`
@@ -82,7 +82,7 @@ git tag v0.0.1 && git push origin v0.0.1          # 版本号须与 package.json
 > **master 上只能有一套前端实现**（`frontend-host/` 的契约要求恰好一个实现，多一个会白屏）。
 > 当前发布的方案是 **vanilla**（`ui/` + `frontend-host/vanilla.js`）。
 >
-> - **切到 Vite 版**：`git checkout master && git merge feat/vite-frontend`
+> - **切到 Vite 版**：`git checkout master && git merge vite-frontend`
 >   —— vite 那条历史里删掉了 `ui/` 与 `frontend-host/vanilla.js`，合并会一并删除，结果干净。
 > - **从 Vite 切回 vanilla**：合并会把两套都留下 → 需要手动移除另一套
 >   （`git rm -r --cached` 掉 `frontend/`，并只保留一个 `frontend-host/*.js` 实现）。

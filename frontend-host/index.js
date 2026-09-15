@@ -7,7 +7,7 @@
  *
  * 实现文件（每个分支只保留一个）：
  *   vanilla.js —— 默认方案：读 ui/webUI.html + 扫描 ui/css、ui/scripts 再注入（core 自带）
- *   vite.js    —— Vite 方案：读 frontend/dist 或 Vite dev server（feat/vite-frontend 自带）
+ *   vite.js    —— Vite 方案：读 frontend/dist 或 Vite dev server（vite-frontend 自带）
  *
  * 本层**不依赖 vscode 模块**（便于在 jsdom 里做契约测试）：
  * webview URI 的转换由调用方通过 runtime.toWebviewUri 注入。
