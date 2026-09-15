@@ -1,0 +1,11 @@
+# pnpm 配置（pnpm 10+ 起设置集中放这里，键名用驼峰；package.json 的 pnpm 字段与项目 .npmrc 都不生效）
+
+# esbuild 需要执行安装脚本来落地平台二进制（vite 分支依赖它），
+# 否则报 ERR_PNPM_IGNORED_BUILDS 并导致 vite build 直接失败。
+allowBuilds:
+  esbuild: true
+
+# 平铺 node_modules：vsce 打包时需要它才能抓全「生产依赖」（本扩展运行时依赖 json5）。
+# 仍然是 store 的硬链接，不牺牲跨 worktree 的省盘效果。
+# ⚠️ 键名必须是驼峰 nodeLinker；写成 node-linker 会被静默忽略（实测 config get 返回 undefined）。
+nodeLinker: hoisted

@@ -57,8 +57,7 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test",
+    "test": "npm run lint && vscode-test",
     "test:ui": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000 \"test/ui/**/*.test.mjs\"",
     "test:ui:file": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000",
     "test:ui:watch": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000 --watch \"test/ui/**/*.test.mjs\"",
