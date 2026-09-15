@@ -1,8 +1,8 @@
 import './helpers/domSetup.mjs';
 import { describe, it } from 'mocha';
 import assert from 'node:assert/strict';
-import { NodeGenerator } from '../../frontend/src/generators/nodeGenerator.js';
-import { HubProp } from '../../frontend/src/models/propModels/hubProp.js';
+import { NodeGenerator } from '../../frontend/src-legacy/generators/nodeGenerator.js';
+import { HubProp } from '../../frontend/src-legacy/models/propModels/hubProp.js';
 
 /**
  * 节点模型生命周期：releaseListeners（软释放，保留数据）与
