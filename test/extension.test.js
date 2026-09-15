@@ -2,6 +2,7 @@ const assert = require('assert');
 const path = require('path');
 const vscode = require('vscode');
 const extension = require('../extension');
+const frontendHost = require('../frontend-host');
 
 /**
  * 扩展宿主集成测试（vscode-test / @vscode/test-cli）
@@ -14,8 +15,12 @@ const extension = require('../extension');
  *   · NODE_EDITOR_CONFIG 正常注入、previewMode 能透传
  *   · openEditor 命令真的能开出一个面板
  *
- * ⚠️ 断言刻意做成「实现无关」，这样同一份测试在 vanilla-frontend 与 vite-frontend 上都能跑。
+ * ⚠️ 断言刻意做成「实现无关」，这样同一份测试在 core / vanilla-frontend / vite-frontend 上都能跑：
+ * 凡是依赖前端实现的断言，都只在**本分支确实带实现**时执行（core 是纯后端，不带 ui/ 也不带宿主实现）。
  */
+
+/** 本分支是否带前端实现（core 不带；两条前端线各带一套） */
+const HAS_FRONTEND = frontendHost.listImpls().length > 0;
 
 const EXT_ROOT = path.resolve(__dirname, '..');
 
@@ -58,29 +63,38 @@ suite('扩展宿主集成测试', () => {
         }
     });
 
-    test('getWebviewContent 产出应用页（而不是回退到错误页）', () => {
-        const html = extension.getWebviewContent(makePanel(), makeContext());
+    if (HAS_FRONTEND) {
+        test('getWebviewContent 产出应用页（而不是回退到错误页）', () => {
+            const html = extension.getWebviewContent(makePanel(), makeContext());
 
-        assert.ok(html.includes('id="canvas-basic"'), '应包含画布节点；缺失说明回退成了错误页');
-        assert.ok(html.includes('id="canvas-viewport"'), '应包含画布视口');
-        assert.ok(/<script[^>]*type="module"/.test(html), '应有 module 脚本（前端入口）');
-        assert.ok(html.includes('window.NODE_EDITOR_CONFIG'), '应注入前端配置');
-    });
+            assert.ok(html.includes('id="canvas-basic"'), '应包含画布节点；缺失说明回退成了错误页');
+            assert.ok(html.includes('id="canvas-viewport"'), '应包含画布视口');
+            assert.ok(/<script[^>]*type="module"/.test(html), '应有 module 脚本（前端入口）');
+            assert.ok(html.includes('window.NODE_EDITOR_CONFIG'), '应注入前端配置');
+        });
 
-    test('previewMode 会透传给前端（customEditor「打开方式」用）', () => {
-        const normal = extension.getWebviewContent(makePanel(), makeContext());
-        assert.equal(/"previewMode": true/.test(normal), false, '普通模式不应带 previewMode');
+        test('previewMode 会透传给前端（customEditor「打开方式」用）', () => {
+            const normal = extension.getWebviewContent(makePanel(), makeContext());
+            assert.equal(/"previewMode": true/.test(normal), false, '普通模式不应带 previewMode');
 
-        const preview = extension.getWebviewContent(makePanel(), makeContext(), { previewMode: true });
-        assert.ok(/"previewMode": true/.test(preview), '预览模式应透传 previewMode');
-    });
+            const preview = extension.getWebviewContent(makePanel(), makeContext(), { previewMode: true });
+            assert.ok(/"previewMode": true/.test(preview), '预览模式应透传 previewMode');
+        });
 
-    test('配置里带可用的占位图 URI（图片加载失败时前端回退用）', () => {
-        const html = extension.getWebviewContent(makePanel(), makeContext());
-        const matched = html.match(/"placeholderImage": "([^"]+)"/);
-        assert.ok(matched, 'NODE_EDITOR_CONFIG 里应有 placeholderImage');
-        assert.ok(matched[1].length > 0, 'placeholderImage 不应为空');
-    });
+        test('配置里带可用的占位图 URI（图片加载失败时前端回退用）', () => {
+            const html = extension.getWebviewContent(makePanel(), makeContext());
+            const matched = html.match(/"placeholderImage": "([^"]+)"/);
+            assert.ok(matched, 'NODE_EDITOR_CONFIG 里应有 placeholderImage');
+            assert.ok(matched[1].length > 0, 'placeholderImage 不应为空');
+        });
+    } else {
+        test('本分支不含前端实现时，给出可读的提示页而不是白屏', () => {
+            const html = extension.getWebviewContent(makePanel(), makeContext());
+
+            assert.ok(html.length > 0, '不应返回空串（那就是白屏）');
+            assert.ok(html.includes('不含前端实现'), '应说明本分支没有前端实现');
+        });
+    }
 
     test('openEditor 命令真的能打开编辑器面板', async function () {
         this.timeout(20000);

@@ -49,26 +49,34 @@ code --install-extension cultist-node-editor-<版本>.vsix
 
 ```bash
 pnpm install
-pnpm run dev            # 仅 Vite 前端分支：起 dev server（HMR）
-pnpm run verify         # lint + 前端单测（jsdom）；Vite 分支还会先构建
+pnpm run verify         # 提交前把关：lint（前端线还会跑前端单测，Vite 线另含构建）
 pnpm test               # 扩展宿主集成测试（会真的拉起一个 VS Code）
+pnpm run dev            # 仅 Vite 前端线：起 dev server（HMR）
 pnpm run package:vsix   # 打包成 vsix
 ```
 
-分支结构与约定：
+### 分支结构与约定
 
-- 后端（`core/**`、`extension.js`、`frontend-host/index.js`）只在主干改，前端分支通过 merge 获取更新；
-  `extension.js` 与 `frontend-host/index.js` 在各分支上保持一致，前端差异只体现在 `frontend-host/` 的具体实现里
-- 前端有两套并行实现，通过 `frontend-host/` 契约层插拔：
-  - `vanilla-frontend` 线：`ui/`，源码即运行时（扩展扫描目录注入资源）
-  - `vite-frontend` 线：`frontend/`（Vite 工程；开发走 dev server + HMR，发布读 `frontend/dist`）
+三线分工，后端与前端分开演进：
+
+| 分支 | 内容 | 说明 |
+| --- | --- | --- |
+| `core` | 后端 + 契约层 | `core/**`、`extension.js`、`frontend-host/index.js`、`test/extension.test.js`。**不含 `ui/`，也不含任何前端宿主实现**（单独运行会显示「本分支不含前端实现」提示页） |
+| `vanilla-frontend` | core + vanilla 前端 | `ui/`（源码即运行时：扩展扫描目录注入资源）+ `frontend-host/vanilla.js` |
+| `vite-frontend` | core + Vite 前端 | `frontend/`（Vite 工程；开发走 dev server + HMR，发布读 `frontend/dist`）+ `frontend-host/vite.js` |
+
+- 后端改动**只在 `core` 上做**，前端线用 `git merge core` 取更新；`extension.js` 与 `frontend-host/index.js`
+  在三条线上逐字节一致，前端差异只体现在 `frontend-host/` 的具体实现里
+- ⚠️ 不要往 `core` 里加前端文件（`ui/`、`frontend/`、`frontend-host/*.js` 实现、`test/ui/**`）：
+  `core` 是上游，它的改动（包括删除）会传播到两条前端线
 - 图片资源（约 233 MB）不在本仓库，走 CDN：
   `cdn.jsdelivr.net/gh/DoubleCircle-dev/cultist-node-editor-assets@v1/`，
   名字 → 路径映射见 `core/origin_resources/image-index.json`
 
 ### 发布
 
-`master` 是**发布线**：谁被合并进 master，就发布谁。
+`master` 是**发布线**：谁被合并进 master，就发布谁 —— 但**只能合前端线**（`vanilla-frontend` / `vite-frontend`）。
+`core` 不带前端，合进 master 等于发布一个打不开编辑器的空壳。
 
 ```bash
 git checkout master && git merge <要发布的分支>   # 先合并
@@ -89,7 +97,7 @@ git tag v0.0.1 && git push origin v0.0.1          # 版本号须与 package.json
 > - 合错了也不会发出去：`test/ui/frontendHost.test.mjs` 断言「实现恰好一个」，
 >   完整 CI 跑在 release 之前，会先把这类错误挡下来。
 
-更细的说明见 `test/ui/README.md`（前端单测）与 `frontend/README.md`（Vite 前端）。
+更细的说明见各前端分支：`test/ui/README.md`（vanilla 线的前端单测）与 `frontend/README.md`（Vite 前端）。
 
 ## 已知限制
 
