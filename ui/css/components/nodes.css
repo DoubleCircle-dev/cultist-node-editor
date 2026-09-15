@@ -1,0 +1,92 @@
+.node {
+    position: absolute;
+    width: 300px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    cursor: move;
+    user-select: none;
+    font-family: var(--font-sans);
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    z-index: var(--z-node-default);
+}
+
+.node.selected {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary);
+    z-index: var(--z-node-selected);
+}
+
+.node.dragging {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary), var(--shadow-md);
+    opacity: 0.95;
+    cursor: grabbing;
+    z-index: var(--z-node-dragging);
+}
+
+.node.fixed,
+.node.locked {
+    opacity: 0.7;
+    border-color: var(--text-muted);
+    pointer-events: none;
+    /* 固定节点完全不可交互；锁定节点若需保留拖动，需单独处理 */
+}
+
+.node-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.node-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.node-title-input {
+    font-size: 14px;
+    font-weight: bold;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+}
+
+.node-title-input:focus {
+    outline: 1px solid var(--accent-primary);
+    background: var(--bg-secondary);
+}
+
+.node-uid {
+    font-size: 10px;
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.node-label {
+    margin-top: 2px;
+}
+
+.node-label-input {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    width: 100%;
+}
+
+.node-label-input:focus {
+    outline: 1px solid #28a745;
+    background: var(--bg-secondary);
+}

@@ -1,0 +1,99 @@
+/* ========= 次级层级管理栏样式 ========= */
+.sublevel-bar {
+    background: #20202c;
+    border-bottom: 1px solid #3a3a48;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 16px;
+    min-height: 40px;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+}
+
+.sublevel-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sublevel-label {
+    color: #aaa;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #2a2a36;
+    padding: 4px 12px;
+    border-radius: 24px;
+    flex-wrap: wrap;
+}
+
+.crumb-item {
+    color: #8a8aa0;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 16px;
+    transition: all 0.2s;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.crumb-item:hover {
+    background: #3a4a6a;
+    color: #eee;
+}
+
+.crumb-item.active {
+    background: #4f6f8f;
+    color: white;
+    font-weight: 500;
+}
+
+/* 层级操作按钮组 */
+.sublevel-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sublevel-btn {
+    background: #3a3a4e;
+    border: none;
+    color: #ddd;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sublevel-btn:hover {
+    background: #5a6e8a;
+    transform: translateY(-1px);
+}
+
+.level-select {
+    background: #2a2a38;
+    border: 1px solid #5a5a70;
+    color: #eee;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+}
+
+.level-select:hover {
+    background: #3a4a62;
+}

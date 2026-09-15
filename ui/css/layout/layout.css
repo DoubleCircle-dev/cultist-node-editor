@@ -1,0 +1,91 @@
+.container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+.editor-area {
+    flex: 1;
+    position: relative;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar {
+    height: 40px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+}
+
+.canvas-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#canvas-viewport {
+    width: 100%;
+    height: 100%;
+
+    position: relative;
+    overflow: hidden;
+
+    transform-origin: 0 0;
+    background: linear-gradient(90deg, var(--bg-tertiary) 1px, transparent 1px) 0 0 / var(--canvas-grid-size, 20px) var(--canvas-grid-size, 20px),
+        linear-gradient(var(--bg-tertiary) 1px, transparent 1px) 0 0 / var(--canvas-grid-size, 20px) var(--canvas-grid-size, 20px);
+
+}
+
+body.hide-canvas-grid #canvas-viewport {
+    background-image: none;
+}
+
+#canvas-world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+    pointer-events: auto;
+    /* border: 1px solid var(--border-color); */
+}
+
+/* SVG连接线容器 */
+#connections-svg-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: var(--z-connections);
+    overflow: visible;
+}
+
+.editor-palette {
+    display: flex;
+}
+
+
+#placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #666;
+    z-index: var(--z-placeholder);
+}
+
+h3 {
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}

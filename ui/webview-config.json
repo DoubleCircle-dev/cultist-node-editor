@@ -1,0 +1,28 @@
+{
+  "name": "节点编辑器",
+  "version": "0.1.0",
+  "resources": {
+    "css": [
+      "variables.css",
+      "layout.css",
+      "utils\\layout_tools.css",
+      "utils\\status.css",
+      "utils\\viewControl.css",
+      "components\\nodes.css",
+      "components\\ports.css",
+      "components\\properties.css",
+      "components\\connections.css",
+      "components\\menus.css",
+      "style.css"
+    ],
+    "scripts": [
+
+    ]
+  },
+  "features": {
+    "undoRedo": true,
+    "dragDrop": true,
+    "connections": true,
+    "contextMenus": true
+  }
+}

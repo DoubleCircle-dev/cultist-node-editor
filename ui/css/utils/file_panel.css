@@ -1,0 +1,113 @@
+/* ========== 目录面板样式 ========== */
+.manifest-list {
+    font-family: system-ui, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    background: #0f0f1a;
+    border-radius: 12px;
+    padding: 12px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.list-panel {
+    display: auto;
+    width: 100%;
+    overflow-y: auto;
+}
+
+/* 目录树容器 */
+.dir-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 每个分类 */
+.dir-category {
+    border-bottom: 1px solid #2a2a3a;
+}
+
+/* 分类头部（可点击） */
+.dir-category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #1e1e2e;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.dir-category-header:hover {
+    background: #2d2d42;
+}
+
+/* 图标固定宽度 */
+.toggle-icon {
+    display: inline-block;
+    width: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffb347;
+}
+
+/* 分类名称 */
+.category-name {
+    font-weight: 500;
+    color: #eee;
+}
+
+/* 文件列表容器（默认隐藏） */
+.dir-file-list {
+    display: none;
+    list-style: none;
+    margin: 8px 0 12px 28px;
+    padding-left: 0;
+    border-left: 1px dashed #3a3a4a;
+}
+
+/* 展开时显示 */
+.dir-file-list.open {
+    display: block;
+}
+
+/* 单个文件项 */
+.dir-file-item {
+    padding: 6px 12px;
+    margin: 4px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: #ccc;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dir-file-item:hover {
+    background: #2a2a3a;
+    transform: translateX(4px);
+    color: #fff;
+}
+
+/* 可选：滚动条美化 */
+.manifest-list 
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+.manifest-list
+::-webkit-scrollbar-track {
+    background: #1e1e2e;
+    border-radius: 3px;
+}
+
+.manifest-list 
+::-webkit-scrollbar-thumb {
+    background: #ffb347;
+    border-radius: 3px;
+}

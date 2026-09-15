@@ -1,0 +1,1093 @@
+import { NodeModel } from '../models/nodeModels/nodeModel.js';
+import { EventBus } from '../types/eventBus.js';
+import { NodeView } from '../views/nodeView.js';
+import { ControllerCore } from './controllerCore.js';
+import { IManager } from './manager.js';
+import { BaseNodeModel } from '../models/nodeModels/baseNodeModel.js';
+import { BaseProp } from '../models/propModels/baseProp.js';
+import { NodeGenerator } from '../generators/nodeGenerator.js';
+
+/**
+ * 节点管理器类，用于管理画布上的节点 该类负责处理节点的创建、删除、更新等操作
+ *
+ * @class NodeManager
+ * @extends IManager
+ */
+export class NodeManager extends IManager {
+    /**
+     * 创建节点管理器实例
+     *
+     * @param {EventBus} bus - 事件总线，用于管理器间的通信
+     * @param {HTMLElement} viewport - 视口元素，用于容纳节点
+     * @param {HTMLElement} world - 画布元素，用于渲染节点
+     * @param {ControllerCore} coreSpace
+     */
+    constructor(bus, viewport, world, coreSpace) {
+        super(bus, viewport, world, coreSpace);
+
+        this.idGenerator = new BitmapIdGenerator();
+        this.uidGenerator = new BitmapIdGenerator();
+
+        // 节点列表
+        /** @type {Map<NodeID, import('./nodeActionManager.js').BaseNodeModel>} */
+        this.nodes = new Map();
+        /** @type {Map<NodeID, NodeView>} */
+        this.nodeViews = new Map();
+        this.maxIndex = 0;
+
+        /** @type {Map<NodeID, Array<{ event: string; handler: EventListenerOrEventListenerObject }>>} */
+        this.nodeModelListeners = new Map();
+
+        this._initListeners();
+
+        this._onEvent();
+    }
+
+    /** @private */
+    _initListeners() {}
+
+    /** @private */
+    _onEvent() {
+        const canvasClickListener = this.clearNodeSelected.bind(this);
+        const addNodeListener = this._addNode.bind(this);
+
+        this.bus.on('canvas:click', canvasClickListener);
+        this.bus.on('addNode', addNodeListener);
+
+        this.listenerMaps.push(
+            { target: this.bus, type: 'canvas:click', listener: canvasClickListener },
+            { target: this.bus, type: 'addNode', listener: addNodeListener }
+        );
+    }
+
+    get SelectedNodes() {
+        const result = [];
+
+        this.nodes.forEach((node) => {
+            if (node.selected) {
+                result.push(node);
+            }
+        });
+
+        return result;
+    }
+
+    /**
+     * @param {NodeID} id
+     * @returns {import('./nodeActionManager.js').BaseNodeModel | undefined}
+     */
+    getNode(id) {
+        // 类型检查
+        if (typeof id !== 'string' && typeof id !== 'number') {
+            console.error('节点UID格式不对', typeof id, id);
+            return;
+        }
+        // 修复：nodes Map 统一以字符串为键（见 _createNode / _removeNode）。
+        // 原实现把字符串 parseInt 成数字，导致 has(数字) 永远找不到而抛错。
+        if (typeof id === 'number') {
+            id = String(id);
+        }
+
+        // 检查节点是否存在
+        if (!this.nodes.has(id)) {
+            throw new Error(`节点 ${id} 不存在`);
+        }
+
+        return this.nodes.get(id);
+    }
+
+    /** @private */
+    _addNode(e) {
+        this.addNode(e.detail.type, null, null);
+    }
+
+    /**
+     * @private
+     * @param {BaseNodeModel} nodeModel
+     */
+    _createNode(nodeModel) {
+        if (nodeModel instanceof NodeModel) {
+            this.idGenerator.occupy(nodeModel.id);
+
+            this.uidGenerator.occupy(nodeModel.uid);
+
+            const nodeView = new NodeView(nodeModel);
+
+            this.world.appendChild(nodeView.element);
+            nodeView.onMounted();
+
+            this._bindModelListeners(nodeModel);
+
+            this.nodes.set(String(nodeModel.id), nodeModel);
+
+            this.nodeViews.set(String(nodeModel.id), nodeView);
+        }
+    }
+
+    /**
+     * @param {string} type
+     * @param {number | null} Px
+     * @param {number | null} Py
+     */
+    addNode(type, Px, Py) {
+        /** @type {number | null} */
+        let id = null;
+        let uid = null;
+
+        let x = Px || 0;
+        let y = Py || 0;
+        if (!Px || !Py) {
+            ({ x, y } = this.coreSpace.ViewCenter);
+            x = x + Math.random() * 300 - 150;
+            y = y + Math.random() * 100 - 100;
+        }
+        try {
+            // 分配id
+            id = this.idGenerator.generate();
+            uid = this.uidGenerator.generate() || 0;
+            if (!id) {
+                throw new Error('节点数量已达到最大值');
+            }
+
+            // 创建节点视图
+            const nodeModel = NodeGenerator.createNode(String(id), uid, type, x, y);
+
+            this._createNode(nodeModel);
+
+            this.bus.standardEmitDetail(
+                'create',
+                'node',
+                { nodes: [nodeModel] },
+                () => {
+                    this._removeNode(String(id));
+                },
+                () => {
+                    this._createNode(nodeModel);
+                }
+            );
+        } catch (error) {
+            console.error('添加节点失败:', error);
+            if (id) {
+                this.idGenerator.release(id);
+            }
+            if (uid) {
+                this.uidGenerator.release(uid);
+            }
+            this.bus.emit('create:node:failed', error);
+        }
+    }
+
+    /**
+     * 从数据池条目创建「基础类型」节点实例（origin/mod 数据 → 节点）。
+     *
+     * 类型保持不变（recipes/elements/...，不注册动态类型），数据按模板属性名填充：
+     *   - 标量字段（fields）按 name 匹配填充模板属性；
+     *   - 对象字段（refs，如 effects/requirements）暂不连线，作为只读文本保留；
+     *   - 模板未覆盖的多余字段：
+     *       · origin 来源 → 新增 custom prop 保留显示；
+     *       · 用户 mod 来源 → 不允许建立多余词条（忽略并警告）。
+     *
+     * @param {string} type - 基础类型（recipes/elements/...）
+     * @param {any} entry - ModDataRegistry 中的数据条目
+     * @param {number | null} [Px]
+     * @param {number | null} [Py]
+     * @returns {BaseNodeModel | null}
+     */
+    addNodeFromData(type, entry, Px = null, Py = null) {
+        /** @type {number | null} */
+        let id = null;
+        let uid = null;
+
+        let x = Px == null ? 0 : Px;
+        let y = Py == null ? 0 : Py;
+        if (Px == null || Py == null) {
+            ({ x, y } = this.coreSpace.ViewCenter);
+            x = x + Math.random() * 300 - 150;
+            y = y + Math.random() * 100 - 100;
+        }
+
+        try {
+            id = this.idGenerator.generate();
+            uid = this.uidGenerator.generate() || 0;
+            if (!id) {
+                throw new Error('节点数量已达到最大值');
+            }
+
+            const nodeModel = NodeGenerator.createNode(String(id), uid, type, x, y);
+            this._createNode(nodeModel);
+            this._fillNodeFromData(nodeModel, entry);
+            // 导入数据：超出一行的长文本字段 → 自动拆成文本变量节点并连接（所有导入路径）
+            this._externalizeLongTextFields(nodeModel);
+            return nodeModel;
+        } catch (error) {
+            console.error('从数据创建节点失败:', error);
+            if (id) this.idGenerator.release(id);
+            if (uid) this.uidGenerator.release(uid);
+            return null;
+        }
+    }
+
+    /**
+     * 导入长文本 → 拆成文本变量节点（所有导入路径统一在 addNodeFromData 触发）。
+     *
+     * 规则：对每个「文本输入框」（type:'text' 且有输入端口、未连接）字段，
+     * 若其内容超出一行（与折叠按钮同一判定：内容含换行或折叠态 has-btn），
+     * 就新建一个 text 节点存放该文本并程序化连线，原字段仍保留同步内容（折叠显示）。
+     *
+     * @private
+     * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} nodeModel
+     * @returns {number} 创建的文本变量节点数
+     */
+    _externalizeLongTextFields(nodeModel) {
+        if (!nodeModel) return 0;
+        const view = this.nodeViews.get(String(nodeModel.id));
+        const nodeDom = view ? view.element : null;
+        const props = this._collectExternalizableTextProps(nodeModel, nodeDom);
+        if (!props.length) return 0;
+
+        let created = 0;
+        props.forEach((fieldProp, index) => {
+            const textModel = this._createTextVariableForField(nodeModel, fieldProp, index);
+            if (textModel) created++;
+        });
+        return created;
+    }
+
+    /**
+     * @private 收集需要外部化的长文本字段
+     * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} nodeModel
+     * @param {HTMLElement | null} nodeDom
+     * @returns {import('../models/propModels/baseProp.js').BaseProp[]}
+     */
+    _collectExternalizableTextProps(nodeModel, nodeDom) {
+        if (!nodeModel) return [];
+        /** @type {import('../models/propModels/baseProp.js').BaseProp[]} */
+        const result = [];
+        (nodeModel.detailProperties || []).forEach((prop) => {
+            if (!prop || prop.type !== 'text' || !prop.inputPort) return;
+            if (prop.inputPort.isConnected) return; // 已有文本源 → 不重复拆
+            const text = String(prop.value ?? '');
+            if (!text) return;
+            // 显式换行 → 一定多行
+            if (text.includes('\n')) {
+                result.push(prop);
+                return;
+            }
+            // “超一行”判定：用真实折叠容器宽度做换行测量（与折叠按钮同规则），
+            // 不依赖 has-btn（它在 fill 触发的 redraw 后需等 rAF 才刷新）
+            let width = 248;
+            if (nodeDom) {
+                const wrap = this._foldWrapOf(nodeDom, prop);
+                if (wrap && wrap.offsetWidth > 0) width = wrap.offsetWidth;
+            }
+            if (this._textExceedsWidth(text, width)) {
+                result.push(prop);
+            }
+        });
+        return result;
+    }
+
+    /** @private 定位文本字段对应的折叠容器 */
+    _foldWrapOf(nodeDom, prop) {
+        if (!nodeDom || !prop) return null;
+        const wrappers = nodeDom.querySelectorAll('.prop-fold-text');
+        for (const wrap of wrappers) {
+            const single = wrap.querySelector('.prop-input.single');
+            if (single && single.id === prop.id) return wrap;
+        }
+        return null;
+    }
+
+    /**
+     * @private 文本在给定列宽下是否超过一行（临时隐形元素测量，与折叠判定一致）
+     * @param {string} text
+     * @param {number} widthPx
+     * @returns {boolean}
+     */
+    _textExceedsWidth(text, widthPx) {
+        if (!text) return false;
+        if (typeof document === 'undefined' || !document.body || !(widthPx > 0)) {
+            return text.length > 80; // 无 DOM / 无真实布局（测试环境）粗判兜底
+        }
+        const style =
+            'position:absolute;visibility:hidden;pointer-events:none;left:-9999px;top:0;' +
+            `width:${widthPx}px;padding:4px 8px;box-sizing:border-box;white-space:pre-wrap;` +
+            'overflow-wrap:break-word;word-break:break-word;line-height:1.4;font-size:11px;' +
+            "font-family:-apple-system,'Segoe UI',Roboto,sans-serif;";
+        const probe = document.createElement('div');
+        probe.style.cssText = style;
+        probe.textContent = text;
+        const one = document.createElement('div');
+        one.style.cssText = style;
+        one.textContent = 'x';
+        document.body.appendChild(probe);
+        document.body.appendChild(one);
+        const exceeds = probe.offsetHeight > one.offsetHeight + 2;
+        probe.remove();
+        one.remove();
+        return exceeds;
+    }
+
+    /**
+     * @private 为某个长文本字段创建文本变量节点并连线
+     * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} parentModel
+     * @param {import('../models/propModels/baseProp.js').BaseProp} fieldProp
+     * @param {number} index
+     * @returns {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel | null}
+     */
+    _createTextVariableForField(parentModel, fieldProp, index) {
+        let id = null;
+        let uid = null;
+        try {
+            id = this.idGenerator.generate();
+            uid = this.uidGenerator.generate() || 0;
+            if (!id) {
+                throw new Error('节点数量已达到最大值');
+            }
+
+            // 定位：父节点右侧，多个字段向下排
+            const baseX = parentModel && parentModel.x != null ? parentModel.x : 0;
+            const baseY = parentModel && parentModel.y != null ? parentModel.y : 0;
+            const parentW = (parentModel && parentModel.width) || 300;
+            const x = baseX + parentW + 40;
+            const y = baseY + 20 + index * 220;
+
+            const textModel = NodeGenerator.createNode(String(id), uid, 'text', x, y);
+
+            // 先把文本写入变量内容，再挂视图（避免二次 redraw）
+            const contentProp = (textModel.detailProperties || []).find((p) => p && p.type === 'textarea-preview');
+            const value = String(fieldProp.value ?? '');
+            if (contentProp) {
+                contentProp.updateValue(value);
+            }
+            this._createNode(textModel);
+
+            // 连线：父节点该字段输入端口 → 文本节点输出端口
+            const fieldPort = fieldProp.inputPort;
+            const outProp = (textModel.detailProperties || []).find((p) => p && p.outputPort);
+            const outPort = outProp ? outProp.outputPort : null;
+            if (fieldPort && outPort && this.coreSpace && this.coreSpace.connectionManager) {
+                try {
+                    this.coreSpace.connectionManager.createProgrammaticConnection(parentModel, fieldPort, textModel, outPort);
+                } catch (error) {
+                    console.error('[文本变量] 连线失败:', error);
+                }
+            }
+            return textModel;
+        } catch (error) {
+            console.error('创建文本变量节点失败:', error);
+            if (id) this.idGenerator.release(id);
+            if (uid) this.uidGenerator.release(uid);
+            return null;
+        }
+    }
+
+    /**
+     * 批量从数据池创建基础类型节点并网格布局（「加载后转换为可查看的节点」）。
+     * 布局以视野中心为起点，按行排列，避免节点重叠。
+     *
+     * @param {Array<any>} entries - 数据条目（每条含 category/source）
+     * @param {{ limit?: number, perRow?: number, gapX?: number, gapY?: number }} [opts]
+     * @returns {{ count: number, created: Array<{ entry: any, model: import('../models/nodeModels/baseNodeModel.js').BaseNodeModel }> }} 铺图数(count) 与 entry→model 映射（供 connectDataLinks 连线）
+     */
+    addNodesFromData(entries, opts = {}) {
+        if (!Array.isArray(entries) || !entries.length) return { count: 0, created: [] };
+        const limit = opts.limit || entries.length;
+        const items = entries.slice(0, limit);
+        const perRow = opts.perRow || 6;
+        const gapX = opts.gapX || 340;
+        const gapY = opts.gapY || 260;
+        const { x: cx, y: cy } = this.coreSpace.ViewCenter;
+        const startX = cx - (Math.min(items.length, perRow) * gapX) / 2;
+        const startY = cy - 40;
+
+        /** @type {Array<{ entry: any, model: import('../models/nodeModels/baseNodeModel.js').BaseNodeModel }>} */
+        const created = [];
+        let count = 0;
+        items.forEach((entry, i) => {
+            const row = Math.floor(i / perRow);
+            const col = i % perRow;
+            const model = this.addNodeFromData(entry.category, entry, startX + col * gapX, startY + row * gapY);
+            if (model) {
+                created.push({ entry, model });
+                count++;
+            }
+        });
+        return { count, created };
+    }
+
+    /**
+     * @private 用数据条目填充基础类型节点实例
+     * @param {BaseNodeModel} nodeModel
+     * @param {any} entry
+     */
+    _fillNodeFromData(nodeModel, entry) {
+        if (!entry) return;
+
+        // mod 数据：id 字段即 title（原本 mod 设计没有 id）
+        // - id 形如 "#数字"（如 #1）→ node editor 生成的标记，非真实 title，用 label 兜底
+        // - 否则（如 sample_study）→ 真实 mod id，作为节点 title
+        let title = '';
+        if (entry.source === 'mod' && entry.id) {
+            const rawId = String(entry.id);
+            if (/^#\d+$/.test(rawId)) {
+                title = entry.fields && entry.fields.label ? String(entry.fields.label) : '';
+            } else {
+                title = rawId;
+            }
+        }
+        if (!title) title = entry.title || '';
+        if (title) {
+            nodeModel.title = title;
+            // label = mod 的 label 字段（游戏内显示名），无则用 title
+            const labelVal = entry.fields && entry.fields.label;
+            nodeModel.label = labelVal ? String(labelVal) : title;
+        }
+        // 节点 id 标签：一律用自动分配的 uid（origin / mod 均不显示数据 id）
+
+        const detailProps = nodeModel.detailProperties;
+        /** @type {Array<{name: string, value: any}>} */
+        const extras = [];
+
+        /** 按名填充（大小写不敏感），找不到对应模板属性返回 false */
+        const fillField = (name, value) => {
+            const prop = detailProps.find(
+                (p) => p.name && String(p.name).toLowerCase() === String(name).toLowerCase()
+            );
+            if (!prop) return false;
+            // 端口/引用类：以只读文本保留数据（连线留待后续迭代）
+            if (prop.type === 'port' || prop.type === 'hub') {
+                const text = value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
+                prop.updateValue(text);
+            } else {
+                prop.updateValue(value);
+            }
+            return true;
+        };
+
+        // 1. 标量字段 → 按名填充模板属性（label 已用作标题/标签，跳过以免多余词条）
+        Object.entries(entry.fields || {}).forEach(([name, value]) => {
+            if (name.toLowerCase() === 'label') return;
+            if (!fillField(name, value)) {
+                extras.push({ name, value: value && typeof value === 'object' ? JSON.stringify(value) : value });
+            }
+        });
+        // 2. 对象字段（引用，如 effects/requirements）暂不连线 → 保留为只读文本
+        Object.entries(entry.refs || {}).forEach(([name, value]) => {
+            extras.push({ name, value: JSON.stringify(value) });
+        });
+
+        // 3. 多余字段处理：origin 保留为 custom prop；用户 mod 不允许多余词条（忽略）
+        if (extras.length > 0) {
+            if (entry.source === 'origin') {
+                extras.forEach((ex, i) => {
+                    const prop = new BaseProp(`${nodeModel.id}:custom:${i}`, `保留字段:${ex.name}`, 'custom', ex.value);
+                    prop.parentNode = new WeakRef(nodeModel);
+                    nodeModel.addProperty(prop);
+                });
+            } else {
+                console.warn(
+                    `[数据池] ${entry.source === 'mod' ? '用户 mod' : '数据'}「${entry.id}」存在模板未覆盖字段（按规则忽略，不允许多余词条）:`,
+                    extras.map((e) => e.name)
+                );
+            }
+        }
+
+        // 4. 通知视图重绘（NodeView 监听模型 'redraw'）
+        nodeModel.emit('redraw');
+    }
+
+    /**
+     * @private
+     * @param {Event} e
+     */
+    _deleteNode(e) {
+        /** @type {string[]} */
+        const ids = [];
+        /** @type {import('./nodeActionManager.js').BaseNodeModel[]} */
+        const models = [];
+
+        switch (this.coreSpace.mode) {
+            case 'select':
+                this.deleteNodes(this.SelectedNodes.map((node) => node.id));
+                break;
+            case 'drag':
+                break;
+            case 'focus':
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * @private
+     * @param {BaseNodeModel} nodeModel
+     */
+    _bindModelListeners(nodeModel) {
+        const listeners = [];
+
+        const deleteHandler = this._deleteNode.bind(this);
+        nodeModel.addEventListener('delete', deleteHandler);
+        listeners.push({ event: 'delete', handler: deleteHandler });
+
+        const mousedownHandler = (e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            const originalEvent = ce.detail.originalEvent;
+
+            if (originalEvent.ctrlKey || originalEvent.metaKey) {
+                this._handleNodeClick(ce, nodeModel);
+                return;
+            }
+
+            let onFailed = () => {};
+            let onSuccess = () => {};
+
+            switch (this.coreSpace.mode) {
+                case 'select':
+                    onFailed = () => {
+                        this.setNodeSelected(nodeModel, true);
+                    };
+                    if (!nodeModel.selected) {
+                        onSuccess = () => {
+                            this.setNodeSelected(nodeModel, true);
+                        };
+                    }
+                    break;
+                case 'drag':
+                    this.clearNodeSelected();
+                    return;
+                case 'focus':
+                    break;
+            }
+
+            this.bus.onceExclusive('drag:node:success', 'drag:node:failed', onFailed, onSuccess);
+
+            nodeModel.setSelected(true);
+
+            this.bus.emit('drag:node:start', {
+                originalEvent,
+                selectedNodes: this.coreSpace.selectedNodes,
+            });
+        };
+        nodeModel.addEventListener('mousedown', mousedownHandler);
+        listeners.push({ event: 'mousedown', handler: mousedownHandler });
+
+        const mousedownPortHandler = (e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            this.setNodeSelected(nodeModel, true);
+            this.bus.emit('drag:port:start', { ...ce.detail, node: nodeModel });
+        };
+        nodeModel.addEventListener('mousedown:port', mousedownPortHandler);
+        listeners.push({ event: 'mousedown:port', handler: mousedownPortHandler });
+
+        const mouseupPortHandler = (e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            this.bus.emit('drag:port:end', { ...ce.detail, node: nodeModel });
+        };
+        nodeModel.addEventListener('mouseup:port', mouseupPortHandler);
+        listeners.push({ event: 'mouseup:port', handler: mouseupPortHandler });
+
+        const changePropertyHandler = (e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            this.bus.standardEmitDetail(
+                'change',
+                'property',
+                ce.detail,
+                (/** @type {any} */ data) => {
+                    nodeModel.setPropValue(data.propId, data.oldValue);
+                },
+                (/** @type {any} */ data) => {
+                    nodeModel.setPropValue(data.propId, data.newValue);
+                }
+            );
+        };
+        nodeModel.addEventListener('change:property:success', changePropertyHandler);
+        listeners.push({ event: 'change:property:success', handler: changePropertyHandler });
+
+        const appendPropertyHandler = (e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+
+            // 类型守卫：仅 NodeModel 具备扩展属性（active/pool），其他模型不弹面板
+            if (!(nodeModel instanceof NodeModel)) {
+                return;
+            }
+
+            // 可选属性 = 当前已激活的 + 属性池中的；两者都为空则不弹面板
+            const activeHub = nodeModel.extendedProperties?.active;
+            const poolHub = nodeModel.extendedProperties?.pool;
+            const hasActive = (activeHub?.properties || []).some((p) => p.type !== 'button');
+            const hasPool = (poolHub?.properties || []).length > 0;
+
+            if (!hasActive && !hasPool) {
+                return;
+            }
+
+            const panel = this._createNodePropertyPanel(nodeModel, ce.detail.props);
+
+            this.bus.emit('toggleMenu', {
+                menu: panel,
+                menuId: panel.id,
+                position: ce.detail.position,
+            });
+        };
+        nodeModel.addEventListener('append:property', appendPropertyHandler);
+        listeners.push({ event: 'append:property', handler: appendPropertyHandler });
+
+        const changeTitleHandler = (e) => {
+            const oldTitle = nodeModel.title;
+            nodeModel.title = e.detail.newTitle;
+            this.bus.standardEmitDetail(
+                'change',
+                'title',
+                { nodeId: nodeModel.id, oldTitle, newTitle: e.detail.newTitle},
+                (data) => {
+                    nodeModel.title = data.oldTitle;
+                    this.bus.emit('change:title:success');
+                },
+                (data) => {
+                    nodeModel.title = data.newTitle;
+                    this.bus.emit('change:title:success');
+                }
+            );
+        };
+        nodeModel.addEventListener('change:title:success', changeTitleHandler);
+        listeners.push({ event: 'change:title:success', handler: changeTitleHandler });
+
+        this.nodeModelListeners.set(String(nodeModel.id), listeners);
+    }
+
+    /**
+     * @private
+     * @param {NodeModel} nodeModel
+     * @param {BaseProp[]} props
+     */
+    _createNodePropertyPanel(nodeModel, props) {
+        const panel = document.createElement('div');
+        panel.classList.add('node-extend-property-panel');
+        panel.id = `${nodeModel.id}-extend-property-panel`;
+
+        const activeHub = nodeModel.extendedProperties?.active;
+        const poolHub = nodeModel.extendedProperties?.pool;
+
+        const activeProps = (activeHub?.properties || []).filter((p) => p.type !== 'button');
+        const poolProps = poolHub?.properties || [];
+
+        /**
+         * @param {BaseProp} prop
+         * @param {boolean} isActive
+         */
+        const renderOption = (prop, isActive) => {
+            const optEl = document.createElement('label');
+            optEl.className = 'extend-prop-option';
+            optEl.dataset.propId = prop.id;
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = isActive;
+
+            // 有连接的已激活属性：锁定，不可取消勾选（即不可删除）
+            const connected = isActive && !!prop.isConnected;
+            if (connected) {
+                checkbox.disabled = true;
+                optEl.classList.add('connected-locked');
+            }
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'option-name';
+            nameSpan.textContent = prop.label || prop.name || prop.id;
+
+            optEl.appendChild(checkbox);
+            optEl.appendChild(nameSpan);
+
+            if (connected) {
+                const lock = document.createElement('span');
+                lock.className = 'lock-tag';
+                lock.textContent = '已连接';
+                optEl.appendChild(lock);
+            }
+
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    // 勾选：添加属性
+                    if (nodeModel.appendExtendProp(prop.id)) {
+                        this.bus.standardEmitDetail(
+                            'append',
+                            'property',
+                            { propId: prop.id },
+                            (data) => {
+                                nodeModel.removeExtendProp(data.propId);
+                                nodeModel.emit('redraw', {});
+                            },
+                            (data) => {
+                                nodeModel.appendExtendProp(data.propId);
+                                nodeModel.emit('redraw', {});
+                            }
+                        );
+                        nodeModel.emit('redraw', {});
+                    } else {
+                        checkbox.checked = false;
+                        nodeModel.emit('append:property:failed', { propId: prop.id });
+                    }
+                } else {
+                    // 取消勾选：删除属性（有连接不可删除）
+                    if (prop.isConnected) {
+                        checkbox.checked = true;
+                        nodeModel.emit('remove:property:failed', { propId: prop.id, reason: 'connected' });
+                        return;
+                    }
+                    if (nodeModel.removeExtendProp(prop.id)) {
+                        this.bus.standardEmitDetail(
+                            'delete',
+                            'property',
+                            { propId: prop.id },
+                            (data) => {
+                                nodeModel.appendExtendProp(data.propId);
+                                nodeModel.emit('redraw', {});
+                            },
+                            (data) => {
+                                nodeModel.removeExtendProp(data.propId);
+                                nodeModel.emit('redraw', {});
+                            }
+                        );
+                        nodeModel.emit('redraw', {});
+                    } else {
+                        checkbox.checked = true;
+                    }
+                }
+            });
+
+            return optEl;
+        };
+
+        activeProps.forEach((prop) => panel.appendChild(renderOption(prop, true)));
+        poolProps.forEach((prop) => panel.appendChild(renderOption(prop, false)));
+
+        if (panel.children.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-tip';
+            empty.textContent = '无可选属性';
+            panel.appendChild(empty);
+        }
+
+        // 面板内点击不关闭菜单，便于连续勾选
+        panel.addEventListener('mousedown', (e) => e.stopPropagation());
+
+        return panel;
+    }
+
+    /**
+     * @private
+     * @param {CustomEvent} evt
+     * @param {import('./nodeActionManager.js').BaseNodeModel} model
+     */
+
+    _handleNodeClick(evt, model) {
+        const e = /** @type {MouseEvent} */ (evt.detail.originalEvent);
+        // 监听鼠标选中事件
+        if (e.ctrlKey || e.metaKey) {
+            // 多选模式：切换当前节点的选中状态，不改变其他
+            this.toggleNodeSelected(model);
+        } else {
+            // 单选模式：选中当前节点
+            this.setNodeSelected(model, true);
+        }
+    }
+
+    clearNodeSelected() {
+        Array.from(this.nodes.values()).forEach((node) => {
+            if (node.selected) node.setSelected(false);
+        });
+    }
+
+    /**
+     * 设置节点选中状态
+     *
+     * @param {import('./nodeActionManager.js').BaseNodeModel} node - 要选中的节点
+     * @param {boolean} [clearOthers=true] - 是否清除其他节点的选中状态. Default is `true`
+     */
+    setNodeSelected(node, clearOthers = true) {
+        if (clearOthers) {
+            this.clearNodeSelected();
+        }
+
+        if (!node.selected) {
+            node.setSelected(true);
+        }
+    }
+
+    toggleNodeSelected(node) {
+        if (!node) return;
+
+        if (node.selected) {
+            node.setSelected(false);
+        } else {
+            node.setSelected(true);
+        }
+    }
+
+    /**
+     * @private
+     * @param {NodeID} nodeId
+     */
+    _removeNode(nodeId) {
+        if (typeof nodeId === 'number') {
+            nodeId = String(nodeId);
+        }
+
+        const node = this.nodes.get(nodeId);
+        if (!node) {
+            console.error(`无法找到删除目标${nodeId}`);
+            return;
+        }
+
+        node.setSelected(false);
+
+        // 1. 移除 NodeManager 绑定在模型上的业务监听器
+        const listeners = this.nodeModelListeners.get(nodeId);
+        if (listeners) {
+            listeners.forEach(({ event, handler }) => {
+                node.removeEventListener(event, handler);
+            });
+            this.nodeModelListeners.delete(nodeId);
+        }
+
+        // 2. 释放模型监听器（软释放：保留模型数据，undo/redo 恢复时 `_createNode` 复用同一模型）
+        node.releaseListeners();
+
+        // 3. 回收 ID
+        if (node instanceof NodeModel) {
+            this.uidGenerator.release(node.uid);
+        }
+        this.idGenerator.release(nodeId);
+
+        // 4. 销毁视图（移除监听器 + 摘除 DOM）
+        const view = this.nodeViews.get(nodeId);
+        if (view) {
+            view.dispose();
+            this.nodeViews.delete(nodeId);
+        }
+
+        // 5. 从索引移除
+        this.nodes.delete(nodeId);
+    }
+
+    /** @param {NodeID} nodeId */
+    deleteNode(nodeId) {
+        this.deleteNodes([nodeId]);
+    }
+
+    deleteNodes(nodeIds) {
+        const models = nodeIds.map((nodeId) => this.nodes.get(nodeId));
+
+        nodeIds.forEach((nodeId) => {
+            this._removeNode(nodeId);
+        });
+
+        this.bus.standardEmitDetail(
+            'delete',
+            'node',
+            { nodeIds, models },
+            (/** @type {any} */ data) => {
+                data.models.forEach((model) => {
+                    this._createNode(model);
+                });
+            },
+            (/** @type {any} */ data) => {
+                data.nodeIds.forEach((nodeId) => {
+                    this._removeNode(nodeId);
+                });
+            }
+        );
+
+        if (this.nodes.size === 0) {
+            this.bus.emit('delete:all_node:success');
+        }
+    }
+
+    hiddenNode(nodeId) {
+        let node = this.nodes.get(nodeId);
+        if (!node) {
+            console.error(`无法找到隐藏目标${nodeId}`);
+            return;
+        }
+    }
+
+    // 删除所有节点
+    clear() {
+        if (this.coreSpace.setting.quickClear) {
+            // 清理不受 NodeManager 追踪的测试节点 DOM
+            const test_nodes = this.world.querySelectorAll('.test-node');
+            test_nodes.forEach((node) => node.remove());
+
+            // 快速清理：不触发 undo 记录，但必须释放模型/视图，
+            // 否则 model 上累积的监听器（含闭包持有的 NodeManager/DOM）会形成泄漏
+            this.nodes.forEach((node) => {
+                const view = this.nodeViews.get(String(node.id));
+                view?.dispose();
+                node.dispose();
+            });
+
+            this.bus.emit('delete:all_node:success');
+        } else {
+            this.nodes.forEach((node) => {
+                this.deleteNode(node.id);
+            });
+        }
+
+        this.nodes.clear();
+        this.nodeViews.clear();
+        this.nodeModelListeners.clear();
+        this.idGenerator.reset();
+        this.uidGenerator.reset();
+        this.highlightCache = {
+            highlightedNodes: new Set(),
+            dimmedConnections: new Set(),
+        };
+
+        this.bus.emit('ClearOver:nodeManager', {});
+    }
+
+    destroy() {
+        this.clear();
+        super.destroy();
+    }
+}
+
+/** BitmapIdGenerator 类 - 基于位图的高效ID生成器 使用位图来跟踪ID的使用状态，提供高效的ID分配和释放操作 */
+class BitmapIdGenerator {
+    /**
+     * 构造函数
+     *
+     * @param {number} maxSize - 最大ID值，默认为999999
+     */
+    constructor(maxSize = 999999) {
+        this.maxSize = maxSize;
+        this.bitmap = new Uint32Array(Math.ceil(maxSize / 32)); // 使用位图存储使用状态
+        this.nextId = 1;
+    }
+
+    // 设置位
+    /** @private */
+    _setBit(index) {
+        const wordIndex = Math.floor(index / 32);
+        const bitIndex = index % 32;
+        this.bitmap[wordIndex] |= 1 << bitIndex;
+    }
+
+    // 清除位
+    /** @private */
+    _clearBit(index) {
+        const wordIndex = Math.floor(index / 32);
+        const bitIndex = index % 32;
+        this.bitmap[wordIndex] &= ~(1 << bitIndex);
+    }
+
+    // 检查位
+    /** @private */
+    _checkBit(index) {
+        const wordIndex = Math.floor(index / 32);
+        const bitIndex = index % 32;
+        return (this.bitmap[wordIndex] & (1 << bitIndex)) !== 0;
+    }
+
+    // 生成ID（更高效的算法）
+    generate() {
+        // 尝试从nextId开始查找
+        for (let i = this.nextId; i <= this.maxSize; i++) {
+            if (!this._checkBit(i - 1)) {
+                // 位图索引从0开始
+                this._setBit(i - 1);
+                this.nextId = i + 1;
+                return i;
+            }
+        }
+
+        // 如果从nextId开始没找到，从头开始查找
+        for (let i = 1; i < this.nextId; i++) {
+            if (!this._checkBit(i - 1)) {
+                this._setBit(i - 1);
+                return i;
+            }
+        }
+
+        return null; // 没有可用ID
+    }
+
+    /**
+     * 释放ID
+     *
+     * @param {number | string} id - 要释放的ID
+     */
+    release(id) {
+        if (typeof id != 'number') {
+            if (typeof id == 'string') {
+                id = parseInt(id);
+            } else {
+                throw new Error('无效的ID类型');
+            }
+        }
+
+        if (id < 1 || id > this.maxSize) {
+            throw new Error(`id ${id} 超出范围 (1-${this.maxSize})`);
+        }
+
+        if (this._checkBit(id - 1)) {
+            this._clearBit(id - 1);
+            // 如果释放的ID比nextId小，更新nextId
+            if (id < this.nextId) {
+                this.nextId = id;
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    occupy(uid) {
+        if (uid < 1 || uid > this.maxSize) {
+            throw new Error(`uid ${uid} 超出范围 (1-${this.maxSize})`);
+        }
+
+        // 如果占领的ID已经存在
+        if (this._checkBit(uid - 1)) {
+            return false;
+        }
+
+        this._setBit(uid - 1);
+
+        return true;
+    }
+
+    // 获取空闲ID数量
+    getAvailableCount() {
+        let count = 0;
+        for (let i = 0; i < this.maxSize; i++) {
+            if (!this._checkBit(i)) count++;
+        }
+        return count;
+    }
+
+    setBitmap(bitmap) {
+        //  类型检查
+        if (!(bitmap instanceof Uint32Array)) {
+            throw new TypeError('bitmap must be an instance of Uint32Array');
+        }
+
+        //  长度检查
+        if (bitmap.length * 32 < this.maxSize) {
+            throw new RangeError(`bitmap length must be at least ${Math.ceil(this.maxSize / 32)}`);
+        }
+
+        this.bitmap = Uint32Array.from(bitmap);
+    }
+
+    getBitmap() {
+        return this.bitmap;
+    }
+
+    reset() {
+        this.bitmap.fill(0);
+        this.nextId = 1;
+    }
+}

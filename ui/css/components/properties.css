@@ -1,0 +1,663 @@
+:root {
+    --port-slot-width: 24px;
+    /* 端点占用的总宽度 */
+
+    --port-slot-min-width: 2px;
+
+    --padding-text: 6px 8px;
+}
+
+.prop-hub {
+    display: grid;
+    align-items: start;
+}
+
+.prop-hub.single {
+    display: inline;
+    grid-template-columns: 1fr;
+}
+
+.prop-hub.double {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* 属性之间的分割线 主要用于分割prop-hub和其他属性 */
+.prop-separator {
+    border: none;
+    height: 1px;
+    background: var(--border-light, rgba(128, 128, 128, 0.3));
+    margin: 6px 0 2px;
+    width: 100%;
+    pointer-events: none;
+}
+
+.prop-row {
+    display: grid;
+    /* 定义三列：左槽位、中间内容、右槽位 */
+    grid-template-columns: var(--port-slot-width) 1fr var(--port-slot-width);
+    align-items: center;
+    min-height: 32px;
+}
+
+/* 槽位容器：始终存在，负责占位 */
+.port-slot {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: var(--port-slot-width);
+    height: 100%;
+}
+
+/* 当左槽位隐藏时，将左列宽度设为 0 */
+.prop-row:has(.port-slot:first-child.hidden) {
+    grid-template-columns: var(--port-slot-min-width) 1fr var(--port-slot-width);
+}
+
+/* 当右槽位隐藏时，将右列宽度设为 0 */
+.prop-row:has(.port-slot:last-child.hidden) {
+    grid-template-columns: var(--port-slot-width) 1fr var(--port-slot-min-width);
+}
+
+/* 同时隐藏左右槽位 */
+.prop-row:has(.port-slot:first-child.hidden):has(.port-slot:last-child.hidden) {
+    grid-template-columns: var(--port-slot-min-width) 1fr var(--port-slot-min-width);
+}
+
+.prop-input {
+    width: 100%;
+    padding: 4px 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+@keyframes breathe {
+    0% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    }
+
+    35% {
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-primary) 90%, transparent);
+    }
+
+    65% {
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-primary) 90%, transparent);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    }
+}
+
+.prop-input:hover {
+    animation: breathe 1.5s ease-in-out infinite;
+}
+
+.prop-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 1px var(--accent-primary-shadow);
+}
+
+/* ============ 可折叠文本输入（长文本自动换行） ============ */
+.prop-fold-text {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.prop-fold-text .single,
+.prop-fold-text .multi,
+.prop-fold-ghost {
+    font-family: var(--font-sans);
+    font-size: 11px;
+}
+
+/* 展开态的多行输入：随内容增高、自动换行 */
+.prop-fold-text .multi {
+    display: none;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4;
+    vertical-align: top;
+    /* 高度由 JS 按内容计算，不做过渡避免输入时抖动 */
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.prop-fold-text.expanded .single {
+    display: none;
+}
+
+.prop-fold-text.expanded .multi {
+    display: block;
+    padding-right: 24px;
+    /* 顶部右上角给折叠按钮留位 */
+}
+
+/* 折叠态：超行内容单行省略，右侧给按钮留位 */
+.prop-fold-text.collapsed.has-btn .single {
+    padding-right: 26px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 隐形测量层：同宽同排版，仅用于计算内容换行后的高度 */
+.prop-fold-ghost {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    visibility: hidden;
+    pointer-events: none;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+/* 折叠/展开按钮（用 span，避免预览模式禁用 button 的逻辑误伤） */
+.prop-fold-btn {
+    position: absolute;
+    top: 50%;
+    right: 2px;
+    transform: translateY(-50%);
+    z-index: 2;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s, background 0.2s;
+}
+
+.prop-fold-btn.visible {
+    display: inline-flex;
+}
+
+.prop-fold-text.expanded .prop-fold-btn {
+    top: 6px;
+    right: 6px;
+    transform: none;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.prop-fold-btn:hover {
+    color: var(--accent-primary);
+    background: var(--bg-tertiary);
+}
+
+/* 文本输入样式 */
+.prop-input .text {
+    font-family: inherit;
+}
+
+/* 数字输入样式 */
+.prop-input .integer::-webkit-inner-spin-button,
+.prop-input .integer::-webkit-outer-spin-button {
+    opacity: 0.6;
+    height: 14px;
+}
+
+/* 滑动条样式 */
+.prop-input .slider {
+    width: 100%;
+    cursor: pointer;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    padding: 0;
+    margin: 2px 0;
+}
+
+.prop-input .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.prop-input .slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.prop-input .slider::-moz-range-track {
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+.prop-content .prop-number {
+    display: flex;
+}
+
+/* 单选框样式 */
+.prop-content .prop-radio-group {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    align-items: center;
+}
+
+.prop-content .label {
+    font-size: 14px;
+    margin-right: 4px;
+    margin-left: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0 0 2px;
+    /* 防止被压缩 */
+}
+
+.prop-content .radio-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.prop-content .radio-option input[type='radio'] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.prop-content .radio-option-label {
+    display: flex;
+    align-items: center;
+    color: var(--text-primary);
+    font-size: 11px;
+    padding-left: 20px;
+    position: relative;
+    height: 18px;
+    line-height: 18px;
+}
+
+.prop-content .radio-option-label::before,
+.prop-content .radio-option-label::after {
+    content: '';
+    box-sizing: border-box;
+    position: absolute;
+    transition: all 0.2s;
+}
+
+.prop-content .radio-option-label::before {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: var(--bg-secondary);
+}
+
+.prop-content .radio-option-label::after {
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+}
+
+.prop-content .radio-option input[type="radio"]:checked+.radio-option-label::before {
+    border-color: var(--accent-primary);
+}
+
+.prop-content .radio-option input[type="radio"]:checked+.radio-option-label::after {
+    transform: translateY(-50%) scale(1);
+}
+
+.prop-content .radio-option input[type="radio"]:focus+.radio-option-label::before {
+    box-shadow: 0 0 0 2px var(--accent-primary-shadow);
+}
+
+.prop-content .radio-option:hover .radio-option-label {
+    color: var(--accent-primary);
+}
+
+/* 下拉选择框样式 */
+.prop-content .select {
+    width: 100%;
+    height: 24px;
+    line-height: 22px;
+    /* 减去 border */
+    padding: 0 24px 0 8px;
+
+    /* 颜色配置 */
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+
+    /* 字体与排版 */
+    font-family: var(--font-sans);
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+
+    /* 系统外观重置 */
+    appearance: none;
+    -webkit-appearance: none;
+
+    /* 优化的箭头图标：颜色使用 --text-muted */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 10px;
+
+    /* 动画 */
+    transition: border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background-color var(--transition-fast);
+}
+
+/* 状态：悬停 */
+.prop-content .select:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-primary);
+}
+
+/* 状态：聚焦/展开 */
+.prop-content .select:focus {
+    border-color: var(--accent-primary);
+    background-color: var(--bg-tertiary);
+    box-shadow: 0 0 0 2px var(--accent-primary-shadow);
+}
+
+/* 选项列表样式 */
+.prop-content .select option {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 8px;
+}
+
+/* 模式切换下拉框 (Mode Select) 特殊样式 */
+.prop-row.type-mode-select .select {
+    /* 使用 menu-highlight 的颜色作为左侧标识，暗示其决定了后续属性的布局 */
+    border-left: 2px solid var(--accent-primary);
+    background-color: var(--bg-tertiary);
+}
+
+/* 当处于 Overlay 布局（如 ViewProp 内部的切换）时 */
+.layout-overlay .select {
+    background-color: rgba(37, 37, 38, 0.9);
+    /* 基于 --bg-secondary 的透明度 */
+    backdrop-filter: blur(4px);
+    border-color: var(--border-light);
+}
+
+.prop-content input[type="checkbox"] {
+    width: 1.2em;
+    height: 1.2em;
+    accent-color: #4a90e2;
+    /* 主题色 */
+    margin-right: 0.5em;
+    margin-left: 1em;
+    transform: translateY(0.2em);
+    /* 与文本对齐微调 */
+}
+
+.prop-card {
+    grid-column: 2;
+    margin: 6px calc(var(--port-slot-width) / 2);
+
+    aspect-ratio: 16 / 9;
+    border: 1px solid #ddd;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    /* 确保子元素不溢出圆角 */
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+
+    cursor: pointer;
+}
+
+.prop-view {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 6px 8px 8px 4px;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+.prop-view-port {
+    position: absolute;
+    top: 0;
+    left: 4px;
+    transform: none;
+    z-index: 3;
+}
+
+.prop-view-content {
+    width: calc(100% - 6px);
+    margin-left: 6px;
+}
+
+.prop-view .prop-card {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+.prop-content .prop-card {
+    grid-column: 1;
+    margin: 0;
+    width: 100%;
+}
+
+.prop-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.prop-card.icon {
+    aspect-ratio: 1 / 1;
+    border-radius: 24px;
+}
+
+.prop-card .table-wrapper {
+    overflow: auto;
+    padding: 0;
+}
+
+.prop-card table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 14px;
+}
+
+.prop-table th {
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-secondary);
+
+}
+
+.prop-table th,
+.prop-table td {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 10px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 3. 文本框处理 */
+.prop-card textarea {
+    width: 100%;
+    height: 100%;
+    padding: var(--padding-text);
+    /* 比小输入框略大一点的内边距 */
+    border: none;
+    outline: none;
+    resize: none;
+    line-height: 1.4;
+    font-family: inherit;
+
+    font-size: 12px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    flex: 1;
+
+}
+
+/* 属性面板按钮样式 */
+.prop-content .button {
+    display: inline-flex;
+    align-items: left;
+    justify-content: left;
+    width: 100%;
+    min-height: 24px;
+    padding: var(--padding-text);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    line-height: 1;
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* 悬停状态 */
+.prop-content .button:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-primary);
+}
+
+/* 聚焦状态 */
+.prop-content .button:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-shadow);
+}
+
+/* 按下状态 */
+.prop-content .button:active {
+    background-color: var(--bg-tertiary);
+    transform: translateY(1px);
+}
+
+/* 禁用状态 */
+.prop-content .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 「修改可选属性」按钮：独特样式，区别于其他属性按钮 */
+.prop-content .button.simple {
+    border-style: dashed;
+    border-color: var(--accent-purple);
+    background: rgba(156, 39, 176, 0.12);
+    color: var(--accent-purple);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.prop-content .button.simple:hover {
+    background: rgba(156, 39, 176, 0.25);
+    border-color: var(--accent-purple);
+}
+
+/* 「修改可选属性」按钮始终位于节点最下方（active hub 纵向 flex，按钮 order 置底） */
+.node-properties .prop-hub.single:has(.prop-row.type-button) {
+    display: flex;
+    flex-direction: column;
+    /* 覆盖 .prop-hub 的 align-items:start，让子行撑满整宽 */
+    align-items: stretch;
+}
+
+.node-properties .prop-hub.single:has(.prop-row.type-button) > .prop-row.type-button {
+    order: 1000;
+}
+
+/* 4. 提示框样式 */
+
+
+/* 伪元素作为描述框 */
+.tooltip-trigger::after {
+    content: attr(data-description);
+
+    max-width: 100%;
+    min-width: 60%;
+    white-space: normal;
+    word-wrap: break-word;
+
+    position: absolute;
+    left: 100%;
+    background: #333;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: var(--z-tooltip);
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+/* 悬停时启动延迟动画 */
+.tooltip-trigger:hover::after {
+    animation: delayShow 2s forwards;
+    /* 延迟2秒后显示 */
+}
+
+/* 动画定义：前99%时间不可见，最后一刻变为可见 */
+@keyframes delayShow {
+    0% {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    99% {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    100% {
+        visibility: visible;
+        opacity: 1;
+    }
+}

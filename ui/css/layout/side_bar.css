@@ -1,0 +1,156 @@
+/* ========= 侧边栏重构样式 ========= */
+.sidebar {
+    position: absolute;
+    /* 相对于 .canvas-viewport 定位 */
+    left: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: row;
+    min-width: 60px;
+    height: 100%;
+    width: 100%;
+
+    overflow-y: auto;
+    overflow-x: visible;
+    z-index: var(--z-side-bar);
+    pointer-events: none;
+}
+
+.sidebar-content {
+    flex-direction: column;
+    background: var(--bg-secondary, #1e1e2a);
+    border-right: 1px solid var(--border-color, #3a3a4a);
+    padding: 6px 0px 3px 0px !important;
+    width: 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    pointer-events: auto;
+}
+
+/* 上方/下方按钮组 */
+.sidebar-top-actions,
+.sidebar-bottom-actions {
+    display: inline;
+    gap: 8px;
+    z-index: var(--z-side-bar);
+}
+
+.sidebar-bottom-actions {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #3f3f55;
+}
+
+/* 主按钮样式 */
+.sidebar-main-btn {
+    flex: none;
+    /* 改为固定宽度，不拉伸 */
+    width: 100%;
+    height: 56px;
+    /* 固定高度，使按钮接近正方形 */
+    background: transparent;
+    color: #eee;
+    font-weight: 500;
+    padding: 4px 4px;
+    font-size: 10px;
+    /* 文字稍大一点 */
+    cursor: pointer;
+    transition: all 0.15s;
+
+    /* 核心修改：纵向排列，图标与文字上下分布 */
+    display: flex;
+    flex-direction: column;
+    /* 垂直方向 */
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    /* 图标与文字间距 */
+
+    line-height: 1.2;
+    text-align: center;
+    /* 圆角稍大更美观 */
+}
+
+.sidebar-main-btn .icon-emoji {
+    font-size: 14px;
+    /* 图标单独放大 */
+    line-height: 1;
+    display: block;
+}
+
+
+.sidebar-main-btn:hover {
+    background: #3f4a6b;
+    border-color: #7a8db0;
+    transform: translateY(-1px);
+}
+
+.sidebar-main-btn.active {
+    background: #4f6f8f;
+    border-color: #8aacd4;
+    color: white;
+    box-shadow: 0 0 8px rgba(79, 111, 143, 0.5);
+}
+
+/* 帮助列表 */
+.help-list {
+    margin: 4px 0 0 16px;
+    padding-left: 0;
+    color: #ccc;
+    font-size: 12px;
+    line-height: 1.7;
+    list-style: none;
+}
+
+/* 快捷键行 */
+.shortcut-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px dotted #4a4a66;
+    font-size: 12px;
+}
+
+.key {
+    background: #2a2e40;
+    padding: 3px 10px;
+    border-radius: 30px;
+    font-family: monospace;
+    color: #ffd966;
+}
+
+.shortcut-footnote {
+    margin-top: 10px;
+    color: #9cf;
+    font-size: 11px;
+}
+
+/* 状态栏 */
+.sidebar-status-area {
+    background: #1e1e2c;
+    border-radius: 30px;
+    padding: 10px 14px;
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    border: 1px solid #42425a;
+    color: #ddd;
+}
+
+#status {
+    color: #aaccff;
+    font-weight: 500;
+}
+
+#canvas-scale-display {
+    background: #2e3e4e;
+    padding: 4px 10px;
+    border-radius: 30px;
+    color: #ffd966;
+    font-weight: bold;
+}

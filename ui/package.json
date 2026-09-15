@@ -1,0 +1,6 @@
+{
+  "name": "cultist-node-editor-ui",
+  "private": true,
+  "description": "让 ui/scripts 下的 ES 模块可被 Node 测试按 ESM 解析（浏览器中加载不受此文件影响）",
+  "type": "module"
+}
