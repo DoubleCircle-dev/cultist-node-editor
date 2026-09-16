@@ -2,84 +2,65 @@
  * frontend/dev/ ── 纯浏览器调试用的 dev server 插件（**只在本工作区开发时生效**）
  *
  * 背景：`openJsonPreview`（"👁️ 预览json"按钮）在 VS Code 里依赖宿主：
- * 宿主弹文件对话框 → core 的 `toData.singleFileToData(filePath)` 读盘并转成「数据池」→
+ * 宿主弹文件对话框 → core 的 `toData.singleFileToData(filePath)` 读盘并转成节点图 →
  * 回发 `jsonPreviewLoaded`。直接开浏览器（`pnpm run dev`）时没有宿主，按钮点了只会 warn。
  *
  * 本插件把这一环补上 —— 浏览器把「文件内容」POST 过来，dev server（Node 侧）用
  * **core 的同一套纯函数**转换，保证浏览器里看到的就是扩展里的结果：
  *
  *   POST /__cne-dev/json-preview   { fileName, text, categoryHint }
- *   → { ok: true, data: <与后端 jsonPreviewLoaded 的 data 同形> }
+ *   → { ok: true, data: <与宿主 jsonPreviewLoaded 的 data 同形> }
  *   → { ok: false, error: '...' }
  *
- * ⚠️ 只消费 core、不改 core：`core/` 由「同步后端（core → 本工作区）」任务拷入（本工作区 git 忽略），
- * 缺失时接口返回可读错误，不影响其它功能。生产（VSIX）不走这里 —— webview 走宿主，本文件不参与打包。
+ * ⚠️ 只消费 core、不改 core。core 代码优先直接读 **core 分支工作区**（见 coreModules.mjs），
+ * 改完后端不必先同步；分支工作区不在时才回退到本工作区的 `core/` 副本。
+ * 生产（VSIX）不走这里 —— webview 走宿主，本文件不参与打包。
  */
-import fs from 'node:fs';
-import path from 'node:path';
-import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
+import { requireCoreModule } from './coreModules.mjs';
 
-const require = createRequire(import.meta.url);
-/** 本文件所在目录（frontend/dev/） */
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-/** core 目录（仓库根/core），由「同步后端」任务拷入 */
-const CORE_DIR = path.resolve(HERE, '..', '..', 'core');
 /** 接口路径（前端 frontend/src/devPreview.js 里必须保持一致） */
 const ROUTE = '/__cne-dev/json-preview';
 /** 请求体上限（单个 json 远小于此；防止误传大文件把 dev server 撑住） */
 const MAX_BODY = 32 * 1024 * 1024;
 
-/** @type {any} */
-let coreToData = null;
-
 /**
- * 惰性加载 core 的 toData（缺失时抛错，由调用方转成响应体）
+ * json 文本 → 节点图（形状与 core/modLoad/handlers.js 的 `previewFile` 回发内容一一对应）
  *
- * @returns {any} core/modLoad/toData.js 的导出
- */
-function loadCoreToData() {
-    if (coreToData) return coreToData;
-    const entry = path.join(CORE_DIR, 'modLoad', 'toData.js');
-    if (!fs.existsSync(entry)) {
-        throw new Error(`未找到 ${entry}，请先运行「同步后端（core → 本工作区）」任务`);
-    }
-    coreToData = require(entry);
-    return coreToData;
-}
-
-/**
- * json 文本 → 数据池（形状对齐 core 的 `singleFileToData`）
+ * 与 core 的 `toData.singleFileToData(filePath)` 走同一条流水线，唯一差别：
+ * 那边从磁盘读文件、用文件所在目录名当 category；浏览器只给得到「内容 + 文件名」，
+ * 所以 category 由调用方给的 categoryHint（一般是 json-manifest 里的目录名，如 recipes）决定，
+ * 拿不到时退回文件名去后缀。解析 / 建图规则全部调 core 自己的函数，不在这里复制。
  *
- * 与 `singleFileToData` 的唯一差别：那边从磁盘读、用文件所在目录名当 category；
- * 浏览器只给得到「内容 + 文件名」，所以 category 由调用方给的 categoryHint（一般为
- * json-manifest 里的目录名，如 recipes）决定，拿不到时退回文件名去后缀。
- *
- * @param {{fileName: string, text: string, categoryHint?: string}} payload
- * @returns {Record<string, any>} 数据池（含 categories / links / namespace）
+ * @param {{fileName: string, text: string, categoryHint?: string}} payload 浏览器传来的文件信息
+ * @returns {Record<string, any>} 节点图（含 count / nodes / edges / external / warnings / stats）
+ * @throws {Error} JSON/JSON5 解析失败时
  */
 function textToData({ fileName, text, categoryHint }) {
-    const toData = loadCoreToData();
-    let parsed;
-    try {
-        parsed = JSON.parse(text);
-    } catch {
-        parsed = require('json5').parse(text);
-    }
+    const toData = requireCoreModule('modLoad/toData.js');
+    const parse = requireCoreModule('modLoad/parse.js');
+
+    // 与 core 的 parse.readJSONFileSync 同一套容错（JSON5 + 多级兜底），只是内容来自浏览器而不是磁盘
+    const data = parse.smartJSON5Parse(text, fileName);
+    if (data === null) throw new Error(`无法解析 ${fileName}（不是合法的 JSON / JSON5）`);
 
     const base = String(fileName || 'untitled').replace(/\.[^.]+$/, '');
-    const { entries, category } = toData.extractEntries(parsed, categoryHint || base);
-    /** @type {Record<string, any[]>} */
-    const categories = {};
-    categories[category] = toData.entriesToData(category, entries, { source: 'mod', file: fileName });
+    const { groups } = parse.filesToGroups([{ fileName, relativePath: fileName, data }], {
+        fallbackCategory: categoryHint || base,
+        includeSingle: true, // 单对象条目文件也算一个节点（与 singleFileToData 一致）
+    });
+    const graph = toData.buildGraph(groups, { source: 'mod', namespace: `file:${base}`, scope: 'file', fileCount: 1 });
 
     return {
-        source: 'mod',
-        namespace: `file:${base}`,
-        categories,
-        category,
         fileName,
-        links: toData.buildLinks(categories),
+        category: groups.length ? groups[0].category : '',
+        namespace: graph.namespace,
+        source: graph.source,
+        count: graph.nodes.length,
+        nodes: graph.nodes,
+        edges: graph.edges,
+        external: graph.external,
+        warnings: graph.warnings,
+        stats: graph.stats,
     };
 }
 
@@ -146,8 +127,7 @@ export default function devPreviewApi() {
                         return;
                     }
                     const data = textToData(payload);
-                    const count = Object.values(data.categories).reduce((n, list) => n + list.length, 0);
-                    console.log(`👁️ [dev] json 预览: ${payload.fileName} → ${data.category} (${count} 条)`);
+                    console.log(`👁️ [dev] json 预览: ${payload.fileName} → ${data.category} (${data.count} 个节点)`);
                     sendJson(res, 200, { ok: true, data });
                 } catch (error) {
                     console.warn(`⚠️ [dev] json 预览失败: ${error.message}`);
