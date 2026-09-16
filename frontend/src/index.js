@@ -90,7 +90,7 @@ export function openJsonPreview() {
         vscode.postMessage({ command: 'openJsonPreview' });
         return;
     }
-    // 浏览器开发环境：没有宿主的文件对话框，改用原生文件选择器 + dev server 侧转换（见 devPreview.js）
+    // 浏览器开发环境：没有宿主的文件对话框，改为「原生文件选择器 + 新开预览子页面」（见 devPreview.js）
     previewJsonInBrowser();
 }
 
@@ -150,8 +150,7 @@ function handleVscodeMessage(event) {
         case 'jsonPreviewLoaded': {
             const ns = message.data.namespace;
             // 防御：同一预览命名空间重复加载时忽略，避免画布重复铺图（后端已幂等发送，此为兜底）
-            // force：浏览器开发环境重复预览同一文件时需要重新铺图（前端 devPreview.js 会带上）
-            if (!message.force && ns && __previewedNamespaces.has(ns)) {
+            if (ns && __previewedNamespaces.has(ns)) {
                 console.warn(`[预览] 忽略重复加载: ${ns}`);
                 break;
             }

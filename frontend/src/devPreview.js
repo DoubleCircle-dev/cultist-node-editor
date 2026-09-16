@@ -1,20 +1,24 @@
 /**
- * frontend/src/devPreview.js —— 纯浏览器调试用的「预览 json」回退
+ * frontend/src/devPreview.js —— 纯浏览器调试用的「预览 json」回退（父页面一侧）
  *
- * 用途：直接开浏览器（`pnpm run dev`，无 VS Code 宿主）时，「👁️ 预览json」按钮原本只会
- * 打印 `非 VSCode 环境，无法预览 json` —— warn 完什么都不发生。这里补上等价链路：
+ * 对齐扩展里的行为：VS Code 中「预览json」是让宿主**新开一个页面**（自定义编辑器，仅查看），
+ * 而不是把预览铺进当前面板。dev（`pnpm run dev`，无宿主）下同样新开一个子页面：
  *
- *   原生文件选择器选 json → dev server 用 **core 的同一套函数**转成数据池
- *   → 以 `jsonPreviewLoaded` 消息回到前端（与宿主发来的消息走同一条处理链路）
+ *   主页面点按钮 → 原生文件选择器选 json → 内容暂存到 localStorage
+ *   → window.open 打开「预览模式」子页面（URL 带 ?cneDevPreview=1）
+ *   → 子页面自己取回内容、经 dev server 转成节点图，以 jsonPreviewLoaded 铺图
+ *     （见 frontend/src/devPreviewPage.js）
  *
- * 真正的转换在 dev server 侧（`frontend/dev/devPreviewApi.mjs`）：本工作区不维护、也不复制
- * core 的映射规则，避免浏览器里看到的结果与扩展里不一致。
+ * 子页面是普通地址，刷新即可重新取数（暂存内容保留到下次预览），方便反复调预览 UI。
  *
- * ⚠️ 仅开发可用：VS Code 里走宿主（文件对话框 + 自定义编辑器预览），不会进到这里。
+ * ⚠️ 仅开发用：VS Code 里走宿主（文件对话框 + 自定义编辑器预览），不会进到这里。
  */
 
-/** dev server 接口路径；与 frontend/dev/devPreviewApi.mjs 的 ROUTE 保持一致 */
-const DEV_API = '/__cne-dev/json-preview';
+/** 暂存键：父页面写、子页面读（同源 localStorage，每次预览覆盖上一次） */
+export const DEV_PREVIEW_KEY = '__cneDevPreview';
+
+/** 子页面标记：仅带该参数的 http(s) 页面会进入预览模式并自动取数据（见 devPreviewPage.js） */
+export const DEV_PREVIEW_PARAM = 'cneDevPreview';
 
 /** @type {Promise<Map<string, string>> | null} 文件名 → 目录名 索引（懒加载一次） */
 let categoryIndex = null;
@@ -85,7 +89,19 @@ function loadCategoryIndex() {
 }
 
 /**
- * 浏览器里的「预览 json」：选文件 → dev server 转换 → 以 jsonPreviewLoaded 回填
+ * 预览子页面地址：沿用当前页地址，只把查询串换成子页面标记
+ *
+ * @returns {string} 子页面 URL
+ */
+function buildPreviewUrl() {
+    const url = new URL(location.href);
+    url.search = `?${DEV_PREVIEW_PARAM}=1`;
+    url.hash = '';
+    return url.toString();
+}
+
+/**
+ * 浏览器里的「预览 json」：选文件 → 暂存内容 → 新开预览子页面
  *
  * @returns {Promise<void>}
  */
@@ -95,27 +111,26 @@ export async function previewJsonInBrowser() {
 
     const index = await loadCategoryIndex();
     try {
-        const response = await fetch(DEV_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        localStorage.setItem(
+            DEV_PREVIEW_KEY,
+            JSON.stringify({
                 fileName: picked.fileName,
                 text: picked.text,
                 categoryHint: index.get(picked.fileName) || '',
-            }),
-        });
-        // dev server 没有该路由时会回落到 index.html（200 + text/html），据此给出可操作的提示
-        const type = response.headers.get('content-type') || '';
-        if (!response.ok || !type.includes('application/json')) {
-            throw new Error('dev server 未提供 ' + DEV_API + '（请用 pnpm run dev 重启开发服务器）');
-        }
-        const result = await response.json();
-        if (!result.ok) throw new Error(result.error || '转换失败');
-
-        console.log(`[dev] json 预览: ${picked.fileName} → ${result.data.category}`);
-        // force：同一个文件重复预览时跳过后端的幂等去重（浏览器是长驻页面，与「每次新开 webview」的宿主不同）
-        window.postMessage({ command: 'jsonPreviewLoaded', data: result.data, force: true }, '*');
+            })
+        );
     } catch (error) {
-        window.postMessage({ command: 'error', message: `浏览器预览失败: ${error.message}` }, '*');
+        window.postMessage({ command: 'error', message: `浏览器预览失败: 暂存文件内容失败（${error.message}），文件可能过大` }, '*');
+        return;
     }
+
+    const url = buildPreviewUrl();
+    const child = window.open(url, '_blank');
+    if (!child) {
+        // 弹窗被拦截：内容已暂存，手动打开该地址同样能预览
+        console.warn(`[dev] 预览子页面被浏览器拦截，可手动打开: ${url}`);
+        window.postMessage({ command: 'error', message: `预览子页面被浏览器拦截：请允许本站弹出窗口，或手动打开 ${url}` }, '*');
+        return;
+    }
+    console.log(`[dev] 已在新页面打开预览: ${picked.fileName} → ${url}`);
 }
