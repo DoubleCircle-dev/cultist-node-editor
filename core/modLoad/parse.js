@@ -1,5 +1,6 @@
 // /src/core/readModJSON5.js
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 const JSON5 = require('json5');
 
@@ -1018,6 +1019,196 @@ function generateFixReport(modPath, problematicFiles) {
     return report;
 }
 
+// ========== 最外围键拆分（节点图流水线第 ① 步） ==========
+
+/**
+ * 同步读取单个 json / json5 文件（origin 预加载等同步路径用；异步路径见 readJSONFileJSON5）。
+ *
+ * 返回结构与异步版一致：`{ filePath, relativePath, fileName, data, error, warnings }`。
+ * 解析沿用 smartJSON5Parse（含 CRLF / 尾随逗号等修复），失败时 data 为空对象并写 error。
+ *
+ * @param {string} filePath - 文件绝对路径
+ * @returns {{ filePath: string; relativePath: string; fileName: string; data: any; error: string|null; warnings: string[] }}
+ */
+function readJSONFileSync(filePath) {
+    const fileName = path.basename(filePath);
+    /** @type {{ filePath: string; relativePath: string; fileName: string; data: any; error: string|null; warnings: string[] }} */
+    const result = { filePath, relativePath: fileName, fileName, data: null, error: null, warnings: [] };
+
+    let content;
+    try {
+        content = fsSync.readFileSync(filePath, 'utf8');
+    } catch (e) {
+        result.data = {};
+        result.error = `读取失败: ${e.message}`;
+        return result;
+    }
+
+    if (!content || content.trim() === '') {
+        result.data = {};
+        result.warnings.push('空文件');
+        return result;
+    }
+
+    const data = smartJSON5Parse(content, filePath);
+    if (data === null) {
+        result.data = {};
+        result.error = `无法解析 JSON5 文件: ${safePath(filePath)}`;
+        return result;
+    }
+
+    result.data = data;
+    return result;
+}
+
+/**
+ * 递归同步读取目录下全部 .json（默认跳过 images / dll）。
+ *
+ * @param {string} dirPath - 目录绝对路径（不存在时返回空数组）
+ * @param {string[]} [excludeDirs] - 跳过的子目录名
+ * @returns {ReturnType<typeof readJSONFileSync>[]} 文件对象数组（relativePath 相对 dirPath）
+ */
+function readAllJSONFilesSync(dirPath, excludeDirs = ['images', 'dll']) {
+    /** @type {ReturnType<typeof readJSONFileSync>[]} */
+    const results = [];
+
+    /** 深度优先遍历 */
+    const walk = (dir) => {
+        let entries;
+        try {
+            entries = fsSync.readdirSync(dir, { withFileTypes: true });
+        } catch (error) {
+            console.warn(`无法访问目录 ${safePath(dir)}: ${error.message}`);
+            return;
+        }
+        for (const entry of entries) {
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                if (excludeDirs.includes(entry.name)) continue;
+                walk(full);
+                continue;
+            }
+            if (!entry.isFile() || path.extname(entry.name).toLowerCase() !== '.json') continue;
+            const file = readJSONFileSync(full);
+            file.relativePath = path.relative(dirPath, full);
+            results.push(file);
+        }
+    };
+
+    walk(dirPath);
+    return results;
+}
+
+/**
+ * 拆分「最外围键」：整份 JSON → 根键 + 内部 list。
+ *
+ * 这是流水线第 ① 步的核心：一个数据文件的最外围键一般 1-2 个（recipes / elements…），
+ * 键名即前端节点类型，值是该类型的条目列表；全部列表原样输出，不做筛选、不改内容。
+ *
+ * 三种形态：
+ *   - `collection`：`{ "recipes": [ ... ] }` → 每个数组键一组（多个键就多组）；
+ *   - `root-array`：文件本身就是数组 → 用 options.category 兜底归类；
+ *   - `single-object`：没有数组键（如 synopsis.json）→ 整份当一个条目，由调用方决定是否采用。
+ *
+ * @param {any} data - 文件解析结果
+ * @param {{ category?: string }} [options] - category：无根键可依据时的类别兜底
+ * @returns {{
+ *     mode: 'collection' | 'root-array' | 'single-object' | 'empty';
+ *     rootKeys: string[];
+ *     scalarKeys: string[];
+ *     groups: { category: string; key: string|null; entries: any[]; isArray: boolean }[];
+ * }} 拆分结果
+ */
+function splitRootKeys(data, options = {}) {
+    const hint = options.category || '';
+
+    if (Array.isArray(data)) {
+        return {
+            mode: 'root-array',
+            rootKeys: [],
+            scalarKeys: [],
+            groups: [{ category: hint || 'misc', key: null, entries: data, isArray: true }],
+        };
+    }
+
+    if (!data || typeof data !== 'object') {
+        return { mode: 'empty', rootKeys: [], scalarKeys: [], groups: [] };
+    }
+
+    const keys = Object.keys(data);
+    const arrayKeys = keys.filter((k) => Array.isArray(data[k]));
+
+    if (arrayKeys.length) {
+        return {
+            mode: 'collection',
+            rootKeys: keys,
+            scalarKeys: keys.filter((k) => !Array.isArray(data[k])),
+            groups: arrayKeys.map((k) => ({ category: k, key: k, entries: data[k], isArray: true })),
+        };
+    }
+
+    return {
+        mode: 'single-object',
+        rootKeys: keys,
+        scalarKeys: keys,
+        groups: [{ category: hint || 'misc', key: null, entries: [data], isArray: false }],
+    };
+}
+
+/**
+ * 取文件的类别兜底名：相对路径首段（recipes/x.json → recipes），根目录文件用调用方给的 hint。
+ *
+ * @param {{ relativePath?: string; fileName?: string }} file - 文件对象
+ * @param {string} [fallback] - 无目录信息时的兜底（单文件预览传所在目录名）
+ * @returns {string} 类别兜底名
+ */
+function categoryHintOf(file, fallback) {
+    const rel = file.relativePath || '';
+    const seg = rel.split(/[\\/]/).filter(Boolean);
+    if (seg.length > 1) return seg[0];
+    return fallback || 'misc';
+}
+
+/**
+ * 文件对象数组（`readAllJSONFilesSync` 或 `analyzeModJSON5` 的 `modInfo.content`）→ 待处理「组」列表。
+ *
+ * 只收集有数组键的集合文件（opts.includeSingle 打开时也收单对象条目），
+ * 并给每组带上文件信息，供 toData 建节点时记录来源。
+ *
+ * @param {Array<{ filePath?: string; relativePath?: string; fileName?: string; data: any; error?: string|null }>} files
+ * @param {{ fallbackCategory?: string; includeSingle?: boolean }} [options]
+ * @returns {{ groups: Array<{ category: string; key: string|null; entries: any[]; isArray: boolean; file: string; relativePath: string; fileName: string }>; issues: { file: string; message: string }[] }}
+ */
+function filesToGroups(files, options = {}) {
+    /** @type {ReturnType<typeof filesToGroups>['groups']} */
+    const groups = [];
+    /** @type {{ file: string; message: string }[]} */
+    const issues = [];
+
+    (files || []).forEach((file) => {
+        if (!file || file.error || file.data == null) return;
+        const rel = file.relativePath || file.fileName || '';
+        const split = splitRootKeys(file.data, { category: categoryHintOf(file, options.fallbackCategory) });
+        const usable = split.groups.filter((g) => g.isArray || options.includeSingle);
+
+        if (!usable.length) {
+            issues.push({ file: rel, message: `没有条目列表（${split.mode}），已跳过` });
+            return;
+        }
+
+        usable.forEach((g) => {
+            groups.push({
+                ...g,
+                file: file.filePath || rel,
+                relativePath: rel,
+                fileName: file.fileName || path.basename(rel),
+            });
+        });
+    });
+
+    return { groups, issues };
+}
+
 // ========== 导出 ==========
 
 module.exports = {
@@ -1027,7 +1218,14 @@ module.exports = {
     readModFolderJSON5,
     analyzeModJSON5,
     processModWithJSON5,
-    
+
+    // 同步读取 + 最外围键拆分（toData 流水线的输入层）
+    readJSONFileSync,
+    readAllJSONFilesSync,
+    splitRootKeys,
+    filesToGroups,
+    categoryHintOf,
+
     // 工具函数
     smartJSON5Parse,
     prepareForJSON5,

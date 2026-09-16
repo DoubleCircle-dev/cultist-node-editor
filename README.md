@@ -17,11 +17,15 @@
 | **预览单个 Mod JSON 文件为节点** | 单文件预览，不依赖完整 mod 结构 |
 
 右键任意 `.json` →「打开方式」→ **节点编辑器 JSON 预览**，可在只读预览模式查看该文件的数据。
-主编辑器打开时会预加载游戏原版内容（origin_resources）作为数据池，可直接取用其中的条目。
+主编辑器打开时会预加载游戏原版内容（origin_resources）作为全局节点图，可直接取用其中的条目。
 
 其他已实现的能力：
 
-- **引用连线**：条目之间按 id 互引时自动在端口间连线（`effects` / `requirements` / `linked` / `alt` 等字段）
+- **节点类型 = 数据文件的最外围键**：一个文件的 `{"recipes": [...]}` 直接变成一组 `recipes` 节点，
+  列表里每个元素一个节点；哪些字段算「引用」由 `core/modLoad/mapping.js` 的白名单声明
+  （`requirements` / `effects` / `linked` / `alt` / `slots` / `spec` / `actionid` …）
+- **连接线分三段解析**：建完全部节点后再按 id 连线；连不上的目标标成**文件外节点**
+  （`external-origin` 游戏基础内容 / `external-mod` 用户自定义引入），全局加载时另出「端口悬空」告警
 - **文本变量同步**：文本字段可连到「文本节点」共享同一变量，任一端口编辑即双向同步（可选实时逐键同步）
 - **属性系统**：数值 / 选项 / 端口 / 表格 / 图片预览等属性类型，含「修改可选属性」的扩展属性池
 - **撤销重做**、画布缩放平移、适应视图、隐藏连接、专注某节点
@@ -81,6 +85,26 @@ pnpm run package:vsix   # 打包成 vsix
 - 图片资源（约 233 MB）不在本仓库，走 CDN：
   `cdn.jsdelivr.net/gh/DoubleCircle-dev/cultist-node-editor-assets@v1/`，
   名字 → 路径映射见 `core/origin_resources/image-index.json`
+
+### 数据契约（后端 → 前端）
+
+`modLoaded` / `originLoaded` / `jsonPreviewLoaded` 三个 webview 消息统一带同一套字段：
+
+```js
+{
+  source: 'origin' | 'mod', namespace, count, scope: 'file' | 'global',
+  nodes:    [ { uid, id, type, category, title, file, source, fields, refs, connections, refCount } ],
+  edges:    [ { id, kind, from: { uid, type, category, id, field, side, label }, targetId, amount, status, to } ],
+  external: [ /* status !== resolved 的连接线：external-origin / external-mod */ ],
+  warnings: [ /* scope=global 时的「端口悬空」汇总；单文件预览为空 */ ],
+  stats:    { files, nodes, edges, resolved, externalOrigin, externalMod, danglingFields }
+}
+```
+
+- `node.type` 就是数据文件的最外围键（`recipes` / `elements` …），可直接当基础类型实例化；
+  标量字段在 `fields`（填属性），对象字段在 `refs`（原始结构），连接性检测结果在 `connections`。
+- `edge.from.field` 用来在引用方找端口；`edge.status` 为 `resolved` / `external-origin` / `external-mod`。
+- 流程与规则细节见 `core/modLoad/toData.js` 头部注释、`core/modLoad/mapping.js` 的白名单声明。
 
 ### 发布
 

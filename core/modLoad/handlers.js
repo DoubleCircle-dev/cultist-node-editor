@@ -18,7 +18,13 @@
  *   modHandlers.handleNewMod(panel);          // 新建 mod 基础结构（newMod 命令 / 消息）
  *   modHandlers.handleOpenJsonPreview(panel); // 选 json 用自定义编辑器预览（openJsonPreview）
  *   modHandlers.preloadOrigin(panel);         // 打开编辑器时预加载游戏基础内容（可在设置中关闭）
- *   modHandlers.previewFile(panel, filePath); // 自定义编辑器：单文件 json → 数据池并回发
+ *   modHandlers.previewFile(panel, filePath); // 自定义编辑器：单文件 json → 节点图并回发
+ *
+ * 回发契约（前端消费）：`{ nodes, edges, external, warnings, stats, count, namespace, source }`
+ *   - nodes    ：与数据文件最外围键同名的节点（type = recipes / elements …）；
+ *   - edges    ：连接线（from.field 找端口，to 为目标节点）；
+ *   - external ：未解析目标（external-origin 进上方引入区 / external-mod 进左方引入区）；
+ *   - warnings ：scope='global' 时的「端口悬空」汇总（单文件预览不告警）。
  */
 
 const vscode = require('vscode');
@@ -28,9 +34,24 @@ const path = require('path');
 // 纯函数子模块按需 require，函数归属一目了然
 const detect = require('./detect');  // findSynopsisInFolder
 const parseMod = require('./parse'); // analyzeModJSON5
-const toData = require('./toData');  // contentFilesToData / loadOriginData / singleFileToData
+const toData = require('./toData');  // buildGraph / contentFilesToData / loadOriginData / singleFileToData / collectIds
 const create = require('./create');  // createModStructure
 const origin = require('./origin');  // loadOriginToData（封装 toData.loadOriginData）
+
+/**
+ * origin 条目 id 索引：预加载时建立，供 mod 加载把未解析目标区分为
+ * external-origin（游戏基础内容）/ external-mod（用户自定义引入）。未预加载时为 null。
+ * @type {Set<string>|null}
+ */
+let originIds = null;
+
+/**
+ * 取当前缓存的 origin id 索引。
+ * @returns {Set<string>|null} id 索引（未预加载时为 null）
+ */
+function getOriginIds() {
+    return originIds;
+}
 
 /**
  * 功能2：读取 mod（检测工作区 synopsis.json，无则询问文件位置）
@@ -66,15 +87,16 @@ function handleReadMod(panel) {
                     vscode.window.showWarningMessage('mod 中没有可加载的 content 数据');
                 }
 
-                // 后端转换：mod 原始数据 → 前端数据池（按类别，供基础类型实例化；替代前端 toModJSON）
+                // 后端转换：mod 原始数据 → 节点图（nodes + edges，替代前端 toModJSON）
                 const modName = (modInfo.synopsis && modInfo.synopsis.name) || path.basename(modPath);
                 const namespace = `mod:${modName}`;
-                const data = toData.contentFilesToData(modInfo.content, {
+                const graph = toData.contentFilesToData(modInfo.content, {
                     source: 'mod',
                     modId: modName,
                     namespace,
+                    // 已预加载 origin 时：命中 origin → external-origin，未命中 → external-mod
+                    originIds: getOriginIds(),
                 });
-                const count = Object.values(data.categories).reduce((n, list) => n + list.length, 0);
 
                 panel.webview.postMessage({
                     command: 'modLoaded',
@@ -82,12 +104,22 @@ function handleReadMod(panel) {
                         synopsis: modInfo.synopsis || null,
                         modPath,
                         namespace,
-                        source: data.source,
-                        categories: data.categories,
-                        count,
+                        source: graph.source,
+                        modId: modName,
+                        count: graph.nodes.length,
+                        nodes: graph.nodes,
+                        edges: graph.edges,
+                        external: graph.external,
+                        warnings: graph.warnings,
+                        stats: graph.stats,
+                        issues: graph.issues,
                         errors: modInfo.errors || [],
                     },
                 });
+
+                if (graph.warnings.length) {
+                    console.warn(`⚠️ mod 加载：${graph.warnings.length} 个节点字段端口悬空（未实现的目标）`);
+                }
             })
             .catch((err) => {
                 vscode.window.showErrorMessage(`读取 mod 失败: ${err.message}`);
@@ -197,13 +229,28 @@ function preloadOrigin(panel) {
             return;
         }
 
-        // 走 origin 模块封装（loadOriginToData → toData.loadOriginData），复用同一数据池结构
-        const { categories } = origin.loadOriginToData(originDir);
-        const count = Object.values(categories).reduce((n, list) => n + list.length, 0);
-        console.log(`🎮 预加载游戏基础内容: ${count} 条数据`);
+        // 走 origin 模块封装（loadOriginToData → toData.loadOriginData），复用同一节点图结构
+        const graph = origin.loadOriginToData(originDir);
+
+        // 缓存 origin id 索引：后续 mod 加载据此区分 external-origin / external-mod
+        originIds = toData.collectIds(graph);
+
+        console.log(
+            `🎮 预加载游戏基础内容: ${graph.nodes.length} 个节点 / ${graph.edges.length} 条连接线` +
+                `（悬空字段 ${graph.warnings.length}）`
+        );
         panel.webview.postMessage({
             command: 'originLoaded',
-            data: { namespace: 'origin', source: 'origin', categories, count },
+            data: {
+                namespace: 'origin',
+                source: 'origin',
+                count: graph.nodes.length,
+                nodes: graph.nodes,
+                edges: graph.edges,
+                external: graph.external,
+                warnings: graph.warnings,
+                stats: graph.stats,
+            },
         });
     } catch (error) {
         console.error('预加载 origin 内容失败:', error);
@@ -211,8 +258,9 @@ function preloadOrigin(panel) {
 }
 
 /**
- * 功能4（自定义编辑器）：单文件 json → 数据池，并在 webview 回发 jsonPreviewLoaded / error。
+ * 功能4（自定义编辑器）：单文件 json → 节点图，并在 webview 回发 jsonPreviewLoaded / error。
  *
+ * 解析范围只有本文件（scope='file'）：连不上的目标不告警，只标成 external（引入区）。
  * 幂等（webviewReady 与延时兜底可能重复触发）由调用方（extension.js JsonPreviewEditorProvider）控制。
  * @param {import('vscode').WebviewPanel} panel
  * @param {string} filePath 目标 json 文件绝对路径
@@ -220,7 +268,6 @@ function preloadOrigin(panel) {
 function previewFile(panel, filePath) {
     try {
         const result = toData.singleFileToData(filePath);
-        const count = Object.values(result.categories || {}).reduce((n, list) => n + list.length, 0);
         if (result.error) {
             panel.webview.postMessage({ command: 'error', message: `预览失败: ${result.error}` });
             return;
@@ -232,8 +279,12 @@ function previewFile(panel, filePath) {
                 category: result.category,
                 namespace: result.namespace,
                 source: result.source,
-                categories: result.categories,
-                count,
+                count: result.nodes.length,
+                nodes: result.nodes,
+                edges: result.edges,
+                external: result.external,
+                warnings: result.warnings,
+                stats: result.stats,
             },
         });
     } catch (e) {
@@ -247,4 +298,5 @@ module.exports = {
     handleOpenJsonPreview,
     preloadOrigin,
     previewFile,
+    getOriginIds,
 };
