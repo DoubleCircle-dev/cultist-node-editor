@@ -4,6 +4,7 @@ import { NodeTypeRegistry } from './types/nodeTypes.js';
 import { NodeGenerator } from './generators/nodeGenerator.js';
 import { NodeView } from './views/nodeView.js';
 import { ModDataRegistry } from './modDataRegistry.js';
+import { previewJsonInBrowser } from './devPreview.js';
 
 let vscode = null;
 
@@ -87,9 +88,10 @@ export function openJsonPreview() {
     updateStatus('打开 json 预览...');
     if (vscode) {
         vscode.postMessage({ command: 'openJsonPreview' });
-    } else {
-        console.warn('非 VSCode 环境，无法预览 json');
+        return;
     }
+    // 浏览器开发环境：没有宿主的文件对话框，改用原生文件选择器 + dev server 侧转换（见 devPreview.js）
+    previewJsonInBrowser();
 }
 
 /**
@@ -148,7 +150,8 @@ function handleVscodeMessage(event) {
         case 'jsonPreviewLoaded': {
             const ns = message.data.namespace;
             // 防御：同一预览命名空间重复加载时忽略，避免画布重复铺图（后端已幂等发送，此为兜底）
-            if (ns && __previewedNamespaces.has(ns)) {
+            // force：浏览器开发环境重复预览同一文件时需要重新铺图（前端 devPreview.js 会带上）
+            if (!message.force && ns && __previewedNamespaces.has(ns)) {
                 console.warn(`[预览] 忽略重复加载: ${ns}`);
                 break;
             }
