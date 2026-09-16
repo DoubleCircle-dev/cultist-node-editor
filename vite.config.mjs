@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import devPreviewApi from './frontend/dev/devPreviewApi.mjs';
+import coreWatcher from './frontend/dev/coreWatcher.mjs';
 
 /**
  * Vite 配置（原生 JS，无框架）
@@ -14,12 +15,14 @@ import devPreviewApi from './frontend/dev/devPreviewApi.mjs';
  *   npm run dev      # dev server :5173，扩展设 CNE_DEV_SERVER=1 即可让 webview 走 HMR
  *   npm run build:ui # 产出 frontend/dist
  *
- * 插件：
- *   devPreviewApi  # 仅 dev：为纯浏览器调试补上「单文件 json 预览」接口（见 frontend/dev/devPreviewApi.mjs）
+ * 插件（都只在 dev server 生效，不进构建产物）：
+ *   devPreviewApi  # 为纯浏览器调试补上「单文件 json 预览」接口（见 frontend/dev/devPreviewApi.mjs）
+ *   coreWatcher    # 监视 core 分支工作区：代码一改就清缓存 + 整页刷新，并顺带同步工作区副本
+ *                  #（见 frontend/dev/coreWatcher.mjs；CNE_CORE_WATCH=0 / CNE_CORE_SYNC=0 可关）
  */
 export default defineConfig({
     root: 'frontend',
-    plugins: [devPreviewApi()],
+    plugins: [devPreviewApi(), coreWatcher()],
     // 产物内部用相对路径（./assets/xxx），扩展侧再把它们换成 webview URI
     base: './',
     build: {
