@@ -4,6 +4,7 @@ import { NodeTypeRegistry } from './types/nodeTypes.js';
 import { NodeGenerator } from './generators/nodeGenerator.js';
 import { NodeView } from './views/nodeView.js';
 import { ModDataRegistry } from './modDataRegistry.js';
+import { graphToDataPool } from './dataContract.js';
 import { previewJsonInBrowser } from './devPreview.js';
 
 let vscode = null;
@@ -98,12 +99,14 @@ export function openJsonPreview() {
  * 把后端加载的数据注册进数据池（按类别，供基础类型实例化时选择）。 注意：节点类型始终是基础类型（recipes/elements/...），这里不注册任何动态类型。
  *
  * @param {string} label - 来源描述（用于状态提示）
- * @param {{ namespace: string; source: string; categories: Record<string, any[]>; count?: number }} data
+ * @param {any} rawData - 后端回发的节点图（core 数据契约，见 dataContract.js）
  */
 /** 已预览过的命名空间集合（jsonPreviewLoaded 去重用，防止画布重复铺图） */
 const __previewedNamespaces = new Set();
 
-function registerData(label, data) {
+function registerData(label, rawData) {
+    // 后端回发的是节点图；前端内部仍按「类别 + 连接候选」消费，这里做一层适配
+    const data = graphToDataPool(rawData);
     if (!data || !data.categories || typeof data.categories !== 'object') return;
     // 防御：同一命名空间重复加载时先卸载旧数据，避免数据池累积（如重复读取 mod / 预览）
     if (data.namespace && ModDataRegistry.sources[data.namespace]) {
