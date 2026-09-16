@@ -11,6 +11,10 @@
  *     → 让浏览器整页刷新（core 的改动发生在 dev server 一侧，Vite 的 HMR 管不到）
  *     → 顺带把工作区 core 副本同步一遍（扩展宿主 / 单元测试读副本，见 .vscode/tasks.json）
  *
+ * **先确认内容真的变了再刷新**：事件来了不等于内容变了（编辑器保存、`touch`、`git` 操作、
+ * 别的会话跑测试都会产生事件）。每轮先比指纹 —— 大小 + mtime 没变就直接跳过，变了才读内容算哈希；
+ * 内容没变就不刷新。刷新只看 `core/`（dev server 依赖的只有它），其余文件的改动只触发副本同步。
+ *
  * 开关与路径：
  *   CNE_CORE_WATCH=0     关闭监视（默认开启）
  *   CNE_CORE_SYNC=0      只热重载、不同步工作区副本（默认开）
@@ -49,6 +53,14 @@ const LOCK_WAIT_MS = 20000;
 const LOCK_POLL_MS = 150;
 /** 同步锁：超过这个岁数的锁文件视为上一个进程崩了留的残留，直接清掉 */
 const LOCK_STALE_MS = 60000;
+
+/**
+ * 关注范围内每个文件的内容指纹：相对路径 → { size, mtimeMs, hash }
+ *
+ * 用来过滤「事件有了但内容没变」的假变更（编辑器保存、`touch`、git 操作、别的会话跑测试）。
+ * 记录里的 size + mtimeMs 是便宜判断（不用读文件），hash 是内容层面的最终判断。
+ */
+const fingerprints = new Map();
 
 /**
  * 监听的目录（相对 core 工作区根）与是否递归
@@ -123,15 +135,174 @@ function isRelevant(rel) {
 }
 
 /**
- * 把触发文件清单说成人话（最多列 3 个）
+ * 把文件清单说成人话（最多列 3 个）
  *
  * @param {string[]} files 相对 core 工作区根的路径
- * @returns {string} 例如 `core/modLoad/toData.js 改动`
+ * @returns {string} 例如 `core/modLoad/toData.js`、`a.js、b.js、c.js 等 8 个文件`
  */
 function describe(files) {
-    if (files.length === 0) return 'core 工作区有改动';
     const shown = files.slice(0, 3).join('、');
-    return files.length > 3 ? `${shown} 等 ${files.length} 个文件改动` : `${shown} 改动`;
+    return files.length > 3 ? `${shown} 等 ${files.length} 个文件` : shown;
+}
+
+/**
+ * 递归列出目录下的文件（相对 core 工作区根），只保留会被同步的那些
+ *
+ * @param {string} absDir 目录绝对路径
+ * @param {boolean} recursive 是否递归子目录
+ * @returns {string[]} 相对路径列表（用 `/` 分隔）
+ */
+function listFiles(absDir, recursive) {
+    /** @type {string[]} */
+    const out = [];
+    /** @type {import('node:fs').Dirent[]} */
+    let entries;
+    try {
+        entries = fs.readdirSync(absDir, { withFileTypes: true });
+    } catch {
+        return out;
+    }
+    for (const entry of entries) {
+        const abs = path.join(absDir, entry.name);
+        const rel = path.relative(CORE_WORKTREE_DIR, abs).split(path.sep).join('/');
+        if (!isRelevant(rel)) continue;
+        if (entry.isDirectory()) {
+            if (recursive) out.push(...listFiles(abs, true));
+        } else {
+            out.push(rel);
+        }
+    }
+    return out;
+}
+
+/**
+ * 把事件路径展开成「要检查指纹的文件清单」
+ *
+ * @param {string[]} relPaths 本轮事件涉及的路径；空数组表示事件没给文件名（只能全量扫描）
+ * @returns {{files: string[], full: boolean}} 待检查文件，以及是否全量（全量时还能发现被删的文件）
+ */
+function expandTargets(relPaths) {
+    if (relPaths.length === 0) {
+        /** @type {string[]} */
+        const all = [];
+        for (const { rel, recursive } of WATCH_DIRS) {
+            const abs = path.join(CORE_WORKTREE_DIR, rel);
+            if (fs.existsSync(abs)) all.push(...listFiles(abs, recursive));
+        }
+        return { files: all, full: true };
+    }
+    /** @type {string[]} */
+    const files = [];
+    for (const rel of relPaths) {
+        const abs = path.join(CORE_WORKTREE_DIR, rel);
+        let isDir = false;
+        try {
+            isDir = fs.statSync(abs).isDirectory();
+        } catch {
+            // 已不存在：可能是文件被删，也可能是目录被删（下面按指纹里的子项判断）
+        }
+        if (isDir) files.push(...listFiles(abs, true));
+        else files.push(rel);
+    }
+    return { files, full: false };
+}
+
+/**
+ * 判断一个文件的内容相对上次检查是否真的变了，并把新指纹记下来
+ *
+ * 两级判断：先比大小 + mtime，没变就直接返回（连文件都不读）；变了才读内容算哈希 ——
+ * 编辑器保存、`touch`、git 操作经常只改 mtime，这种情况不该触发刷新。
+ *
+ * @param {string} rel 相对 core 工作区根的路径
+ * @returns {boolean} 内容是否真的变了
+ */
+function isContentChanged(rel) {
+    const abs = path.join(CORE_WORKTREE_DIR, rel);
+    const prev = fingerprints.get(rel);
+    /** @type {import('node:fs').Stats|null} */
+    let stat = null;
+    try {
+        stat = fs.statSync(abs);
+    } catch {
+        // 文件（或整个目录）没了
+    }
+
+    if (!stat) {
+        if (prev) {
+            fingerprints.delete(rel);
+            return true;
+        }
+        // 可能是个被删掉的目录：看指纹里有没有以它为前缀的子项
+        const prefix = `${rel}/`;
+        const kids = [...fingerprints.keys()].filter((key) => key.startsWith(prefix));
+        for (const key of kids) fingerprints.delete(key);
+        return kids.length > 0;
+    }
+    if (stat.isDirectory()) return false;
+    if (prev && prev.size === stat.size && prev.mtimeMs === stat.mtimeMs) return false;
+
+    /** @type {string} */
+    let hash;
+    try {
+        hash = createHash('sha1').update(fs.readFileSync(abs)).digest('hex');
+    } catch {
+        return false; // 读不到（被占用等）：当没变，等下次事件再判
+    }
+    fingerprints.set(rel, { size: stat.size, mtimeMs: stat.mtimeMs, hash });
+    return !prev || prev.hash !== hash;
+}
+
+/**
+ * 收集本轮「内容真的变了」的文件
+ *
+ * @param {string[]} files 待检查文件（相对 core 工作区根）
+ * @param {boolean} full 是否全量扫描；全量时指纹里多出来的条目说明文件被删了
+ * @returns {string[]} 内容有变的文件
+ */
+function collectChanged(files, full) {
+    /** @type {string[]} */
+    const changed = [];
+    const seen = new Set();
+    for (const rel of files) {
+        seen.add(rel);
+        if (isContentChanged(rel)) changed.push(rel);
+    }
+    if (full) {
+        for (const rel of [...fingerprints.keys()]) {
+            if (seen.has(rel)) continue;
+            fingerprints.delete(rel);
+            changed.push(rel);
+        }
+    }
+    return changed;
+}
+
+/**
+ * 建立内容指纹基线（dev server 启动时跑一次）
+ *
+ * 这一遍会把关注的文件（约 20MB）全读一次算哈希，之后就不会再莫名其妙地全红了：
+ * mtime + 大小没变就直接跳过，变了才读内容比哈希。
+ *
+ * @returns {{count: number, ms: number}} 建立基线的文件数与耗时
+ */
+function seedFingerprints() {
+    const started = Date.now();
+    let count = 0;
+    for (const rel of expandTargets([]).files) {
+        const abs = path.join(CORE_WORKTREE_DIR, rel);
+        try {
+            const stat = fs.statSync(abs);
+            fingerprints.set(rel, {
+                size: stat.size,
+                mtimeMs: stat.mtimeMs,
+                hash: createHash('sha1').update(fs.readFileSync(abs)).digest('hex'),
+            });
+            count += 1;
+        } catch {
+            // 读不到就跳过，等事件再处理
+        }
+    }
+    return { count, ms: Date.now() - started };
 }
 
 /**
@@ -276,6 +447,8 @@ export default function coreWatcher() {
 
             /** 本轮抖动窗口内改动过的文件（相对 core 工作区根） */
             const pending = new Set();
+            /** 本轮里有「拿不到文件名」的事件：只能全量比对指纹 */
+            let pendingFuzzy = false;
             /** @type {ReturnType<typeof setTimeout>|null} */
             let timer = null;
             /** 同步进行中（同一时刻只跑一个 sync-backend.mjs） */
@@ -312,26 +485,36 @@ export default function coreWatcher() {
             }
 
             /**
-             * core 有改动：先让 dev 侧立即生效，再顺带把工作区副本同步一遍
+             * 处理一轮抖动：先确认内容是不是真的变了，再决定刷不刷新 / 要不要同步副本
              *
-             * @param {string} trigger 触发原因（给人看的文件清单）
+             * @param {string[]} relPaths 本轮事件涉及的路径；空数组表示事件没给文件名（只能全量比对）
              */
-            async function applyChange(trigger) {
+            async function applyChange(relPaths) {
                 if (syncing) {
                     dirtyWhileSyncing = true;
                     return;
                 }
                 syncing = true;
                 try {
-                    // ① 清缓存 + 整页刷新：dev server 读的就是 core 分支工作区的代码（见 coreModules.mjs），
-                    //    所以不必等同步完成，改完 core 刷新即生效
-                    const cleared = clearCoreModules();
-                    const hot = server.hot ?? server.ws;
-                    hot?.send({ type: 'full-reload', path: '*' });
-                    console.log(`🔁 [core-watch] ${trigger} → 已重载（清掉 core 模块缓存 ${cleared.length} 个）`);
+                    const { files, full } = expandTargets(relPaths);
+                    const changed = collectChanged(files, full);
+                    if (changed.length === 0) {
+                        console.log(`· [core-watch] ${relPaths.length ? `${relPaths.length} 个事件` : '一轮无文件名事件'}，内容没变，不刷新`);
+                    } else {
+                        // ① dev server 依赖的只有 core/：它真的变了才清缓存 + 整页刷新
+                        //    （读的就是 core 分支工作区的代码，见 coreModules.mjs，不必等同步完成）
+                        if (changed.some((rel) => rel.startsWith('core/'))) {
+                            const cleared = clearCoreModules();
+                            const hot = server.hot ?? server.ws;
+                            hot?.send({ type: 'full-reload', path: '*' });
+                            console.log(`🔁 [core-watch] ${describe(changed)} 内容有变 → 已重载（清掉 core 模块缓存 ${cleared.length} 个）`);
+                        } else {
+                            console.log(`· [core-watch] ${describe(changed)} 有改动，但不在 core/ 里（dev 预览用不到，不刷新）`);
+                        }
 
-                    // ② 顺带同步工作区副本（扩展宿主 / 单元测试用；CNE_CORE_SYNC=0 可关掉）
-                    if (isSyncEnabled()) await syncCopy();
+                        // ② 顺带同步工作区副本（扩展宿主 / 单元测试用；CNE_CORE_SYNC=0 可关掉）
+                        if (isSyncEnabled()) await syncCopy();
+                    }
                 } finally {
                     syncing = false;
                 }
@@ -348,11 +531,16 @@ export default function coreWatcher() {
                 if (timer) clearTimeout(timer);
                 timer = setTimeout(() => {
                     timer = null;
-                    const files = [...pending];
+                    const relPaths = [...pending];
+                    const fuzzy = pendingFuzzy;
                     pending.clear();
-                    void applyChange(describe(files));
+                    pendingFuzzy = false;
+                    void applyChange(fuzzy ? [] : relPaths);
                 }, DEBOUNCE_MS);
             }
+
+            // 先建内容指纹基线（启动时读一遍，约 20MB），否则第一批事件会把所有文件都当成新的
+            const baseline = seedFingerprints();
 
             /** @type {fs.FSWatcher[]} */
             const watchers = [];
@@ -361,9 +549,10 @@ export default function coreWatcher() {
                 if (!fs.existsSync(dir)) continue;
                 const watcher = fs.watch(dir, { recursive }, (eventType, filename) => {
                     const changed = filename ? path.relative(CORE_WORKTREE_DIR, path.join(dir, filename)).split(path.sep).join('/') : '';
-                    // 拿不到文件名时：根目录（无关文件多）忽略，其余（core/ 等）按有改动处理
+                    // 拿不到文件名时：根目录（无关文件多）忽略，其余（core/ 等）标记为「只能全量比对」
                     if (changed ? !isRelevant(changed) : rel === '.') return;
                     if (changed) pending.add(changed);
+                    else pendingFuzzy = true;
                     schedule();
                 });
                 watcher.on('error', (error) => console.warn(`⚠️ [core-watch] 监视 ${dir} 出错：${error.message}`));
@@ -372,6 +561,7 @@ export default function coreWatcher() {
 
             console.log(`👀 [core-watch] 监视 core 分支工作区：${CORE_WORKTREE_DIR}`);
             console.log(`   dev 加载 core 代码：${CORE_MODULE_DIRS[0] || '(没找到，请先跑「同步后端」任务)'}`);
+            console.log(`   内容指纹基线：${baseline.count} 个文件 / ${baseline.ms} ms（内容没变不刷新）`);
             console.log(`   ${isSyncEnabled() ? '变更后顺带同步工作区 core 副本' : '不同步工作区 core 副本（CNE_CORE_SYNC=0）'}`);
             server.httpServer?.once('close', () => {
                 for (const watcher of watchers) watcher.close();
