@@ -106,6 +106,16 @@
                         <button id="toggle-connections" title="隐藏连接线" onclick="toggleConnections()">隐藏连接</button>
                         <button id="fit-view" title="适应视图" onclick="fitView()">适应视图</button>
                     </div>
+                    <div class="control-row">
+                        <button
+                            id="organize-layout"
+                            style="flex: 1"
+                            title="按引用方向铺行重排节点（输出在右、输入在左，每行上限可在设置里改）"
+                            onclick="organizeLayout()"
+                        >
+                            整理布局
+                        </button>
+                    </div>
                     <div class="control-row" style="align-items: center">
                         <span style="color: #eee">缩放</span>
                         <input type="range" id="zoom-slider" min="0.1" max="5" step="0.01" value="1" oninput="setScale(this.value)" />

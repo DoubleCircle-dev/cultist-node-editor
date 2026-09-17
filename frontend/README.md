@@ -20,6 +20,7 @@ frontend/
 ├─ src/
 │  ├─ main.js            唯一入口：import 样式 + index.js + debug.js
 │  ├─ index.js           应用主入口（自调用 initWebview）
+│  ├─ layout/            按引用方向铺行的自动布局（纯函数，见 flowLayout.js）
 │  ├─ styles/index.css   样式入口（顺序 = 原来的 <link> 顺序）
 │  ├─ styles/**          原 ui/css/**
 │  ├─ controllers/ models/ views/ generators/ types/ ...  原 ui/scripts/**

@@ -12,6 +12,7 @@ import { MenuManager } from './MenuManager.js';
 import { StandardMessage } from '../types/standardDetail.js';
 import { DataSelector } from '../views/dataSelector.js';
 import { ModDataRegistry } from '../modDataRegistry.js';
+import { computeFlowLayout } from '../layout/flowLayout.js';
 
 export class ControllerCore {
     /**
@@ -31,6 +32,7 @@ export class ControllerCore {
             historyMaxLength: 20,
             undoHistoryMaxLength: 20,
             autoLayoutLimit: 200, // 数据加载后自动铺图的最大节点数（超出保留在数据池）
+            layoutRowLimit: 24, // 整理布局：一行最多放几个节点（超出换行）
             theme: 'dark',
             language: 'zh-cn',
             autoSave: false,
@@ -253,6 +255,79 @@ export class ControllerCore {
         }
         const p = (model.detailProperties || []).find((prop) => prop && prop.inputPort);
         return p ? p.inputPort : null;
+    }
+
+    /**
+     * 整理布局：按引用方向铺行（左入右出）——节点按引用顺序从左到右排，每行最多
+     * `layoutRowLimit` 个（默认 24，可在设置里改），铺满才换行；换行点会避开多分支处。
+     *
+     * 行内每条线都从输出的右边指向输入的左边，不会指向左；辅助节点（长文本外化出的文本变量等）
+     * 不占行内位置：只服务一个宿主的排到宿主左侧的辅助列，服务多个宿主的收在行带上方左侧。
+     * 无任何连线的节点不参与铺行，按网格排在主图下方。
+     *
+     * @param {{ fit?: boolean | 'all', gapX?: number, rowGap?: number, rowLimit?: number }} [opts] -
+     *   fit：默认「可读缩放」展示（大图不压成看不清的一团）；'all' = 整图压进视口（同「适应视图」）；false = 不动视图
+     * @returns {{ count: number, rows: number, columns: number }} 移动的节点数、行数、最宽行节点数
+     */
+    organizeLayout(opts = {}) {
+        const nodes = this.nodes;
+        if (!nodes.length) return { count: 0, rows: 0, columns: 0 };
+
+        const items = nodes.map((node) => ({
+            id: String(node.id),
+            width: node.width || 300,
+            height: node.height || 240,
+            // 文本变量节点是辅助节点：不占行内位置，贴到宿主旁边
+            aux: node.type === 'text',
+        }));
+        /** @type {Array<{ from: string, to: string }>} */
+        const edges = [];
+        this.connectionManager.connections.forEach((conn) => {
+            if (!conn) return;
+            const fromId = String(conn.fromNodeId);
+            const toId = String(conn.toNodeId);
+            // 连线两端不一定等于数据流向：辅助节点（文本/表格）是「宿主的输入端口 ← 它的输出端口」，
+            // 模型里 from 反而是宿主。这里一律按端口方向定方向：输出侧 → 输入侧。
+            const reversed = conn.startPort && conn.startPort.direction === 'input';
+            if (reversed) edges.push({ from: toId, to: fromId });
+            else edges.push({ from: fromId, to: toId });
+        });
+
+        const layout = computeFlowLayout(items, edges, {
+            rowLimit: opts.rowLimit ?? this.setting.layoutRowLimit,
+            gapX: opts.gapX,
+            rowGap: opts.rowGap,
+        });
+        // 先在原点附近算好相对坐标，再整体平移到视野中心：避免按未知的整体尺寸反复试算
+        const { x: cx, y: cy } = this.ViewCenter;
+        const dx = cx - (layout.bounds.minX + layout.bounds.maxX) / 2;
+        const dy = cy - (layout.bounds.minY + layout.bounds.maxY) / 2;
+
+        let count = 0;
+        nodes.forEach((node) => {
+            const pos = layout.positions.get(String(node.id));
+            if (!pos) return;
+            node.setPosition(Math.round(pos.x + dx), Math.round(pos.y + dy));
+            count++;
+        });
+        // 节点位置已生效（DOM left/top 同步更新），统一重算连接线端点
+        this.connectionManager.refreshAllConnections();
+
+        // 视图：默认「可读缩放」展示（大图不压成看不清的一团），'all' 才整图压进视口
+        if (opts.fit !== false) {
+            if (opts.fit === 'all') {
+                this.canvasManager.fitView();
+            } else {
+                this.canvasManager.revealBounds({
+                    minX: layout.bounds.minX + dx,
+                    minY: layout.bounds.minY + dy,
+                    maxX: layout.bounds.maxX + dx,
+                    maxY: layout.bounds.maxY + dy,
+                });
+            }
+        }
+
+        return { count, rows: layout.rows, columns: layout.columns };
     }
 
     /**

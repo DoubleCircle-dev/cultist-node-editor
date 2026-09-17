@@ -345,11 +345,12 @@ export class NodeManager extends IManager {
                 throw new Error('节点数量已达到最大值');
             }
 
-            // 定位：父节点右侧，多个字段向下排
+            // 定位：父节点**左侧**（文本节点的输出 → 父节点该字段的输入端口，
+            // 与「左入右出」方向一致；多个字段纵向排开），后续整理布局也会据此分层
             const baseX = parentModel && parentModel.x != null ? parentModel.x : 0;
             const baseY = parentModel && parentModel.y != null ? parentModel.y : 0;
             const parentW = (parentModel && parentModel.width) || 300;
-            const x = baseX + parentW + 40;
+            const x = baseX - parentW - 120;
             const y = baseY + 20 + index * 220;
 
             const textModel = NodeGenerator.createNode(String(id), uid, 'text', x, y);

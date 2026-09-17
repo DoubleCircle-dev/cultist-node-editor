@@ -118,10 +118,16 @@ function registerData(label, rawData) {
     const created = (laid && laid.count) || 0;
     // 中间模型连接：mod JSON 中的引用 → 已铺图节点间展示连线（引用缺失/未铺图暂悬空）。
     // 延迟一帧再连线：端口圆点 DOM 位置需等本轮布局完成才准确，否则连接线端点会画到未布局位置。
-    if (core && Array.isArray(data.links) && laid && laid.created && laid.created.length) {
+    if (core && laid && laid.created && laid.created.length) {
+        const links = Array.isArray(data.links) ? data.links : [];
         requestAnimationFrame(() => {
-            const linked = core.connectDataLinks(data.links, laid.created);
+            const linked = core.connectDataLinks(links, laid.created);
             if (linked > 0) console.log(`[数据池] 已展示 ${linked} 条引用连接`);
+            // 再等一帧：连线与折叠按钮重排后节点高度才稳定，此时量出来的列高才准
+            requestAnimationFrame(() => {
+                const layout = core.organizeLayout();
+                if (layout.count) console.log(`[布局] 按引用方向铺行：${layout.count} 个节点 / ${layout.rows} 行（最宽 ${layout.columns} 个）`);
+            });
         });
     }
     updateStatus(`✅ ${label}：已加载 ${registered} 条数据，铺图 ${created} 个节点`);
@@ -214,6 +220,20 @@ export function fitView() {
     core.canvasManager.fitView();
 }
 
+/**
+ * 整理布局：按连线方向（右出 → 左入）重排画布节点，排完自动适应视图。
+ * 数据加载时会自动跑一次；手工拖动打乱后可用右下控制面板的按钮重排。
+ */
+export function organizeLayout() {
+    if (!core) return;
+    const result = core.organizeLayout();
+    if (!result.count) {
+        updateStatus('画布上没有可整理的节点');
+        return;
+    }
+    updateStatus(`✅ 已按引用方向铺行：${result.count} 个节点 / ${result.rows} 行（最宽 ${result.columns} 个）`);
+}
+
 /** @param {number} scale */
 export function setScale(scale) {
     updateStatus('缩放比例已设置为' + scale);
@@ -247,12 +267,15 @@ function applySetting(key, value) {
     if (!core) return;
     if (key === 'defaultZoom') {
         core.canvasManager.setZoom(Number(value));
+    } else if (key === 'layoutRowLimit') {
+        // 行宽改了：画布上有节点就按新行宽立即重排
+        if (core.nodes.length) core.organizeLayout();
     } else if (key === 'animationSpeed') {
         document.documentElement.style.setProperty('--transition-fast', `${Number(value)}ms ease-in-out`);
     } else if (key === 'connectionStyle') {
         document.documentElement.dataset.connectionStyle = String(value);
-        // 通过动态属性访问兼容 ConnectionManager 的私有声明，并传入其必需参数。
-        core.connectionManager['_updateConnections'](undefined);
+        // 连线样式变了，按新样式重算全部连接线路径
+        core.connectionManager.refreshAllConnections();
     } else if (key === 'showGrid') {
         document.body.classList.toggle('hide-canvas-grid', !value);
     } else if (key === 'gridSize') {
@@ -333,6 +356,12 @@ export function openSettings() {
             <label class="settings-option"><input data-setting="snapToGrid" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">对齐网格</span></span></label>
             <label class="settings-option"><input data-setting="showGrid" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">显示网格</span></span></label>
             <label class="settings-option"><input data-setting="showMiniMap" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">显示小地图</span></span></label>
+        </section>
+        <section class="settings-section">
+            <div class="settings-section-title">布局</div>
+            <label class="settings-field">每行最多节点数
+                <input data-setting="layoutRowLimit" type="number" min="2" max="200" step="1" />
+            </label>
         </section>
         <section class="settings-section">
             <div class="settings-section-title">编辑</div>
@@ -598,6 +627,7 @@ win.openJsonPreview = openJsonPreview;
 
 win.setScale = setScale;
 win.fitView = fitView;
+win.organizeLayout = organizeLayout;
 win.changeMode = changeMode;
 win.toggleConnections = toggleConnections;
 

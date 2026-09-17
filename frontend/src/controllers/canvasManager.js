@@ -296,6 +296,44 @@ export class CanvasManager extends IManager {
         this.updateTransform();
     }
 
+    /**
+     * 展示一块世界区域：能完整放下就完整显示，放不下就退到「可读缩放下限」并定位到区域左上角。
+     *
+     * 与 fitView 的区别：fitView 会把整图压进视口（大图会被压到 10% 看不清），
+     * 这里保证缩放不低于 minReadableScale，宁可只显示局部，也不把字压没。
+     *
+     * @param {{ minX: number, minY: number, maxX: number, maxY: number }} bounds
+     * @param {{ minReadableScale?: number, padding?: number }} [opts]
+     */
+    revealBounds(bounds, opts = {}) {
+        if (!bounds || !this.viewport || !this.world) return;
+        const { minX, minY, maxX, maxY } = bounds;
+        const width = Math.max(1, maxX - minX);
+        const height = Math.max(1, maxY - minY);
+        const padding = opts.padding ?? 60;
+        const minReadableScale = opts.minReadableScale ?? 0.5;
+
+        const viewportW = this.viewport.clientWidth;
+        const viewportH = this.viewport.clientHeight;
+        const fitScale = Math.min((viewportW - padding * 2) / width, (viewportH - padding * 2) / height);
+        const scale = Math.min(
+            this.coreSpace.setting.maxZoom ?? Infinity,
+            Math.max(minReadableScale, Math.min(fitScale, this.coreSpace.setting.maxZoom ?? Infinity))
+        );
+
+        this.transform.scale = scale;
+        if (scale <= fitScale + 1e-6) {
+            // 整块都放得下 → 居中显示
+            this.transform.x = viewportW / 2 - ((minX + maxX) / 2) * scale;
+            this.transform.y = viewportH / 2 - ((minY + maxY) / 2) * scale;
+        } else {
+            // 放不下 → 把区域左上角（流程起点）对齐视口左上角
+            this.transform.x = padding - minX * scale;
+            this.transform.y = padding - minY * scale;
+        }
+        this.updateTransform();
+    }
+
     //强制画面缩放微小幅度，以触发重绘
     Brefresh() {
         const s = this.transform.scale;

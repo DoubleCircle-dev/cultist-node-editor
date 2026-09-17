@@ -302,6 +302,14 @@ export class ConnectionManager extends IManager {
     }
 
     /**
+     * 重算全部连接线端点（拖拽之外的批量位移：整理布局、连线样式切换等）。
+     * 端点取自端口圆点的真实 DOM 位置，因此调用前节点必须已挂载且位置已生效。
+     */
+    refreshAllConnections() {
+        this._updateConnections(undefined);
+    }
+
+    /**
      * @private
      * @param {CustomEvent} e
      */
