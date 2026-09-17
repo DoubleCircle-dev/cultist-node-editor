@@ -40,6 +40,7 @@ npm run verify
 | `propRendering.test.mjs` | 全节点类型 × 全属性渲染检测（含扩展属性池/模式属性/端口） |
 | `flowLayout.test.mjs` | 铺行布局纯函数：边一律向右、每行上限、换行避开多分支、辅助节点分列、多连线节点抬高 |
 | `organizeLayout.test.mjs` | `ControllerCore.organizeLayout` 接线：按端口方向定前后、位置落到模型与 DOM |
+| `nodeSearch.test.mjs` | 预览模式搜索节点框：title/id/label 匹配、键盘选择、`ControllerCore.focusNode` 定位居中 |
 | `memory-check.mjs` | 独立内存检查：批量创建/删除后堆内存平坦 |
 | `helpers/domSetup.mjs` | jsdom 全局环境（document/Event/CustomEvent/EventTarget…） |
 | `helpers/env.mjs` | 构建 webview 骨架 + 创建/销毁 `ControllerCore` |

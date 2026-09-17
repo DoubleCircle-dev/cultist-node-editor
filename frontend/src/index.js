@@ -3,6 +3,7 @@ import { NodeModel } from './models/nodeModels/nodeModel.js';
 import { NodeTypeRegistry } from './types/nodeTypes.js';
 import { NodeGenerator } from './generators/nodeGenerator.js';
 import { NodeView } from './views/nodeView.js';
+import { NodeSearchBox } from './views/nodeSearchBox.js';
 import { ModDataRegistry } from './modDataRegistry.js';
 import { graphToDataPool } from './dataContract.js';
 import { previewJsonInBrowser } from './devPreview.js';
@@ -545,6 +546,25 @@ if (PREVIEW_MODE) {
     previewRo.observe(document.body, { childList: true, subtree: true });
 }
 
+/** 预览模式右上角的「搜索节点」框（编辑模式用侧边栏面板，这里为 null） */
+let nodeSearchBox = null;
+
+/**
+ * 创建并挂载搜索框：输入 title / id / label 即可过滤，选中后由核心控制器定位到该节点。
+ *
+ * @param {ControllerCore} coreInstance
+ */
+function initNodeSearchBox(coreInstance) {
+    if (nodeSearchBox) return nodeSearchBox;
+    nodeSearchBox = new NodeSearchBox({
+        getNodes: () => coreInstance.nodes,
+        onPick: (node) => coreInstance.focusNode(node.id),
+    });
+    nodeSearchBox.mount(document.body);
+    win.nodeSearchBox = nodeSearchBox;
+    return nodeSearchBox;
+}
+
 // 初始化函数
 function initWebview(callback) {
     console.log('初始化Webview');
@@ -577,6 +597,7 @@ function initWebview(callback) {
                 // 预览仅查看：用 select 模式（点击节点可选中并拖动整理布局）；
                 // 注意不能用 drag 模式——nodeManager 在 drag 模式下对节点 mousedown 直接清选并 return，节点无法拖动。
                 core.canvasManager.setMode('select');
+                initNodeSearchBox(core);
             }
 
             // 通知后端 webview 已就绪（自定义编辑器「打开方式」依赖此信号发送预览数据）

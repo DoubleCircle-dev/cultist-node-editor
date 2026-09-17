@@ -20,6 +20,7 @@
 @import './utils/buttons.css';
 @import './utils/status.css';
 @import './utils/viewControl.css';
+@import './utils/nodeSearch.css';
 
 /* 组件 */
 @import './components/connections.css';

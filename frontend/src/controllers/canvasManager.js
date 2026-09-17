@@ -297,6 +297,25 @@ export class CanvasManager extends IManager {
     }
 
     /**
+     * 把某个世界坐标点移到视口中心（可选顺带改缩放）。「搜索节点」定位用。
+     *
+     * @param {number} worldX
+     * @param {number} worldY
+     * @param {{ scale?: number | null }} [opts] - scale 为空时保持当前缩放
+     */
+    centerOn(worldX, worldY, opts = {}) {
+        if (!this.viewport || !this.world) return;
+        if (opts.scale != null && Number.isFinite(opts.scale)) {
+            const minZoom = this.coreSpace.setting.minZoom ?? 0.1;
+            const maxZoom = this.coreSpace.setting.maxZoom ?? 3;
+            this.transform.scale = Math.min(maxZoom, Math.max(minZoom, opts.scale));
+        }
+        this.transform.x = this.viewport.clientWidth / 2 - worldX * this.transform.scale;
+        this.transform.y = this.viewport.clientHeight / 2 - worldY * this.transform.scale;
+        this.updateTransform();
+    }
+
+    /**
      * 展示一块世界区域：能完整放下就完整显示，放不下就退到「可读缩放下限」并定位到区域左上角。
      *
      * 与 fitView 的区别：fitView 会把整图压进视口（大图会被压到 10% 看不清），

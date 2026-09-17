@@ -1,0 +1,148 @@
+/**
+ * 画布右上角「搜索节点」快捷框（预览模式用）
+ *
+ * 预览模式没有侧边栏，这个框是查找/定位节点的唯一入口，所以只在预览模式显示。
+ */
+
+.node-search {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 260px;
+    z-index: var(--z-side-bar);
+    background: rgba(30, 30, 30, 0.92);
+    backdrop-filter: blur(5px);
+    border: 1px solid #444;
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    font-size: 12px;
+    /* 编辑模式用侧边栏的「查找节点」面板，这里不重复出现 */
+    display: none;
+}
+
+body.preview-mode .node-search {
+    display: block;
+}
+
+.node-search-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+}
+
+.node-search-icon {
+    opacity: 0.7;
+}
+
+.node-search-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 12px;
+    padding: 3px 6px;
+}
+
+.node-search-input:focus {
+    outline: 1px solid var(--accent-primary);
+    background: var(--bg-secondary);
+}
+
+.node-search-clear {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    opacity: 0.6;
+    cursor: pointer;
+    font-family: 'Segoe UI Symbol', var(--font-sans);
+    font-size: 14px;
+    line-height: 1;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+}
+
+.node-search-clear:hover {
+    opacity: 1;
+}
+
+.node-search-results {
+    max-height: 320px;
+    /* 长标题不换行 → 只允许纵向滚动，否则会出现横向滚动条 */
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-top: 1px solid var(--border-color);
+}
+
+.node-search-results.hidden {
+    display: none;
+}
+
+.node-search-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 8px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.node-search-item:hover,
+.node-search-item.active {
+    background: var(--bg-tertiary);
+}
+
+.node-search-item.active {
+    box-shadow: inset 2px 0 0 var(--accent-primary);
+}
+
+.node-search-item-title {
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.node-search-item-meta {
+    color: var(--text-muted);
+    font-size: 11px;
+    flex-shrink: 0;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.node-search-empty,
+.node-search-more {
+    padding: 6px 8px;
+    color: var(--text-muted);
+}
+
+/* 定位到节点时闪一下，避免「点了没反应」 */
+@keyframes node-search-flash {
+    0% {
+        outline-color: rgba(113, 198, 255, 0);
+        box-shadow: 0 0 0 0 rgba(113, 198, 255, 0);
+    }
+    15%,
+    55% {
+        outline-color: rgba(113, 198, 255, 0.95);
+        box-shadow: 0 0 0 6px rgba(113, 198, 255, 0.5);
+    }
+    100% {
+        outline-color: rgba(113, 198, 255, 0);
+        box-shadow: 0 0 0 0 rgba(113, 198, 255, 0);
+    }
+}
+
+.node.found-flash {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    animation: node-search-flash 1.6s ease-in-out 2;
+}

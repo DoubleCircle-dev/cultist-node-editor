@@ -23,7 +23,8 @@ frontend/
 │  ├─ layout/            按引用方向铺行的自动布局（纯函数，见 flowLayout.js）
 │  ├─ styles/index.css   样式入口（顺序 = 原来的 <link> 顺序）
 │  ├─ styles/**          原 ui/css/**
-│  ├─ controllers/ models/ views/ generators/ types/ ...  原 ui/scripts/**
+│  ├─ views/nodeSearchBox.js  预览模式右上角的搜索节点框（title/id/label）
+│  └─ controllers/ models/ views/ generators/ types/ ...  原 ui/scripts/**
 ├─ public/               运行时数据，构建时原样拷贝到 dist/
 │  ├─ json-manifest.json / config.json / help.json / UI-config.json
 │  ├─ webview-config.json   （扩展读它注入 NODE_EDITOR_CONFIG）

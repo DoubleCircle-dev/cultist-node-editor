@@ -83,7 +83,63 @@ export class ControllerCore {
 
         this.panelManager = new PanelManager(this.bus, this.viewport, this.world, this);
 
+        /**
+         * 侧边栏「查找节点」面板点条目时会 emit `findNode`，定位由这里负责。
+         *
+         * @private
+         * @type {(e: CustomEvent) => void}
+         */
+        this._findNodeHandler = (e) => {
+            const id = e && e.detail ? e.detail.id : null;
+            if (id != null) this.focusNode(id);
+        };
+        this.bus.on('findNode', this._findNodeHandler);
+
         this._bindShortCut();
+    }
+
+    /**
+     * 定位到某个节点：选中它、把视野移到它身上（缩放夹在可读区间内），并闪一下提示。
+     * 「搜索节点」框与侧边栏「查找节点」面板点条目时都走这里。
+     *
+     * @param {string | number} nodeId - 节点的内部 id 或界面上的 uid（`#12` 里的 12）
+     * @param {{ select?: boolean, flash?: boolean, minScale?: number, maxScale?: number }} [opts]
+     * @returns {boolean} 是否找到并定位
+     */
+    focusNode(nodeId, opts = {}) {
+        if (nodeId == null) return false;
+        const key = String(nodeId);
+        const node = this.nodes.find((item) => String(item.id) === key || String(item.uid) === key);
+        if (!node) return false;
+
+        if (opts.select !== false) {
+            this.nodes.forEach((item) => {
+                if (item !== node && item.selected) item.setSelected(false);
+            });
+            node.setSelected(true);
+        }
+
+        // 缩放：太远看不清、太近只看得到一个节点，都夹到可读区间
+        const minScale = opts.minScale ?? 0.5;
+        const maxScale = opts.maxScale ?? 1;
+        const current = this.canvasManager.transform.scale || 1;
+        const scale = Math.min(maxScale, Math.max(minScale, current));
+        const width = node.width || 300;
+        const height = node.height || 240;
+        this.canvasManager.centerOn(node.x + width / 2, node.y + height / 2, { scale });
+
+        if (opts.flash !== false) {
+            const view = this.nodeManager.nodeViews.get(String(node.id));
+            const dom = view ? view.element : null;
+            if (dom) {
+                dom.classList.remove('found-flash');
+                // 强制重排，保证连续定位同一个节点也能重新播放动画
+                void dom.offsetWidth;
+                dom.classList.add('found-flash');
+                setTimeout(() => dom.classList.remove('found-flash'), 3000);
+            }
+        }
+        return true;
     }
 
     /**
@@ -437,6 +493,10 @@ export class ControllerCore {
         if (this._shortcutHandler) {
             document.removeEventListener('keydown', this._shortcutHandler);
             this._shortcutHandler = null;
+        }
+        if (this._findNodeHandler) {
+            this.bus.off('findNode', this._findNodeHandler);
+            this._findNodeHandler = null;
         }
 
         // 注意：UIManager 不是 IManager 子类，没有 destroy()，需做能力判断
