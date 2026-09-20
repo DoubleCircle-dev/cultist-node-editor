@@ -66,6 +66,12 @@ const EXTERNAL_MOD = 'external-mod';
 /** 中间态 JSON 的形状标识（前端 nodeModel ⇄ 中间态互转时校对用） */
 const GRAPH_FORMAT = 'cne-node-graph';
 const GRAPH_VERSION = 1;
+
+/** 节点角色：data = 数据条目（写回 content 文件）；tool = 工具节点（只为表达值，不写数据文件） */
+const NODE_ROLE = { DATA: 'data', TOOL: 'tool' };
+
+/** 连接线种类：link = 引用关系；contains = 结构拆分；bind = 值绑定/外化（工具节点 → 字段） */
+const EDGE_KINDS = ['link', 'contains', 'bind'];
 /** 一条汇总告警里最多列几个目标 id（其余折叠成「等 N 个」） */
 const WARN_TARGET_LIMIT = 5;
 
@@ -188,7 +194,7 @@ function detectConnections(category, entry) {
  * @param {any} [inline] - 该节点是不是从宿主的内联定义拆出来的（是则写明宿主与字段），见 expandEntry
  * @returns {{
  *     uid: string; id: string; type: string; category: string; title: string;
- *     file: string; source: string;
+ *     file: string; source: string; role: 'data'|'tool';
  *     inline: any;
  *     props: Array<Record<string, any>>;
  *     connections: ReturnType<typeof detectConnections>;
@@ -211,6 +217,8 @@ function entryToNode(category, entry, source, inline = null) {
         title,
         file: source.file || '',
         source: source.source || 'mod',
+        // 本函数只建数据条目；字段声明 materialize.as='tool' 时由 expandEntry 建工具节点。
+        role: NODE_ROLE.DATA,
         inline,
         props,
         connections,
@@ -219,7 +227,51 @@ function entryToNode(category, entry, source, inline = null) {
 }
 
 /**
- * 建 id → 节点 索引（跨类别；同 id 多节点时全部保留，连线会扇出到每一个）
+ * 将 mapping 声明为 materialize.as='tool' 的字段表示为工具节点。
+ *
+ * 工具节点不是 content 条目，故没有可被引用的 id，也不加入 id 索引。它的值由
+ * `contains` 边定位回宿主字段；uid 仅供画布和该结构边稳定关联。
+ *
+ * 节点自带 `tool` 描述符（与内联子节点的 `inline` 对称），因此前端**不需要**反查边
+ * 就能知道「这是什么工具、值从哪个宿主的哪个字段来」；怎么渲染这个工具由前端决定。
+ *
+ * @param {any} host - 持有该字段的数据节点
+ * @param {string} field - 字段名
+ * @param {string} kind - 字段的基础属性类型
+ * @param {any} value - 字段原始值
+ * @param {Record<string, any>} materialize - mapping 的 materialize 声明
+ * @returns {any} 工具节点
+ */
+function toolNode(host, field, kind, value, materialize) {
+    const type = String(materialize.type || 'tool');
+    return {
+        uid: `tool:${host.uid}:${field}`,
+        id: '',
+        type,
+        category: type,
+        title: `${host.title} · ${field}`,
+        file: host.file,
+        source: host.source,
+        role: NODE_ROLE.TOOL,
+        inline: null,
+        // 工具节点的来源：宿主与字段。渲染方式（表格/列表/变量控件）由前端按 type 决定
+        tool: {
+            as: NODE_ROLE.TOOL,
+            type,
+            hostUid: host.uid,
+            hostCategory: host.category,
+            hostId: host.id,
+            field,
+        },
+        value,
+        props: [{ name: 'value', kind, value, links: [], materialize: null }],
+        connections: [],
+        refCount: 0,
+    };
+}
+
+/**
+ * 建 id → 节点 索引（跨类别；同 id 多节点时全部保留，解析连线时按 `from.targets` 收敛）
  *
  * @param {{ id: string }[]} nodes - 节点列表
  * @returns {Map<string, any[]>} id 索引
@@ -364,6 +416,15 @@ function summarizeExternal(external) {
 /**
  * 解析待连接（第 ③ 步）：pending edge + id 索引 → 已连接 edge / 文件外节点 / 告警。
  *
+ * 解析规则：
+ *   1. **两端都已明确**（如包含连线，建边时就写好了子节点 uid）→ 直接 resolved，不再按 id 重查；
+ *   2. 只明确了引用端 → 拿 `targetId` 去 id 索引里找，**多个同 id 节点时按 `from.targets`
+ *      声明的目标类别收敛**（仍多义时优先正式定义，不选从宿主字段拆出来的内联节点）；
+ *   3. 索引里没有 → 标文件外节点（external-origin / external-mod）。
+ *
+ * 第 2 条的「收敛」不可省略：内联拆分出来的 slots 节点常常与宿主同 id
+ *（Cultist 的 verb.slot.id 就写作 verb.id），不筛类别会把一条引用解成两条。
+ *
  * @param {any[]} pending - buildPendingEdges 产物
  * @param {Map<string, any[]>} index - buildIdIndex 产物
  * @param {{ scope?: 'file'|'global'; originIds?: Set<string>|string[]|null }} [options]
@@ -378,17 +439,24 @@ function resolveEdges(pending, index, options = {}) {
     const external = [];
 
     (pending || []).forEach((edge) => {
+        // 两端都已明确：目标就是已经写在里的那个节点（别再用 id 索引重查，否则会同 id 的兄弟节点也会连上）
+        if (edge.out.uid && edge.in.uid) {
+            const target = edge.out.uid === edge.from.uid ? edge.in : edge.out;
+            edges.push({ ...edge, status: 'resolved', to: pickPatch(target) });
+            return;
+        }
+
         const hits = index.get(edge.targetId);
         if (hits && hits.length) {
-            hits.forEach((hit) => {
-                const patch = { uid: hit.uid, type: hit.type, category: hit.category, id: hit.id };
+            pickHits(hits, edge).forEach((hit) => {
+                const patch = pickPatch(hit);
                 // 目标那一端（uid 为空的一端）补上目标节点信息
                 edges.push({
                     ...edge,
                     out: edge.out.uid ? edge.out : { ...edge.out, ...patch },
                     in: edge.in.uid ? edge.in : { ...edge.in, ...patch },
                     status: 'resolved',
-                    to: { uid: hit.uid, type: hit.type, category: hit.category, id: hit.id },
+                    to: patch,
                 });
             });
             return;
@@ -405,6 +473,38 @@ function resolveEdges(pending, index, options = {}) {
         external,
         warnings: scope === 'global' ? summarizeExternal(external) : [],
     };
+}
+
+/** 取节点信息补到连线端点（uid / type / category / id） */
+function pickPatch(node) {
+    return { uid: node.uid, type: node.type, category: node.category, id: node.id };
+}
+
+/** 两个类别名是否指同一类（容大小写与复数差异：recipes / Recipe / recipe 视为同类） */
+function sameCategory(a, b) {
+    const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/s$/, '');
+    return norm(a) === norm(b);
+}
+
+/**
+ * id 命中多个节点时的取舍：先按规则声明的目标类别收敛，再优先「正式定义」。
+ *
+ * @param {any[]} hits - 同 id 的节点列表
+ * @param {any} edge - pending edge（用 from.targets 收敛）
+ * @returns {any[]} 要连的目标节点（保持原行为：实在分不出就全连，不静默丢引用）
+ */
+function pickHits(hits, edge) {
+    if (hits.length <= 1) return hits;
+
+    const targets = (edge.from && edge.from.targets) || [];
+    let pool = targets.length ? hits.filter((h) => targets.some((t) => sameCategory(t, h.category))) : hits;
+    if (!pool.length) pool = hits; // 规则没写 / 写的类别对不上 → 退回全连
+
+    if (pool.length > 1) {
+        const declared = pool.filter((h) => !h.inline);
+        if (declared.length) pool = declared;
+    }
+    return pool;
 }
 
 /** 内联定义拆节点的递归深度上限（防「定义里再套定义」无限展开） */
@@ -433,6 +533,15 @@ function expandEntry(category, entry, origin, ctx) {
     ctx.nodes.push(node);
     if (uid) ctx.byUid.set(uid, node);
     ctx.pending.push(...buildPendingEdges([node]));
+
+    node.props
+        .filter((prop) => prop.materialize && prop.materialize.as === NODE_ROLE.TOOL)
+        .forEach((prop) => {
+            const childNode = toolNode(node, prop.name, prop.kind, prop.value, prop.materialize);
+            ctx.nodes.push(childNode);
+            ctx.byUid.set(childNode.uid, childNode);
+            ctx.pending.push(toolContainmentEdge(node, prop.name, childNode));
+        });
 
     if (ctx.depth >= MAX_INLINE_DEPTH) return node;
 
@@ -497,6 +606,58 @@ function containmentEdge(host, child, childNode) {
             field: child.field,
             side: 'output',
             port: `output:${child.field}`,
+        },
+        in: {
+            uid: childNode.uid,
+            type: childNode.type,
+            category: childNode.category,
+            id: childNode.id,
+            side: 'input',
+            port: 'link',
+        },
+        status: 'pending',
+        to: null,
+    };
+}
+
+/**
+ * 工具性包含关系：宿主字段 → 从该字段拆出的工具节点。
+ *
+ * 与内联数据条目的 contains 边共享形状，但工具节点没有数据 id；两端 uid 均明确，
+ * resolveEdges 会直接将它解析为 resolved。
+ *
+ * @param {any} host - 宿主数据节点
+ * @param {string} field - 产生工具节点的字段
+ * @param {any} childNode - 工具节点
+ * @returns {any} 工具节点的包含边
+ */
+function toolContainmentEdge(host, field, childNode) {
+    return {
+        id: `${host.uid}.${field}#tool#${childNode.uid}`,
+        kind: 'contains',
+        from: {
+            uid: host.uid,
+            type: host.type,
+            category: host.category,
+            id: host.id,
+            field,
+            port: field,
+            side: 'output',
+            targets: [childNode.category],
+            extract: 'tool',
+            multi: false,
+            sources: ['mapping'],
+        },
+        targetId: '',
+        amount: null,
+        out: {
+            uid: host.uid,
+            type: host.type,
+            category: host.category,
+            id: host.id,
+            field,
+            side: 'output',
+            port: `output:${field}`,
         },
         in: {
             uid: childNode.uid,
@@ -719,10 +880,13 @@ module.exports = {
     EXTERNAL_MOD,
     GRAPH_FORMAT,
     GRAPH_VERSION,
+    NODE_ROLE,
+    EDGE_KINDS,
     namespaceKey,
     nodeUid,
     detectConnections,
     entryToNode,
+    toolNode,
     buildIdIndex,
     buildPendingEdges,
     resolveEdges,
@@ -733,4 +897,3 @@ module.exports = {
     singleFileToData,
     FileToData: singleFileToData,
 };
-

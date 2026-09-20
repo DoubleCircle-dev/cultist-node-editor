@@ -228,8 +228,13 @@ suite('modLoad 数据加载流水线', () => {
         assert.ok(graph.stats.resolved / graph.stats.edges > 0.9, 'origin 内部连接率应超过 90%');
 
         assert.ok(
-            graph.nodes.every((n) => typeof n.uid === 'string' && n.uid.startsWith('origin:') && n.type === n.category),
-            '每个节点都要有命名空间化的 uid，且 type === category'
+            graph.nodes.every(
+                (n) =>
+                    typeof n.uid === 'string' &&
+                    (n.role === 'tool' ? n.uid.startsWith('tool:origin:') : n.uid.startsWith('origin:')) &&
+                    n.type === n.category
+            ),
+            '数据节点使用 origin 命名空间，工具节点使用稳定的 tool:origin 前缀，且 type === category'
         );
         assert.ok(
             graph.edges.every((e) => ['resolved', 'external-origin', 'external-mod'].includes(e.status)),
@@ -420,6 +425,70 @@ suite('modLoad 数据加载流水线', () => {
         assert.strictEqual(contains.to.uid, 'test:slots:s1');
         assert.strictEqual(contains.out.port, 'output:slots');
         assert.strictEqual(contains.in.port, 'link');
+    });
+
+    test('契约面：角色与连线种类（role / NODE_ROLE / EDGE_KINDS，materialize 工具节点）', () => {
+        const graph = toData.buildGraph(
+            [
+                {
+                    category: 'recipes',
+                    relativePath: 'a.json',
+                    entries: [{ id: 'r1', mutations: [{ filter: 'lantern', mutate: 'knock' }] }],
+                },
+            ],
+            { namespace: 'test', scope: 'global' }
+        );
+
+        const recipe = graph.nodes.find((n) => n.uid === 'test:recipes:r1');
+        const tool = graph.nodes.find((n) => n.role === 'tool');
+        assert.strictEqual(recipe.role, 'data');
+        assert.strictEqual(toData.NODE_ROLE.TOOL, 'tool');
+        assert.deepStrictEqual(tool, {
+            uid: 'tool:test:recipes:r1:mutations',
+            id: '',
+            type: 'table',
+            category: 'table',
+            title: 'r1 · mutations',
+            file: 'a.json',
+            source: 'mod',
+            role: 'tool',
+            inline: null,
+            // 自描述：前端据此知道这是什么工具、值来自哪个宿主的哪个字段（无需反查边）
+            tool: {
+                as: 'tool',
+                type: 'table',
+                hostUid: 'test:recipes:r1',
+                hostCategory: 'recipes',
+                hostId: 'r1',
+                field: 'mutations',
+            },
+            value: [{ filter: 'lantern', mutate: 'knock' }],
+            props: [
+                {
+                    name: 'value',
+                    kind: 'list',
+                    value: [{ filter: 'lantern', mutate: 'knock' }],
+                    links: [],
+                    materialize: null,
+                },
+            ],
+            connections: [],
+            refCount: 0,
+        });
+
+        // 连线种类字典：link（引用）/ contains（结构拆分）/ bind（工具节点的值绑定，前端产出）
+        assert.deepStrictEqual(toData.EDGE_KINDS, ['link', 'contains', 'bind']);
+        assert.ok(
+            graph.edges.every((e) => toData.EDGE_KINDS.includes(e.kind)),
+            '每条边的 kind 都在字典里'
+        );
+        const contains = graph.edges.find((e) => e.kind === 'contains' && e.to.uid === tool.uid);
+        assert.strictEqual(contains.status, 'resolved');
+        assert.strictEqual(contains.from.field, 'mutations');
+        assert.strictEqual(contains.out.uid, recipe.uid);
+        assert.strictEqual(contains.in.uid, tool.uid);
+        // 后端目前只产 link / contains；bind 由前端产出，形状与之对齐（from / out / in 齐全）
+        assert.ok(!graph.edges.some((e) => e.kind === 'bind'), '导入方向不含 bind 边');
     });
 
     test('mapping：别名 / 兜底规则（legcies 拼写错误、未知类别）', () => {
