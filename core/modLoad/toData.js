@@ -38,7 +38,7 @@
  *       · `kind`  = `string | number | boolean | list | dict`（**值本身的 JSON 类型**，前端据此选控件）；
  *       · `value` = 原始值，原样（不加工、不字符串化）；
  *       · `link`  = 连接需求（`direction` / `targets` / `multi` / `extract`），没有就是 null；
- *       · `materialize` = 中间态转化（该抽取成节点/工具节点时给出）；
+ *       · `materialize` = 中间态转化（该抽取成节点/变量节点时给出）；
  *   - `connections` = 连接需求检测结果（字段 → 方向 → 目标 id 列表）。
  *
  * 连接线（edge）结构：
@@ -67,10 +67,10 @@ const EXTERNAL_MOD = 'external-mod';
 const GRAPH_FORMAT = 'cne-node-graph';
 const GRAPH_VERSION = 1;
 
-/** 节点角色：data = 数据条目（写回 content 文件）；tool = 工具节点（只为表达值，不写数据文件） */
+/** 节点角色：data = 数据条目（写回 content 文件）；tool = 工具节点大类（非数据条目、不写数据文件；持有值的子类叫变量节点） */
 const NODE_ROLE = { DATA: 'data', TOOL: 'tool' };
 
-/** 连接线种类：link = 引用关系；contains = 结构拆分；bind = 值绑定/外化（工具节点 → 字段） */
+/** 连接线种类：link = 引用关系；contains = 结构拆分；bind = 值绑定/外化（变量节点 → 字段） */
 const EDGE_KINDS = ['link', 'contains', 'bind'];
 /** 一条汇总告警里最多列几个目标 id（其余折叠成「等 N 个」） */
 const WARN_TARGET_LIMIT = 5;
@@ -156,7 +156,7 @@ function entryToNode(category, entry, source, inline = null) {
         title,
         file: source.file || '',
         source: source.source || 'mod',
-        // 本函数只建数据条目；字段声明 materialize.as='tool' 时由 expandEntry 建工具节点。
+        // 本函数只建数据条目；字段声明 materialize.as='tool' 时由 expandEntry 建变量节点。
         role: NODE_ROLE.DATA,
         inline,
         props,
@@ -166,20 +166,21 @@ function entryToNode(category, entry, source, inline = null) {
 }
 
 /**
- * 将 mapping 声明为 materialize.as='tool' 的字段表示为工具节点。
+ * 将 mapping 声明为 materialize.as='tool' 的字段表示为**工具节点**里的**变量节点**。
  *
- * 工具节点不是 content 条目，故没有可被引用的 id，也不加入 id 索引。它的值由
+ * 变量节点不是 content 条目，故没有可被引用的 id，也不加入 id 索引。它的值由
  * `contains` 边定位回宿主字段；uid 仅供画布和该结构边稳定关联。
  *
  * 节点自带 `tool` 描述符（与内联子节点的 `inline` 对称），因此前端**不需要**反查边
- * 就能知道「这是什么工具、值从哪个宿主的哪个字段来」；怎么渲染这个工具由前端决定。
+ * 就能知道「这是什么变量、值从哪个宿主的哪个字段来」；怎么渲染这个变量由前端决定。
+ * （命名沿用契约里的 `tool` / `role: 'tool'`：工具节点是大类，变量节点是其中持有值的一类。）
  *
  * @param {any} host - 持有该字段的数据节点
  * @param {string} field - 字段名
  * @param {string} kind - 字段的基础属性类型
  * @param {any} value - 字段原始值
  * @param {Record<string, any>} materialize - mapping 的 materialize 声明
- * @returns {any} 工具节点
+ * @returns {any} 工具节点（变量节点）
  */
 function toolNode(host, field, kind, value, materialize) {
     const type = String(materialize.type || 'tool');
@@ -193,7 +194,7 @@ function toolNode(host, field, kind, value, materialize) {
         source: host.source,
         role: NODE_ROLE.TOOL,
         inline: null,
-        // 工具节点的来源：宿主与字段。渲染方式（表格/列表/变量控件）由前端按 type 决定
+        // 变量节点的来源：宿主与字段。渲染方式（字典 / 列表 / 标量控件）由前端按 type 决定
         tool: {
             as: NODE_ROLE.TOOL,
             type,
@@ -564,15 +565,15 @@ function containmentEdge(host, child, childNode) {
 }
 
 /**
- * 工具性包含关系：宿主字段 → 从该字段拆出的工具节点。
+ * 变量节点的包含关系：宿主字段 → 从该字段拆出的工具节点（变量节点）。
  *
- * 与内联数据条目的 contains 边共享形状，但工具节点没有数据 id；两端 uid 均明确，
+ * 与内联数据条目的 contains 边共享形状，但变量节点没有数据 id；两端 uid 均明确，
  * resolveEdges 会直接将它解析为 resolved。
  *
  * @param {any} host - 宿主数据节点
- * @param {string} field - 产生工具节点的字段
- * @param {any} childNode - 工具节点
- * @returns {any} 工具节点的包含边
+ * @param {string} field - 产生变量节点的字段
+ * @param {any} childNode - 工具节点（变量节点）
+ * @returns {any} 工具节点（变量节点）的包含边
  */
 function toolContainmentEdge(host, field, childNode) {
     return {

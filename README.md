@@ -199,7 +199,7 @@ pnpm run package:vsix          # 打包成 vsix（会先自动生成 origin 快�
   source: 'origin' | 'mod', namespace, count, scope: 'file' | 'global',
   nodes: [
     { uid, id, type, category, title, file, source, refCount,
-      // 'data' = 数据条目（写回 content 文件）；'tool' = 工具性节点（变量 / 表格，不写数据文件）
+      // 'data' = 数据条目（写回 content 文件）；'tool' = 工具节点（变量节点等，不写数据文件）
       role: 'data' | 'tool',
       // 从宿主的内联定义拆出来的节点才非 null：{ hostUid, hostCategory, hostId, field, index, syntheticId }
       inline,
@@ -208,7 +208,7 @@ pnpm run package:vsix          # 打包成 vsix（会先自动生成 origin 快�
       connections: [ { field, port, side, targets, extract, multi, sources, targetIds, reverse? } ] },
   ],
   edges: [
-    // kind: 'link'（引用）/ 'contains'（宿主 → 拆出来的子节点）/ 'bind'（工具节点 → 使用它的字段）
+    // kind: 'link'（引用）/ 'contains'（宿主 → 拆出来的子节点）/ 'bind'（变量节点 → 使用它的字段）
     { id, kind: 'link',
       from: { uid, type, category, id, field, port, side, targets, extract, multi, sources, reverse? },
       out:  { uid, type, category, id, field?, side: 'output', port },
@@ -281,28 +281,33 @@ pnpm run package:vsix          # 打包成 vsix（会先自动生成 origin 快�
      `toData.expandEntry()` 为它们建节点（同 id 只建一次，递归深度上限 4）并补一条
      `kind: 'contains'` 的包含连线（宿主 `output:<字段名>` → 子节点的通用入口 `link`）；
      子节点带 `inline: { hostUid, hostCategory, hostId, field, index, syntheticId }` 说明它从谁身上拆出来。
-   - `as: 'tool'`：后端为声明字段拆出一个 `role: 'tool'` 节点，原始值放在节点的
-     `value`（及同值的 `props[0]`）中，并以 `kind: 'contains'` 边连接回宿主字段。
-     工具节点没有数据 `id`，不会参与引用解析或写入独立 content 条目。
+   - `as: 'tool'`：后端为声明字段拆出一个 `role: 'tool'` 的**变量节点**（`table` = 字典形态 / `list` = 列表形态），
+     原始值放在节点的 `value`（及同值的 `props[0]`）中，并以 `kind: 'contains'` 边连接回宿主字段。
+     变量节点没有数据 `id`，不会参与引用解析或写入独立 content 条目。
      节点自带 `tool: { as, type, hostUid, hostCategory, hostId, field }` 描述符
-     （与内联子节点的 `inline` 对称），前端不必反查边就知道它是什么工具、值从哪来；
-     **怎么把该工具画出来由前端决定**（后端只给模型与数据，不做渲染决策）。
+     （与内联子节点的 `inline` 对称），前端不必反查边就知道它是什么变量、值从哪来；
+     **怎么把该变量画出来由前端决定**（后端只给模型与数据，不做渲染决策）。
 
-### 工具性节点（`role: 'tool'`）
+### 工具节点与变量节点（`role: 'tool'`）
 
-变量节点（`type: 'text' | 'number' | 'images'`）、表格/列表工具节点（`materialize.as: 'tool'`）
-**不是数据条目**：它们只为表达「值的持有与外化」，写回 mod 时**不写任何数据文件**。
+**术语**（前后端统一；契约字段名 `role` / `materialize.as` / `tool` 描述符保持不变）：
+
+| 术语 | 含义 | 典型 `type` |
+| --- | --- | --- |
+| **工具节点**（`role: 'tool'`） | 大类：**不是数据条目**，写回 mod 时**不写任何数据文件**，只为表达「值的持有与外化」或画布结构 | —— |
+| └ **变量节点** | 工具节点里**持有值**的一类：标量、字典形态、列表形态 | `text` / `number` / `images` / `table`（字典）/ `list`（列表） |
+| └ 其它工具节点 | 不持有变量值 | `container` / `danglingPort` / `previewNode` |
 
 - 节点上标 `role: 'tool'`（数据条目为 `'data'`，缺省按 `'data'` 处理），往往没有数据
   `id`；**但 `uid` 必须稳定唯一**（后端拆出的节点使用 `tool:<host uid>:<field>`，前端建议
   `editor:<type>:<序号>`），
   否则导出→导入往返一次，连在它身上的线就对不上了。
-- 后端拆出的工具节点自带 `tool` 描述符（`as` / `type` / `hostUid` / `hostCategory` / `hostId` / `field`）；
-  `type` 取自 `materialize.type`（当前为 `table`），**前端需自己为该类型提供节点模板与渲染**，
+- 后端拆出的变量节点自带 `tool` 描述符（`as` / `type` / `hostUid` / `hostCategory` / `hostId` / `field`）；
+  `type` 取自 `materialize.type`（当前为 `table` / `list`），**前端需自己为该类型提供节点模板与渲染**，
   后端不再补充控件、标签或颜色信息。
 - 两种产生方：
-  - **后端**：`materialize: { as: 'tool', type: 'table' }` 的字段被拆出来 → `contains` 边（宿主 `output:<字段名>` → 工具节点），值在工具节点里；
-  - **前端**：用户在画布上放在的变量/工具节点，没有宿主 → 用 `kind: 'bind'` 边与使用它的字段关联（一个变量可喂多个字段）。
+  - **后端**：`materialize: { as: 'tool', type: 'table' }` 的字段被拆出来 → `contains` 边（宿主 `output:<字段名>` → 变量节点），值在变量节点里；
+  - **前端**：用户在画布上放置的变量节点，没有宿主 → 用 `kind: 'bind'` 边与使用它的字段关联（一个变量可喂多个字段）。
 
 ### 写回规则（前端 → 后端的中间态 JSON）
 
@@ -314,7 +319,7 @@ pnpm run package:vsix          # 打包成 vsix（会先自动生成 origin 快�
 | `role: 'tool'` 节点 | **不写数据文件**，只作为值来源 / 画布结构保留 |
 | `inline` 非 null 的子节点 | 合并进宿主字段（`inline.hostUid` 的 `inline.field[inline.index]`），不新建条目；`inline.syntheticId === false` 时才把它的 `id` 写进那份内联对象 |
 | `kind: 'contains'` | 结构关系：子节点内容 ⇒ 宿主的 `from.field`（`as: 'node'` 合并实体，`as: 'tool'` 折叠值） |
-| `kind: 'bind'` | 值关系：`from` 端（工具节点）的内容 ⇒ `in` 端节点的 `from.field`；同一字段被多条 `bind` 绑定时告警 |
+| `kind: 'bind'` | 值关系：`from` 端（变量节点）的内容 ⇒ `in` 端节点的 `from.field`；同一字段被多条 `bind` 绑定时告警 |
 | `kind: 'link'` | 引用关系：字段值的**编码形状**由后端按 mapping 的 `extract` / `keys` 负责（前端只给目标 id） |
 | 两端都没有 mapping 声明的连线 | 不是引用关系（如画布批注线）→ 不进 `edges`，导出时计到 `stats` 里，不算 `warnings` |
 

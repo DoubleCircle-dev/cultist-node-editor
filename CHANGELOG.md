@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- docs(core): 术语统一（只改中文表述，契约字段名不变）
+  - `role: 'tool'` 是**工具节点**这个大类（不是数据条目、不写数据文件）；
+    其中**持有值**的一类叫**变量节点** —— 标量 `text` / `number` / `images`
+    与字典 / 列表形态的 `table` / `list`；
+    `container` / `danglingPort` / `previewNode` 等**不持有变量值**的节点仍属工具节点
+  - `reverse: true` 的中文统一写「**反向记录**」（书写位置与判定主体不在同一端、语义主体在对端），
+    README 新增「工具节点与变量节点」术语表
 - feat(core): 契约新增 `reverse`（**反向记录**）标记，并订正 recipe 跳转分支的方向
   - `recipes.alt` / `linked` / `alternativerecipes` / `inductions` 由 `direction: 'input'` 改为 `'output'`：
     这些字段的分支列表写在**源** recipe 上，节点模型里就是「源 → 目标」，
@@ -37,9 +44,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   - 新增画布文档自动保存（落扩展存储，打开时恢复）—— 之前前端 `autoSave*` 设置只存配置、无后端实现
   - 契约只做加法：原三条消息字段不变，新增 `fromCache` / `fromSnapshot` / `signature` 与
     `graphPatched` / `docRestored` / `autoDocSaved` / `imageResolved` / `sourceSnippet` 五条新消息
-- feat(core): `materialize: { as: 'tool' }` 落地 —— 装备声明字段拆出 `role: 'tool'` 工具节点
+- feat(core): `materialize: { as: 'tool' }` 落地 —— 装备声明字段拆出 `role: 'tool'` 变量节点
   （自带 `tool: { as, type, hostUid, hostCategory, hostId, field }` 描述符）与 `kind: 'contains'` 结构边；
-  渲染交给前端（后端只给模型与数据）。origin 全量实测新增 1079 个工具节点（6692 节点 / 28493 边）
+  渲染交给前端（后端只给模型与数据）。origin 全量实测新增 1079 个变量节点（6692 节点 / 28493 边）
 - test: 新增 `test/service.test.js`（19 条：缓存基元、图/文档缓存、文件收集与图比对、origin 资源、
   mod 加载与重载，含「重载结果 ≡ 从零全量重跑」不变量）；扩展宿主集成测试补服务层接线（命令/设置/回发）
 

@@ -235,7 +235,7 @@ suite('modLoad 数据加载流水线', () => {
                     (n.role === 'tool' ? n.uid.startsWith('tool:origin:') : n.uid.startsWith('origin:')) &&
                     n.type === n.category
             ),
-            '数据节点使用 origin 命名空间，工具节点使用稳定的 tool:origin 前缀，且 type === category'
+            '数据节点使用 origin 命名空间，变量节点使用稳定的 tool:origin 前缀，且 type === category'
         );
         assert.ok(
             graph.edges.every((e) => ['resolved', 'external-origin', 'external-mod'].includes(e.status)),
@@ -428,7 +428,7 @@ suite('modLoad 数据加载流水线', () => {
         assert.strictEqual(contains.in.port, 'link');
     });
 
-    test('契约面：角色与连线种类（role / NODE_ROLE / EDGE_KINDS，materialize 工具节点）', () => {
+    test('契约面：角色与连线种类（role / NODE_ROLE / EDGE_KINDS，materialize 变量节点）', () => {
         const graph = toData.buildGraph(
             [
                 {
@@ -477,7 +477,7 @@ suite('modLoad 数据加载流水线', () => {
             refCount: 0,
         });
 
-        // 连线种类字典：link（引用）/ contains（结构拆分）/ bind（工具节点的值绑定，前端产出）
+        // 连线种类字典：link（引用）/ contains（结构拆分）/ bind（变量节点的值绑定，前端产出）
         assert.deepStrictEqual(toData.EDGE_KINDS, ['link', 'contains', 'bind']);
         assert.ok(
             graph.edges.every((e) => toData.EDGE_KINDS.includes(e.kind)),
