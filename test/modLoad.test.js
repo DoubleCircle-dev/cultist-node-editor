@@ -355,6 +355,73 @@ suite('modLoad 数据加载流水线', () => {
         );
     });
 
+    test('契约面：导出/导入两侧依赖的字段都在（inline / contains / from / out / in / to）', () => {
+        const graph = toData.buildGraph(
+            [
+                {
+                    category: 'recipes',
+                    relativePath: 'a.json',
+                    entries: [
+                        {
+                            id: 'r1',
+                            label: '测试',
+                            actionId: 'study',
+                            effects: { lantern: 2 },
+                            slots: [{ id: 's1', required: { lantern: 1 } }, { id: 's1' }],
+                        },
+                        { id: 'study' },
+                        { id: 'lantern' },
+                    ],
+                },
+            ],
+            { namespace: 'test', scope: 'global' }
+        );
+
+        assert.strictEqual(graph.format, 'cne-node-graph');
+        assert.strictEqual(graph.version, 1);
+
+        // 节点：拆出来的子节点带「内联来源」，根节点为 null
+        const host = graph.nodes.find((n) => n.id === 'r1');
+        const child = graph.nodes.find((n) => n.type === 'slots' && n.id === 's1');
+        assert.strictEqual(host.inline, null, '根节点的 inline 为 null');
+        assert.deepStrictEqual(child.inline, {
+            hostUid: 'test:recipes:r1',
+            hostCategory: 'recipes',
+            hostId: 'r1',
+            field: 'slots',
+            index: 0,
+            syntheticId: false,
+        });
+
+        // connections：导出侧要的 sources / targetIds 在，渲染期的 label / connected 不在
+        const conn = host.connections.find((c) => c.field === 'effects');
+        assert.ok(conn.sources.includes('mapping'));
+        assert.deepStrictEqual(
+            conn.targetIds.map((t) => t.targetId),
+            ['lantern']
+        );
+        assert.ok(!('label' in conn) && !('connected' in conn), 'connections 不带渲染期字段');
+
+        // edges：from / out / in / to 的字段齐全（导出侧按 to / out / in 还原朝向）
+        const link = graph.edges.find((e) => e.kind === 'link' && e.from.field === 'actionId');
+        ['uid', 'type', 'category', 'id', 'field', 'port', 'side', 'targets', 'extract', 'multi', 'sources'].forEach(
+            (k) => assert.ok(k in link.from, `edge.from 缺 ${k}`)
+        );
+        ['uid', 'type', 'category', 'id', 'side', 'port'].forEach((k) => {
+            assert.ok(k in link.out, `edge.out 缺 ${k}`);
+            assert.ok(k in link.in, `edge.in 缺 ${k}`);
+        });
+        assert.ok(link.to.uid.endsWith(':study'), 'edge.to 带上目标节点');
+        assert.strictEqual(link.out.port, 'link', '目标那一端是通用入口');
+        assert.strictEqual(link.in.port, 'input:actionId');
+
+        // 包含边：宿主 → 拆出来的子节点
+        const contains = graph.edges.find((e) => e.kind === 'contains');
+        assert.strictEqual(contains.to.uid, 'test:slots:s1');
+        assert.strictEqual(contains.out.port, 'output:slots');
+        assert.strictEqual(contains.in.port, 'link');
+    });
+
     test('mapping：别名 / 兜底规则（legcies 拼写错误、未知类别）', () => {
         assert.deepStrictEqual(mapping.ruleFor('legcies').fields, mapping.ruleFor('legacies').fields);
         assert.strictEqual(mapping.ruleFor('从未见过的类别'), mapping.fallback);

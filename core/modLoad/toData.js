@@ -30,8 +30,10 @@
  * 按 `link.targets` 限制端口能连什么 → edges 直接按 `out` / `in` 两端画线
  * （朝向已由后端变换好）→ external 进引入区占位 → warnings 进问题提示。
  *
- * 节点结构：`{ uid, id, type, category, title, file, source, props, connections }`
+ * 节点结构：`{ uid, id, type, category, title, file, source, inline, props, connections }`
  *   - `type` / `category` = 数据文件的最外围键（= 前端基础节点类型，如 recipes）；
+ *   - `inline`= 该节点是不是从**宿主的内联定义**拆出来的：是则写明
+ *     `{ hostUid, hostCategory, hostId, field, index, syntheticId }`（如 recipe 里内联的卡槽），根节点为 null；
  *   - `props` = 属性定义，每个字段一条 `{ name, kind, value, link, materialize }`：
  *       · `kind`  = `string | number | boolean | list | dict`（**值本身的 JSON 类型**，前端据此选控件）；
  *       · `value` = 原始值，原样（不加工、不字符串化）；
@@ -183,15 +185,17 @@ function detectConnections(category, entry) {
  * @param {string} category - 类别（= 数据文件最外围键 = 前端节点类型）
  * @param {Record<string, any>} entry - 原始条目
  * @param {{ source?: 'origin'|'mod'; namespace: string; file?: string }} source - 来源信息
+ * @param {any} [inline] - 该节点是不是从宿主的内联定义拆出来的（是则写明宿主与字段），见 expandEntry
  * @returns {{
  *     uid: string; id: string; type: string; category: string; title: string;
  *     file: string; source: string;
+ *     inline: any;
  *     props: Array<Record<string, any>>;
  *     connections: ReturnType<typeof detectConnections>;
  *     refCount: number;
  * }} 节点
  */
-function entryToNode(category, entry, source) {
+function entryToNode(category, entry, source, inline = null) {
     const rule = mapping.ruleFor(category);
     const props = mapping.helpers.buildProps(entry, rule);
     const connections = detectConnections(category, entry);
@@ -207,6 +211,7 @@ function entryToNode(category, entry, source) {
         title,
         file: source.file || '',
         source: source.source || 'mod',
+        inline,
         props,
         connections,
         refCount: connections.reduce((n, c) => n + c.targetIds.length, 0),
@@ -416,7 +421,7 @@ const MAX_INLINE_DEPTH = 4;
  * @param {string} category - 类别
  * @param {Record<string, any>} entry - 条目（内联定义会被补上合成 id）
  * @param {{ source: string; namespace: string; file: string }} origin - 来源信息
- * @param {{ nodes: any[]; pending: any[]; byUid: Map<string, any>; depth: number }} ctx - 累积上下文
+ * @param {{ nodes: any[]; pending: any[]; byUid: Map<string, any>; depth: number; inline?: any }} ctx - 累积上下文
  * @returns {any|null} 建出来的节点
  */
 function expandEntry(category, entry, origin, ctx) {
@@ -424,7 +429,7 @@ function expandEntry(category, entry, origin, ctx) {
     const uid = id ? nodeUid(origin.namespace, category, id) : null;
     if (uid && ctx.byUid.has(uid)) return ctx.byUid.get(uid); // 同一 id 只建一次
 
-    const node = entryToNode(category, entry, origin);
+    const node = entryToNode(category, entry, origin, ctx.inline || null);
     ctx.nodes.push(node);
     if (uid) ctx.byUid.set(uid, node);
     ctx.pending.push(...buildPendingEdges([node]));
@@ -433,14 +438,20 @@ function expandEntry(category, entry, origin, ctx) {
 
     mapping.splitInline(category, entry).forEach((child) => {
         // 内联定义常常没写 id → 用「宿主 id#字段#序号」合成一个稳定 id
-        const childId = String(
-            child.entry.id == null || child.entry.id === ''
-                ? `${id || category}#${child.field}#${child.index}`
-                : child.entry.id
-        );
+        const synthetic = child.entry.id == null || child.entry.id === '';
+        const childId = String(synthetic ? `${id || category}#${child.field}#${child.index}` : child.entry.id);
         const childNode = expandEntry(child.category, { ...child.entry, id: childId }, origin, {
             ...ctx,
             depth: ctx.depth + 1,
+            // 内联来源：前端（与写回 mod 时）要靠它知道这个节点是从谁身上拆出来的
+            inline: {
+                hostUid: node.uid,
+                hostCategory: node.category,
+                hostId: node.id,
+                field: child.field,
+                index: child.index,
+                syntheticId: synthetic,
+            },
         });
         ctx.pending.push(containmentEdge(node, child, childNode));
     });

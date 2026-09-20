@@ -138,11 +138,14 @@ pnpm run package:vsix   # 打包成 vsix
   source: 'origin' | 'mod', namespace, count, scope: 'file' | 'global',
   nodes: [
     { uid, id, type, category, title, file, source, refCount,
+      // 从宿主的内联定义拆出来的节点才非 null：{ hostUid, hostCategory, hostId, field, index, syntheticId }
+      inline,
       // 每个字段一条（id 除外）：基础属性类型 + 原始值 + 连接需求 + 中间态转化
       props: [ { name, kind, value, links: [ { port, direction, targets, multi, extract } ], materialize } ],
       connections: [ { field, port, side, targets, extract, multi, sources, targetIds } ] },
   ],
   edges: [
+    // kind: 'link'（引用）/ 'contains'（宿主 → 拆出来的内联子节点）
     { id, kind: 'link',
       from: { uid, type, category, id, field, port, side, targets, extract, multi, sources },
       out:  { uid, type, category, id, field?, side: 'output', port },
@@ -163,13 +166,20 @@ pnpm run package:vsix   # 打包成 vsix
 2. **连接需求**：只有需要连线的字段才有 `links`（一个字段可有多条 = 多个含义的端口）：
    - `direction`：**本条目在这条线上是哪一侧** —— `input` = 别的东西指向我，`output` = 我指向别的东西；
    - `targets`：对端类别（如 `['verbs']`），前端据此限制端口能连什么；
-   - `multi`：是否允许多连；`extract`：从值里取目标 id 的方式（`map` / `id-list` / `nested-map` …）。
+   - `multi`：是否允许多连；`extract`：从值里取目标 id 的方式（`map` / `id-list` / `nested-map` …）；
+   - `port`：端口名（默认 = 字段名）。**端口 key = `<side>:<port>`**（如 `input:actionId`）；
+     该字段在画布上不一定有对应的模板端口（`effects$add` 这类扩展字段、TRM 字段都可能没有），
+     前端按 key 找端口、找不到就按 `kind` 兜底。连线另一侧若没有字段端口，`port` 就是通用入口 `link`。
    像 `alt` / `linked` / `inductions` 这种「跳转条件写在目标身上」的关系，`direction` 就是 `input`
    —— 后端已经把这种不能双向的关系**变换**成了定好两端的连接线：`edge.out` / `edge.in`，
-   前端照着画即可，不用猜端口。
-3. **中间态转化**：内嵌对象/列表该提取成节点或工具节点时，用 `materialize` 声明
-   （`{ as: 'node' | 'tool', type, inline? }`，如 `recipes.slots` → `slots` 节点）。
-   ⚠️ 目前只做到「声明」，真正的提取（生成节点 + 包含关系的连线）还没实现。
+   前端照着画即可，不用猜端口。**声明优先于前端模板里的端口方向**（两边不一致时以声明为准）。
+3. **中间态转化**：内嵌对象/列表该提取成节点时，用 `materialize` 声明
+   （`{ as: 'node', type, inline: true }`，如 `recipes.slots` → `slots` 节点）。
+   - **已实现**：`mapping.splitInline()` 找出「内联定义」（只写 `id`/`chance` 这类引用参数的不算），
+     `toData.expandEntry()` 为它们建节点（同 id 只建一次，递归深度上限 4）并补一条
+     `kind: 'contains'` 的包含连线（宿主 `output:<字段名>` → 子节点的通用入口 `link`）；
+     子节点带 `inline: { hostUid, hostCategory, hostId, field, index, syntheticId }` 说明它从谁身上拆出来。
+   - **尚未实现**：`as: 'tool'`（表格 / 列表等工具节点）。
 
 - `node.type` 就是数据文件的最外围键（`recipes` / `elements` …），可直接当基础类型实例化；
 - `edge.status` 为 `resolved` / `external-origin` / `external-mod`；未解析的目标只给 `targetId`。
