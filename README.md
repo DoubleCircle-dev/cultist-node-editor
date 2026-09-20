@@ -15,6 +15,8 @@
 | **加载 Mod（检测/选择 synopsis.json）** | 自动检测当前工作区的 mod 结构并加载其中的 JSON；找不到就让你选文件位置 |
 | **新建 Mod 基础结构（synopsis.json）** | 生成一个可用的 mod 目录骨架 |
 | **预览单个 Mod JSON 文件为节点** | 单文件预览，不依赖完整 mod 结构 |
+| **重载 Mod 数据（跳过缓存重新解析）** | 主动全量重载当前 mod：怀疑缓存不对、或在外部工具里大改过一堆文件时用 |
+| **重载游戏基础内容（跳过快照重新解析）** | 主动全量重载 origin：忽略内存缓存与随包快照，从源文件重算 |
 
 右键任意 `.json` →「打开方式」→ **节点编辑器 JSON 预览**，可在只读预览模式查看该文件的数据。
 主编辑器打开时会预加载游戏原版内容（origin_resources）作为全局节点图，可直接取用其中的条目。
@@ -40,12 +42,64 @@
 - **文本变量同步**：文本字段可连到「文本节点」共享同一变量，任一端口编辑即双向同步（可选实时逐键同步）
 - **属性系统**：数值 / 选项 / 端口 / 表格 / 图片预览等属性类型，含「修改可选属性」的扩展属性池
 - **撤销重做**、画布缩放平移、适应视图、隐藏连接、专注某节点
+- **后端服务层**（`core/service/`）：节点图落盘缓存（命中时一个 json 都不解析）、
+  工作区文件监听（改动只重解析变化的文件，增量补丁回发）、origin 快照（随包分发，免每次重解析）、
+  图片名解析与源数据按需读取 —— 详见下文「后端服务层」
+
+## 后端服务层（`core/service/`）
+
+把「每次打开编辑器都从头跑一遍流水线」换成「按工作区缓存 + 按需增量」。
+它**不起网络端口**：数据仍走原有的 webview `postMessage` 契约，前端只在旧字段之外多看到几个标量。
+
+| 文件 | 职责 |
+| --- | --- |
+| `index.js` | 纯服务层（不 require vscode）：`loadMod` / `refreshMod` / `loadOrigin` / `saveDoc` / `loadDoc` / `warmMod` |
+| `host.js` | **vscode 环境绑定**：storageUri、文件监听、设置项、生命周期 |
+| `graphCache.js` | 节点图（中间态 JSON）落盘缓存：原子写、损坏/过期当作未命中 |
+| `graphStage.js` | 文件收集（解析结果复用）、建图、新旧图比对 |
+| `docStore.js` | 画布文档缓存（自动保存 / 恢复） |
+| `originResource.js` | origin 快照、id 索引、图片名→URL、源数据按需读取 |
+| `cacheKey.js` / `storage.js` | 缓存键与来源签名；缓存目录布局 |
+
+**缓存位置**：`context.storageUri`（工作区级，没开工作区时退 `globalStorageUri`），
+**不往用户工作区里写任何文件**：
+
+```
+<storage>/graphs/<key>.json     mod 节点图（中间态 JSON，带来源签名）
+<storage>/docs/<key>.json       画布文档（节点位置 / 页面 / 视图状态）
+```
+
+**快速加载**：先算来源文件的「相对路径 + mtime + size」摘要（只 stat，不读内容），
+与缓存里记的签名一致就直接 `JSON.parse` 复用 —— 连一个 JSON 都不解析。
+命中缓存后会在后台预热解析结果，让后续改动能真的做到「只重解析变化的文件」。
+
+**工作区监听**：监听 mod 目录的 `**/*.json`，事件先防抖（默认 300 ms）再统一重载：
+
+- 只重新解析**变化的文件**（其余复用内存里的解析结果）；建图仍是全量重跑
+  ——因为 `toData` 的「同 id 只建一次」是**跨文件**去重，分片重跑会让节点归属漂移；
+- 新旧图按 `node.uid` / `edge.id` 比对，变化面小于阈值（默认 40%）时只回发 `graphPatched` 增量，
+  超过阈值则重发整张图（`modLoaded`），避免增量比全量还贵；
+- 两者之外还提供**主动全量重载**（前端消息 `reloadGraph` / 命令面板两个 `重载` 命令）。
+
+**origin 快照**：origin 内容稳定不变，所以在打包前预生成中间态 JSON（约 34 MB）并随 VSIX 分发；
+运行时只需一次 `JSON.parse`（实测 881 ms → 415 ms）。快照里记着生成当时的
+`mappingRevision`（`mapping.js` + 内置插件的源码摘要），规则表一改版本就变，
+运行时读到旧快照会直接回退源文件加载 —— 不需要手工维护版本号。
+
+**图片与源码按需取**：图片走 `image-index.json` 的 name→路径索引（本地文件优先，缺失回退 CDN，
+同名多义按条目所在类别目录消歧）；origin 的 JSON 源数据**不预加载**，只有用户要看某个节点的
+源码时才按 `file` + `category` + `id` 去读那一个文件。
 
 ## 设置
 
 | 设置项 | 默认 | 说明 |
 | --- | --- | --- |
 | `cultistNodeEditor.preloadOrigin` | `true` | 打开编辑器时预加载游戏基础内容（`origin_resources`）为可拖拽节点 |
+| `cultistNodeEditor.quickLoad` | `true` | **快速加载**：优先用已保存的中间态 JSON 缓存，不重复解析 mod 的 json；关掉则每次从源文件重解析 |
+| `cultistNodeEditor.watchWorkspace` | `true` | **工作区监听**：监听整个 mod 工作区的 json 变化，改动后只重解析变化的文件并增量更新画布 |
+| `cultistNodeEditor.watchDebounce` | `300` | 监听防抖时长（毫秒）：连续保存合并成一次重载 |
+| `cultistNodeEditor.autoSaveDoc` | `true` | 自动保存画布文档（节点位置 / 页面 / 视图状态）到扩展存储，下次打开自动恢复 |
+| `cultistNodeEditor.snapshotPercent` | `40` | 工作区变化超过该百分比时重发全量图而不是增量补丁 |
 | `cultistNodeEditor.fieldPlugins` | `[]` | 自定义**字段插件**（JSON 文件或目录，相对工作区或绝对路径） |
 | `cultistNodeEditor.disabledPlugins` | `[]` | 要禁用的插件 id（内置：`trm`、`import-extension`） |
 
@@ -95,11 +149,17 @@ code --install-extension cultist-node-editor-<版本>.vsix
 
 ```bash
 pnpm install
-pnpm run verify         # 提交前把关：lint（前端线还会跑前端单测，Vite 线另含构建）
-pnpm test               # 扩展宿主集成测试（会真的拉起一个 VS Code）
-pnpm run dev            # 仅 Vite 前端线：起 dev server（HMR）
-pnpm run package:vsix   # 打包成 vsix
+pnpm run verify                # 提交前把关：lint（前端线还会跑前端单测，Vite 线另含构建）
+pnpm test                      # 扩展宿主集成测试（会真的拉起一个 VS Code）
+pnpm run gen:origin-snapshot   # 重新生成 origin 快照（改了 mapping/插件后需要）
+pnpm run dev                   # 仅 Vite 前端线：起 dev server（HMR）
+pnpm run package:vsix          # 打包成 vsix（会先自动生成 origin 快照）
 ```
+
+- **origin 快照**产物是 `core/origin_resources/origin.graph.json`（约 34 MB）：它**不进版本库**
+  （`.gitignore`），但会**打进 VSIX**（`package:vsix` 先跑生成脚本）。本地开发时若还没生成，
+  运行时会自动回退源文件加载（慢约一倍，功能不受影响），跑一次
+  `pnpm run gen:origin-snapshot` 即可；`--check` 可只校验现有快照是否仍然有效。
 
 ### 分支结构与约定
 
@@ -107,7 +167,7 @@ pnpm run package:vsix   # 打包成 vsix
 
 | 分支 | 内容 | 说明 |
 | --- | --- | --- |
-| `core` | 后端 | `core/**`、`extension.js`、`frontend-host/index.js`（契约层）、`scripts/sync-backend.mjs`、集成测试。**不含任何前端**（单独运行会显示「本分支不含前端实现」提示页） |
+| `core` | 后端 | `core/**`（流水线 + 服务层）、`extension.js`、`frontend-host/index.js`（契约层）、`scripts/sync-backend.mjs`、集成测试。**不含任何前端**（单独运行会显示「本分支不含前端实现」提示页） |
 | `vanilla-frontend` | 前端（无构建） | `ui/` + `frontend-host/vanilla.js` + `test/ui/**`；源码即运行时（扩展扫描目录注入资源） |
 | `vite-vanilla` | 前端（Vite + 原生 JS） | `frontend/`（Vite 工程，源码在 `frontend/src/`）+ `frontend-host/vite.js`；开发走 dev server + HMR |
 | `vite-vue` | 前端（Vite + Vue 3） | 响应式重写，**骨架阶段、暂不用于发布**，见 `frontend/DESIGN.md` |
@@ -138,6 +198,8 @@ pnpm run package:vsix   # 打包成 vsix
   source: 'origin' | 'mod', namespace, count, scope: 'file' | 'global',
   nodes: [
     { uid, id, type, category, title, file, source, refCount,
+      // 'data' = 数据条目（写回 content 文件）；'tool' = 工具性节点（变量 / 表格，不写数据文件）
+      role: 'data' | 'tool',
       // 从宿主的内联定义拆出来的节点才非 null：{ hostUid, hostCategory, hostId, field, index, syntheticId }
       inline,
       // 每个字段一条（id 除外）：基础属性类型 + 原始值 + 连接需求 + 中间态转化
@@ -145,7 +207,7 @@ pnpm run package:vsix   # 打包成 vsix
       connections: [ { field, port, side, targets, extract, multi, sources, targetIds } ] },
   ],
   edges: [
-    // kind: 'link'（引用）/ 'contains'（宿主 → 拆出来的内联子节点）
+    // kind: 'link'（引用）/ 'contains'（宿主 → 拆出来的子节点）/ 'bind'（工具节点 → 使用它的字段）
     { id, kind: 'link',
       from: { uid, type, category, id, field, port, side, targets, extract, multi, sources },
       out:  { uid, type, category, id, field?, side: 'output', port },
@@ -157,6 +219,32 @@ pnpm run package:vsix   # 打包成 vsix
   stats:    { files, nodes, edges, resolved, externalOrigin, externalMod, danglingFields }
 }
 ```
+
+`node.file` 是**相对扫描根**的路径（mod 相对 `<mod 根>/content/`，origin 相对 `StreamingAssets/content/core/`），
+写回时直接拿它拼目标文件即可，不必自己反查来源。
+
+### 服务层新增的消息与字段（向后兼容的加法）
+
+原有三条消息（`modLoaded` / `originLoaded` / `jsonPreviewLoaded`）字段**一个都没改**，只多了几个标量：
+
+| 新增字段 | 含义 |
+| --- | --- |
+| `fromCache` | 本次是否命中磁盘缓存（命中时**没有解析任何文件**） |
+| `fromSnapshot` | 仅 origin：本次是否走了随包分发的快照（而非源文件加载） |
+| `signature` | 来源签名（文件集合摘要），调试缓存失效原因时看它 |
+
+新消息（前端不处理也不影响现有功能）：
+
+| 方向 | 消息 | 含义 |
+| --- | --- | --- |
+| 后端 → 前端 | `graphPatched` | 工作区变化后的**增量**：`added` / `updated` / `removed`（按 `uid` / `edge.id` 对齐） |
+| 后端 → 前端 | `docRestored` | 上次自动保存的画布文档（没有则为 `{ doc: null }`） |
+| 后端 → 前端 | `autoDocSaved` | 自动保存回执（`ok` / `savedAt` / `bytes`） |
+| 后端 → 前端 | `imageResolved` | 图片名 → URL 的批量解析结果（带 `source: local\|cdn\|miss` 与候选清单） |
+| 后端 → 前端 | `sourceSnippet` | 某节点的源条目（按需读取，origin 的源数据不预加载） |
+| 前端 → 后端 | `reloadGraph` | 全量重载，`scope: 'mod' \| 'origin' \| 'all'` |
+| 前端 → 后端 | `saveAutoDoc` / `restoreDoc` | 画布文档的自动保存与恢复 |
+| 前端 → 后端 | `resolveImages` / `readSource` | 取图片 URL / 取源码条目（都带 `requestId` 以便并发展开对应） |
 
 **三条边界（后端只描述语义，不做渲染决策）**
 
@@ -179,7 +267,42 @@ pnpm run package:vsix   # 打包成 vsix
      `toData.expandEntry()` 为它们建节点（同 id 只建一次，递归深度上限 4）并补一条
      `kind: 'contains'` 的包含连线（宿主 `output:<字段名>` → 子节点的通用入口 `link`）；
      子节点带 `inline: { hostUid, hostCategory, hostId, field, index, syntheticId }` 说明它从谁身上拆出来。
-   - **尚未实现**：`as: 'tool'`（表格 / 列表等工具节点）。
+   - `as: 'tool'`：后端为声明字段拆出一个 `role: 'tool'` 节点，原始值放在节点的
+     `value`（及同值的 `props[0]`）中，并以 `kind: 'contains'` 边连接回宿主字段。
+     工具节点没有数据 `id`，不会参与引用解析或写入独立 content 条目。
+     节点自带 `tool: { as, type, hostUid, hostCategory, hostId, field }` 描述符
+     （与内联子节点的 `inline` 对称），前端不必反查边就知道它是什么工具、值从哪来；
+     **怎么把该工具画出来由前端决定**（后端只给模型与数据，不做渲染决策）。
+
+### 工具性节点（`role: 'tool'`）
+
+变量节点（`type: 'text' | 'number' | 'images'`）、表格/列表工具节点（`materialize.as: 'tool'`）
+**不是数据条目**：它们只为表达「值的持有与外化」，写回 mod 时**不写任何数据文件**。
+
+- 节点上标 `role: 'tool'`（数据条目为 `'data'`，缺省按 `'data'` 处理），往往没有数据
+  `id`；**但 `uid` 必须稳定唯一**（后端拆出的节点使用 `tool:<host uid>:<field>`，前端建议
+  `editor:<type>:<序号>`），
+  否则导出→导入往返一次，连在它身上的线就对不上了。
+- 后端拆出的工具节点自带 `tool` 描述符（`as` / `type` / `hostUid` / `hostCategory` / `hostId` / `field`）；
+  `type` 取自 `materialize.type`（当前为 `table`），**前端需自己为该类型提供节点模板与渲染**，
+  后端不再补充控件、标签或颜色信息。
+- 两种产生方：
+  - **后端**：`materialize: { as: 'tool', type: 'table' }` 的字段被拆出来 → `contains` 边（宿主 `output:<字段名>` → 工具节点），值在工具节点里；
+  - **前端**：用户在画布上放在的变量/工具节点，没有宿主 → 用 `kind: 'bind'` 边与使用它的字段关联（一个变量可喂多个字段）。
+
+### 写回规则（前端 → 后端的中间态 JSON）
+
+前端导出时按同一套形状回传，后端据 `role` / `kind` / `inline` 三个字段就能唯一定位：
+
+| 形状 | 写回行为 |
+| --- | --- |
+| `role: 'data'` 节点 | 写进它来源的 content 文件（`file` + `category` + `id`） |
+| `role: 'tool'` 节点 | **不写数据文件**，只作为值来源 / 画布结构保留 |
+| `inline` 非 null 的子节点 | 合并进宿主字段（`inline.hostUid` 的 `inline.field[inline.index]`），不新建条目；`inline.syntheticId === false` 时才把它的 `id` 写进那份内联对象 |
+| `kind: 'contains'` | 结构关系：子节点内容 ⇒ 宿主的 `from.field`（`as: 'node'` 合并实体，`as: 'tool'` 折叠值） |
+| `kind: 'bind'` | 值关系：`from` 端（工具节点）的内容 ⇒ `in` 端节点的 `from.field`；同一字段被多条 `bind` 绑定时告警 |
+| `kind: 'link'` | 引用关系：字段值的**编码形状**由后端按 mapping 的 `extract` / `keys` 负责（前端只给目标 id） |
+| 两端都没有 mapping 声明的连线 | 不是引用关系（如画布批注线）→ 不进 `edges`，导出时计到 `stats` 里，不算 `warnings` |
 
 - `node.type` 就是数据文件的最外围键（`recipes` / `elements` …），可直接当基础类型实例化；
 - `edge.status` 为 `resolved` / `external-origin` / `external-mod`；未解析的目标只给 `targetId`。

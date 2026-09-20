@@ -6,6 +6,29 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- feat(core): 新增**后端服务层** `core/service/`（进程内，不起网络端口；数据仍走原 webview `postMessage` 契约）
+  - `index.js` 纯服务层（不 require vscode）+ `host.js` vscode 绑定（storageUri / FileSystemWatcher / 设置 / 生命周期）；
+    缓存落 `context.storageUri`（无工作区退 `globalStorageUri`），**不往用户工作区写文件**
+  - **快速加载**：来源文件「相对路径 + mtime + size」签名一致时直接复用落盘的节点图，
+    连一个 JSON 都不解析（实测示例 mod 冷启动 345ms → 命中 2ms）；命中后在后台预热解析结果
+  - **工作区监听**：mod 目录 `**/*.json` 事件防抖后只重解析**变化的文件**，建图后与上一张图按
+    `uid` / `edge.id` 比对，变化面小于阈值时回发新增的 `graphPatched` 增量、超过则重发全量图；
+    另提供**主动全量重载**（消息 `reloadGraph` + 命令面板「重载 Mod 数据」「重载游戏基础内容」）
+  - **origin 快照**：`scripts/gen-origin-snapshot.mjs` 预生成中间态 JSON（约 34 MB）随 VSIX 分发，
+    运行时一次 `JSON.parse`（实测 881ms → 415ms）；快照记 `mappingRevision`（`mapping.revision()` =
+    `mapping.js` + 内置插件源码摘要），规则表一改自动失效并回退源文件加载
+  - **origin 资源**：图片按 `image-index.json` 的 name→路径索引解析（本地优先 → CDN 回退 → 同名多义按类别目录消歧）；
+    origin 的 JSON 源数据不预加载，按需读单条源码
+  - 新增设置项 `quickLoad` / `watchWorkspace` / `watchDebounce` / `autoSaveDoc` / `snapshotPercent`（均默认开）
+  - 新增画布文档自动保存（落扩展存储，打开时恢复）—— 之前前端 `autoSave*` 设置只存配置、无后端实现
+  - 契约只做加法：原三条消息字段不变，新增 `fromCache` / `fromSnapshot` / `signature` 与
+    `graphPatched` / `docRestored` / `autoDocSaved` / `imageResolved` / `sourceSnippet` 五条新消息
+- feat(core): `materialize: { as: 'tool' }` 落地 —— 装备声明字段拆出 `role: 'tool'` 工具节点
+  （自带 `tool: { as, type, hostUid, hostCategory, hostId, field }` 描述符）与 `kind: 'contains'` 结构边；
+  渲染交给前端（后端只给模型与数据）。origin 全量实测新增 1079 个工具节点（6692 节点 / 28493 边）
+- test: 新增 `test/service.test.js`（19 条：缓存基元、图/文档缓存、文件收集与图比对、origin 资源、
+  mod 加载与重载，含「重载结果 ≡ 从零全量重跑」不变量）；扩展宿主集成测试补服务层接线（命令/设置/回发）
+
 - refactor(core): 后端契约改成「只描述语义」，流水线按职责重排为 `parse 解析` → `mapping 加连接 / 拆节点`
   → `toData 融合中间态 JSON`：
   - 字段规则只声明**连接需求**（`link`: direction / targets / multi / extract / keys / port）与**中间态转化**
