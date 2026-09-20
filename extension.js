@@ -9,6 +9,12 @@ const path = require('path');
 let currentPanel = undefined;
 function activate(context) {
     console.log('✅ Node Editor 扩展已激活');
+    // 字段插件（TRM/导入扩展内置 + 设置里的用户插件）尽早就位，之后的读取/预览才带得上扩展字段
+    try {
+        modHandlers.loadFieldPlugins();
+    } catch (error) {
+        console.warn('⚠️ 字段插件加载失败（不影响主流程）:', error && error.message);
+    }
     // 重要：检查命令是否成功注册
     const openEditorCommand = vscode.commands.registerCommand('cultist-node-editor.openEditor', () => {
         console.log('📝 命令 "cultist-node-editor.openEditor" 被调用');

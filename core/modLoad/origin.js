@@ -34,7 +34,7 @@ function loadOriginToData(originContentDir) {
  * @returns {Promise<{ source: string, namespace: string, nodes: any[], edges: any[], external?: any[], warnings?: string[], stats?: any, file?: string }>}
  */
 async function loadOriginSnapshot(snapshotFile) {
-    // TODO(后续)：实现中间态快照的生成与直接加载。当前 origin 仍走 loadOriginToData（源文件）。
+    //TODO: 实现中间态快照的生成与直接加载。当前 origin 仍走 loadOriginToData（源文件）。
     throw new Error(
         'loadOriginSnapshot 尚未实现：origin 中间态快照生成/缓存为后续优化；当前请用 loadOriginToData（源文件加载）'
     );

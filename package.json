@@ -41,6 +41,22 @@
           "type": "boolean",
           "default": true,
           "description": "打开编辑器时预加载游戏基础内容（origin_resources）为可拖拽节点"
+        },
+        "cultistNodeEditor.fieldPlugins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "自定义字段插件（JSON 文件或目录，相对工作区或绝对路径）。插件为 mapping 的连接性白名单补充字段规则，例如：`{\"id\":\"my-fields\",\"categories\":{\"recipes\":{\"outputs\":[{\"from\":\"myReward\",\"extract\":\"map\"}]}}}`"
+        },
+        "cultistNodeEditor.disabledPlugins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "要禁用的字段插件 id（内置插件：`trm`、`import-extension`）"
         }
       }
     },

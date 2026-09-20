@@ -95,11 +95,18 @@ suite('modLoad 数据加载流水线', () => {
         assert.strictEqual(r1.type, 'recipes');
         assert.strictEqual(r1.category, 'recipes');
         assert.strictEqual(r1.uid, 'test:recipes:r1');
-        assert.strictEqual(r1.fields.warmup, 10);
-        assert.ok(r1.refs.requirements && r1.refs.effects, 'refs 保留原始引用结构');
+        // 属性：每个字段一条 { name, kind, value, links, materialize }（value 是原始值，不加工）
+        const warmup = r1.props.find((p) => p.name === 'warmup');
+        assert.strictEqual(warmup.kind, 'number');
+        assert.strictEqual(warmup.value, 10);
+        assert.deepStrictEqual(warmup.links, [], '没人声明的字段只有原始值，没有连接需求');
+        const reqs = r1.props.find((p) => p.name === 'requirements');
+        assert.strictEqual(reqs.kind, 'dict');
+        assert.deepStrictEqual(reqs.value, { e1: 1 }, '原始值原样给出（不字符串化）');
+        assert.strictEqual(reqs.links[0].targets[0], 'elements', '连接需求里带目标类别');
 
-        const fields = r1.connections.map((c) => `${c.side}:${c.field}`).sort();
-        assert.deepStrictEqual(fields, ['input:requirements', 'output:effects', 'output:linked']);
+        const fields = r1.connections.map((c) => `${c.side}:${c.port}`).sort();
+        assert.deepStrictEqual(fields, ['input:linked', 'input:requirements', 'output:effects']);
         assert.strictEqual(r1.refCount, 3);
     });
 
@@ -168,7 +175,20 @@ suite('modLoad 数据加载流水线', () => {
         assert.strictEqual(single.namespace, 'file:ascension');
         assert.strictEqual(single.fileName, 'ascension.json');
         assert.ok(single.nodes.length > 50, `ascension.json 应有大量 recipe 节点，实际 ${single.nodes.length}`);
-        assert.ok(single.nodes.every((n) => n.type === 'recipes' && n.category === 'recipes'));
+        // 主节点全是 recipes；内联定义（如 slots）会被拆成各自类别的节点（mapping.splitInline）
+        assert.ok(single.nodes.some((n) => n.type === 'recipes' && n.category === 'recipes'));
+        assert.ok(
+            single.nodes.every((n) => n.type === n.category),
+            '每个节点的 type 与 category 一致'
+        );
+        assert.ok(
+            single.nodes.some((n) => n.type === 'slots'),
+            'recipe 里内联的卡槽应被拆成 slots 节点'
+        );
+        assert.ok(
+            single.edges.some((e) => e.kind === 'contains'),
+            '拆分出来的子节点与宿主之间有包含关系连线'
+        );
         assert.deepStrictEqual(single.warnings, [], '单文件解析不告警');
         assert.ok(single.external.length > 0, 'ascension 引用了文件外的元素/动作');
 
@@ -223,9 +243,126 @@ suite('modLoad 数据加载流水线', () => {
         assert.strictEqual(graph.stats.externalMod, 0, 'origin 自身加载不传 originIds → 未解析目标统一记 external-origin');
     });
 
+    test('mapping：recipes.actionid = 普通属性 + 连接需求（可连线、也可手填）', () => {
+        const rule = mapping.ruleFor('recipes');
+        const fieldRule = rule.fields.find((r) => String(r.from).toLowerCase() === 'actionid');
+        assert.ok(fieldRule, 'recipes 的 actionid 应声明连接需求');
+        assert.strictEqual(fieldRule.link.direction, 'input', '本条目是入线端（线从 verbs 过来）');
+        assert.deepStrictEqual(fieldRule.link.targets, ['verbs'], '可连的类别 = verbs');
+        assert.strictEqual(fieldRule.link.multi, false, '一个 recipe 只接一个行动框');
+        assert.strictEqual(fieldRule.link.extract, 'id');
+        // 渲染方式不由后端决定：规则里不该出现控件类型/值类型/标签
+        assert.ok(!('type' in fieldRule) && !('valueType' in fieldRule), '后端不声明渲染类型');
+        assert.ok(!('label' in fieldRule), '后端不声明展示标签');
+
+        // 数据里两种写法（actionid / actionId）都要认，且「属性值」与「连线」同源
+        ['actionid', 'actionId'].forEach((key) => {
+            const node = toData.entryToNode('recipes', { id: 'r1', [key]: 'study' }, { namespace: 'test' });
+            const prop = node.props.find((p) => String(p.name).toLowerCase() === 'actionid');
+            assert.ok(prop, `${key}：属性定义里应有 actionid`);
+            assert.strictEqual(prop.kind, 'string', '基础属性类型由原始值推出来');
+            assert.strictEqual(prop.value, 'study', `${key}：带上条目里的原始值`);
+            assert.strictEqual(prop.links.length, 1);
+            assert.strictEqual(prop.links[0].direction, 'input');
+            assert.deepStrictEqual(prop.links[0].targets, ['verbs']);
+            assert.strictEqual(prop.links[0].multi, false);
+
+            const conn = node.connections.find((c) => String(c.field).toLowerCase() === 'actionid');
+            assert.ok(conn, `${key}：应产出连接需求检测结果（连线靠它）`);
+            assert.strictEqual(conn.side, 'input');
+            assert.deepStrictEqual(
+                conn.targetIds.map((t) => t.targetId),
+                ['study']
+            );
+        });
+
+        // 值缺失时不虚报端口；但属性本身照样给出（兜底 text 渲染）
+        const empty = toData.entryToNode('recipes', { id: 'r2' }, { namespace: 'test' });
+        assert.ok(!empty.connections.some((c) => String(c.field).toLowerCase() === 'actionid'));
+        
+        // 连接线两端由后端变换好：input 方向 → 出线端是目标、入线端是本条目
+        const graph = toData.buildGraph(
+            [
+                { category: 'recipes', entries: [{ id: 'r1', actionid: 'study' }] },
+                { category: 'verbs', entries: [{ id: 'study' }] },
+            ],
+            { namespace: 'test', scope: 'global' }
+        );
+        const edge = graph.edges.find((e) => e.targetId === 'study');
+        assert.ok(edge, '应产出 actionid → study 的连接线');
+        assert.strictEqual(edge.status, 'resolved');
+        assert.strictEqual(edge.out.uid, 'test:verbs:study', '出线端 = 目标（verb）');
+        assert.strictEqual(edge.out.port, 'link');
+        assert.strictEqual(edge.in.uid, 'test:recipes:r1', '入线端 = 本条目');
+        assert.strictEqual(edge.in.port, 'input:actionid', '入线端口用数据里的真实字段名');
+    });
+
+    test('mapping：加连接 / 拆节点（connectionsOf / splitInline）→ toData 融合包含连线', () => {
+        const entry = {
+            id: 'r1',
+            actionId: 'study',
+            effects: { lantern: 2 },
+            slots: [{ id: 's1', label: '槽', required: { lantern: 2 } }, { id: 's1' }],
+            alt: [{ id: 'r2', chance: 30 }, { id: 'r3', warmup: 5 }],
+            internaldeck: { spec: ['card_a'] },
+        };
+
+        // ① 加连接：一条「端口 + 方向」一条，参考字段（slots）的 id 引用也在内
+        const conns = mapping.connectionsOf('recipes', entry);
+        assert.deepStrictEqual(
+            conns.map((c) => `${c.side}:${c.port}`).sort(),
+            ['input:actionId', 'input:alt', 'output:effects', 'output:slots']
+        );
+
+        // ② 拆节点：只有「内联定义」才拆；纯引用（只写 id/chance 这类引用参数）不拆
+        const inline = mapping.splitInline('recipes', entry);
+        assert.deepStrictEqual(
+            inline.map((c) => `${c.category}:${c.field}:${c.index}`).sort(),
+            ['decks:internaldeck:0', 'recipes:alt:1', 'slots:slots:0']
+        );
+
+        // ③ 融合：拆出来的子节点进图，宿主 → 子节点之间有包含连线
+        const graph = toData.buildGraph([{ category: 'recipes', relativePath: 'a.json', entries: [entry] }], {
+            namespace: 'test',
+            scope: 'global',
+        });
+        const ids = graph.nodes.map((n) => `${n.type}:${n.id}`).sort();
+        assert.ok(ids.includes('slots:s1'), '内联卡槽拆成了 slots 节点');
+        assert.ok(ids.includes('recipes:r3'), 'alt 里的内联 recipe 拆成了 recipes 节点');
+        assert.ok(ids.some((id) => id.startsWith('decks:')), '内联卡组拆成了 decks 节点');
+        assert.ok(!ids.includes('recipes:r2'), '纯引用的 alt 条目不拆节点');
+
+        const contains = graph.edges.filter((e) => e.kind === 'contains');
+        assert.ok(contains.length >= 3, `应有宿主→子节点的包含连线，实际 ${contains.length}`);
+        assert.ok(
+            contains.every((e) => e.status === 'resolved' && e.out.uid && e.in.uid),
+            '包含连线两端都在图内，直接解析成 resolved'
+        );
+        const slotContains = contains.find((e) => e.in.id === 's1');
+        assert.strictEqual(slotContains.out.uid, 'test:recipes:r1');
+        assert.strictEqual(slotContains.out.port, 'output:slots');
+
+        // 同一条关系不重复画线：内联定义已被包含连线覆盖，同宿主同字段的引用线不再重复
+        assert.ok(
+            !graph.edges.some((e) => e.kind === 'link' && e.from.id === 'r1' && e.from.field === 'slots' && e.targetId === 's1'),
+            '内联定义的引用线与包含连线重复 → 只留包含连线'
+        );
+        // 拆出来的 slots 节点自己带着条件连线（required → 元素）
+        const slotNode = graph.nodes.find((n) => n.type === 'slots' && n.id === 's1');
+        assert.ok(
+            slotNode.connections.some((c) => c.field === 'required' && c.side === 'input'),
+            '槽位条件挂在拆出来的 slots 节点上'
+        );
+    });
+
     test('mapping：别名 / 兜底规则（legcies 拼写错误、未知类别）', () => {
-        assert.strictEqual(mapping.ruleFor('legcies').colorVar, mapping.ruleFor('legacies').colorVar);
+        assert.deepStrictEqual(mapping.ruleFor('legcies').fields, mapping.ruleFor('legacies').fields);
         assert.strictEqual(mapping.ruleFor('从未见过的类别'), mapping.fallback);
-        assert.deepStrictEqual(mapping.fallback.inputs, []);
+        assert.deepStrictEqual(mapping.fallback.fields, []);
+        // 规则表只描述「连接需求 + 中间态转化」，不带渲染信息
+        assert.ok(
+            mapping.categories.recipes.fields.every((r) => !('type' in r) && !('label' in r) && !('icon' in r)),
+            '规则里不应出现控件类型 / 标签 / 图标'
+        );
     });
 });

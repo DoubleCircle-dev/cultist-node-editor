@@ -37,6 +37,49 @@ const parseMod = require('./parse'); // analyzeModJSON5
 const toData = require('./toData');  // buildGraph / contentFilesToData / loadOriginData / singleFileToData / collectIds
 const create = require('./create');  // createModStructure
 const origin = require('./origin');  // loadOriginToData（封装 toData.loadOriginData）
+const plugins = require('./plugins'); // 字段映射插件（TRM/导入扩展内置；用户插件走设置）
+
+/** 取工作区根目录（未打开工作区时返回空串） */
+function workspaceRoot() {
+    const folders = vscode.workspace.workspaceFolders;
+    return vscode.workspace.rootPath || (folders && folders[0] ? folders[0].uri.fsPath : '') || '';
+}
+
+/** 上一次生效的插件配置签名（路径 + 禁用列表），用于幂等跳过 */
+let pluginSignature = null;
+
+/**
+ * 加载用户字段插件并应用启停设置（幂等：配置没变就直接返回）。
+ *
+ * 设置项：
+ *   - `cultistNodeEditor.fieldPlugins`  ：JSON 插件文件或目录（相对工作区或绝对路径）
+ *   - `cultistNodeEditor.disabledPlugins`：要禁用的插件 id（含内置 trm / import-extension）
+ *
+ * 插件只影响「字段→连接」的白名单，加载失败只告警，不阻断读取流程。
+ * @returns {void}
+ */
+function loadFieldPlugins() {
+    const cfg = vscode.workspace.getConfiguration('cultistNodeEditor');
+    const targetPaths = cfg.get('fieldPlugins', []) || [];
+    const disabled = cfg.get('disabledPlugins', []) || [];
+    const signature = JSON.stringify([targetPaths, disabled]);
+    if (signature === pluginSignature) return;
+    pluginSignature = signature;
+
+    const root = workspaceRoot();
+    /** @type {{ file: string; message: string }[]} */
+    const errors = [];
+    targetPaths.forEach((target) => {
+        const full = path.isAbsolute(target) ? target : path.join(root, target);
+        errors.push(...plugins.loadPath(full).errors);
+    });
+
+    plugins.ids().forEach((id) => plugins.setEnabled(id, !disabled.includes(id)));
+
+    const active = plugins.list().filter((p) => p.enabled).map((p) => p.id);
+    console.log(`🧩 字段插件：启用 [${active.join(', ') || '无'}]，禁用 [${disabled.join(', ') || '无'}]`);
+    errors.forEach((e) => console.warn(`⚠️ 插件加载失败：${e.file} —— ${e.message}`));
+}
 
 /**
  * origin 条目 id 索引：预加载时建立，供 mod 加载把未解析目标区分为
@@ -59,6 +102,7 @@ function getOriginIds() {
  */
 function handleReadMod(panel) {
     console.log('📂 读取mod请求');
+    loadFieldPlugins(); // 先确保字段插件就位（幂等），否则连线上会缺扩展字段
     const wsRoot =
         vscode.workspace.rootPath ||
         (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]
@@ -216,6 +260,7 @@ function handleOpenJsonPreview(panel) {
  */
 function preloadOrigin(panel) {
     try {
+        loadFieldPlugins(); // 字段插件（启动时读一次设置；同样影响 origin 的连线）
         const cfg = vscode.workspace.getConfiguration('cultistNodeEditor');
         const enabled = cfg.get('preloadOrigin', true);
         if (!enabled) {
@@ -267,6 +312,7 @@ function preloadOrigin(panel) {
  */
 function previewFile(panel, filePath) {
     try {
+        loadFieldPlugins(); // 自定义编辑器可能没打开主面板 → 这里也补一次（幂等）
         const result = toData.singleFileToData(filePath);
         if (result.error) {
             panel.webview.postMessage({ command: 'error', message: `预览失败: ${result.error}` });
@@ -299,4 +345,6 @@ module.exports = {
     preloadOrigin,
     previewFile,
     getOriginIds,
+    /** 加载/重载用户字段插件（设置 cultistNodeEditor.fieldPlugins / disabledPlugins） */
+    loadFieldPlugins,
 };

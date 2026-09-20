@@ -12,6 +12,9 @@
  *             产物 `{ nodes, edges, external, warnings, stats }`；规则白名单在 mapping
  *   - origin : origin 游戏基础内容加载（封装 toData.loadOriginData；预留中间态快照）
  *   - mapping: 类别映射规则（titleOf / 连接性检测白名单 inputs·outputs / 属性字段）
+ *   - plugins: 字段映射插件注册表（TRM / 导入扩展等扩展字段的挂载点）
+ *     —— mapping 只收原版本体字段，扩展字段一律以插件形式补充；
+ *     写 JSON 插件文件 → `plugins.loadFile(path)` 或设置 `cultistNodeEditor.fieldPlugins`。
  *
  * 用法：
  *   // 需要哪个函数就点名到子模块（归属一目了然，编辑器 F12/ctrl+点击直达定义）：
@@ -37,6 +40,7 @@ const parse = require('./parse');
 const toData = require('./toData');
 const origin = require('./origin');
 const mapping = require('./mapping');
+const plugins = require('./plugins');
 
 module.exports = {
     detect,
@@ -45,4 +49,5 @@ module.exports = {
     toData,
     origin,
     mapping,
+    plugins,
 };

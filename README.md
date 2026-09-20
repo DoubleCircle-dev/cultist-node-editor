@@ -22,10 +22,21 @@
 其他已实现的能力：
 
 - **节点类型 = 数据文件的最外围键**：一个文件的 `{"recipes": [...]}` 直接变成一组 `recipes` 节点，
-  列表里每个元素一个节点；哪些字段算「引用」由 `core/modLoad/mapping.js` 的白名单声明
-  （`requirements` / `effects` / `linked` / `alt` / `slots` / `spec` / `actionid` …）
-- **连接线分三段解析**：建完全部节点后再按 id 连线；连不上的目标标成**文件外节点**
-  （`external-origin` 游戏基础内容 / `external-mod` 用户自定义引入），全局加载时另出「端口悬空」告警
+  列表里每个元素一个节点；哪些字段需要**连线**、该连什么类别、以及哪些内嵌对象要**提取成节点**，
+  全部由 `core/modLoad/mapping.js` 的字段规则表声明（事实依据是官方 wiki 手册，见 `agent-scratch/help.mw`），
+  扩展字段（TRM / 导入扩展 / 自用扩展）由 `core/modLoad/plugins/` 里的**插件**补充
+- **数据流水线四段**（后端三段的职责按「谁懂游戏语义谁负责」划分）：
+  1. `parse` **解析 JSON**：读文件 → 拆最外围键（键名 = 节点类型）；
+  2. `mapping` **加连接、拆节点**：字段规则表声明「要连线的字段（方向 / 目标类别 / 取值方式）」与
+     「要拆成节点的内联定义」，并抽出一个条目的**连接需求**（`connectionsOf`）与**该拆出来的内联子节点**（`splitInline`）
+     —— 如 `recipes.slots[]` 拆成 `slots` 节点、`alt` 里的内联 recipe 拆成 `recipes` 节点；
+  3. `toData` **融合成中间态 JSON**：为每个条目（含拆出来的）建节点、把包含关系与引用关系都变成连接线、
+     按 id 解析目标（连不上的标成**文件外节点** `external-origin` / `external-mod`，全局加载时另出「端口悬空」告警）；
+  4. 前端 **nodeModel ⇄ 中间态 JSON 互转**：导入按 `props` 的 `kind` 建属性、按 `edge.out` / `edge.in` 落位连线。
+- **后端只描述语义，不决定渲染**：字段只给「基础属性类型（`kind`）+ 原始值 + 连接需求（`links`）+ 中间态转化（`materialize`）」，
+  用什么控件、什么标签由前端自己定（兜底 = 原生 text）
+- **不能双向的关系由后端变换**：`alt` / `linked` / `inductions` 的跳转条件写在目标身上，
+  后端把它们变成「目标 → 本条目」的线（`edge.out` / `edge.in`），前端照着画即可
 - **文本变量同步**：文本字段可连到「文本节点」共享同一变量，任一端口编辑即双向同步（可选实时逐键同步）
 - **属性系统**：数值 / 选项 / 端口 / 表格 / 图片预览等属性类型，含「修改可选属性」的扩展属性池
 - **撤销重做**、画布缩放平移、适应视图、隐藏连接、专注某节点
@@ -35,8 +46,39 @@
 | 设置项 | 默认 | 说明 |
 | --- | --- | --- |
 | `cultistNodeEditor.preloadOrigin` | `true` | 打开编辑器时预加载游戏基础内容（`origin_resources`）为可拖拽节点 |
+| `cultistNodeEditor.fieldPlugins` | `[]` | 自定义**字段插件**（JSON 文件或目录，相对工作区或绝对路径） |
+| `cultistNodeEditor.disabledPlugins` | `[]` | 要禁用的插件 id（内置：`trm`、`import-extension`） |
 
 编辑器内部还有一批偏好（主题、网格、缩放范围、连线样式、实时文本同步等），在编辑器右上角 ⚙️ 里配置。
+
+## 字段插件
+
+`mapping.js` 只声明**原版（本体）字段**的连接需求与中间态转化；各种**扩展**字段一律以插件形式外挂：
+
+| 插件 | 作用 |
+| --- | --- |
+| `trm`（内置） | The Roost Machine：`grandReqs` / `movements` / `decays` / `addCallbacks` / `rootAdd` / 槽位 `xtrigger` / 性相 `aspectSlots` / 动词 `maxUnique` 等，并自带 `fucine-ids` 解析器（从 `[~/extant:funds]` 这类 Fucine 表达式里取出元素 id） |
+| `import-extension`（内置） | 导入扩展：`$derives` / `$extends` / `$depends` / `$incompatible`，以及 `effects$add` / `linked$append` 这类**属性操作字段**（靠正则 `from` 一次命中多个字段名） |
+
+**自定义字段（不用改代码）**：写一个 JSON 插件文件，填进 `cultistNodeEditor.fieldPlugins`；
+或调用 `modLoad.plugins.loadFile(path)` / `loadDirectory(dir)`。
+
+```json
+{
+  "id": "my-fields",
+  "name": "我自己的字段",
+  "categories": {
+    "recipes": {
+      "fields": [
+        { "from": "myReward", "link": { "direction": "output", "targets": ["elements"], "extract": "map" } },
+        { "from": "myCost",   "link": { "direction": "input",  "targets": ["elements"], "extract": "map" } }
+      ]
+    }
+  }
+}
+```
+
+插件接口（登记、启停、自定义 `extract` 解析器、新类别）详见 `core/modLoad/plugins/index.js` 文件头。
 
 ## 安装
 
@@ -92,19 +134,46 @@ pnpm run package:vsix   # 打包成 vsix
 
 ```js
 {
+  format: 'cne-node-graph', version: 1,   // 中间态 JSON 的形状标识
   source: 'origin' | 'mod', namespace, count, scope: 'file' | 'global',
-  nodes:    [ { uid, id, type, category, title, file, source, fields, refs, connections, refCount } ],
-  edges:    [ { id, kind, from: { uid, type, category, id, field, side, label }, targetId, amount, status, to } ],
+  nodes: [
+    { uid, id, type, category, title, file, source, refCount,
+      // 每个字段一条（id 除外）：基础属性类型 + 原始值 + 连接需求 + 中间态转化
+      props: [ { name, kind, value, links: [ { port, direction, targets, multi, extract } ], materialize } ],
+      connections: [ { field, port, side, targets, extract, multi, sources, targetIds } ] },
+  ],
+  edges: [
+    { id, kind: 'link',
+      from: { uid, type, category, id, field, port, side, targets, extract, multi, sources },
+      out:  { uid, type, category, id, field?, side: 'output', port },
+      in:   { uid, type, category, id, field?, side: 'input',  port },
+      targetId, amount, status, to },
+  ],
   external: [ /* status !== resolved 的连接线：external-origin / external-mod */ ],
   warnings: [ /* scope=global 时的「端口悬空」汇总；单文件预览为空 */ ],
   stats:    { files, nodes, edges, resolved, externalOrigin, externalMod, danglingFields }
 }
 ```
 
+**三条边界（后端只描述语义，不做渲染决策）**
+
+1. **基础属性类型**：后端按原始 JSON 值现推 `kind`（`string` / `number` / `boolean` / `list` / `dict`），
+   并原样给 `value`。前端自己决定用什么控件渲染（兜底 = 原生 text），后端不写 `text` / `textarea` /
+   `valueType` 这类东西。
+2. **连接需求**：只有需要连线的字段才有 `links`（一个字段可有多条 = 多个含义的端口）：
+   - `direction`：**本条目在这条线上是哪一侧** —— `input` = 别的东西指向我，`output` = 我指向别的东西；
+   - `targets`：对端类别（如 `['verbs']`），前端据此限制端口能连什么；
+   - `multi`：是否允许多连；`extract`：从值里取目标 id 的方式（`map` / `id-list` / `nested-map` …）。
+   像 `alt` / `linked` / `inductions` 这种「跳转条件写在目标身上」的关系，`direction` 就是 `input`
+   —— 后端已经把这种不能双向的关系**变换**成了定好两端的连接线：`edge.out` / `edge.in`，
+   前端照着画即可，不用猜端口。
+3. **中间态转化**：内嵌对象/列表该提取成节点或工具节点时，用 `materialize` 声明
+   （`{ as: 'node' | 'tool', type, inline? }`，如 `recipes.slots` → `slots` 节点）。
+   ⚠️ 目前只做到「声明」，真正的提取（生成节点 + 包含关系的连线）还没实现。
+
 - `node.type` 就是数据文件的最外围键（`recipes` / `elements` …），可直接当基础类型实例化；
-  标量字段在 `fields`（填属性），对象字段在 `refs`（原始结构），连接性检测结果在 `connections`。
-- `edge.from.field` 用来在引用方找端口；`edge.status` 为 `resolved` / `external-origin` / `external-mod`。
-- 流程与规则细节见 `core/modLoad/toData.js` 头部注释、`core/modLoad/mapping.js` 的白名单声明。
+- `edge.status` 为 `resolved` / `external-origin` / `external-mod`；未解析的目标只给 `targetId`。
+- 流程与规则细节见 `core/modLoad/toData.js` 头部注释、`core/modLoad/mapping.js` 的规则表说明。
 
 ### 发布
 

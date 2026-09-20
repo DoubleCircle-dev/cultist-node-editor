@@ -9,12 +9,10 @@
  *      读文件 → 拿到整份 JSON → 拆出最外围键（一般 1-2 个，如 recipes / elements）；
  *      键名 = 前端节点类型，值 = 该类型的条目 list，原样交给下一步处理。
  *
- *   ② 建节点 + 连接性检测（entryToNode / detectConnections）
+ *   ② 建节点 + 连接需求检测（entryToNode / detectConnections）
  *      列表里每个元素 → 一个「与根键同名」的节点（node.type = 根键）；
- *      元素每个字段逐一过检测：
- *        · 变量属性（标量值）→ 留在 node.fields，不产生连线；
- *        · mapping 白名单声明过的引用字段（inputs / outputs）→ 抽出目标 id，
- *          生成「连接线节点」（pending edge，见 buildPendingEdges），先存为待连接。
+ *      元素每个字段都变成一条属性定义（原始值 + 由值推出来的基础类型），
+ *      其中 mapping 声明了 `link` 的字段再额外抽出目标 id，生成连接线（pending edge）。
  *
  *   ③ 解析待连接（resolveEdges）
  *      本次解析范围内的节点全部建完后（scope='file' 本文件 / scope='global' 本次加载的全部文件），
@@ -28,18 +26,26 @@
  * 产物（buildGraph 返回值）：
  *   `{ source, modId, namespace, scope, nodes, edges, external, warnings, stats }`
  *
- * 前端消费：nodes 按 type 实例化基础类型节点 → edges 按 `from.field` 找端口连线 →
- * external 进引入区占位 → warnings 进问题提示。
+ * 前端消费：nodes 按 type 实例化基础类型节点 → 每个 prop 按 `kind` 决定渲染（兜底 text）、
+ * 按 `link.targets` 限制端口能连什么 → edges 直接按 `out` / `in` 两端画线
+ * （朝向已由后端变换好）→ external 进引入区占位 → warnings 进问题提示。
  *
- * 节点结构：`{ uid, id, type, category, title, file, source, fields, refs, connections }`
+ * 节点结构：`{ uid, id, type, category, title, file, source, props, connections }`
  *   - `type` / `category` = 数据文件的最外围键（= 前端基础节点类型，如 recipes）；
- *   - `fields` = 变量属性（标量），按名填充前端模板属性；
- *   - `refs`   = 引用字段的原始结构（展示 / 调试用）；
- *   - `connections` = 连接性检测结果（字段 → 端口方向 → 目标 id 列表）。
+ *   - `props` = 属性定义，每个字段一条 `{ name, kind, value, link, materialize }`：
+ *       · `kind`  = `string | number | boolean | list | dict`（**值本身的 JSON 类型**，前端据此选控件）；
+ *       · `value` = 原始值，原样（不加工、不字符串化）；
+ *       · `link`  = 连接需求（`direction` / `targets` / `multi` / `extract`），没有就是 null；
+ *       · `materialize` = 中间态转化（该抽取成节点/工具节点时给出）；
+ *   - `connections` = 连接需求检测结果（字段 → 方向 → 目标 id 列表）。
  *
- * 连接线节点（edge）结构：
- *   `{ id, kind:'link', from:{uid,type,category,id,field,side,label}, targetId, amount,
- *      status:'pending'|'resolved'|'external-origin'|'external-mod', to:{uid,type,category,id}|null, external? }`
+ * 连接线（edge）结构：
+ *   `{ id, kind:'link',
+ *      from:{uid,type,category,id,field,side,targets,extract,multi,sources},
+ *      out:{uid,side:'output',port,field?}, in:{uid,side:'input',port,field?},
+ *      targetId, amount,
+ *      status:'pending'|'resolved'|'external-origin'|'external-mod', to:{uid,type,category,id}|null }`
+ *   —— `from` 是引用关系本身，`out` / `in` 才是给前端的**连接线两端**（已变换朝向）。
  */
 
 const fs = require('fs');
@@ -55,7 +61,9 @@ const EXTERNAL_ORIGIN = 'external-origin';
 
 /** 文件外节点：目标是用户自定义引入（其它 mod / 外部库） */
 const EXTERNAL_MOD = 'external-mod';
-
+/** 中间态 JSON 的形状标识（前端 nodeModel ⇄ 中间态互转时校对用） */
+const GRAPH_FORMAT = 'cne-node-graph';
+const GRAPH_VERSION = 1;
 /** 一条汇总告警里最多列几个目标 id（其余折叠成「等 N 个」） */
 const WARN_TARGET_LIMIT = 5;
 
@@ -87,87 +95,90 @@ function nodeUid(namespace, category, id) {
 }
 
 /**
- * 连接性检测（第 ② 步核心）：把一个条目的字段分成「变量属性」与「引用字段」。
+ * 连接性检测（第 ② 步核心）：把一个条目的字段过一遍 mapping 声明的**连接需求**。
  *
- * 判定依据**只有** mapping.js 里显式声明的 inputs / outputs —— 白名单之外的对象 / 数组字段
- * 一律当普通值处理，不猜、不推断（避免误连线）。命中的字段会连同端口方向（side）与目标 id
- * 一起返回，供 buildPendingEdges 生成「连接线节点」。
+ * 判定依据**只有** mapping.js 里带 `link` 的字段规则（本体表 + 启用中的插件）——
+ * 没声明的字段一律当普通属性处理，不猜、不推断（避免误连线）。
+ *
+ * 登记粒度是「字段 + 方向」：
+ *   - 同一字段可有多条规则；同方向的多条合并成一条（目标 id 取并集，来源插件名合并）；
+ *   - 不同方向各记一条（如 mutations：filter 是入、mutate 是出）。
  *
  * @param {string} category - 类别（= 节点类型 = 数据文件最外围键）
  * @param {Record<string, any>} entry - 原始条目
  * @returns {{
  *     field: string;
  *     side: 'input' | 'output';
- *     label: string;
  *     extract: string;
  *     multi: boolean;
- *     targets: { targetId: string; amount: number|null }[];
- * }[]} 连接性检测结果（一个字段一条）
+ *     targets: string[];
+ *     plugin: string|null;
+ *     materialize: Record<string, any>|null;
+ *     sources: string[];
+ *     targetIds: { targetId: string; amount: number|null }[];
+ * }[]} 连接性检测结果（一个「字段 + 方向」一条）
  */
 function detectConnections(category, entry) {
     const rule = mapping.ruleFor(category);
-    const { actualFieldName, collectRefTargets } = mapping.helpers;
+    const { actualFieldNames, collectRefTargets } = mapping.helpers;
 
     /** @type {ReturnType<typeof detectConnections>} */
     const connections = [];
-    const seen = new Set();
+    /** @type {Map<string, ReturnType<typeof detectConnections>[number]>} 字段+方向 → 已登记的连接 */
+    const byFieldSide = new Map();
 
-    /** 按方向扫一遍声明 */
-    const scan = (rules, side) => {
-        (rules || []).forEach((r) => {
-            const field = actualFieldName(entry, r.from);
-            if (!field || seen.has(field)) return;
-            const targets = collectRefTargets(entry[field], r);
-            if (!targets.length) return; // 数据里没这个字段 / 形态不符 → 不虚报端口
-            seen.add(field);
-            connections.push({
+    (rule.fields || []).forEach((r) => {
+        if (!r.link) return; // 只声明「中间态转化」的规则不参与连接
+        const side = r.link.direction === 'output' ? 'output' : 'input';
+        const source = r.plugin || 'mapping'; // 规则来源：本体规则记为 mapping，插件规则记插件 id
+
+        // 规则的 from 可能是正则（插件里的 `xxx$add` 这类属性操作字段）→ 一个规则命中多个字段
+        actualFieldNames(entry, r.from).forEach((field) => {
+            const targetIds = collectRefTargets(entry[field], r.link);
+            if (!targetIds.length) return; // 数据里没这个字段 / 形态不符 → 不虚报端口
+
+            // 端口名：规则写了 port 用它，否则就是字段名；同一端口上的多条规则合并
+            const port = r.link.port || field;
+            const key = `${side}:${port}`;
+            const exist = byFieldSide.get(key);
+            if (exist) {
+                targetIds.forEach(({ targetId, amount }) => {
+                    if (exist.targetIds.some((t) => t.targetId === targetId)) return;
+                    exist.targetIds.push({ targetId, amount });
+                });
+                (r.link.targets || []).forEach((t) => {
+                    if (!exist.targets.includes(t)) exist.targets.push(t);
+                });
+                if (!exist.sources.includes(source)) exist.sources.push(source);
+                return;
+            }
+
+            const conn = {
                 field,
+                port,
                 side,
-                label: r.label || r.from,
-                extract: r.extract || 'map',
-                multi: r.multi !== false,
-                targets,
-            });
+                extract: r.link.extract || 'map',
+                multi: r.link.multi !== false,
+                targets: [...(r.link.targets || [])],
+                plugin: r.plugin || null,
+                materialize: r.materialize || null,
+                sources: [source],
+                targetIds,
+            };
+            byFieldSide.set(key, conn);
+            connections.push(conn);
         });
-    };
-
-    scan(rule.inputs, 'input');
-    scan(rule.outputs, 'output');
+    });
 
     return connections;
 }
 
 /**
- * 条目字段 → 属性 / 原始引用 的拆分（保留旧语义，供前端按名填属性、按 refs 展示）
+ * 条目 → 节点（第 ② 步产物）
  *
- * - `fields`：标量字段（string/number/boolean）—— 变量属性；
- * - `refs` ：对象字段与含对象的数组（如 effects / requirements / linked）—— 原始引用结构。
- *
- * @param {Record<string, any>} entry - 原始条目
- * @returns {{ fields: Record<string, any>; refs: Record<string, any> }} 拆分结果
- */
-function splitEntryFields(entry) {
-    /** @type {Record<string, any>} */
-    const fields = {};
-    /** @type {Record<string, any>} */
-    const refs = {};
-
-    Object.entries(entry).forEach(([k, v]) => {
-        if (k === 'id') return;
-        if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
-            refs[k] = v; // 对象字段 → 引用结构
-        } else if (Array.isArray(v) && v.some((item) => item && typeof item === 'object')) {
-            refs[k] = v; // 引用数组（如 linked/alt: [{ id: ... }]）→ 引用结构
-        } else {
-            fields[k] = v; // 标量字段 → 变量属性
-        }
-    });
-
-    return { fields, refs };
-}
-
-/**
- * 单个条目 → 节点（第 ② 步产物）
+ * 节点只带语义信息（后端不做渲染决策）：
+ *   - `props`：每个字段一条 `{ name, kind, value, link, materialize }`；
+ *   - `connections`：连接需求检测结果（字段 → 方向 → 目标 id）。
  *
  * @param {string} category - 类别（= 数据文件最外围键 = 前端节点类型）
  * @param {Record<string, any>} entry - 原始条目
@@ -175,17 +186,18 @@ function splitEntryFields(entry) {
  * @returns {{
  *     uid: string; id: string; type: string; category: string; title: string;
  *     file: string; source: string;
- *     fields: Record<string, any>; refs: Record<string, any>;
+ *     props: Array<Record<string, any>>;
  *     connections: ReturnType<typeof detectConnections>;
  *     refCount: number;
  * }} 节点
  */
 function entryToNode(category, entry, source) {
     const rule = mapping.ruleFor(category);
-    const title = rule.titleOf ? rule.titleOf(entry) : String(entry.id || 'untitled');
-    const { fields, refs } = splitEntryFields(entry);
+    const props = mapping.helpers.buildProps(entry, rule);
     const connections = detectConnections(category, entry);
     const id = String(entry.id == null ? '' : entry.id);
+    // 标题取数据里的 label（游戏内显示名），没写就退回 id
+    const title = String(entry.label || entry.id || 'untitled');
 
     return {
         uid: nodeUid(source.namespace, category, id),
@@ -195,10 +207,9 @@ function entryToNode(category, entry, source) {
         title,
         file: source.file || '',
         source: source.source || 'mod',
-        fields,
-        refs,
+        props,
         connections,
-        refCount: connections.reduce((n, c) => n + c.targets.length, 0),
+        refCount: connections.reduce((n, c) => n + c.targetIds.length, 0),
     };
 }
 
@@ -220,10 +231,12 @@ function buildIdIndex(nodes) {
 }
 
 /**
- * 建「连接线节点」待连接表（第 ② 步产物）：连接性检测结果 → 一条条待解析的 edge。
+ * 建「连接线」待连接表（第 ② 步产物）：连接需求检测结果 → 一条条待解析的 edge。
  *
- * 此时还不知道目标在不在本次解析范围里，所以 `status='pending'`、`to=null`；
- * 等所有节点建完（同一文件或全局）再交给 resolveEdges 解析。
+ * edge 的形状（前端只消费 `out` / `in` 两端，不必理解游戏语义）：
+ *   - `from`：引用关系本身（谁在哪个字段上声明了引用、方向、目标类别、规则来源）；
+ *   - `out` / `in`：**已经变换好的连接线两端**（出线端画在 output 端口，入线端在 input 端口）；
+ *   - `targetId` / `to` / `status`：目标解析情况（待解析时 `to=null`、`status='pending'`）。
  *
  * @param {any[]} nodes - 节点列表
  * @returns {any[]} 待连接 edge 列表
@@ -236,24 +249,47 @@ function buildPendingEdges(nodes) {
     (nodes || []).forEach((node) => {
         if (!node || !node.id) return; // 无 id 的条目无法被引用
         (node.connections || []).forEach((conn) => {
-            conn.targets.forEach(({ targetId, amount }) => {
-                const id = `${node.uid}.${conn.field}#${targetId}`;
+            conn.targetIds.forEach(({ targetId, amount }) => {
+                // 同一字段可能双向都有目标（如 mutations 的 filter / mutate）→ id 里带方向避免撞车
+                const id = `${node.uid}.${conn.field}#${conn.side}#${targetId}`;
                 if (seen.has(id)) return;
                 seen.add(id);
+
+                // **连接线朝向的变换**（后端做完再交给前端）：
+                //   conn.side = 'output' → 本条目是出线端（out = 自己，in = 目标）
+                //   conn.side = 'input'  → 本条目是入线端（out = 目标，in = 自己）
+                // 目标那一端的端口 key 统一是 'link'（通用连接口），未解析时 uid 留空，
+                // 由 resolveEdges 命中后补上。
+                const self = {
+                    uid: node.uid,
+                    type: node.type,
+                    category: node.category,
+                    id: node.id,
+                    field: conn.field,
+                };
+                const selfPort = { side: conn.side, port: `${conn.side}:${conn.port}` };
+                const otherPort = { side: conn.side === 'output' ? 'input' : 'output', port: 'link' };
+                const out = conn.side === 'output' ? { ...self, ...selfPort } : { uid: null, ...otherPort };
+                const into = conn.side === 'output' ? { uid: null, ...otherPort } : { ...self, ...selfPort };
+
                 edges.push({
                     id,
                     kind: 'link',
+                    // from = 引用关系本身（谁在哪个字段上声明了这条引用、方向、目标类别、规则来源）
                     from: {
-                        uid: node.uid,
-                        type: node.type,
-                        category: node.category,
-                        id: node.id,
-                        field: conn.field,
+                        ...self,
+                        port: conn.port,
                         side: conn.side,
-                        label: conn.label,
+                        targets: conn.targets || [],
+                        extract: conn.extract,
+                        multi: conn.multi,
+                        sources: conn.sources || [], // 该字段的规则来源：mapping（本体）/ 插件 id
                     },
                     targetId,
                     amount,
+                    // out / in = 已经变换好的连接线两端（前端照着画即可）
+                    out,
+                    in: into,
                     status: 'pending',
                     to: null,
                 });
@@ -292,7 +328,7 @@ function summarizeExternal(external) {
     const groups = new Map();
 
     (external || []).forEach((edge) => {
-        const key = `${edge.from.uid}.${edge.from.field}`;
+        const key = `${edge.from.uid}.${edge.from.field}#${edge.from.side}`;
         if (!groups.has(key)) groups.set(key, { from: edge.from, targets: [] });
         const group = groups.get(key);
         if (!group.targets.includes(edge.targetId)) group.targets.push(edge.targetId);
@@ -303,9 +339,11 @@ function summarizeExternal(external) {
     groups.forEach(({ from, targets }) => {
         const shown = targets.slice(0, WARN_TARGET_LIMIT).join(', ');
         const more = targets.length > WARN_TARGET_LIMIT ? ` 等 ${targets.length} 个` : '';
+        const origin = (from.sources || []).filter((s) => s !== 'mapping');
+        const originText = origin.length ? `，插件 ${origin.join('/')}` : '';
         warnings.push(
             `端口悬空：${from.category}:${from.id} 的 ${from.field}` +
-                `（${from.side === 'input' ? '需求' : '效果'}端口）引用的目标 [${shown}${more}] 未解析（未实现的目标）`
+                `（${from.side === 'input' ? '需求' : '效果'}端口${originText}）引用的目标 [${shown}${more}] 未解析（未实现的目标）`
         );
     });
 
@@ -338,8 +376,12 @@ function resolveEdges(pending, index, options = {}) {
         const hits = index.get(edge.targetId);
         if (hits && hits.length) {
             hits.forEach((hit) => {
+                const patch = { uid: hit.uid, type: hit.type, category: hit.category, id: hit.id };
+                // 目标那一端（uid 为空的一端）补上目标节点信息
                 edges.push({
                     ...edge,
+                    out: edge.out.uid ? edge.out : { ...edge.out, ...patch },
+                    in: edge.in.uid ? edge.in : { ...edge.in, ...patch },
                     status: 'resolved',
                     to: { uid: hit.uid, type: hit.type, category: hit.category, id: hit.id },
                 });
@@ -360,8 +402,110 @@ function resolveEdges(pending, index, options = {}) {
     };
 }
 
+/** 内联定义拆节点的递归深度上限（防「定义里再套定义」无限展开） */
+const MAX_INLINE_DEPTH = 4;
+
 /**
- * 组装节点图：组（根键 + 条目 list）→ nodes / edges / external / warnings。
+ * 建一个条目的节点，并递归展开它内联定义里的子节点（mapping「拆分节点」的落地）。
+ *
+ * `mapping.splitInline` 给出该拆出来的内嵌定义（如 recipe 里内联的 slots / 内联 recipe），
+ * 这里为它们各自建节点，并补一条**包含关系**连线：宿主 → 子节点。
+ *
+ * 同一 id 只建一次（数据里同一份定义可能被多处内联引用），所以重复定义不会重复建节点。
+ *
+ * @param {string} category - 类别
+ * @param {Record<string, any>} entry - 条目（内联定义会被补上合成 id）
+ * @param {{ source: string; namespace: string; file: string }} origin - 来源信息
+ * @param {{ nodes: any[]; pending: any[]; byUid: Map<string, any>; depth: number }} ctx - 累积上下文
+ * @returns {any|null} 建出来的节点
+ */
+function expandEntry(category, entry, origin, ctx) {
+    const id = String(entry.id == null ? '' : entry.id);
+    const uid = id ? nodeUid(origin.namespace, category, id) : null;
+    if (uid && ctx.byUid.has(uid)) return ctx.byUid.get(uid); // 同一 id 只建一次
+
+    const node = entryToNode(category, entry, origin);
+    ctx.nodes.push(node);
+    if (uid) ctx.byUid.set(uid, node);
+    ctx.pending.push(...buildPendingEdges([node]));
+
+    if (ctx.depth >= MAX_INLINE_DEPTH) return node;
+
+    mapping.splitInline(category, entry).forEach((child) => {
+        // 内联定义常常没写 id → 用「宿主 id#字段#序号」合成一个稳定 id
+        const childId = String(
+            child.entry.id == null || child.entry.id === ''
+                ? `${id || category}#${child.field}#${child.index}`
+                : child.entry.id
+        );
+        const childNode = expandEntry(child.category, { ...child.entry, id: childId }, origin, {
+            ...ctx,
+            depth: ctx.depth + 1,
+        });
+        ctx.pending.push(containmentEdge(node, child, childNode));
+    });
+
+    return node;
+}
+
+/**
+ * 包含关系连线：宿主条目 → 它内联定义拆出来的子节点
+ *
+ * 出线端 = 宿主的 `output:<字段名>`；入线端 = 子节点的通用入口（`link`）。
+ * 两端都在图里，resolveEdges 会把它标成 resolved。
+ *
+ * @param {any} host - 宿主节点
+ * @param {{ field: string; index: number; category: string }} child - splitInline 的产物
+ * @param {any} childNode - 拆出来的子节点
+ * @returns {any} 连接线
+ */
+function containmentEdge(host, child, childNode) {
+    return {
+        id: `${host.uid}.${child.field}#inline#${childNode.uid}`,
+        kind: 'contains',
+        from: {
+            uid: host.uid,
+            type: host.type,
+            category: host.category,
+            id: host.id,
+            field: child.field,
+            port: child.field,
+            side: 'output',
+            targets: [child.category],
+            extract: 'inline',
+            multi: true,
+            sources: ['mapping'],
+        },
+        targetId: childNode.id,
+        amount: null,
+        out: {
+            uid: host.uid,
+            type: host.type,
+            category: host.category,
+            id: host.id,
+            field: child.field,
+            side: 'output',
+            port: `output:${child.field}`,
+        },
+        in: {
+            uid: childNode.uid,
+            type: childNode.type,
+            category: childNode.category,
+            id: childNode.id,
+            side: 'input',
+            port: 'link',
+        },
+        status: 'pending',
+        to: null,
+    };
+}
+
+/**
+ * 组装中间态 JSON：组（根键 + 条目 list）→ 节点图（nodes / edges / external / warnings）。
+ *
+ * 流水线分工：`parse` 解析 JSON → **`mapping` 加连接、拆节点**（connectionsOf / splitInline）
+ * → 本函数把两者的产物**融合**成中间态 JSON。前端拿它建 nodeModel，也可以反向把
+ * nodeModel 导回这个形状（值 + 端口），再由后端按 mapping 补回连接需求写回 mod JSON。
  *
  * 第 ② 步建全部节点与待连接表 → 第 ③ 步在「本次解析范围」内解析连接。
  *
@@ -389,24 +533,37 @@ function buildGraph(groups, options = {}) {
 
     /** @type {any[]} */
     const nodes = [];
+    /** @type {any[]} */
+    const pending = [];
+    /** @type {Map<string, any>} uid → 节点（同一 id 的内联定义只建一次） */
+    const byUid = new Map();
+
     (groups || []).forEach((group) => {
         (group.entries || []).forEach((entry) => {
             if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-            nodes.push(
-                entryToNode(group.category, entry, {
-                    source,
-                    namespace,
-                    file: group.relativePath || group.file || '',
-                })
-            );
+            expandEntry(group.category, entry, { source, namespace, file: group.relativePath || group.file || '' }, {
+                nodes,
+                pending,
+                byUid,
+                depth: 0,
+            });
         });
     });
 
     const index = buildIdIndex(nodes);
-    const pending = buildPendingEdges(nodes);
-    const { edges, external, warnings } = resolveEdges(pending, index, { ...options, scope });
+    // 融合时去重：内联定义已经被「包含关系」连线表达过了（宿主 → 拆出来的子节点），
+    // 同宿主同字段再指向同一个目标就只留包含连线，不重复画两条
+    const contained = new Set(
+        pending.filter((e) => e.kind === 'contains').map((e) => `${e.from.uid}.${e.from.field}#${e.targetId}`)
+    );
+    const merged = pending.filter(
+        (e) => e.kind === 'contains' || !contained.has(`${e.from.uid}.${e.from.field}#${e.targetId}`)
+    );
+    const { edges, external, warnings } = resolveEdges(merged, index, { ...options, scope });
 
     return {
+        format: GRAPH_FORMAT,
+        version: GRAPH_VERSION,
         source,
         modId,
         namespace,
@@ -549,10 +706,11 @@ module.exports = {
     ORIGIN_NS,
     EXTERNAL_ORIGIN,
     EXTERNAL_MOD,
+    GRAPH_FORMAT,
+    GRAPH_VERSION,
     namespaceKey,
     nodeUid,
     detectConnections,
-    splitEntryFields,
     entryToNode,
     buildIdIndex,
     buildPendingEdges,
