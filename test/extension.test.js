@@ -3,6 +3,8 @@ const path = require('path');
 const vscode = require('vscode');
 const extension = require('../extension');
 const frontendHost = require('../frontend-host');
+const modHandlers = require('../core/modLoad/handlers');
+const serviceHost = require('../core/service/host');
 
 /**
  * 扩展宿主集成测试（vscode-test / @vscode/test-cli）
@@ -24,12 +26,10 @@ const HAS_FRONTEND = frontendHost.listImpls().length > 0;
 
 const EXT_ROOT = path.resolve(__dirname, '..');
 
-const COMMANDS = [
-    'cultist-node-editor.openEditor',
-    'cultist-node-editor.loadMod',
-    'cultist-node-editor.newMod',
-    'cultist-node-editor.openJsonPreview',
-];
+/** 扩展清单：命令与设置项直接读 package.json，新增时测试自动跟上，不必手改清单 */
+const MANIFEST = require('../package.json');
+const COMMANDS = MANIFEST.contributes.commands.map((c) => c.command);
+const SETTINGS = Object.keys(MANIFEST.contributes.configuration.properties);
 
 /** 最小 ExtensionContext 替身（只要 activate/getWebviewContent 用到的字段） */
 function makeContext() {
@@ -40,18 +40,25 @@ function makeContext() {
     };
 }
 
-/** 最小 WebviewPanel 替身：asWebviewUri 直接返回入参（Uri 自带 toString） */
+/** 最小 WebviewPanel 替身：asWebviewUri 直接返回入参（Uri 自带 toString）；postMessage 收进 messages 供断言 */
 function makePanel() {
+    /** @type {any[]} */
+    const messages = [];
     return {
         webview: {
             cspSource: 'vscode-webview://integration-test',
             asWebviewUri: (uri) => uri,
+            postMessage: (message) => {
+                messages.push(message);
+                return Promise.resolve(true);
+            },
         },
+        messages,
     };
 }
 
 suite('扩展宿主集成测试', () => {
-    test('activate 不抛错，并且 4 个命令都已注册', async () => {
+    test('activate 不抛错，并且清单里的命令都已注册（含服务层的两个重载命令）', async () => {
         const before = await vscode.commands.getCommands(true);
         // activationEvents 是 "*"，宿主通常已经激活过扩展；没有的话手动激活一次
         if (!before.includes(COMMANDS[0])) {
@@ -61,6 +68,85 @@ suite('扩展宿主集成测试', () => {
         for (const id of COMMANDS) {
             assert.ok(all.includes(id), `命令未注册：${id}`);
         }
+        assert.ok(COMMANDS.includes('cultist-node-editor.reloadMod'), '应有重载 mod 命令');
+        assert.ok(COMMANDS.includes('cultist-node-editor.reloadOrigin'), '应有重载 origin 命令');
+    });
+
+    test('服务层的设置项都已注册，且能读到默认值', () => {
+        ['quickLoad', 'watchWorkspace', 'watchDebounce', 'autoSaveDoc', 'snapshotPercent'].forEach((key) => {
+            assert.ok(SETTINGS.includes(`cultistNodeEditor.${key}`), `设置项未注册：cultistNodeEditor.${key}`);
+        });
+
+        const cfg = vscode.workspace.getConfiguration('cultistNodeEditor');
+        assert.strictEqual(cfg.get('quickLoad'), true, '快速加载默认开');
+        assert.strictEqual(cfg.get('watchWorkspace'), true, '工作区监听默认开');
+        assert.strictEqual(cfg.get('watchDebounce'), 300);
+        assert.strictEqual(cfg.get('autoSaveDoc'), true);
+        assert.strictEqual(cfg.get('snapshotPercent'), 40);
+    });
+
+    test('服务层宿主：服务实例落在扩展自己的存储目录，画布文档可写可读', () => {
+        serviceHost.activate(makeContext());
+        const service = serviceHost.getService();
+
+        assert.ok(service, '应能取到服务实例');
+        const storageDir = serviceHost.storageDirOf();
+        assert.ok(storageDir.length > 0, 'storageDir 不应为空');
+        assert.ok(
+            storageDir.startsWith(serviceHost.getService().extensionRoot) || path.isAbsolute(storageDir),
+            `storageDir 应是绝对路径：${storageDir}`
+        );
+
+        const key = `${serviceHost.docKey()}#service-test`;
+        const doc = { pages: [{ id: 'p-int', name: '集成测试页', nodes: [], edges: [] }], activeId: 'p-int' };
+        const written = service.saveDoc(key, doc);
+        assert.ok(written.ok, `文档应写入成功：${written.error || ''}`);
+        assert.deepStrictEqual(service.loadDoc(key).doc, doc, '文档应原样取回');
+        service.removeDoc(key);
+    });
+
+    test('服务层：重载 origin 会走缓存并回发 originLoaded', async function () {
+        this.timeout(20000);
+        serviceHost.activate(makeContext());
+
+        const panel = makePanel();
+        modHandlers.handleReloadGraph(panel, { scope: 'origin' });
+
+        const loaded = panel.messages.find((m) => m.command === 'originLoaded');
+        assert.ok(loaded, `应回发 originLoaded：${JSON.stringify(panel.messages.map((m) => m.command))}`);
+        assert.ok(loaded.data.count > 1000, `origin 节点数应上千：${loaded.data.count}`);
+        assert.strictEqual(loaded.data.nodes.length, loaded.data.count, 'count 应与 nodes 数量一致');
+        assert.ok(typeof loaded.data.fromSnapshot === 'boolean', '应告知是否走了快照');
+        assert.ok(loaded.data.fromCache === loaded.data.fromSnapshot, 'fromCache 与 fromSnapshot 同义');
+    });
+
+    test('服务层：没有正在编辑的 mod 时，重载 mod 只告警、不报错', () => {
+        serviceHost.activate(makeContext());
+        const panel = makePanel();
+
+        // 扩展宿主的工作区是扩展目录本身，没有 synopsis.json → 应走「没有正在编辑的 mod」分支
+        modHandlers.handleReloadGraph(panel, { scope: 'mod' });
+        assert.ok(
+            !panel.messages.some((m) => m.command === 'modLoaded'),
+            '不应无缘无故回发 modLoaded'
+        );
+    });
+
+    test('服务层：图片解析与读源码都有回包（即使参数无效）', () => {
+        serviceHost.activate(makeContext());
+        const panel = makePanel();
+
+        modHandlers.handleResolveImages(panel, { requestId: 'req-1', names: [], category: null });
+        const images = panel.messages.find((m) => m.command === 'imageResolved');
+        assert.ok(images, '应回发 imageResolved');
+        assert.strictEqual(images.data.requestId, 'req-1');
+        assert.deepStrictEqual(images.data.items, []);
+
+        modHandlers.handleReadSource(panel, { requestId: 'req-2', uid: 'origin:elements:不存在' });
+        const source = panel.messages.find((m) => m.command === 'sourceSnippet');
+        assert.ok(source, '应回发 sourceSnippet');
+        assert.strictEqual(source.data.requestId, 'req-2');
+        assert.ok(source.data.error, '找不到的节点应带错误说明而不是抛错');
     });
 
     if (HAS_FRONTEND) {
