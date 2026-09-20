@@ -57,6 +57,9 @@
  *    （`plugins.mergeInto`，插件变动自动重建），规则上的 `plugin` 标明来源（本体为 `null`）。
  */
 
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const plugins = require('./plugins');
 
 /** 取值方式（`link.extract`）清单：说明见文件头；内置种类由 plugins 提供 */
@@ -499,6 +502,46 @@ function collectRefTargets(value, rule) {
 
 /* ────────────────────────────── 规则查询 / 属性组装 ────────────────────────────── */
 
+/** 规则表版本缓存（源码不变则只算一次） */
+let revisionCache = null;
+
+/**
+ * 规则表版本号：本体规则 + 内置插件源码的内容摘要。
+ *
+ * 用途：origin 中间态快照、节点图磁盘缓存都依赖规则表。规则表变了（连字段白名单变了、
+ * 取值方式改了），旧快照就不可信了，必须重新生成。手写版本号很容易忘，所以直接对
+ * 源码取摘要——改了源码版本号自然就变了，无需维护。
+ *
+ * @returns {string} 16 位十六进制摘要
+ */
+function revision() {
+    if (revisionCache) return revisionCache;
+
+    let pluginFiles = [];
+    try {
+        pluginFiles = fs
+            .readdirSync(path.join(__dirname, 'plugins'))
+            .filter((name) => name.endsWith('.js'))
+            .sort()
+            .map((name) => path.join(__dirname, 'plugins', name));
+    } catch {
+        pluginFiles = []; // 目录不存在（不应发生）→ 只按本体表算
+    }
+
+    const hash = crypto.createHash('sha1');
+    [__filename, ...pluginFiles].forEach((file) => {
+        hash.update(path.basename(file));
+        try {
+            hash.update(fs.readFileSync(file));
+        } catch {
+            hash.update('unreadable');
+        }
+    });
+
+    revisionCache = hash.digest('hex').slice(0, 16);
+    return revisionCache;
+}
+
 /**
  * 由类别名取规则：精确命中 → 大小写不敏感 → 单复数/别名兜底 → fallback。
  *
@@ -766,6 +809,8 @@ module.exports = {
     /** 取值方式清单（文档用途） */
     EXTRACT_KINDS,
     PICK_KINDS,
+    /** 规则表版本：本体表 + 内置插件源码的摘要（快照/缓存据此判断是否过期） */
+    revision,
     /** 供 toData / 其它调用方使用的纯函数 */
     helpers: {
         buildProps,

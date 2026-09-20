@@ -10,11 +10,17 @@
  *              （analyzeModJSON5 → modInfo.content；splitRootKeys / filesToGroups → 给 toData 的组）
  *   - toData : 数据文件 → 节点图（三段式：拆根键 → 建节点/连接性检测 → 解析连接）
  *             产物 `{ nodes, edges, external, warnings, stats }`；规则白名单在 mapping
- *   - origin : origin 游戏基础内容加载（封装 toData.loadOriginData；预留中间态快照）
+ *   - origin : origin 游戏基础内容加载（源文件加载 + 随包分发的中间态快照）
+ *             产物 `{ nodes, edges, ... }`；快照读写见 origin.js（snapshot 相关导出）
  *   - mapping: 类别映射规则（titleOf / 连接性检测白名单 inputs·outputs / 属性字段）
  *   - plugins: 字段映射插件注册表（TRM / 导入扩展等扩展字段的挂载点）
  *     —— mapping 只收原版本体字段，扩展字段一律以插件形式补充；
  *     写 JSON 插件文件 → `plugins.loadFile(path)` 或设置 `cultistNodeEditor.fieldPlugins`。
+ *
+ * ⚠️ 本目录只放**纯函数流水线**（不依赖 vscode，也不持有缓存与状态）。
+ *    「加载结果缓存 / 工作区监听 / origin 资源索引 / 生命周期」在 `core/service/`：
+ *      const service = require('./core/service');  // 纯服务层（可 headless 跑）
+ *      const host = require('./core/service/host'); // vscode 环境绑定（storage / watcher / 设置）
  *
  * 用法：
  *   // 需要哪个函数就点名到子模块（归属一目了然，编辑器 F12/ctrl+点击直达定义）：
