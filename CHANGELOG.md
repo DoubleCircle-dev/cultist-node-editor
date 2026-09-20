@@ -6,6 +6,20 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- feat(core): 契约新增 `reverse`（**反向记录**）标记，并订正 recipe 跳转分支的方向
+  - `recipes.alt` / `linked` / `alternativerecipes` / `inductions` 由 `direction: 'input'` 改为 `'output'`：
+    这些字段的分支列表写在**源** recipe 上，节点模型里就是「源 → 目标」，
+    `edge.out` = 源条目的 `output:<字段>`、`edge.in` = 目标的通用入口（此前它们被画成「目标 → 本条目」，前端必须在输入侧另开槽位）
+  - 新增 `links[].reverse: true`（同值透传到 `nodes[].connections[].reverse` 与 `edges[].from.reverse`）：
+    表示游戏 JSON 里这条关系的**书写位置与判定主体相反**，目前两类：
+    recipe 的跳转分支（`alt` / `linked` / `alternativerecipes` / `inductions`）与卡牌 / 性相的分支式触发（`elements.induces`）
+    —— 分支列表在源条目上，但「是否跳转 / 能否触发、以什么条件生效」由**对端** recipe 自己的定义决定；
+    缺省（无此键）= 正向，如 `effects`（自己的产出）、`requirements`（自己的进入条件）与 `actionid`
+    （行动框只是分类名、不是执行端，仍是普通 `input`）
+  - 悬空告警按端口性质分档：反向记录的端口描述为「分支端口」，其余仍是「需求 / 效果端口」
+  - `toData.detectConnections` 改为委托 `mapping.connectionsOf`，不再维护第二份实现（此前两边各一份，新增规则字段必漏改一边）
+  - origin 全量数字不变（6692 节点 / 28493 边 / resolved 27947 / 悬空字段 201），仅方向与标记变化
+
 - feat(core): 新增**后端服务层** `core/service/`（进程内，不起网络端口；数据仍走原 webview `postMessage` 契约）
   - `index.js` 纯服务层（不 require vscode）+ `host.js` vscode 绑定（storageUri / FileSystemWatcher / 设置 / 生命周期）；
     缓存落 `context.storageUri`（无工作区退 `globalStorageUri`），**不往用户工作区写文件**

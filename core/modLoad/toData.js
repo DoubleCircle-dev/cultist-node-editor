@@ -43,7 +43,7 @@
  *
  * 连接线（edge）结构：
  *   `{ id, kind:'link',
- *      from:{uid,type,category,id,field,side,targets,extract,multi,sources},
+ *      from:{uid,type,category,id,field,side,targets,extract,multi,sources,reverse?},
  *      out:{uid,side:'output',port,field?}, in:{uid,side:'input',port,field?},
  *      targetId, amount,
  *      status:'pending'|'resolved'|'external-origin'|'external-mod', to:{uid,type,category,id}|null }`
@@ -108,77 +108,16 @@ function nodeUid(namespace, category, id) {
  * 判定依据**只有** mapping.js 里带 `link` 的字段规则（本体表 + 启用中的插件）——
  * 没声明的字段一律当普通属性处理，不猜、不推断（避免误连线）。
  *
- * 登记粒度是「字段 + 方向」：
- *   - 同一字段可有多条规则；同方向的多条合并成一条（目标 id 取并集，来源插件名合并）；
- *   - 不同方向各记一条（如 mutations：filter 是入、mutate 是出）。
+ * 实现已在 `mapping.connectionsOf`（mapping 的职责就是「加连接」），这里保留同名入口
+ * 供 `toData` 内部与既有调用方使用，**不再维护第二份实现**（曾经两边各一份，
+ * 新增 `reverse` 这类规则字段时极易漏改一边）。
  *
  * @param {string} category - 类别（= 节点类型 = 数据文件最外围键）
  * @param {Record<string, any>} entry - 原始条目
- * @returns {{
- *     field: string;
- *     side: 'input' | 'output';
- *     extract: string;
- *     multi: boolean;
- *     targets: string[];
- *     plugin: string|null;
- *     materialize: Record<string, any>|null;
- *     sources: string[];
- *     targetIds: { targetId: string; amount: number|null }[];
- * }[]} 连接性检测结果（一个「字段 + 方向」一条）
+ * @returns {ReturnType<typeof mapping.connectionsOf>} 连接性检测结果（一个「端口 + 方向」一条）
  */
 function detectConnections(category, entry) {
-    const rule = mapping.ruleFor(category);
-    const { actualFieldNames, collectRefTargets } = mapping.helpers;
-
-    /** @type {ReturnType<typeof detectConnections>} */
-    const connections = [];
-    /** @type {Map<string, ReturnType<typeof detectConnections>[number]>} 字段+方向 → 已登记的连接 */
-    const byFieldSide = new Map();
-
-    (rule.fields || []).forEach((r) => {
-        if (!r.link) return; // 只声明「中间态转化」的规则不参与连接
-        const side = r.link.direction === 'output' ? 'output' : 'input';
-        const source = r.plugin || 'mapping'; // 规则来源：本体规则记为 mapping，插件规则记插件 id
-
-        // 规则的 from 可能是正则（插件里的 `xxx$add` 这类属性操作字段）→ 一个规则命中多个字段
-        actualFieldNames(entry, r.from).forEach((field) => {
-            const targetIds = collectRefTargets(entry[field], r.link);
-            if (!targetIds.length) return; // 数据里没这个字段 / 形态不符 → 不虚报端口
-
-            // 端口名：规则写了 port 用它，否则就是字段名；同一端口上的多条规则合并
-            const port = r.link.port || field;
-            const key = `${side}:${port}`;
-            const exist = byFieldSide.get(key);
-            if (exist) {
-                targetIds.forEach(({ targetId, amount }) => {
-                    if (exist.targetIds.some((t) => t.targetId === targetId)) return;
-                    exist.targetIds.push({ targetId, amount });
-                });
-                (r.link.targets || []).forEach((t) => {
-                    if (!exist.targets.includes(t)) exist.targets.push(t);
-                });
-                if (!exist.sources.includes(source)) exist.sources.push(source);
-                return;
-            }
-
-            const conn = {
-                field,
-                port,
-                side,
-                extract: r.link.extract || 'map',
-                multi: r.link.multi !== false,
-                targets: [...(r.link.targets || [])],
-                plugin: r.plugin || null,
-                materialize: r.materialize || null,
-                sources: [source],
-                targetIds,
-            };
-            byFieldSide.set(key, conn);
-            connections.push(conn);
-        });
-    });
-
-    return connections;
+    return mapping.connectionsOf(category, entry);
 }
 
 /**
@@ -340,6 +279,8 @@ function buildPendingEdges(nodes) {
                         targets: conn.targets || [],
                         extract: conn.extract,
                         multi: conn.multi,
+                        // 反向记录（alt / linked 这类跳转分支）：书写位置在本条目、判定主体在对端
+                        ...(conn.reverse ? { reverse: true } : {}),
                         sources: conn.sources || [], // 该字段的规则来源：mapping（本体）/ 插件 id
                     },
                     targetId,
@@ -398,9 +339,11 @@ function summarizeExternal(external) {
         const more = targets.length > WARN_TARGET_LIMIT ? ` 等 ${targets.length} 个` : '';
         const origin = (from.sources || []).filter((s) => s !== 'mapping');
         const originText = origin.length ? `，插件 ${origin.join('/')}` : '';
+        // 端口性质：反向记录的跳转分支（alt / linked）与普通的需求/效果端口分开描述
+        const portText = from.reverse ? '分支' : from.side === 'input' ? '需求' : '效果';
         warnings.push(
             `端口悬空：${from.category}:${from.id} 的 ${from.field}` +
-                `（${from.side === 'input' ? '需求' : '效果'}端口${originText}）引用的目标 [${shown}${more}] 未解析（未实现的目标）`
+                `（${portText}端口${originText}）引用的目标 [${shown}${more}] 未解析（未实现的目标）`
         );
     });
 

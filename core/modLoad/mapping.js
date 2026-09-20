@@ -27,11 +27,23 @@
  *    | extract    | 从**值**里取目标 id 的方式（见 PICK_KINDS）                   |
  *    | keys       | `extract` 为 `nested-*` 时的子字段路径（支持点号 + 数组展开） |
  *    | port       | 端口名（默认 = 字段名）。同一字段上可写多条 `link`：同名同向合并，不同名 = 不同端口 |
+ *    | reverse    | **反向记录**：`true` 表示游戏 JSON 的书写位置与判定逻辑不在同一端（见下），缺省 = 正向 |
  *
- *    `direction` 就是「不能双向」那类关系的出口：比如 `alt` / `linked` / `inductions`
- *    的跳转条件是写在**目标 recipe** 身上的（由对方决定），所以它们的 `direction` 是 `input`
- *    —— 出线端是目标、入线端是本条目。变换在 `toData` 里做，前端拿到的 `edge.out` / `edge.in`
- *    已经是定好两端的连接线模型。
+ *    `direction` 是「这条线画在哪一侧」的唯一依据，`toData` 据此把边变换成
+ *    `edge.out` / `edge.in`（前端照着画即可，不用猜端口）。
+ *
+ *    **关于 `reverse`（反向记录）**：绝大多数关系里「字段写在谁身上」与「判定逻辑在谁身上」
+ *    是同一端（如 `recipes.effects` 是 recipe 自己的产出、`recipes.requirements` 是它自己的
+ *    进入条件），方向与 JSON 的书写位置一致，不带 `reverse`。
+ *    少数**跳转分支与分支式触发**字段不是这样：`alt` / `linked` / `alternativerecipes` / `inductions`
+ *    （recipe 的后续分支）与 `elements.induces`（卡牌列出的可能触发 recipe）的**列表都写在源条目上**
+ *    （所以它是源条目的字段），但**「是否跳转 / 能否触发、以什么条件生效」
+ *    由对端 recipe 自己的定义决定**（判定逻辑在对端的 JSON 里）—— 即记录位置与判定主体相反。
+ *    这类字段：`direction` 仍是 `output`（节点模型里是「源 → 目标」），另标 `reverse: true`，
+ *    消费方（前端 / 写回逻辑）据此知道**这条线的语义主体在对端**，
+ *    不要因为「列表在源上」就把它当成源端说了算的关系。
+ *    ⚠️ 这与 `mutations.filter` 那类「谁作用于我」不同：后者的判定逻辑仍在被写的条目上；
+ *    与 `actionid` 也不同：行动框（verb）只是分类名、不是执行端，所以它仍是普通 `input`。
 
  *
  *    没有 `link` 的字段 = 普通属性：前端仍可给它一个隐式的值输入能力
@@ -116,6 +128,7 @@ const RULES = {
             wiki: '创建模组 / recipes / 字段表（本体）',
             fields: [
                 // 行动：指向 verbs 里的行动框（历史数据里 actionid / actionId 两种写法）
+                // ⚠️ verb 不是执行端，只相当于分类名 → 方向是 input（行动框 → 本 recipe），且**不算反向记录**
                 { from: 'actionid', link: { direction: 'input', targets: ['verbs'], multi: false, extract: 'id' } },
 
                 // 需求：进入本 recipe 的前提（元素/性相 → 本 recipe）
@@ -141,25 +154,27 @@ const RULES = {
                     link: { direction: 'output', targets: ['elements'], multi: true, extract: 'nested-id', keys: ['mutate', 'mutateAspectId'] },
                 },
 
-                // 后续 recipe：跳转条件写在**目标**身上（按顺序判定）→ 本条目是入线端
+                // 后续 recipe（跳转分支）：分支列表写在本条目上 → 节点模型里是输出（本条目 → 目标）；
+                // 但「是否跳转 / 以什么条件生效」由**目标 recipe 自己的定义**决定（判定逻辑在对端 JSON 里）
+                // → 标 reverse，提醒消费方语义主体在对端。
                 {
                     from: 'alt',
-                    link: { direction: 'input', targets: ['recipes'], multi: true, extract: 'id-list' },
+                    link: { direction: 'output', reverse: true, targets: ['recipes'], multi: true, extract: 'id-list' },
                     materialize: { as: 'node', type: 'recipes', inline: true },
                 },
                 {
                     from: 'linked',
-                    link: { direction: 'input', targets: ['recipes'], multi: true, extract: 'id-list' },
+                    link: { direction: 'output', reverse: true, targets: ['recipes'], multi: true, extract: 'id-list' },
                     materialize: { as: 'node', type: 'recipes', inline: true },
                 },
                 {
                     from: 'alternativerecipes', // 旧写法
-                    link: { direction: 'input', targets: ['recipes'], multi: true, extract: 'id-list' },
+                    link: { direction: 'output', reverse: true, targets: ['recipes'], multi: true, extract: 'id-list' },
                     materialize: { as: 'node', type: 'recipes', inline: true },
                 },
                 {
                     from: 'inductions',
-                    link: { direction: 'input', targets: ['recipes'], multi: true, extract: 'id-list' },
+                    link: { direction: 'output', reverse: true, targets: ['recipes'], multi: true, extract: 'id-list' },
                     materialize: { as: 'node', type: 'recipes', inline: true },
                 },
 
@@ -210,7 +225,9 @@ const RULES = {
                 { from: 'aspects', link: { direction: 'output', targets: ['elements'], multi: true, extract: 'map' } },
                 { from: 'xtriggers', link: { direction: 'input', targets: ['elements'], multi: true, extract: 'map' }, materialize: { as: 'tool', type: 'table' } },
                 { from: 'xtriggers', link: { direction: 'output', targets: ['elements'], multi: true, extract: 'map-values' } },
-                { from: 'induces', link: { direction: 'output', targets: ['recipes'], multi: true, extract: 'id-list' } },
+                // 卡牌/性相列出的「可能触发的 recipe」：与 alt 同构 —— 列表写在元素上，
+                // 但能否触发看目标 recipe 自己的定义（additional 时还要看它所需的行动框能否创建）→ reverse
+                { from: 'induces', link: { direction: 'output', reverse: true, targets: ['recipes'], multi: true, extract: 'id-list' } },
                 { from: 'lever', link: { direction: 'output', targets: ['levers'], multi: false, extract: 'id' } },
             ],
         },
@@ -614,6 +631,7 @@ function fieldRulesFor(category, field) {
  *   - `links`：连接需求列表（无声明 = 空数组）。**同一字段可以有多条**：
  *     同一端口名（`port`，默认 = 字段名）的多条规则合并（目标类别取并集），
  *     不同端口名 = 该字段上有多个不同含义的连接口（如 alt 的「后续 recipe」与「弹出元素」）。
+ *     条目里带 `reverse: true` 的表示「反向记录」（书写位置与判定主体相反，见文件头）。
  *   - `materialize`：中间态转化（无声明 = null）
  *
  * @param {Record<string, any>} entry - 原始条目
@@ -652,6 +670,8 @@ function buildProps(entry, rule) {
                         multi: r.link.multi !== false,
                         extract: r.link.extract || 'map',
                         ...(r.link.keys ? { keys: r.link.keys } : {}),
+                        // 反向记录（书写位置与判定主体相反）才标记，正向不占位（契约里缺省 = 正向）
+                        ...(r.link.reverse ? { reverse: true } : {}),
                         plugin: r.plugin || null,
                     });
                 }
@@ -684,6 +704,7 @@ function buildProps(entry, rule) {
  *     extract: string;
  *     multi: boolean;
  *     targets: string[];
+ *     reverse?: true;
  *     plugin: string|null;
  *     materialize: Record<string, any>|null;
  *     sources: string[];
@@ -731,6 +752,8 @@ function connectionsOf(category, entry) {
                 extract: r.link.extract || 'map',
                 multi: r.link.multi !== false,
                 targets: [...(r.link.targets || [])],
+                // 反向记录：书写位置（本条目）与判定主体（对端）相反，如 alt / linked（见文件头）
+                ...(r.link.reverse ? { reverse: true } : {}),
                 plugin: r.plugin || null,
                 materialize: r.materialize || null,
                 sources: [source],

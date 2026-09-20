@@ -37,8 +37,9 @@
   4. 前端 **nodeModel ⇄ 中间态 JSON 互转**：导入按 `props` 的 `kind` 建属性、按 `edge.out` / `edge.in` 落位连线。
 - **后端只描述语义，不决定渲染**：字段只给「基础属性类型（`kind`）+ 原始值 + 连接需求（`links`）+ 中间态转化（`materialize`）」，
   用什么控件、什么标签由前端自己定（兜底 = 原生 text）
-- **不能双向的关系由后端变换**：`alt` / `linked` / `inductions` 的跳转条件写在目标身上，
-  后端把它们变成「目标 → 本条目」的线（`edge.out` / `edge.in`），前端照着画即可
+- **不能双向的关系由后端变换**：`alt` / `linked` / `inductions` / `elements.induces` 这类**跳转分支 / 分支式触发**，
+  分支列表写在源条目上、判定逻辑在对端条目的 JSON 里（**反向记录**，契约里标 `links[].reverse`）；
+  节点模型里它们就是源条目的 `output`，后端把朝向变换好（`edge.out` / `edge.in`），前端照着画即可
 - **文本变量同步**：文本字段可连到「文本节点」共享同一变量，任一端口编辑即双向同步（可选实时逐键同步）
 - **属性系统**：数值 / 选项 / 端口 / 表格 / 图片预览等属性类型，含「修改可选属性」的扩展属性池
 - **撤销重做**、画布缩放平移、适应视图、隐藏连接、专注某节点
@@ -203,13 +204,13 @@ pnpm run package:vsix          # 打包成 vsix（会先自动生成 origin 快�
       // 从宿主的内联定义拆出来的节点才非 null：{ hostUid, hostCategory, hostId, field, index, syntheticId }
       inline,
       // 每个字段一条（id 除外）：基础属性类型 + 原始值 + 连接需求 + 中间态转化
-      props: [ { name, kind, value, links: [ { port, direction, targets, multi, extract } ], materialize } ],
-      connections: [ { field, port, side, targets, extract, multi, sources, targetIds } ] },
+      props: [ { name, kind, value, links: [ { port, direction, targets, multi, extract, reverse? } ], materialize } ],
+      connections: [ { field, port, side, targets, extract, multi, sources, targetIds, reverse? } ] },
   ],
   edges: [
     // kind: 'link'（引用）/ 'contains'（宿主 → 拆出来的子节点）/ 'bind'（工具节点 → 使用它的字段）
     { id, kind: 'link',
-      from: { uid, type, category, id, field, port, side, targets, extract, multi, sources },
+      from: { uid, type, category, id, field, port, side, targets, extract, multi, sources, reverse? },
       out:  { uid, type, category, id, field?, side: 'output', port },
       in:   { uid, type, category, id, field?, side: 'input',  port },
       targetId, amount, status, to },
@@ -258,9 +259,22 @@ pnpm run package:vsix          # 打包成 vsix（会先自动生成 origin 快�
    - `port`：端口名（默认 = 字段名）。**端口 key = `<side>:<port>`**（如 `input:actionId`）；
      该字段在画布上不一定有对应的模板端口（`effects$add` 这类扩展字段、TRM 字段都可能没有），
      前端按 key 找端口、找不到就按 `kind` 兜底。连线另一侧若没有字段端口，`port` 就是通用入口 `link`。
-   像 `alt` / `linked` / `inductions` 这种「跳转条件写在目标身上」的关系，`direction` 就是 `input`
-   —— 后端已经把这种不能双向的关系**变换**成了定好两端的连接线：`edge.out` / `edge.in`，
-   前端照着画即可，不用猜端口。**声明优先于前端模板里的端口方向**（两边不一致时以声明为准）。
+   - `reverse`（**可缺省**）：**反向记录** —— 游戏 JSON 里这条关系的「书写位置」与「判定主体」不在同一端。
+     缺省（没有这个键）= 正向：字段写在本条目上、判定逻辑也在本条目上（如 `effects` 是 recipe 自己的产出、
+     `requirements` 是它自己的进入条件）。
+     `reverse: true` = 书写位置与判定主体相反，当前有两类：
+     · **recipe 的跳转分支**（`alt` / `linked` / `alternativerecipes` / `inductions`）：**分支列表写在源 recipe 上**
+     · **卡牌 / 性相的分支式触发**（`elements.induces`）：**可能触发的 recipe 列在元素上**
+
+     两者的共同点：列表在源条目上（所以它是源条目的字段，方向就是 `output`：源 → 目标），
+     **但「是否跳转 / 能否触发、以什么条件生效」由对端 recipe 自己的定义决定**（判定逻辑写在对端的 JSON 里）。
+     消费方据此知道这条线的**语义主体在对端**：不要把「列表在源上」当成「源端说了算」，
+     也不要把方向反过来画。
+     （`actionid` 这类不是反向记录：行动框 `verb` 只是分类名、不是执行端，它仍是普通 `input`。）
+
+   后端已经把方向**变换**成了定好两端的连接线：`edge.out` / `edge.in`，前端照着画即可，不用猜端口；
+   `reverse` 只补充语义（读 / 写这条线时谁是主体），**不改变 `out` / `in`**。
+   **声明优先于前端模板里的端口方向**（两边不一致时以声明为准）。
 3. **中间态转化**：内嵌对象/列表该提取成节点时，用 `materialize` 声明
    （`{ as: 'node', type, inline: true }`，如 `recipes.slots` → `slots` 节点）。
    - **已实现**：`mapping.splitInline()` 找出「内联定义」（只写 `id`/`chance` 这类引用参数的不算），

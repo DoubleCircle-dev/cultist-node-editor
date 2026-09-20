@@ -106,7 +106,8 @@ suite('modLoad 数据加载流水线', () => {
         assert.strictEqual(reqs.links[0].targets[0], 'elements', '连接需求里带目标类别');
 
         const fields = r1.connections.map((c) => `${c.side}:${c.port}`).sort();
-        assert.deepStrictEqual(fields, ['input:linked', 'input:requirements', 'output:effects']);
+        // linked 是「跳转分支」：分支列表写在源条目上 → 节点模型里是输出（详见「反向记录」测试）
+        assert.deepStrictEqual(fields, ['input:requirements', 'output:effects', 'output:linked']);
         assert.strictEqual(r1.refCount, 3);
     });
 
@@ -316,7 +317,7 @@ suite('modLoad 数据加载流水线', () => {
         const conns = mapping.connectionsOf('recipes', entry);
         assert.deepStrictEqual(
             conns.map((c) => `${c.side}:${c.port}`).sort(),
-            ['input:actionId', 'input:alt', 'output:effects', 'output:slots']
+            ['input:actionId', 'output:alt', 'output:effects', 'output:slots']
         );
 
         // ② 拆节点：只有「内联定义」才拆；纯引用（只写 id/chance 这类引用参数）不拆
@@ -489,6 +490,73 @@ suite('modLoad 数据加载流水线', () => {
         assert.strictEqual(contains.in.uid, tool.uid);
         // 后端目前只产 link / contains；bind 由前端产出，形状与之对齐（from / out / in 齐全）
         assert.ok(!graph.edges.some((e) => e.kind === 'bind'), '导入方向不含 bind 边');
+    });
+
+    test('契约面：反向记录（alt / linked / inductions / alternativerecipes / induces）', () => {
+        const entry = {
+            id: 'r1',
+            alt: [{ id: 'r2', chance: 30 }],
+            linked: [{ id: 'r3' }],
+            alternativerecipes: [{ id: 'r4' }],
+            inductions: [{ id: 'r5' }],
+            effects: { lantern: 1 },
+            requirements: { lantern: 1 },
+        };
+
+        // ① 规则层：跳转分支是「本条目 → 目标」的输出，并带 reverse（游戏 JSON 反向记录）
+        const byPort = new Map(mapping.connectionsOf('recipes', entry).map((c) => [c.port, c]));
+        ['alt', 'linked', 'alternativerecipes', 'inductions'].forEach((field) => {
+            const conn = byPort.get(field);
+            assert.ok(conn, `${field}：应产出连接需求`);
+            assert.strictEqual(conn.side, 'output', `${field}：节点模型方向是输出（源 → 目标）`);
+            assert.strictEqual(conn.reverse, true, `${field}：标记为反向记录（判定主体在目标）`);
+        });
+        // 普通引用不带 reverse：effects 是源自己的产出（output），requirements 是源自己的进入条件（input）
+        assert.strictEqual(byPort.get('effects').side, 'output');
+        assert.ok(!byPort.get('effects').reverse, 'effects 是正向记录');
+        assert.strictEqual(byPort.get('requirements').side, 'input');
+        assert.ok(!byPort.get('requirements').reverse, 'requirements 是正向记录（判定逻辑在本条目自己身上）');
+
+        // elements.induces 与 alt 同构（列表在卡牌/性相上，能否触发看目标 recipe）→ 也是反向记录
+        const induces = mapping.connectionsOf('elements', { id: 'c1', induces: [{ id: 'r9', chance: 20 }] });
+        assert.strictEqual(induces[0].side, 'output');
+        assert.strictEqual(induces[0].reverse, true);
+
+        // actionid 不是反向记录：行动框（verb）只是分类名、不是执行端 → 仍是 input
+        const actionid = mapping.connectionsOf('recipes', { id: 'r1', actionid: 'study' })[0];
+        assert.strictEqual(actionid.side, 'input');
+        assert.ok(!actionid.reverse, 'actionid 是正向记录');
+
+        // ② 契约层：props[].links[] 要带 direction 与 reverse（缺省 = 正向，不占位）
+        const node = toData.entryToNode('recipes', entry, { namespace: 'test' });
+        const altLink = node.props.find((p) => p.name === 'alt').links.find((l) => l.port === 'alt');
+        assert.strictEqual(altLink.direction, 'output');
+        assert.strictEqual(altLink.reverse, true);
+        assert.ok(
+            !('reverse' in node.props.find((p) => p.name === 'effects').links[0]),
+            '正向字段的 link 不带 reverse 键'
+        );
+
+        // ③ 连接线：出线端是源条目、入线端是目标（与游戏 JSON 的书写位置一致）
+        const graph = toData.buildGraph(
+            [
+                { category: 'recipes', relativePath: 'a.json', entries: [entry] },
+                { category: 'recipes', relativePath: 'b.json', entries: [{ id: 'r2' }] },
+            ],
+            { namespace: 'test', scope: 'global' }
+        );
+        const alt = graph.edges.find((e) => e.from.field === 'alt');
+        assert.strictEqual(alt.from.reverse, true);
+        assert.strictEqual(alt.out.uid, 'test:recipes:r1', '出线端 = 本条目');
+        assert.strictEqual(alt.out.port, 'output:alt');
+        assert.strictEqual(alt.in.uid, 'test:recipes:r2', '入线端 = 目标');
+        assert.strictEqual(alt.in.port, 'link');
+        assert.strictEqual(alt.targetId, 'r2', 'targetId 始终是引用目标（与方向无关）');
+        // 悬空告警里这类端口按「分支」描述，而不是笼统的效果端口
+        assert.ok(
+            graph.warnings.some((w) => w.includes('分支端口')),
+            '跳转分支的悬空告警标注为「分支端口」'
+        );
     });
 
     test('mapping：别名 / 兜底规则（legcies 拼写错误、未知类别）', () => {
