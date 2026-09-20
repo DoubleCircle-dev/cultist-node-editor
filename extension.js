@@ -1,6 +1,9 @@
 // mod 领域编排层（core/modLoad/handlers.js）：读 mod/新建/预览/预加载等命令与 webview 消息
 // 一律转发到 modHandlers.* 处理；具体纯函数（detect/parse/toData/...）由 handlers 内部按需 require。
 const modHandlers = require('./core/modLoad/handlers');
+// 后端服务层（缓存 / 工作区监听 / origin 资源）在 vscode 环境下的绑定：
+// activate 只登记上下文，服务实例与文件监听器按需惰性创建
+const serviceHost = require('./core/service/host');
 const frontendHost = require('./frontend-host');
 const vscode = require('vscode');
 const fs = require('fs');
@@ -9,6 +12,9 @@ const path = require('path');
 let currentPanel = undefined;
 function activate(context) {
     console.log('✅ Node Editor 扩展已激活');
+    // 服务层宿主：登记上下文 + 监听设置变更（改了快速加载/监听开关无需重开编辑器）
+    serviceHost.activate(context);
+    serviceHost.watchSettings(context);
     // 字段插件（TRM/导入扩展内置 + 设置里的用户插件）尽早就位，之后的读取/预览才带得上扩展字段
     try {
         modHandlers.loadFieldPlugins();
@@ -45,6 +51,25 @@ function activate(context) {
         }
     });
     context.subscriptions.push(loadModCommand);
+
+    // 全量重载：跳过缓存重新加载（文件监听是被动增量，这里是主动全量）
+    const reloadModCommand = vscode.commands.registerCommand('cultist-node-editor.reloadMod', () => {
+        if (currentPanel) {
+            modHandlers.handleReloadGraph(currentPanel, { scope: 'mod' });
+        } else {
+            vscode.window.showInformationMessage('请先打开节点编辑器');
+        }
+    });
+    context.subscriptions.push(reloadModCommand);
+
+    const reloadOriginCommand = vscode.commands.registerCommand('cultist-node-editor.reloadOrigin', () => {
+        if (currentPanel) {
+            modHandlers.handleReloadGraph(currentPanel, { scope: 'origin' });
+        } else {
+            vscode.window.showInformationMessage('请先打开节点编辑器');
+        }
+    });
+    context.subscriptions.push(reloadOriginCommand);
 
     // 功能3：新建 mod 基础结构（synopsis.json + content/）
     const newModCommand = vscode.commands.registerCommand('cultist-node-editor.newMod', () => {
@@ -147,6 +172,22 @@ function createNodeEditorPanel(context) {
                     case 'readMod':
                     case 'testModLoad':
                         modHandlers.handleReadMod(panel);
+                        return;
+                    case 'reloadGraph':
+                        // 前端按钮：全量重载（scope = mod | origin | all）
+                        modHandlers.handleReloadGraph(panel, message);
+                        return;
+                    case 'saveAutoDoc':
+                        modHandlers.handleSaveAutoDoc(panel, message);
+                        return;
+                    case 'restoreDoc':
+                        modHandlers.handleRestoreDoc(panel);
+                        return;
+                    case 'resolveImages':
+                        modHandlers.handleResolveImages(panel, message);
+                        return;
+                    case 'readSource':
+                        modHandlers.handleReadSource(panel, message);
                         return;
                     case 'newMod':
                         modHandlers.handleNewMod(panel);
@@ -291,6 +332,8 @@ function handleLoadGraph(panel) {
 
 function deactivate() {
     console.log('👋 Node Editor 扩展已停用');
+    // 服务层：停掉工作区监听、释放图/解析缓存（缓存内的节点图可能很大）
+    serviceHost.dispose();
     if (currentPanel) {
         currentPanel.dispose();
     }
