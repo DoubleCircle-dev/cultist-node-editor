@@ -71,6 +71,66 @@
     color: white;
 }
 
+/* 双击 tab 就地改名时的输入框 */
+.tab-rename-input {
+    width: 110px;
+    background: #1e1e2a;
+    border: 1px solid #7a9bc2;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 13px;
+    padding: 2px 8px;
+    outline: none;
+}
+
+/* 拖拽排序：被拖动的 tab 变淡，落点两侧画竖线 */
+.page-tab.dragging {
+    opacity: 0.45;
+}
+
+.page-tab.drop-before {
+    box-shadow: -3px 0 0 0 #7a9bc2;
+}
+
+.page-tab.drop-after {
+    box-shadow: 3px 0 0 0 #7a9bc2;
+}
+
+/* 右侧按钮区：新建页面 / 页面管理 */
+.tabs-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.tabs-add {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #4a4a58;
+    background: #2d2d3a;
+    color: #ddd;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tabs-add:hover {
+    background: #3a5a7a;
+    border-color: #7a9bc2;
+    color: #fff;
+}
+
+/* 非激活页的内容停放容器：不参与渲染与布局（见 PageManager） */
+.page-parking {
+    display: none !important;
+}
+
 /* 页面管理按钮 */
 .page-manager {
     flex-shrink: 0;
@@ -96,6 +156,10 @@
     transform: translateY(-1px);
 }
 
+.page-manager-btn.active {
+    background: #2e7eb0;
+}
+
 /* 页面管理浮层面板 */
 .page-manager-panel {
     position: absolute;
@@ -108,8 +172,21 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     z-index: 200;
     backdrop-filter: blur(8px);
+    display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+.page-manager-panel.hidden {
+    display: none;
+}
+
+/* 浮层的标题行是横排（panel.css 里的 .panel-header 是侧边栏的竖排版式，会盖住上面的 .panel-header） */
+.page-manager-panel .panel-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
 }
 
 .panel-header {
@@ -169,6 +246,50 @@
 
 .file-item:hover {
     background: #3a4a6a;
+}
+
+/* 浮层里的页面条目：名称 + 计数 + 逐页操作 */
+.page-item {
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.page-item .page-item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.page-item.active {
+    background: #3a4a6a;
+}
+
+.page-item-meta {
+    font-size: 11px;
+    color: #8899aa;
+    white-space: nowrap;
+}
+
+.page-item-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1.2;
+    padding: 2px 6px;
+    flex-shrink: 0;
+}
+
+.page-item-btn:hover {
+    background: #3a5a7a;
+    color: #fff;
+}
+
+.page-item-close:hover {
+    background: #c42e2e;
 }
 
 .import-action {
