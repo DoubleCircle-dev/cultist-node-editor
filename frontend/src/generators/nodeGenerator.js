@@ -17,10 +17,13 @@ export class NodeGenerator {
      * @param {string} type
      * @param {number} x
      * @param {number} y
+     * @param {Partial<NodeConfig> | null} [override] - 覆盖模板里的字段（`properties` / `inputs` / `outputs` / `title`…）；
+     *   「额外解析」出来的列表 / 字典变量节点用它按实际值现算属性
      * @returns {NodeModel}
      */
-    static createNode(id, uid, type, x, y) {
-        const nodeTypeConfig = NodeTypeRegistry.getType(type);
+    static createNode(id, uid, type, x, y, override = null) {
+        const baseConfig = NodeTypeRegistry.getType(type);
+        const nodeTypeConfig = override ? { ...baseConfig, ...override } : baseConfig;
 
         const nodeModel = new NodeModel(uid, id, type, x, y, nodeTypeConfig);
 
@@ -34,7 +37,13 @@ export class NodeGenerator {
 
         if (nodeTypeConfig.exProperties) {
             if (nodeTypeConfig.exProperties.length > 0) {
-                const { active: activeHub, pool: poolHub } = this.createExtendProps(id, nodeTypeConfig.exProperties, nodeRef);
+                // 属性池的 prop id 接着常驻属性往下编号：两批属性各自从 0 起编号时，
+                // 同名类型同序号（如常驻的 port-0 与池里的 port-0）会撞 id，导致按 id 回写时改错属性。
+                const poolIdOffset = nodeTypeConfig.properties?.length || 0;
+                // 档位决定初始加载几个可选属性（最低 0 / 标准 3 / 全部全加载）；
+                // 池已按原版出现率降序，所以「最常用的 N 个」就是最前面那几项。
+                const activateCount = NodeTypeRegistry.initialOptionalCount;
+                const { active: activeHub, pool: poolHub } = this.createExtendProps(id, nodeTypeConfig.exProperties, nodeRef, poolIdOffset, activateCount);
                 nodeModel.setExtendProps(activeHub, poolHub);
             }
         }
@@ -117,9 +126,10 @@ export class NodeGenerator {
      * @param {NodeID} nodeID
      * @param {PropConfig[] | undefined} properties
      * @param {WeakRef<BaseNodeModel>} node
+     * @param {number} [indexOffset=0] - prop id 里序号的起始偏移（属性池接着常驻属性编号）
      * @returns {BaseProp[]}
      */
-    static createProps(nodeID, properties, node) {
+    static createProps(nodeID, properties, node, indexOffset = 0) {
         /** @type {BaseProp[]} */
         const result = [];
 
@@ -128,7 +138,7 @@ export class NodeGenerator {
         }
 
         properties.forEach((prop, index) => {
-            const id = `${nodeID}_${prop.type}-${index}`;
+            const id = `${nodeID}_${prop.type}-${index + indexOffset}`;
             const propInstance = PropGenerator.createProp(id, prop.type, prop, node);
             result.push(propInstance);
         });
@@ -150,6 +160,7 @@ export class NodeGenerator {
                 const portProp = new PortProp(`${nodeID}:input-${index}`, port.label, 'port', port.default, {
                     name: port.name,
                     layout: 'no-right',
+                    reverse: port.reverse === true,
                     inputPort: {
                         id: `${nodeID}:input_port-${index}`,
                         dataType: port.requireType,
@@ -168,6 +179,7 @@ export class NodeGenerator {
                 const portProp = new PortProp(`${nodeID}:output-${index}`, port.label, 'port', port.default, {
                     name: port.name,
                     layout: 'no-left',
+                    reverse: port.reverse === true,
                     outputPort: {
                         id: `${nodeID}:output_port-${index}`,
                         dataType: port.returnType,
@@ -186,17 +198,23 @@ export class NodeGenerator {
      * @param {NodeID} nodeID
      * @param {PropConfig[] | undefined} properties
      * @param {WeakRef<NodeModel>} node
+     * @param {number} [indexOffset=0] - pool 属性 id 的序号起始偏移
+     * @param {number} [activateCount=0] - 初始加载几个可选属性（0 = 只留池里；
+     *   Infinity = 全加载，池子留空、取消勾选即移回池里）
      */
-    static createExtendProps(nodeID, properties, node) {
+    static createExtendProps(nodeID, properties, node, indexOffset = 0, activateCount = 0) {
         const extendButton = new BaseProp(`${nodeID}:extendButton`, '修改可选属性', 'button', '');
 
         this._onExtendButtonClick(extendButton, node);
 
-        const activeHub = new HubProp(`${nodeID}:activeHub`, '当前属性', [extendButton], 'single');
+        const pool = NodeGenerator.createProps(nodeID, properties, node, indexOffset);
+        const loaded = pool.slice(0, Math.max(0, Math.min(pool.length, activateCount)));
+        const remaining = pool.slice(loaded.length);
 
-        const pool = NodeGenerator.createProps(nodeID, properties, node);
+        // 按钮的 CSS order 置底，因此已加载的可选属性仍排在按钮上方
+        const activeHub = new HubProp(`${nodeID}:activeHub`, '当前属性', [extendButton, ...loaded], 'single');
 
-        const poolHub = new HubProp(`${nodeID}:poolHub`, '属性池', pool, 'single');
+        const poolHub = new HubProp(`${nodeID}:poolHub`, '属性池', remaining, 'single');
 
         return {
             active: activeHub,

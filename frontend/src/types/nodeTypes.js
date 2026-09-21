@@ -1,42 +1,32 @@
-export class NodeTypeRegistry {
-    static nodeColorVars = (function () {
-        const root = document.documentElement;
+import { DEFAULT_PROPERTY_LEVEL, PROPERTY_LEVELS, applyPropertyLevel, initialOptionalCount } from './nodePropertyLevels.js';
+import { NODE_COLOR_KEYS, getNodeColor, nodeColorKeyOf, setNodeColor as setPaletteColor } from './nodeColors.js';
 
-        const computed = getComputedStyle(root);
-        const colorKeys = [
-            'blank',
-            'test',
-            'legacies',
-            'endings',
-            'achievements',
-            'recipes',
-            'mutations',
-            'elements',
-            'xtriggers',
-            'morphEffects',
-            'decks',
-            'verbs',
-            'slots',
-            'levers',
-            'extends',
-            'copies',
-            'text',
-            'number',
-            'set',
-            'images',
-        ];
-        const colors = {};
-        colorKeys.forEach((key) => {
-            colors[key] = computed.getPropertyValue(`--node-${key}`).trim();
-        });
-        return colors;
-    })();
+export class NodeTypeRegistry {
+    /**
+     * 当前生效的「属性档位」（最低 / 标准 / 全部）
+     *
+     * 档位只决定**建节点时初始加载多少个可选属性**（`initialOptionalCount`）；
+     * 属性本身该不该进「可选属性」池由原版出现率决定，与档位无关。
+     * 由 ⚙️ 设置里的「节点属性档位」经 `setPropertyLevel()` 改写，见 `nodePropertyLevels.js`。
+     */
+    static propertyLevel = DEFAULT_PROPERTY_LEVEL;
+
+    /**
+     * 类型键 → 已按「必要 / 非必要」重排、并带上当前配色的配置（带缓存）
+     *
+     * 属性划分只跟原版字段出现率有关、与档位无关；颜色是配置上的 **getter**（`_configOf` 里现取），
+     * 所以改配色后缓存不用失效，新建节点直接就是新色。
+     *
+     * @private
+     * @type {Map<string, NodeConfig>}
+     */
+    static _splitCache = new Map();
 
     /** @type {Record<string, NodeConfig>} */
     static nodeTypes = {
         blank: {
             title: '空节点',
-            color: this.nodeColorVars.blank,
+            color: getNodeColor('blank'),
             inputs: [],
             outputs: [],
             content: `这是一个空节点`,
@@ -46,7 +36,7 @@ export class NodeTypeRegistry {
         test: {
             active: true,
             title: '测试节点',
-            color: this.nodeColorVars.test,
+            color: getNodeColor('test'),
             inputs: [
                 {
                     name: 'testInputMulti',
@@ -197,7 +187,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'legacy',
             label: '职业',
-            color: this.nodeColorVars.legacies,
+            color: getNodeColor('legacies'),
             inputs: [],
             outputs: [],
             content: `添加独立的职业`,
@@ -280,7 +270,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'ending',
             label: '结局',
-            color: this.nodeColorVars.endings,
+            color: getNodeColor('endings'),
             inputs: [],
             outputs: [
                 {
@@ -303,13 +293,13 @@ export class NodeTypeRegistry {
                     description: 'description: 在达成该结局时，游戏中显示的文本',
                 },
                 {
-                    name: 'achievement',
+                    name: 'achievements',
                     label: '成就',
                     type: 'port',
                     requireType: 'achievements',
                     multiConnect: true,
                     default: '达成该结局时，解锁的成就',
-                    description: 'achievement: 达成该结局时，解锁的成就',
+                    description: 'achievements: 达成该结局时，解锁的成就',
                 },
                 {
                     name: 'image',
@@ -340,7 +330,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'achievement',
             label: '成就',
-            color: this.nodeColorVars.achievements,
+            color: getNodeColor('achievements'),
             icon: '⚡',
             inputs: [],
             outputs: [
@@ -433,7 +423,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'recipe',
             label: '交互',
-            color: this.nodeColorVars.recipes,
+            color: getNodeColor('recipes'),
             inputs: [
                 {
                     name: 'prerequisite',
@@ -452,6 +442,9 @@ export class NodeTypeRegistry {
                     returnType: 'recipes',
                     label: '分支',
                     multiConnect: true,
+                    // 反向记录（契约 `links[].reverse`）：列表写在**源** recipe 上（所以是输出端口），
+                    // 但「是否跳转」由**目标 recipe 自己的定义**决定 —— 语义主体在对端。
+                    reverse: true,
                     description:
                         'alt: 指向满足一定条件后会立刻取代该recipe生效的recipe，如果additional为真值则新的recipe在对应行动框中额外进行且不会立刻取代，要注意这种情况下若该行动框已创建，那么这次转换不会生效。',
                 },
@@ -461,6 +454,7 @@ export class NodeTypeRegistry {
                     returnType: 'recipes',
                     label: '链接',
                     multiConnect: true,
+                    reverse: true, // 同 alt：列表在源上、判定在对端
                     description: 'linked: 指向在此recipe后会概率生效的recipe，与alt类似，但需要等待当前recipe结束后才会生效。',
                 },
                 {
@@ -469,6 +463,7 @@ export class NodeTypeRegistry {
                     returnType: 'recipes',
                     label: '引入',
                     multiConnect: true,
+                    reverse: true, // 同 alt：列表在源上、判定在对端
                     description:
                         'inductions: 效果类似alt中将卡牌弹出并带入新verb中recipe的功能，expulsion是过滤条件，其中包含filter标识需要的性相，limit标识最多转移个数。',
                 },
@@ -482,6 +477,10 @@ export class NodeTypeRegistry {
                     type: 'port',
                     requireType: 'verbs',
                     multiConnect: false,
+                    // 端口属性的值输入：未连线时可手填 id（留空 = 沿用上一个 recipe 的 verb），
+                    // 连上 verb 节点后值以连线为准（只读显示目标 id）
+                    valueType: 'text',
+                    placeholder: '行动 id（留空则沿用上一个 recipe 的 verb）',
                     description: 'actionId: 使用的行动的id，如果此处填空则默认使用上一个recipe的verb',
                 },
                 {
@@ -703,7 +702,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'mutation',
             label: '重载变化',
-            color: this.nodeColorVars.mutations,
+            color: getNodeColor('mutations'),
             inputs: [],
             outputs: [
                 {
@@ -754,7 +753,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'element',
             label: '元素',
-            color: this.nodeColorVars.elements,
+            color: getNodeColor('elements'),
             inputs: [
                 {
                     name: 'inherits',
@@ -773,6 +772,21 @@ export class NodeTypeRegistry {
                     label: '元素',
                     multiConnect: true,
                     description: 'elements: 游戏中的卡牌、性相均属于elements',
+                },
+                {
+                    // `induces`：**可能触发的 recipe 列在元素上** → 元素自己的**输出端口**
+                    // ⚠️ 以前这里错写成 `requireType`（输入语义），方向与契约相反，已纠正。
+                    name: 'induces',
+                    label: '引发',
+                    type: 'port',
+                    returnType: 'recipes',
+                    multiConnect: true,
+                    // 反向记录（契约 `links[].reverse`）：列表在元素上，但「能否触发」由**目标 recipe 自己的定义**
+                    // 决定（`additional` 时还要看它需要的行动框能否创建）→ 语义主体在**对端**。
+                    reverse: true,
+                    NotSetWarning: '该条件需要通过set设置几率以及排序，直接连接元素recipes则默认几率100，排序按给定id排序',
+                    description:
+                        'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建',
                 },
             ],
             content: `游戏中的卡牌、性相均属于elements`,
@@ -799,16 +813,6 @@ export class NodeTypeRegistry {
                     type: 'image-icon',
                     description: 'icon: 该元素（卡牌或性相）的图标图片，默认为空，此时会寻找和id一致的文件名',
                 },
-                {
-                    name: 'induces',
-                    label: '引发',
-                    type: 'port',
-                    requireType: 'recipes',
-                    multiConnect: true,
-                    NotSetWarning: '该条件需要通过set设置几率以及排序，直接连接元素recipes则默认几率100，排序按给定id排序',
-                    description:
-                        'induces: 该元素（卡牌或性相）参与的任意recipe结束时，有对应几率触发induces中相应的recipe；若additional:true则此recipe所需求的行动框可以额外被创建',
-                },
             ],
             modeProperties: {
                 卡牌: [
@@ -822,11 +826,11 @@ export class NodeTypeRegistry {
                         description: 'aspects: 该元素（卡牌）所具有的性相，数值代表等级',
                     },
                     {
-                        name: 'duration',
+                        name: 'lifetime',
                         label: '持续时间',
                         type: 'number',
                         default: 0,
-                        description: 'duration: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。',
+                        description: 'lifetime: 该元素（卡牌）的持续时间，单位为秒；默认为0，不会消逝。',
                     },
                     {
                         name: 'slots',
@@ -926,7 +930,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'xtrigger',
             label: '触变',
-            color: this.nodeColorVars.xtriggers,
+            color: getNodeColor('xtriggers'),
             inputs: [
                 {
                     name: 'inherits',
@@ -965,6 +969,8 @@ export class NodeTypeRegistry {
                     type: 'port',
                     multiConnect: false,
                     requireType: 'elements',
+                    // 触发的性相条件是 xtriggers 对象的「键」（如 "lantern"），数据里没有同名字段、
+                    // 出现率统计拿不到它 —— 由 nodePropertyLevels.js 的 ALWAYS_ESSENTIAL 名单保持常驻。
                     description: '离开具有该性相的交互(recipes)时触发',
                 },
             ],
@@ -997,12 +1003,12 @@ export class NodeTypeRegistry {
                         description: 'id: 只有一个效果时使用，离开具有条件性相的交互(recipes)时触发，触发操作数',
                     },
                     {
-                        name: 'morpheffects',
+                        name: 'morpheffect',
                         label: '基础操作数',
                         type: 'select',
                         options: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'],
                         description:
-                            'morpheffects: 只有一个效果时使用，不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）',
+                            'morpheffect: 只有一个效果时使用，不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）',
                     },
                     {
                         name: 'level',
@@ -1018,7 +1024,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'morphEffect',
             label: '操作数',
-            color: this.nodeColorVars.morphEffects,
+            color: getNodeColor('morphEffects'),
             icon: '🔗',
             inputs: [
                 {
@@ -1050,12 +1056,12 @@ export class NodeTypeRegistry {
                     description: 'id: 离开具有条件性相的交互(recipes)时触发，触发操作数',
                 },
                 {
-                    name: 'morpheffects',
+                    name: 'morpheffect',
                     label: '操作数',
                     type: 'select',
                     options: ['transform', 'spawn', 'quantity', 'mutate', 'setmutaion'],
                     description:
-                        'morpheffects: 不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）',
+                        'morpheffect: 不同操作数提供不同的功能，原版游戏提供了5个操作数。transform: 将卡牌转化为对应数目的目标卡牌；spawn: 额外创建对应数目的目标卡牌；quantity: 自增，额外创建指定数目的本体（无需目标卡牌，如果定义在aspect上则增加aspect所在卡牌）；mutate: 增加/减少对应数量的性相(aspects)；setmutation: 设置对应数量的性相(aspects)（原版文件里实际效果是设置level+1，已自动调整）',
                 },
                 {
                     name: 'level',
@@ -1070,7 +1076,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'deck',
             label: '卡池',
-            color: this.nodeColorVars.decks,
+            color: getNodeColor('decks'),
             inputs: [],
             outputs: [
                 {
@@ -1130,7 +1136,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'verb',
             label: '行动框',
-            color: this.nodeColorVars.verbs,
+            color: getNodeColor('verbs'),
             inputs: [],
             outputs: [
                 {
@@ -1179,7 +1185,7 @@ export class NodeTypeRegistry {
             active: true,
             title: 'slot',
             label: '卡槽',
-            color: this.nodeColorVars.slots,
+            color: getNodeColor('slots'),
             inputs: [
                 {
                     name: 'required',
@@ -1275,7 +1281,7 @@ export class NodeTypeRegistry {
         levers: {
             active: true,
             title: '继承物品',
-            color: this.nodeColorVars.levers,
+            color: getNodeColor('levers'),
             inputs: [],
             outputs: [
                 {
@@ -1315,13 +1321,13 @@ export class NodeTypeRegistry {
                     description: 'defaultValue: 默认得到的卡牌',
                 },
                 {
-                    name: 'weight',
+                    name: 'weights',
                     label: '权重',
                     type: 'port',
                     requireType: 'elements',
                     multiConnect: true,
                     NotSetWarning: '该条件需要通过set设置权重，直接连接元素(elements)则默认权重为1',
-                    description: 'weight: 用于决定继承的性相（或卡牌）的权重，可以为负数。',
+                    description: 'weights: 用于决定继承的性相（或卡牌）的权重，可以为负数。',
                 },
                 {
                     name: 'requiredScore',
@@ -1344,7 +1350,7 @@ export class NodeTypeRegistry {
         extends: {
             active: true,
             title: '扩充对象',
-            color: this.nodeColorVars.extends,
+            color: getNodeColor('extends'),
             icon: '🎚️',
             inputs: [],
             outputs: [],
@@ -1362,7 +1368,7 @@ export class NodeTypeRegistry {
         copies: {
             active: true,
             title: '引用复制',
-            color: this.nodeColorVars.copies,
+            color: getNodeColor('copies'),
             icon: '🎚️',
             inputs: [],
             outputs: [],
@@ -1387,7 +1393,7 @@ export class NodeTypeRegistry {
         text: {
             active: true,
             title: '文本',
-            color: this.nodeColorVars.text,
+            color: getNodeColor('text'),
             inputs: [],
             outputs: [
                 {
@@ -1412,7 +1418,7 @@ export class NodeTypeRegistry {
         number: {
             active: true,
             title: '数字',
-            color: this.nodeColorVars.number,
+            color: getNodeColor('number'),
             inputs: [],
             outputs: [
                 {
@@ -1430,7 +1436,7 @@ export class NodeTypeRegistry {
         nodeSet: {
             active: false,
             title: '集合',
-            color: this.nodeColorVars.set,
+            color: getNodeColor('set'),
             inputs: [
                 {
                     name: 'undefined',
@@ -1550,7 +1556,7 @@ export class NodeTypeRegistry {
         images: {
             active: true,
             title: '图片',
-            color: this.nodeColorVars.images,
+            color: getNodeColor('images'),
             inputs: [],
             outputs: [
                 {
@@ -1580,35 +1586,292 @@ export class NodeTypeRegistry {
                 },
             ],
         },
+        /**
+         * 表格变量节点（变量节点的**字典形态**）
+         *
+         * 「额外解析」的默认产物：宿主字段的值是对象（`dict`）时，把它的键值对变成可编辑表格。
+         * 模板里的 `columns` 只是一份最简默认（供手工新建时用），真正解析出来的节点会按实际值重建列。
+         */
+        table: {
+            active: true,
+            title: '表格',
+            color: getNodeColor('table'),
+            inputs: [
+                {
+                    name: 'value',
+                    type: 'port',
+                    label: '数据',
+                    requireType: 'any',
+                    multiConnect: false,
+                },
+            ],
+            outputs: [
+                {
+                    name: 'value',
+                    type: 'port',
+                    label: '数据',
+                    returnType: 'any',
+                    multiConnect: true,
+                },
+            ],
+            content: `表格变量节点（字典形）：把字段里的对象解析成可编辑的行列（键 → 值）`,
+            icon: '📊',
+            properties: [
+                {
+                    name: 'value',
+                    label: '表格',
+                    type: 'table',
+                    default: [],
+                    columns: [
+                        { label: '键', field: 'key', type: 'text', width: '40%' },
+                        { label: '值', field: 'value', type: 'text', width: '60%' },
+                    ],
+                    description: '额外解析出来的表格；改这里等于改宿主字段的值',
+                },
+            ],
+        },
+        /**
+         * 列表变量节点（变量节点的**列表形态**）
+         *
+         * 「额外解析」的另一个产物：宿主字段的值是对象数组（`list`）时，一条占一行。
+         */
+        list: {
+            active: true,
+            title: '列表',
+            color: getNodeColor('list'),
+            inputs: [
+                {
+                    name: 'value',
+                    type: 'port',
+                    label: '数据',
+                    requireType: 'any',
+                    multiConnect: false,
+                },
+            ],
+            outputs: [
+                {
+                    name: 'value',
+                    type: 'port',
+                    label: '数据',
+                    returnType: 'any',
+                    multiConnect: true,
+                },
+            ],
+            content: `列表变量节点（列表形）：把字段里的数组摆成一行一条（对象元素自动展开成列）`,
+            icon: '📋',
+            properties: [
+                {
+                    name: 'value',
+                    label: '列表',
+                    type: 'table',
+                    default: [],
+                    columns: [{ label: '条目', field: 'value', type: 'text', width: '100%' }],
+                    description: '额外解析出来的列表；改这里等于改宿主字段的值',
+                },
+            ],
+        },
+        /**
+         * 容器节点（containerNode）
+         *
+         * 把画布上若干节点「合并」成一个大背景容器（对齐 ComfyUI 的 subgraph 容器形态）：
+         * **展开态**是半透明、可缩放的背景框（只有 title 栏与右下角可交互，成员节点在框内自由摆放）；
+         * **收起态**缩回普通卡片，只显示**转发端口**与**透传属性**（成员变量，设置里可开关）。
+         *
+         * 属性不来自模板：转发端口是 `PortProp`，透传属性是每个来源节点一个带标签的 `HubProp`，
+         * 均由 `ControllerCore` 动态增删（见 `mergeToContainer` / `_refreshContainerPassthrough`）。
+         */
+        container: {
+            active: false, // 不进「添加节点」面板：由右键「合并为容器节点」创建
+            title: '容器节点',
+            color: getNodeColor('container'),
+            inputs: [
+                {
+                    name: 'in',
+                    type: 'port',
+                    label: '入',
+                    requireType: 'any',
+                    multiConnect: true,
+                },
+            ],
+            outputs: [
+                {
+                    name: 'out',
+                    type: 'port',
+                    label: '出',
+                    returnType: 'any',
+                    multiConnect: true,
+                },
+            ],
+            content: `容器节点：把多个节点合并成一个大背景容器（展开是半透明背景框，收起只留转发端口与透传属性）`,
+            icon: '🗂',
+            properties: [],
+        },
+        /**
+         * 悬空端口（文件外目标的占位节点）
+         *
+         * 只有端口：没有标题栏 / 属性 / 图标，代表「这个引用指向画布外的目标」。
+         * `active: false` —— 不进「添加节点」面板（它是数据驱动的自动产物，不是手建类型）；
+         * 两侧端口都留着（同一个目标可能被 input / output 两种引用指向）。
+         */
+        danglingPort: {
+            active: false,
+            title: '悬空端口',
+            color: getNodeColor('dangling'),
+            inputs: [
+                {
+                    name: 'target',
+                    type: 'port',
+                    label: '目标',
+                    requireType: 'any',
+                    multiConnect: true,
+                },
+            ],
+            outputs: [
+                {
+                    name: 'target',
+                    type: 'port',
+                    label: '目标',
+                    returnType: 'any',
+                    multiConnect: true,
+                },
+            ],
+            content: `未实现的目标（文件外节点）`,
+            icon: '',
+            properties: [],
+        },
+        /**
+         * 引用副本（reference node）
+         *
+         * 从画布上已有的节点复制出一份**只读副本**，专门用来布线（把端口“搬”到需要的位置，
+         * 免得长线横跨整个画布）：样式与容器节点的展开态一致（虚线 + 半透明底色 + 标题栏），
+         * 但**内部不可编辑、不可缩放**，只提供端口。
+         *
+         * 关键：副本端口上拖出的连线**落在原节点端口上**（数据里只有原节点），
+         * 所以副本可以随便摆位、随便删，不影响数据；受保护来源（origin / 其他 mod）
+         * 的那类连接会被直接阻止并报错。
+         *
+         * 端口不来自模板：由 `ControllerCore.createRefNode` 按源节点的端口动态建（端口带 `refProxy`）。
+         */
+        ref: {
+            active: false, // 不进「添加节点」面板：由右键「创建引用副本」创建
+            title: '引用副本',
+            color: getNodeColor('ref'),
+            inputs: [],
+            outputs: [],
+            content: `引用副本：某个节点的只读副本，只提供端口用于布线（连线落在原节点上）`,
+            icon: '⧉',
+            properties: [],
+        },
     };
 
     /**
+     * 当前档位下，建节点时初始加载多少个「可选属性」
+     *
+     * 最低 = 0（只显示必要属性）、标准 = 最常用的 3 个、全部 = 全加载。
+     * 建节点的地方（`NodeGenerator.createExtendProps`）读它。
+     *
+     * @returns {number} 0 / N / Infinity
+     */
+    static get initialOptionalCount() {
+        return initialOptionalCount(this.propertyLevel);
+    }
+
+    /**
+     * 切换「属性档位」（最低 / 标准 / 全部）
+     *
+     * 只改此后新建节点**初始加载几个可选属性**；画布上已有节点不动（要换档请新建节点）。
+     *
+     * @param {string} level - 档位取值，非法值回落到默认档
+     * @returns {string} 实际生效的档位
+     */
+    static setPropertyLevel(level) {
+        this.propertyLevel = PROPERTY_LEVELS.includes(level) ? level : DEFAULT_PROPERTY_LEVEL;
+        return this.propertyLevel;
+    }
+
+    /**
+     * 取某个类型的、已按「必要 / 非必要」重排、并带上当前配色的配置（带缓存）
+     *
+     * 颜色写成 **getter**（`config.color` 每次现取）：改配色后不管走哪条路径
+     * （`setNodeColor` / `resetNodeColors` / `config.json` 的出厂色），
+     * 新建节点立刻用新色，缓存不需要失效。画布上**已有**节点由
+     * `ControllerCore.applyNodeColors()` 重绘刷新。
+     *
+     * @private
+     * @param {string} typeKey - 基础节点类型键
+     * @returns {NodeConfig}
+     */
+    static _configOf(typeKey) {
+        if (!this._splitCache.has(typeKey)) {
+            const config = { ...applyPropertyLevel(typeKey, this.nodeTypes[typeKey]) };
+            Object.defineProperty(config, 'color', {
+                enumerable: true,
+                configurable: true,
+                get: () => this.getTypeColor(typeKey),
+            });
+            this._splitCache.set(typeKey, config);
+        }
+        return /** @type {NodeConfig} */ (this._splitCache.get(typeKey));
+    }
+
+    /**
      * 根据键获取对应的节点类型
+     *
+     * `properties` = 必要属性（常驻），`exProperties` = 全部非必要属性（按出现率降序的
+     * 「修改可选属性」池）；没有原版数据可依据的类型保持模板原样。
      *
      * @param {string} key - 节点类型的键值
      * @returns {NodeConfig} 返回对应键的节点类型，如果不存在则返回默认的'blank'类型
      */
     static getType(key) {
-        return this.nodeTypes[key] || this.nodeTypes['blank'];
+        return this._configOf(this.nodeTypes[key] ? key : 'blank');
     }
 
     /**
-     * 根据键获取对应的颜色值
+     * 根据键获取对应的颜色值（配色键或端口数据类型名，未知键退回 `blank`）
      *
      * @param {string} key - 颜色的标识键
-     * @returns {string} 返回对应的颜色值
+     * @returns {string} 返回对应的颜色值（`#rrggbb`）
      */
     static getColor(key) {
-        return this.nodeColorVars[key] || this.nodeColorVars['blank'];
+        return getNodeColor(key);
+    }
+
+    /**
+     * 按**基础节点类型键**取色（把 `nodeSet` → `set` 这类差异抹平）
+     *
+     * 节点边框/图标、侧边栏列表色条等「按节点类型上色」的地方统一走它。
+     *
+     * @param {string} typeKey - 基础节点类型键
+     * @returns {string} 返回对应的颜色值（`#rrggbb`）
+     */
+    static getTypeColor(typeKey) {
+        return getNodeColor(nodeColorKeyOf(typeKey));
+    }
+
+    /**
+     * 改一个配色项（节点类型 / 端口数据类型共用同一张配色表）
+     *
+     * 只改配色表；**不需要清 `_splitCache`** —— 配置里的 `color` 是现取的 getter。
+     * **画布上已有节点**要刷新颜色，接着调用 `ControllerCore.applyNodeColors()`。
+     * 改过的项会记进 localStorage。
+     *
+     * @param {string} key - 配色键（见 `nodeColors.js` 的 `NODE_COLOR_KEYS`）
+     * @param {string} value - `#rgb` / `#rrggbb`
+     * @returns {boolean} 是否生效（未知键或非法颜色返回 false）
+     */
+    static setNodeColor(key, value) {
+        return setPaletteColor(key, value);
     }
 
     static get allTypesList() {
         return Object.entries(this.nodeTypes)
             .filter(([, config]) => config.active)
-            .map(([key, config]) => ({ ...config, type: key }));
+            .map(([key, config]) => ({ ...config, type: key, color: this.getTypeColor(key) }));
     }
 
+    /** 全部配色键（节点类型 + 端口数据类型共用） */
     static get allColors() {
-        return Object.keys(this.nodeColorVars);
+        return [...NODE_COLOR_KEYS];
     }
 }

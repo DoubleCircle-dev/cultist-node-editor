@@ -6,6 +6,27 @@ import { NodeTypeRegistry } from "../types/nodeTypes.js";
 import { HubProp } from "../models/propModels/hubProp.js";
 import { ViewProp } from "../models/propModels/viewProp.js";
 
+/**
+ * Hub 「可选标签」的显示方式（全局，由设置面板切换）
+ *
+ * - `bar`（默认）：标签以 title 栏形式出现在 hub 上方；
+ * - `corner`：标签收到 hub 右下角的图标里，悬停/点击看说明。
+ *
+ * ⚠️ 只有显式标了 `hub.showLabel = true` 的 hub 才画标签（容器节点的透传属性 hub）。
+ * 模板里那些 hub（端口 / 基础 / 扩展…）不挂标签，否则整张画布的节点高度与排版都会变。
+ */
+let hubLabelMode = 'bar';
+
+/**
+ * 切换 Hub 标签的显示方式
+ *
+ * @param {'bar' | 'corner'} mode
+ * @returns {void}
+ */
+export function setHubLabelMode(mode) {
+    hubLabelMode = mode === 'corner' ? 'corner' : 'bar';
+}
+
 export class PropView {
     /**
      * @param {BaseProp} prop
@@ -84,6 +105,28 @@ export class PropView {
         /** @type {listenerMap[]} */
         const listeners = [];
 
+        // 「可选标签」：标了 showLabel 的 hub 才画（标签栏 / 右下角图标两种样式）
+        if (propModel.showLabel && propModel.label) {
+            hub.classList.add('has-label');
+            if (hubLabelMode === 'corner') {
+                const icon = document.createElement('button');
+                icon.type = 'button';
+                icon.className = 'prop-hub-label-icon';
+                icon.textContent = '🏷';
+                icon.title = propModel.label;
+                const noDrag = (/** @type {Event} */ e) => e.stopPropagation();
+                icon.addEventListener('mousedown', noDrag);
+                listeners.push({ target: icon, type: 'mousedown', listener: noDrag });
+                hub.appendChild(icon);
+            } else {
+                const label = document.createElement('div');
+                label.className = 'prop-hub-label';
+                label.textContent = propModel.label;
+                label.title = propModel.label;
+                hub.appendChild(label);
+            }
+        }
+
         propModel.properties.forEach((/** @type {BaseProp} */ prop) => {
             const renderResult = this.renderProp(prop);
             hub.appendChild(renderResult.element);
@@ -144,6 +187,7 @@ export class PropView {
 
         const row = document.createElement('div');
         row.className = `prop-row type-${propModel.type}`;
+        if (propModel.forward) row.classList.add('prop-forward');
 
         /** @type {listenerMap[]} */
         const listeners = [];
@@ -230,6 +274,15 @@ export class PropView {
         // 恢复加载时若端口已连接，直接标记实心样式
         if (portModel.isConnected) {
             dom.classList.add('connected');
+        }
+
+        // 反向记录端口（契约 `links[].reverse`，如 recipe 的 alt / linked / inductions、元素的 induces）：
+        // 列表写在本节点上，但「是否跳转 / 能否触发」由**对端** recipe 决定 → 给一圈外环 + 悬停提示。
+        // ⚠️ `reverse` 在**端口属性**（`PortProp`）上，不在 `PortModel` 上 → 经 `parentProp` 读。
+        const ownerProp = /** @type {any} */ (portModel.parentProp);
+        if (ownerProp && ownerProp.reverse) {
+            dom.classList.add('reverse');
+            dom.title = '分支（反向记录）：列表写在本节点上，但判定由对端 recipe 决定';
         }
 
         /** @type {listenerMap[]} */
