@@ -37,10 +37,13 @@ npm run verify
 | `iEventTarget.test.mjs` | 监听器登记/移除、`removeAllEventListeners`（含 L6 修复） |
 | `disposeChain.test.mjs` | 模型 `releaseListeners`（软释放）/`dispose`（全量销毁）责任链 |
 | `nodeLifecycle.test.mjs` | 创建/删除/undo/clear/redraw 全生命周期 + 监听器不累积 |
+| `nodeColors.test.mjs` | 节点配色：配色表完整性、两层覆盖、CSS 变量/localStorage 持久化、改色后新建节点与画布刷新 |
 | `propRendering.test.mjs` | 全节点类型 × 全属性渲染检测（含扩展属性池/模式属性/端口） |
+| `propertyLevel.test.mjs` | 属性划分与档位：非必要属性（含各模式属性）全进可选池、必要 = 出现率 ≥ 80%、档位决定初始加载个数 |
 | `flowLayout.test.mjs` | 铺行布局纯函数：边一律向右、每行上限、换行避开多分支、辅助节点分列、多连线节点抬高 |
 | `organizeLayout.test.mjs` | `ControllerCore.organizeLayout` 接线：按端口方向定前后、位置落到模型与 DOM |
 | `nodeSearch.test.mjs` | 预览模式搜索节点框：title/id/label 匹配、键盘选择、`ControllerCore.focusNode` 定位居中 |
+| `pageTabs.test.mjs` | 页面（工作区选项卡）：切换时索引换手 + DOM 停放（无损）、新建/关闭/改名/排序、快照→导入、localStorage 持久化、TabBar 交互（✕/中键关闭、双击改名、拖拽排序、页面管理浮层） |
 | `memory-check.mjs` | 独立内存检查：批量创建/删除后堆内存平坦 |
 | `helpers/domSetup.mjs` | jsdom 全局环境（document/Event/CustomEvent/EventTarget…） |
 | `helpers/env.mjs` | 构建 webview 骨架 + 创建/销毁 `ControllerCore` |
@@ -67,7 +70,7 @@ npm run verify
 ## 关键约定
 
 - **必须先 import `./helpers/domSetup.mjs`**（测试文件第一行）：它把 jsdom 的
-  `document/Event/CustomEvent/EventTarget` 等挂到 `globalThis`，而 `NodeTypeRegistry`
+  `document/Event/CustomEvent/EventTarget/localStorage` 等挂到 `globalThis`，而 `NodeTypeRegistry`
   等模块在**模块顶层**就访问 `document/getComputedStyle`，必须先就绪。
 - 每个测试用全新 `ControllerCore`（`beforeEach` 里 `createCore()`，`afterEach` 里
   `destroyCore()`），保证隔离。
