@@ -24,7 +24,7 @@ export class PortModel extends IEventTarget {
         // 核心设置
         this.portType = options.portType || 'explicit'; // explicit, implicit
         // input时当作requiredType, output时当作returnType
-        this.dataType = options.dataType || 'any'; // 对应 --node-number, --node-text 等
+        this.dataType = options.dataType || 'any'; // 端口颜色取自配色表（getNodeColor），如 --node-number / --node-text
         // 位置管理
         this.pos = options.pos || 'mid'; // mid, top, attached, attached-top, attached-bottom
 

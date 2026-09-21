@@ -103,6 +103,9 @@ export class PropGenerator {
                     const portConfig = {
                         inputPort: {},
                         outputPort: {},
+                        // 端口属性的值输入：valueType 有值时端口旁多一个输入框
+                        valueType: propConfig.valueType,
+                        placeholder: propConfig.placeholder,
                     };
 
                     const maxLinks = propConfig.multiConnect ? propConfig.connectNum || Infinity : 1;
@@ -227,7 +230,7 @@ export class PropRenderer {
         node: (p) => this.createInput('text', p, { placeholder: '节点引用/ID' }),
         'text-preview': (p) => this.createPreView('textarea', p),
         custom: (p) => this.createInput('text', p, { readonly: true, placeholder: '只读（origin 保留字段）' }),
-        port: (p) => this.createButton('port', p),
+        port: (p) => (p.valueType ? this.createPortValue(p) : this.createButton('port', p)),
         selectPort: (p) => this.createButton('selectPort', p),
     };
 
@@ -935,6 +938,101 @@ export class PropRenderer {
         }
 
         return { element: preView, listeners: listeners };
+    }
+
+    /**
+     * 端口属性（带 `valueType`）的渲染：连接按钮（当标签用）+ 值输入框
+     *
+     * 语义（与 core 里 `properties: [{ type: 'port', valueType, ... }]` 的声明一致）：
+     *   - **未连线**：输入框可编辑，改的就是该字段本身的值（如 `recipes.actionid`）；
+     *   - **已连线**：值以连线为准 → 输入框只读，显示连线目标节点的数据 id 供核对。
+     *
+     * 连线/断线（含程序化自动连线、撤销）通过端口的 connected / disconnected 事件同步状态。
+     *
+     * @param {PortProp} p
+     * @returns {{
+     *     element: HTMLElement;
+     *     listeners: listenerMap[];
+     * }}
+     */
+    static createPortValue(p) {
+        const inputType = p.valueType === 'number' ? 'number' : 'text';
+
+        const wrap = this.createElement('div', {}, 'prop-port-value');
+        const input = this.createElement('input', {
+            type: inputType,
+            id: `${p.id}-value`,
+            className: `prop-input ${inputType}`,
+            placeholder: p.placeholder || '',
+        });
+
+        /** @type {listenerMap[]} */
+        const listeners = [];
+
+        /** 显示值：已连线 → 目标节点的数据 id；未连线 → 字段自己的值 */
+        const displayValue = () => {
+            const port = p.inputPort || p.outputPort;
+            const linked = port && Array.isArray(port.links) ? port.links[0] : null;
+            const targetProp = linked && linked.parentProp ? linked.parentProp : null;
+            const targetNode = targetProp && targetProp.parentNode ? targetProp.parentNode.deref() : null;
+            if (targetNode) return String(targetNode.dataId || targetNode.title || targetNode.uid || '');
+            return p.value == null ? '' : String(p.value);
+        };
+
+        /** 按连线状态同步输入框（只读 / 提示 / 显示值） */
+        const sync = () => {
+            const connected = !!p.isConnected;
+            input.readOnly = connected;
+            input.classList.toggle('from-link', connected);
+            input.value = displayValue();
+            input.title = connected ? '值由连线决定；断开连线后可手动输入' : '';
+        };
+
+        const mousedownListener = (/** @type {Event} */ e) => e.stopPropagation();
+        input.addEventListener('mousedown', mousedownListener);
+        listeners.push({ target: input, type: 'mousedown', listener: mousedownListener });
+
+        const changeListener = (/** @type {Event} */ e) => {
+            const target = e.target;
+            if (!(target instanceof HTMLInputElement) || target.readOnly) return;
+            if (inputType === 'number') {
+                p.changeValue(target.value === '' ? '' : Number(target.value));
+            } else {
+                p.changeValue(target.value);
+            }
+        };
+        input.addEventListener('change', changeListener);
+        listeners.push({ target: input, type: 'change', listener: changeListener });
+
+        // 外部改写值（数据填充 / 撤销 / 变量同步）→ 刷新显示；连线中则交给 sync 处理
+        const updateListener = (/** @type {Event} */ e) => {
+            if (!(e instanceof CustomEvent)) return;
+            if (p.isConnected) return;
+            input.value = e.detail?.value == null ? '' : String(e.detail.value);
+        };
+        p.addEventListener('update', updateListener);
+        listeners.push({ target: p, type: 'update', listener: updateListener });
+
+        // 连线 / 断线 → 切换可编辑状态与显示值
+        [p.inputPort, p.outputPort].forEach((port) => {
+            if (!port) return;
+            port.addEventListener('connected', sync);
+            port.addEventListener('disconnected', sync);
+            listeners.push(
+                { target: port, type: 'connected', listener: sync },
+                { target: port, type: 'disconnected', listener: sync }
+            );
+        });
+
+        sync();
+        wrap.appendChild(input);
+
+        // 端口属性原有的连接按钮：保留（它是这套属性的标签 + 交互入口），只缩到内容宽
+        const button = this.createButton('port', p);
+        wrap.insertBefore(button.element, input);
+        listeners.push(...button.listeners);
+
+        return { element: wrap, listeners };
     }
 
     /**
