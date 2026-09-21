@@ -47,6 +47,9 @@ const GLOBALS = [
   'cancelAnimationFrame',
   'MutationObserver',
   'getSelection',
+  // 偏好/配色存在 localStorage（jsdom 在 http://localhost 下自带该实现），
+  // 挂到 globalThis 才能测到「刷新后仍生效」这类行为
+  'localStorage',
 ];
 
 for (const key of GLOBALS) {

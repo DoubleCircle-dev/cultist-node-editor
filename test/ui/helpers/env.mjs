@@ -6,7 +6,7 @@ import { dom, window } from './domSetup.mjs';
 /**
  * 重建页面骨架。
  * UIManager/PanelManager/CanvasManager 依赖这些元素（缺省会自己兜底创建，
- * 这里显式给出以保持环境稳定）。
+ * 这里显式给出以保持环境稳定）；tab 栏的容器供 views/tabBar.js 挂载。
  *
  * @returns {{ viewport: HTMLElement, world: HTMLElement }}
  */
@@ -17,6 +17,11 @@ export function createSkeleton() {
     <div id="mouse-coords"></div>
     <div id="placeholder" class="placeholder">占位</div>
     <div class="view-controls"></div>
+    <div class="tabs-panel">
+      <div class="tabs-scroll">
+        <div class="tabs-list" id="pageTabsList"></div>
+      </div>
+    </div>
     <div id="canvas-viewport">
       <div id="canvas-world"></div>
     </div>
