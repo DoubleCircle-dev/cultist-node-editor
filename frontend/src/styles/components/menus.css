@@ -55,6 +55,113 @@
     color: white;
 }
 
+/* 数据描述式菜单（MenuManager.showContextMenu 生成：节点右键 / 画布空白右键）
+   菜单容器与定位由 MenuManager 提供，这里只管内容排布 */
+.context-menu {
+    display: flex;
+    flex-direction: column;
+    min-width: 230px;
+    max-width: 320px;
+    padding: 2px;
+}
+
+.context-menu-item {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: flex-start;
+    width: 100%;
+    padding: 7px 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.context-menu-item:hover:not(.is-disabled) {
+    background: var(--menu-highlight);
+    color: #fff;
+}
+
+.context-menu-item.is-disabled {
+    color: var(--text-muted);
+    cursor: default;
+    opacity: 0.6;
+}
+
+/* 危险操作（删除…）：平时就带点红，hover 时加重 */
+.context-menu-item.is-danger {
+    color: #ff7b72;
+}
+
+.context-menu-item.is-danger:hover:not(.is-disabled) {
+    background: #b62324;
+    color: #fff;
+}
+
+.context-menu-item .menu-icon {
+    flex: 0 0 auto;
+    width: 16px;
+    font-size: 12px;
+    line-height: 17px;
+    text-align: center;
+}
+
+.context-menu-item .menu-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.context-menu-item .menu-hint {
+    font-size: 10px;
+    line-height: 13px;
+    color: var(--text-muted);
+}
+
+.context-menu-item:hover:not(.is-disabled) .menu-hint {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.context-menu-item .menu-shortcut {
+    flex: 0 0 auto;
+    padding-left: 12px;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 17px;
+}
+
+.context-menu-item:hover:not(.is-disabled) .menu-shortcut {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* 勾选标记：开关型菜单项（如「隐藏连接」） */
+.context-menu-item.is-checked::before {
+    content: '✓';
+    flex: 0 0 auto;
+    width: 12px;
+    color: var(--accent, #4c8dff);
+    font-size: 12px;
+    line-height: 17px;
+}
+
+/* 不可点的说明行：把「为什么没有某个菜单项」直接写在菜单里（如已在容器内不能直接合并） */
+.context-menu-note {
+    padding: 7px 10px;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    line-height: 14px;
+    white-space: normal;
+}
+
 /* 右键菜单分隔符 */
 .context-menu-separator {
     height: 1px;
