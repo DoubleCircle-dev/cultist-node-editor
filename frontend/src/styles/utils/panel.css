@@ -140,11 +140,11 @@
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* 列表项左侧色条：颜色由 panelView 按 nodeColors.js 的配色表内联写入（这里不再定义颜色，避免两处不一致） */
 .node-color-indicator {
     width: 10px;
     height: 36px;
     border-radius: 20px;
-    background: var(--node-color);
     flex-shrink: 0;
 }
 

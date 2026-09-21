@@ -1,6 +1,28 @@
 import { PanelModel } from '../models/panelModels/panelModel.js';
 import { ExpandPanelModel } from '../models/panelModels/expandPanelModel.js';
 import { IView } from '../types/IView.js';
+import { NodeTypeRegistry } from '../types/nodeTypes.js';
+import { NODE_COLOR_KEYS } from '../types/nodeColors.js';
+
+/**
+ * 列表项色条的颜色
+ *
+ * 优先用条目自带的 `color`（节点模型、`NodeTypeRegistry.allTypesList` 都带），
+ * 否则按 `type` / `category` **从配色表现取**（`frontend/src/types/nodeColors.js` 是唯一事实来源，
+ * 所以改配色后重新渲染的列表不会残留旧色），都不认时退回中性灰。
+ *
+ * @param {any} item
+ * @returns {string}
+ */
+function resolveItemColor(item) {
+    if (!item) return '#6b7280';
+    if (item.color) return item.color;
+    const key = item.type || item.category;
+    if (key && (NODE_COLOR_KEYS.includes(key) || NodeTypeRegistry.nodeTypes[key])) {
+        return NodeTypeRegistry.getTypeColor(key);
+    }
+    return '#6b7280';
+}
 
 export class PanelView extends IView {
     /** @param {PanelModel} model - 传入上面创建的任意一个 Model 实例 */
@@ -96,7 +118,7 @@ export class PanelView extends IView {
         // 纯数据映射为 HTML 字符串（通过 data- 属性向下标定数据，不绑定任何事件）
         body.innerHTML = items
             .map((item) => {
-                const color = item.color || '#6b7280';
+                const color = resolveItemColor(item);
                 const icon = item.icon || '📦';
                 const title = this._escapeHtml(item.title || item.label || '');
                 const id = this._escapeHtml(item.id || '');

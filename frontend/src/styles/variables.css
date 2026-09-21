@@ -24,27 +24,11 @@
     --menu-highlight: #094771;
     --menu-background: #094771;
 
-    /* 颜色 - 节点 */
-    --node-blank: #000000;
-    --node-test: #7d1ff8;
-    --node-legacies: #ff8a80;
-    --node-endings: #ff31b0;
-    --node-achievements: #fcf80e;
-    --node-recipes: #ff5719;
-    --node-mutations: #ffaa33;
-    --node-elements: #1e88ff;
-    --node-xtriggers: #8fff33;
-    --node-morphEffects: #f3fc76;
-    --node-decks: #f853f8;
-    --node-verbs: #ff66aa;
-    --node-slots: #ffcc33;
-    --node-levers: #6fc1b0;
-    --node-extends: #ff6b6b;
-    --node-copies: #ff7043;
-    --node-text: #ffffff;
-    --node-number: #2ecc71;
-    --node-set: #bb8fce;
-    --node-images: #ff9f4b;
+    /* 颜色 - 节点（按类型配色）
+     * ⚠️ 默认值不在 CSS 里：见 frontend/src/types/nodeColors.js 的 NODE_COLOR_ITEMS（唯一事实来源，
+     * 可在 ⚙️ 设置 →「节点配色」里改，也可用 config.json 的 nodeColors 给出厂默认）。
+     * 该模块启动时会把当前配色写成 `--node-<key>` 自定义属性，
+     * 所以 `var(--node-recipes)` 这类写法在运行时依旧可用（供自定义 CSS / 调试使用）。 */
 
     /* 颜色 - 端口 */
     --port-color: #7A8B9B;

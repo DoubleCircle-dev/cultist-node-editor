@@ -76,6 +76,8 @@ export class PanelManager extends IManager {
             dataType: 'list',
         });
         addNodesPanel.rawData = NodeTypeRegistry.allTypesList;
+        // 配色变更时要重新取数（allTypesList 是快照），refreshColorPanels() 里会用它
+        this.addNodesPanel = addNodesPanel;
         addNodesPanel.dataActionHandlers.set('click-node-item', (type, id, path) => {
             this.bus.emit('addNode', {
                 type,
@@ -466,6 +468,31 @@ export class PanelManager extends IManager {
     /** @private 节点增删时的事件处理 */
     _onNodesChanged() {
         this._refreshFindNodesPanel();
+    }
+
+    /**
+     * 配色变更后刷新带色条的列表面板
+     *
+     * 两处都要管：
+     *   - 「添加节点」：`rawData` 是 `allTypesList` 的**一次性快照**，得重新取数再通知视图；
+     *   - 「查找节点」：列表项是节点模型（`model.color` 已由 `ControllerCore.applyNodeColors()`
+     *     更新过），这里只需让它重渲染。
+     *
+     * @returns {number} 刷新了几个面板
+     */
+    refreshColorPanels() {
+        let count = 0;
+        if (this.addNodesPanel) {
+            const list = NodeTypeRegistry.allTypesList;
+            this.addNodesPanel.rawData = list;
+            this.addNodesPanel.emit('data:changed', { data: list });
+            count++;
+        }
+        if (this.findNodesPanel) {
+            this._refreshFindNodesPanel();
+            count++;
+        }
+        return count;
     }
 
     /** @private 将 CoreSpace.nodes 同步到 findNodesPanel.rawData 并通知视图刷新 */
