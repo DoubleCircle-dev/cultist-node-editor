@@ -1,8 +1,7 @@
 import { BaseNodeModel } from './baseNodeModel.js';
 
 /**
- * 预览节点模型（工具节点 previewNode 的模型控制器，extends BaseNodeModel）。
- *
+ * 预览节点模型（工具节点 previewNode 的模型控制器，extends BaseNodeModel）。 *
  * 新形态：**半透明框架** —— 不显示节点头、不使用端口连接引用。
  *   - 通过文本属性「预览目标ID」指定画布上的节点（NodeManager 注入 targetFinder 按 ID 查找）
  *   - 内部由 NodeView 只读渲染「原节点」（无法编辑、无法连线）

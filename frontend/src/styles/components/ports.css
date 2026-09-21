@@ -18,6 +18,17 @@
     border-color: var(--port-color);
 }
 
+/* 反向记录端口（契约 `links[].reverse`，如 `alt` / `linked` / `alternativerecipes` / `inductions` /
+   `induces`）：列表写在本节点上，但「是否跳转 / 能否触发」由**对端** recipe 决定
+   → 外环标记（不占用 border / ::after，单连接三角形的样式不受影响）。 */
+.port-dot.reverse {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--port-color) 55%, transparent);
+}
+
+.port-dot.reverse:hover {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--port-color) 75%, transparent);
+}
+
 /* 扩大点击区域 */
 .port-dot::after {
     /* width: 20px; */

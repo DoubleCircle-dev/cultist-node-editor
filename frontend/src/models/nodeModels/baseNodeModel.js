@@ -109,6 +109,22 @@ export class BaseNodeModel extends IEventTarget {
     }
 
     /**
+     * 移除一个属性（容器节点重建「透传属性」hub 时用）
+     *
+     * ⚠️ `NodeModel.properties` 只有 getter（返回拼好的新数组），不能直接 `node.properties = [...]`，
+     * 所以增删一律走 `appendProps` / `removeProperty`。
+     *
+     * @param {BaseProp} prop
+     * @returns {boolean} 是否移除成功（没找到 = false）
+     */
+    removeProperty(prop) {
+        const index = this._properties.indexOf(prop);
+        if (index < 0) return false;
+        this._properties.splice(index, 1);
+        return true;
+    }
+
+    /**
      * 更新位置并通知监听者
      *
      * @param {number} x

@@ -90,3 +90,238 @@
     outline: 1px solid #28a745;
     background: var(--bg-secondary);
 }
+
+/* 悬空端口：只有端口的最小卡片（指向画布外目标的占位节点） */
+.node.node-dangling {
+    min-width: 120px;
+    max-width: 190px;
+    opacity: 0.9;
+}
+
+.node.node-dangling .node-header-dangling {
+    padding: 3px 8px;
+    gap: 0;
+}
+
+.node-dangling-target {
+    font-size: 11px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.node.node-dangling .node-properties {
+    padding: 0 4px 4px;
+}
+
+.node.node-dangling .prop-separator {
+    display: none;
+}
+
+/* ── 容器节点（containerNode）—— 视觉规格照抄 ComfyUI（Comfy-Org/ComfyUI_frontend）──
+   · 子图图标：`SubgraphNode.drawTitleBox` → `roundRect(6, -24.5, 22, 20, 5)` + 白色工作流图形，底色 #3b82f6
+   · 计数徽标：`LGraphBadge` → 白字 / #0F1F0F 底、圆角 5、高 20、内边距 6、字号 12，贴在右上
+   · 进入按钮：`addTitleButton({ name: 'enter_subgraph', text: 'pi-window-maximize 字形' })` → 标题栏右侧图标按钮
+
+   展开态 = 一块**半透明大背景框**：只有 title 栏与右下角缩放句柄能接鼠标（背景不吃事件，
+   成员节点就在框里自由摆放）；收起态 = 普通卡片，只留转发端口与透传属性。 */
+
+/* 子图图标（替换普通节点的类型色圆点） */
+.node-icon.node-icon-subgraph {
+    width: 22px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    background: #3b82f6;
+    color: #fff;
+}
+
+.node-icon.node-icon-subgraph svg {
+    display: block;
+}
+
+/* 徽标容器：跟在 #id 后面、按钮前面 */
+.node-badges {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex: none;
+}
+
+.node-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 5px;
+    background: #0f1f0f;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 104px;
+    user-select: none;
+}
+
+.node-badge-level {
+    background: color-mix(in srgb, #3b82f6 45%, #0f1f0f);
+    font-size: 10px;
+    max-width: 76px;
+}
+
+/* 标题栏右侧的「展开 / 收起」图标按钮（对齐 ComfyUI 的标题按钮：无边框、悬停才有底） */
+.node-fold-toggle {
+    flex: none;
+    width: 20px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.node-fold-toggle:hover {
+    background: color-mix(in srgb, #fff 16%, transparent);
+    color: #fff;
+}
+
+/* ── 展开态：半透明背景框 ─────────────────────────────── */
+.node.node-container-expanded {
+    /* 背景框在连线层下面、成员节点下面，且正文不吃鼠标事件 */
+    pointer-events: none;
+    z-index: 5;
+    background: color-mix(in srgb, #3b82f6 10%, transparent);
+    border: 2px dashed color-mix(in srgb, #3b82f6 60%, transparent);
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+/* 只有 title 栏（拖动容器）与缩放句柄可交互 */
+.node.node-container-expanded .node-header {
+    pointer-events: auto;
+    cursor: move;
+    padding: 6px 8px;
+    border-bottom: 1px dashed color-mix(in srgb, #3b82f6 45%, transparent);
+    border-radius: 8px 8px 0 0;
+    background: color-mix(in srgb, #3b82f6 16%, transparent);
+}
+
+/* 展开态不渲染属性：背景框里只有成员节点 */
+.node.node-container-expanded .node-properties {
+    display: none;
+}
+
+.node-container-resize {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 16px;
+    height: 16px;
+    pointer-events: auto;
+    cursor: nwse-resize;
+    border-right: 3px solid color-mix(in srgb, #3b82f6 80%, transparent);
+    border-bottom: 3px solid color-mix(in srgb, #3b82f6 80%, transparent);
+    border-radius: 0 0 6px 0;
+}
+
+/* ── 收起态：普通卡片（转发端口 + 透传属性） ───────────────── */
+.node.node-container-collapsed {
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, #3b82f6 55%, transparent),
+        var(--shadow-sm);
+    background: linear-gradient(180deg, color-mix(in srgb, #3b82f6 7%, var(--bg-primary)), var(--bg-primary) 42%);
+}
+
+/* 成员节点：一条子图色竖条 + 左上角「↳ 容器标题」浮标（绝对定位，不改节点高度） */
+.node.node-container-member::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 6px 0 0 6px;
+    background: color-mix(in srgb, #3b82f6 70%, transparent);
+    pointer-events: none;
+}
+
+.node-member-tag {
+    position: absolute;
+    top: -9px;
+    left: 6px;
+    max-width: calc(100% - 12px);
+    padding: 0 6px;
+    font-size: 9px;
+    line-height: 15px;
+    color: #fff;
+    background: #1f2937;
+    border: 1px solid var(--member-tag-color, color-mix(in srgb, #3b82f6 70%, transparent));
+    border-radius: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+/* 被容器收起的成员节点与它们的连线 */
+.node-container-member-hidden {
+    display: none !important;
+}
+
+.connection-hidden {
+    display: none;
+}
+
+/* 引用副本（ref）：某个节点的**只读副本**，只提供端口用于布线
+   视觉照容器节点的展开态（虚线 + 半透明底色 + 标题栏），但：内部不可编辑（只有纯端口，没有输入框）、
+   不可缩放（不挂缩放手柄 —— 那是容器专属），拖出的连线落在原节点上（见 ControllerCore.resolveRefPort）。 */
+.node-ref {
+    background: color-mix(in srgb, var(--node-ref, #22d3ee) 12%, transparent);
+    border: 1.5px dashed color-mix(in srgb, var(--node-ref, #22d3ee) 75%, transparent);
+    border-radius: 10px;
+    box-shadow: none;
+    z-index: 4;
+}
+
+/* 只有标题栏与内部端口接鼠标 —— 副本不参与框选正文，避免挡住在它下面的节点 */
+.node-ref .node-header {
+    cursor: move;
+    background: color-mix(in srgb, var(--node-ref, #22d3ee) 16%, transparent);
+    border-radius: 8px;
+}
+
+.node-ref .node-properties {
+    pointer-events: auto; /* 端口要能拖线；副本内部只有纯端口，没有可编辑输入框 */
+    background: transparent;
+}
+
+/* 标题栏右侧的「⌖ 定位原节点」按钮 */
+.node-ref .node-ref-focus {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin-left: 6px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--node-ref, #22d3ee) 25%, transparent);
+    color: var(--text-primary);
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.node-ref .node-ref-focus:hover {
+    background: color-mix(in srgb, var(--node-ref, #22d3ee) 50%, transparent);
+}

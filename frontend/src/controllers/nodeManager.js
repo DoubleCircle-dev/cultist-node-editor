@@ -13,6 +13,9 @@ import { NodeGenerator } from '../generators/nodeGenerator.js';
  * @class NodeManager
  * @extends IManager
  */
+/** 辅助性节点类型：**不占 id 序列**（数据节点的 id 要跟 title 写进源 JSON，不该被它们消耗） */
+const AUX_NODE_KINDS = new Set(['ref']);
+
 export class NodeManager extends IManager {
     /**
      * 创建节点管理器实例
@@ -384,6 +387,84 @@ export class NodeManager extends IManager {
     }
 
     /**
+     * 建一个非数据节点：`table` / `list`（**变量节点**的字典 / 列表形态）+ `container` / `danglingPort`（工具节点）
+     * ——「额外解析」「容器节点」「悬空端口」的产物。
+     *
+     * 与基础类型节点不同，属性不走模板：列（`columns`）与行（`rows`）由调用方按实际字段值现算；
+     * 端口沿用模板里的 1 入 1 出（`dataType: 'any'`），便于与宿主字段端口按需连线。
+     *
+     * @param {'table' | 'list' | 'container' | 'danglingPort' | 'ref'} kind - 节点类型
+     *   （`table` / `list` = 变量节点；`container` / `danglingPort` / `ref` = 工具节点）
+     * @param {{ label?: string; title?: string; rows?: any[]; columns?: any[]; x?: number; y?: number; properties?: any[] | null }} [options]
+     *   - `properties` 传数组时用它整份替换模板属性（悬空端口传 `[]`：只有端口，别的什么都没有）
+     * @returns {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel | null}
+     */
+    addToolNode(kind, options = {}) {
+        const { label = '数据', title = kind, rows = [], columns = [], x = 0, y = 0, properties = null } = options;
+        /** @type {number | string | null} */
+        let id = null;
+        /** @type {number | string | null} */
+        let uid = null;
+        try {
+            if (AUX_NODE_KINDS.has(kind)) {
+                // **辅助性节点**（引用副本）：不占 id 序列 ——
+                // 数据节点的 id 将来要跟 title 一起写进源 JSON，不该被辅助节点消耗；
+                // 辅助节点用 `ref:<序号>` 这类字符串，前端记账（`core.refNodes`）与节点模型 key 都用它。
+                id = this._nextAuxUid(kind);
+                uid = id;
+            } else {
+                id = this.idGenerator.generate();
+                uid = this.uidGenerator.generate() || 0;
+            }
+            if (!id) {
+                throw new Error('节点数量已达到最大值');
+            }
+
+            const model = NodeGenerator.createNode(String(id), uid, kind, x, y, {
+                title,
+                properties:
+                    properties ||
+                    [
+                        {
+                            name: 'value',
+                            label,
+                            type: 'table',
+                            default: rows,
+                            columns,
+                            description: '额外解析出来的数据；改这里等于改宿主字段的值',
+                        },
+                    ],
+            });
+            this._createNode(model);
+            return model;
+        } catch (error) {
+            console.error('创建非数据节点失败:', error);
+            // 只有位图分配的（数字）才需要归还
+            if (typeof id === 'number') this.idGenerator.release(id);
+            if (typeof uid === 'number') this.uidGenerator.release(uid);
+            return null;
+        }
+    }
+
+    /**
+     * @private 辅助性节点的标识：**不占用 id 序列**
+     *
+     * ⚠️ 循环避开已存在的 key：页面快照恢复后序号会跳（快照里的 `ref:3` 先占位），直接自增会撞上。
+     *
+     * @param {string} kind - 节点类型（`ref`）
+     * @returns {string} 辅助标识（如 `ref:1`）
+     */
+    _nextAuxUid(kind) {
+        this.auxSerial = (this.auxSerial || 0) + 1;
+        let uid = `${kind}:${this.auxSerial}`;
+        while (this.nodes.has(uid)) {
+            this.auxSerial += 1;
+            uid = `${kind}:${this.auxSerial}`;
+        }
+        return uid;
+    }
+
+    /**
      * 批量从数据池创建基础类型节点并网格布局（「加载后转换为可查看的节点」）。
      * 布局以视野中心为起点，按行排列，避免节点重叠。
      *
@@ -445,6 +526,14 @@ export class NodeManager extends IManager {
             nodeModel.label = labelVal ? String(labelVal) : title;
         }
         // 节点 id 标签：一律用自动分配的 uid（origin / mod 均不显示数据 id）
+        // 但数据条目 id 仍留在模型上：端口属性只读显示「连线目标 id」时要用（标题可能是中文 label）
+        nodeModel.dataId = entry.id == null ? '' : String(entry.id);
+        // 内联拆分来源（core 的 node.inline）：说明该节点是从哪个宿主的哪个字段拆出来的，
+        // 导出时要据此还原 `kind:'contains'` 包含边、或把子节点内联回宿主字段
+        if (entry.inline) nodeModel.inline = entry.inline;
+        // 中间态的原始属性定义留在模型上（name/kind/value/links/materialize）：
+        // 导出（nodeModel ⇄ 中间态 JSON）时要有据可依
+        nodeModel.dataProps = Array.isArray(entry.props) ? entry.props : [];
 
         const detailProps = nodeModel.detailProperties;
         /** @type {Array<{name: string, value: any}>} */
@@ -536,6 +625,11 @@ export class NodeManager extends IManager {
             const ce = /** @type {CustomEvent} */ (e);
             const originalEvent = ce.detail.originalEvent;
 
+            // 右键：不改选中、不拖节点。菜单走 `contextmenu` 事件（见 `nodeView._createDOM`）——
+            // 若在这里按左键的逻辑走一遍，会先把选中清成「只选右键的那个」，
+            // 「选中若干节点 → 右键容器 → 加入选中节点」就没东西可加了。
+            if (originalEvent && originalEvent.button === 2) return;
+
             if (originalEvent.ctrlKey || originalEvent.metaKey) {
                 this._handleNodeClick(ce, nodeModel);
                 return;
@@ -574,6 +668,22 @@ export class NodeManager extends IManager {
         nodeModel.addEventListener('mousedown', mousedownHandler);
         listeners.push({ event: 'mousedown', handler: mousedownHandler });
 
+        // 右键菜单 → 总线上（ControllerCore 接，弹「合并为容器节点 / 拆开容器节点」）
+        const contextMenuHandler = (/** @type {Event} */ e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            this.bus.emit('node:contextmenu', { ...ce.detail, node: nodeModel });
+        };
+        nodeModel.addEventListener('contextmenu', contextMenuHandler);
+        listeners.push({ event: 'contextmenu', handler: contextMenuHandler });
+
+        // 引用副本：标题栏「⌖ 定位原节点」按钮 → 控制器把视野移到源节点（`ControllerCore.focusNode`）
+        const refFocusHandler = (/** @type {Event} */ e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            this.bus.emit('ref:focus', { ...ce.detail, node: nodeModel });
+        };
+        nodeModel.addEventListener('ref:focus', refFocusHandler);
+        listeners.push({ event: 'ref:focus', handler: refFocusHandler });
+
         const mousedownPortHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
             this.setNodeSelected(nodeModel, true);
@@ -581,6 +691,14 @@ export class NodeManager extends IManager {
         };
         nodeModel.addEventListener('mousedown:port', mousedownPortHandler);
         listeners.push({ event: 'mousedown:port', handler: mousedownPortHandler });
+
+        // 悬空端口双击 → 把「跳转目标」转发到总线（ControllerCore.jumpToTarget 接）
+        const jumpHandler = (/** @type {Event} */ e) => {
+            const ce = /** @type {CustomEvent} */ (e);
+            this.bus.emit('jump:target', { ...ce.detail, node: nodeModel });
+        };
+        nodeModel.addEventListener('jump:target', jumpHandler);
+        listeners.push({ event: 'jump:target', handler: jumpHandler });
 
         const mouseupPortHandler = (e) => {
             const ce = /** @type {CustomEvent} */ (e);
@@ -949,11 +1067,337 @@ export class NodeManager extends IManager {
         this.bus.emit('ClearOver:nodeManager', {});
     }
 
+    // ========= 页面（工作区选项卡）支持 =========
+    // 页面之间的切换是**无损**的：不做「序列化 → 重建」，而是把本页节点 DOM 搬进页面自己的
+    // 停放容器，模型/视图/监听器/端口连接原样保留（见 PageManager）。因此这里只需要「搬 DOM」
+    // 与「索引换手」两类操作；快照（snapshotNodes / restoreNodes）只用于存文件与刷新后恢复。
+
+    /**
+     * 把本页全部节点 DOM 搬到目标容器（模型与视图对象不动，只搬 DOM 位置）。
+     *
+     * @param {HTMLElement} host - 目标容器：页面停放容器（切出）或画布世界层（切回）
+     */
+    moveNodeViewsTo(host) {
+        if (!host) return;
+        this.nodeViews.forEach((view) => {
+            if (view && view.element) host.appendChild(view.element);
+        });
+    }
+
+    /**
+     * 摘出当前页面的索引（页面切换用）：把这些 Map 的所有权交给页面记录，本管理器换成空索引。
+     * 节点模型与视图都不销毁，`PageModel` 拿到的是同一批 Map 引用，因此页面的节点数始终是最新的。
+     *
+     * @returns {NodePageState}
+     */
+    detachPageState() {
+        /** @type {NodePageState} */
+        const state = {
+            nodes: this.nodes,
+            nodeViews: this.nodeViews,
+            listeners: this.nodeModelListeners,
+            highlightCache: this.highlightCache,
+        };
+        this.nodes = new Map();
+        this.nodeViews = new Map();
+        this.nodeModelListeners = new Map();
+        this.highlightCache = { highlightedNodes: new Set(), dimmedConnections: new Set() };
+        return state;
+    }
+
+    /**
+     * 装回页面索引（与 detachPageState 成对；state 为空表示「该页还没有内容」）
+     *
+     * @param {NodePageState | null} state
+     */
+    attachPageState(state) {
+        if (!state) return;
+        this.nodes = state.nodes;
+        this.nodeViews = state.nodeViews;
+        this.nodeModelListeners = state.listeners;
+        this.highlightCache = state.highlightCache || { highlightedNodes: new Set(), dimmedConnections: new Set() };
+    }
+
+    /**
+     * 预留一批节点的 id/uid。
+     * id 生成器是全局的（跨页面共用），而清空画布会 reset 它，非激活页仍持有自己的 id —— 
+     * 这里重新占位，避免新页面分到已被别的页面用着的号。
+     *
+     * @param {Iterable<BaseNodeModel>} models
+     */
+    reserveIds(models) {
+        if (!models) return;
+        for (const node of models) {
+            if (!node) continue;
+            this.idGenerator.occupy(node.id);
+            if (node instanceof NodeModel) this.uidGenerator.occupy(node.uid);
+        }
+    }
+
+    /**
+     * 丢弃一批节点（页面被关闭时）：释放 id、销毁视图与模型，不保留撤销能力。
+     *
+     * @param {Iterable<BaseNodeModel>} models
+     */
+    discardNodes(models) {
+        if (!models) return;
+        for (const node of models) this._discardNode(node);
+    }
+
+    /**
+     * @private
+     * @param {BaseNodeModel} node
+     */
+    _discardNode(node) {
+        const nodeId = String(node.id);
+
+        const listeners = this.nodeModelListeners.get(nodeId);
+        if (listeners) {
+            listeners.forEach(({ event, handler }) => {
+                node.removeEventListener(event, handler);
+            });
+            this.nodeModelListeners.delete(nodeId);
+        }
+
+        node.setSelected(false);
+        node.releaseListeners();
+
+        const view = this.nodeViews.get(nodeId);
+        if (view) {
+            view.dispose();
+            this.nodeViews.delete(nodeId);
+        }
+
+        if (node instanceof NodeModel) {
+            this.uidGenerator.release(node.uid);
+        }
+        this.idGenerator.release(nodeId);
+
+        node.dispose();
+        this.nodes.delete(nodeId);
+    }
+
+    /**
+     * 节点快照（页面存文件 / 局部存储用）：位置尺寸 + 全部属性值 + 可选属性的激活情况。
+     *
+     * 属性键是「去掉节点 id 前缀后的属性 id」（属性 id 形如 `12_text-3`）：
+     * 恢复时即使节点 id 变了也能对上，模板增删属性也不会串位。
+     * 节点的额外词条（数据加载时外化的 `:custom:N` 保留字段，模板里没有）单独存 label，恢复时重建。
+     *
+     * @returns {Array<any>}
+     */
+    snapshotNodes() {
+        return Array.from(this.nodes.values()).map((node) => this._snapshotNode(node));
+    }
+
+    /**
+     * @private
+     * @param {BaseNodeModel} node
+     * @returns {any}
+     */
+    _snapshotNode(node) {
+        const nodeId = String(node.id);
+        /** @type {Record<string, any>} */
+        const props = {};
+        /** @type {Array<{ key: string, label: string, value: any }>} */
+        const customs = [];
+
+        const take = (/** @type {any[]} */ list) => {
+            (list || []).forEach((prop) => {
+                if (!prop || prop.id == null || prop.value === undefined) return;
+                const key = propKey(prop.id, nodeId);
+                if (prop.type === 'custom') {
+                    customs.push({ key, label: prop.label, value: cloneValue(prop.value) });
+                    return;
+                }
+                props[key] = cloneValue(prop.value);
+            });
+        };
+        take(node.detailProperties);
+        take(node.extendedProperties?.pool?.detailProperties);
+
+        return {
+            id: node.id,
+            uid: node instanceof NodeModel ? node.uid : null,
+            type: node.type,
+            x: node.x,
+            y: node.y,
+            width: node.width,
+            height: node.height,
+            title: node.title,
+            label: node.label,
+            collapsed: !!node.collapsed,
+            mode: node instanceof NodeModel ? node.currentMode ?? null : null,
+            extendActive: activeExtendKeys(node),
+            props,
+            customs,
+        };
+    }
+
+    /**
+     * 从快照恢复节点（调用前该页应为空）。
+     *
+     * 节点按原 id 重建（id 已被占用时另分配），属性按快照键回写（静默赋值，不触发变更事件，
+     * 因为视图还没建），可选属性按快照的激活集合从池里搬回「当前属性」。
+     *
+     * @param {Array<any>} snapshots
+     * @returns {number} 恢复的节点数
+     */
+    restoreNodes(snapshots) {
+        if (!Array.isArray(snapshots) || !snapshots.length) return 0;
+        /** @type {BaseNodeModel[]} */
+        const created = [];
+
+        snapshots.forEach((snap) => {
+            if (!snap || !snap.type) return;
+            try {
+                const id = this._claimId(snap.id);
+                const uid = this._claimUid(snap.uid);
+                const model = NodeGenerator.createNode(String(id), uid, snap.type, Number(snap.x) || 0, Number(snap.y) || 0);
+                this._applySnapshot(model, snap);
+                this._createNode(model);
+                created.push(model);
+            } catch (error) {
+                console.warn('[页面] 恢复节点失败:', snap && snap.type, error);
+            }
+        });
+
+        if (created.length) {
+            this.bus.standardEmitDetail('create', 'node', { nodes: created });
+        }
+        return created.length;
+    }
+
+    /**
+     * @private 申请一个空闲的节点 id：快照里的 id 空闲就沿用（连线两端与引用才找得回来）
+     * @param {any} desiredId
+     * @returns {number | string | null}
+     */
+    _claimId(desiredId) {
+        const wanted = desiredId == null ? '' : String(desiredId);
+        if (wanted && this.idGenerator.occupy(wanted)) return wanted;
+        return this.idGenerator.generate();
+    }
+
+    /**
+     * @private 同上，节点 uid
+     * @param {any} desiredUid
+     * @returns {number}
+     */
+    _claimUid(desiredUid) {
+        const wanted = Number(desiredUid);
+        if (Number.isFinite(wanted) && wanted >= 1 && this.uidGenerator.occupy(wanted)) return wanted;
+        return this.uidGenerator.generate() || 0;
+    }
+
+    /**
+     * @private 把快照里的取值回写到刚建好的模型（属性按稳定键匹配）
+     * @param {BaseNodeModel} model
+     * @param {any} snap
+     */
+    _applySnapshot(model, snap) {
+        const nodeId = String(model.id);
+        const values = snap.props || {};
+
+        const restore = (/** @type {any[]} */ list) => {
+            (list || []).forEach((prop) => {
+                if (!prop || prop.id == null) return;
+                const key = propKey(prop.id, nodeId);
+                if (!Object.prototype.hasOwnProperty.call(values, key)) return;
+                prop.value = values[key];
+            });
+        };
+        restore(model.detailProperties);
+        restore(model.extendedProperties?.pool?.detailProperties);
+
+        // 可选属性：快照里处于「当前属性」的，从池里搬回来
+        const activeKeys = Array.isArray(snap.extendActive) ? snap.extendActive : [];
+        const pool = model instanceof NodeModel ? model.extendedProperties?.pool : null;
+        if (pool && activeKeys.length) {
+            activeKeys.slice().forEach((key) => {
+                const prop = (pool.properties || []).find((item) => propKey(item.id, nodeId) === key);
+                if (prop) model.appendExtendProp(prop.id);
+            });
+        }
+
+        // 模板里没有的额外词条（数据加载时外化的保留字段）：按快照重建
+        (snap.customs || []).forEach((item) => {
+            if (!item || item.value === undefined) return;
+            const prop = new BaseProp(`${nodeId}${item.key}`, String(item.label || '保留字段'), 'custom', item.value);
+            prop.parentNode = new WeakRef(model);
+            model.addProperty(prop);
+        });
+
+        if (snap.mode && model instanceof NodeModel && model.modeProperties && model.modeProperties[snap.mode]) {
+            model.currentMode = snap.mode;
+        }
+        if (snap.title != null) model.title = snap.title;
+        if (snap.label != null) model.label = snap.label;
+        if (snap.color) model.color = snap.color;
+        model.collapsed = !!snap.collapsed;
+        // 尺寸先按快照放上，挂载后 onMounted 会用真实 DOM 测量结果覆盖
+        if (Number.isFinite(snap.width) && snap.width > 0) model.width = snap.width;
+        if (Number.isFinite(snap.height) && snap.height > 0) model.height = snap.height;
+    }
+
     destroy() {
         this.clear();
         super.destroy();
     }
 }
+
+/**
+ * 属性 id → 与节点 id 无关的稳定键：属性 id 一律以所属节点的 id 开头
+ * （`12_text-3`、`12:input_port-0`、`12:exHub-mode_hub:xxx-0`），去掉前缀即可跨节点对齐。
+ *
+ * @param {any} propId
+ * @param {string} nodeId
+ * @returns {string}
+ */
+function propKey(propId, nodeId) {
+    const key = String(propId);
+    return key.startsWith(nodeId) ? key.slice(nodeId.length) : key;
+}
+
+/**
+ * 快照里「当前属性」里的可选属性键（排除「修改可选属性」按钮本身）
+ *
+ * @param {BaseNodeModel} node
+ * @returns {string[]}
+ */
+function activeExtendKeys(node) {
+    if (!(node instanceof NodeModel)) return [];
+    const hub = node.extendedProperties?.active;
+    if (!hub) return [];
+    const nodeId = String(node.id);
+    return (hub.properties || [])
+        .filter((prop) => prop && prop.type !== 'button' && prop.id != null)
+        .map((prop) => propKey(prop.id, nodeId));
+}
+
+/**
+ * 值深拷贝：快照要能 JSON 序列化；不可序列化的值原样带走，避免丢数据
+ *
+ * @param {any} value
+ * @returns {any}
+ */
+function cloneValue(value) {
+    if (value === null || typeof value !== 'object') return value;
+    try {
+        return JSON.parse(JSON.stringify(value));
+    } catch {
+        return value;
+    }
+}
+
+/**
+ * @typedef {{
+ *   nodes: Map<NodeID, BaseNodeModel>,
+ *   nodeViews: Map<NodeID, NodeView>,
+ *   listeners: Map<NodeID, Array<{ event: string, handler: EventListenerOrEventListenerObject }>>,
+ *   highlightCache: { highlightedNodes: Set<any>, dimmedConnections: Set<any> },
+ * }} NodePageState
+ */
 
 /** BitmapIdGenerator 类 - 基于位图的高效ID生成器 使用位图来跟踪ID的使用状态，提供高效的ID分配和释放操作 */
 class BitmapIdGenerator {

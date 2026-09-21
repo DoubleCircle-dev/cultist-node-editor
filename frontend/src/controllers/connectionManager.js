@@ -252,6 +252,9 @@ export class ConnectionManager extends IManager {
 
             this.connections.delete(connId);
 
+            // 端口空出来了 → 代理它的引用副本要重算端口（之前满了会被隐藏）
+            this._refreshRefsOfConnection(conn);
+
             // 连接被删除 → 解除文本同步监听
                         this._unbindValueSync(connId);
         }
@@ -577,6 +580,25 @@ export class ConnectionManager extends IManager {
                     this.targetNode = tempNode;
                     this.targetPort = tempPort;
                 }
+
+                // 引用副本 + 受保护来源：控制器判定后再建连接 ——
+                // 副本端口在这里被换回原节点端口（数据里不出现副本），
+                // 会动到 origin / 其他 mod JSON 的连接直接拒绝（不建线）。
+                const verdict = this.coreSpace.checkConnectionAllowed(
+                    this.startNode,
+                    this.startPort,
+                    this.targetNode,
+                    this.targetPort
+                );
+                if (!verdict.ok) {
+                    this.coreSpace.reportBlockedConnection(verdict.reason);
+                    return;
+                }
+                this.startNode = verdict.from.node;
+                this.startPort = verdict.from.port;
+                this.targetNode = verdict.to.node;
+                this.targetPort = verdict.to.port;
+
                 // 创建连接
                 this.createConnection(this.startNode.id, this.startPort.id, this.targetNode.id, this.targetPort.id);
             }
@@ -615,8 +637,25 @@ export class ConnectionManager extends IManager {
         // 创建连接线
         this.createConnectionLine(connection);
 
+        // 端口容量变了 → 代理它的引用副本要重算端口（满的单连接端口不再渲染）
+        this._refreshRefsOfConnection(connection);
+
         // 文本变量节点 ↔ 文本输入框：建立双向文本同步
         this._bindValueSync(connection);
+    }
+
+    /**
+     * @private 连线增删后，刷新两端节点对应的引用副本（端口「能不能连」与剩余容量有关）
+     *
+     * @param {{ fromNodeId?: any; toNodeId?: any } | null | undefined} connection - 连线模型
+     * @returns {void}
+     */
+    _refreshRefsOfConnection(connection) {
+        const core = this.coreSpace;
+        if (!connection || !core || typeof core._refreshRefsOfSource !== 'function') return;
+        [connection.fromNodeId, connection.toNodeId].forEach((id) => {
+            if (id != null) core._refreshRefsOfSource(String(id));
+        });
     }
 
     // 创建永久连接
@@ -1037,8 +1076,131 @@ export class ConnectionManager extends IManager {
         this.tempLine = null;
     }
 
+    // ========= 页面（工作区选项卡）支持 =========
+    // 与 NodeManager 同一套思路：切换页面时把连接线的索引与 DOM 一起交给页面记录
+    // （见 PageManager）；快照只用于存文件与刷新后恢复。
+
+    /**
+     * 把本页全部连接线 DOM 搬到目标容器（连接模型不动，只搬 svg path）。
+     *
+     * @param {HTMLElement | null} host - 目标容器：页面停放容器（切出）或 SVG 图层（切回）
+     */
+    moveLinesTo(host) {
+        if (!host) return;
+        this.connectionLines.forEach(({ svgLine }) => {
+            if (svgLine) host.appendChild(svgLine);
+        });
+    }
+
+    /**
+     * 摘出当前页面的连接索引（页面切换用，与 NodeManager.detachPageState 成对）
+     *
+     * @returns {ConnectionPageState}
+     */
+    detachPageState() {
+        /** @type {ConnectionPageState} */
+        const state = {
+            connections: this.connections,
+            fromNodeIndex: this.fromNodeIndex,
+            toNodeIndex: this.toNodeIndex,
+            connectionLines: this.connectionLines,
+            syncBindings: this.syncBindings,
+        };
+        this.connections = new Map();
+        this.fromNodeIndex = new Map();
+        this.toNodeIndex = new Map();
+        this.connectionLines = new Map();
+        this.syncBindings = new Map();
+        this._resetDragState();
+        this.startNode = null;
+        this.targetNode = null;
+        this.startPort = null;
+        this.targetPort = null;
+        return state;
+    }
+
+    /**
+     * 装回页面连接索引（state 为空表示「该页还没有连接」）
+     *
+     * @param {ConnectionPageState | null} state
+     */
+    attachPageState(state) {
+        if (!state) return;
+        this.connections = state.connections;
+        this.fromNodeIndex = state.fromNodeIndex;
+        this.toNodeIndex = state.toNodeIndex;
+        this.connectionLines = state.connectionLines;
+        this.syncBindings = state.syncBindings;
+    }
+
+    /**
+     * 连接快照（页面存文件用）：只存两端节点 id 与端口 id，恢复时按 id 找回来
+     *
+     * @returns {Array<{ from: { nodeId: string, portId: string }, to: { nodeId: string, portId: string } }>}
+     */
+    snapshotConnections() {
+        return Array.from(this.connections.values()).map((conn) => ({
+            from: { nodeId: String(conn.fromNodeId), portId: conn.startPort ? String(conn.startPort.id) : '' },
+            to: { nodeId: String(conn.toNodeId), portId: conn.targetPort ? String(conn.targetPort.id) : '' },
+        }));
+    }
+
+    /**
+     * 从快照恢复连接：调用前两端节点必须已恢复并挂载（端口 DOM 位置要真实）
+     *
+     * @param {Array<any>} links
+     * @returns {number} 恢复的连接数
+     */
+    restoreConnections(links) {
+        if (!Array.isArray(links) || !links.length) return 0;
+        const nodes = this.coreSpace.nodeManager.nodes;
+        let count = 0;
+
+        links.forEach((link) => {
+            if (!link || !link.from || !link.to) return;
+            const fromModel = nodes.get(String(link.from.nodeId));
+            const toModel = nodes.get(String(link.to.nodeId));
+            if (!fromModel || !toModel) return;
+
+            const fromPort = findPortById(fromModel, link.from.portId);
+            const toPort = findPortById(toModel, link.to.portId);
+            if (!fromPort || !toPort) return;
+
+            if (this.createProgrammaticConnection(fromModel, fromPort, toModel, toPort)) count++;
+        });
+
+        return count;
+    }
+
     destroy() {
         this.clear();
         super.destroy();
     }
 }
+
+/**
+ * 在节点的属性里按端口 id 找端口模型（输入/输出都找）
+ *
+ * @param {import('../models/nodeModels/baseNodeModel.js').BaseNodeModel} model
+ * @param {any} portId
+ * @returns {import('../models/propModels/portModel.js').PortModel | null}
+ */
+function findPortById(model, portId) {
+    if (!model || portId == null) return null;
+    const key = String(portId);
+    for (const prop of model.detailProperties || []) {
+        if (prop && prop.inputPort && String(prop.inputPort.id) === key) return prop.inputPort;
+        if (prop && prop.outputPort && String(prop.outputPort.id) === key) return prop.outputPort;
+    }
+    return null;
+}
+
+/**
+ * @typedef {{
+ *   connections: Map<string, ConnectionModel>,
+ *   fromNodeIndex: Map<string, ConnectionModel[]>,
+ *   toNodeIndex: Map<string, ConnectionModel[]>,
+ *   connectionLines: Map<string, { svgLine: SVGElement, listeners: Array<any> }>,
+ *   syncBindings: Map<string, Function>,
+ * }} ConnectionPageState
+ */
