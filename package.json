@@ -32,6 +32,14 @@
       {
         "command": "cultist-node-editor.openJsonPreview",
         "title": "预览单个 Mod JSON 文件为节点"
+      },
+      {
+        "command": "cultist-node-editor.reloadMod",
+        "title": "重载 Mod 数据（跳过缓存重新解析）"
+      },
+      {
+        "command": "cultist-node-editor.reloadOrigin",
+        "title": "重载游戏基础内容（跳过快照重新解析）"
       }
     ],
     "configuration": {
@@ -41,6 +49,47 @@
           "type": "boolean",
           "default": true,
           "description": "打开编辑器时预加载游戏基础内容（origin_resources）为可拖拽节点"
+        },
+        "cultistNodeEditor.quickLoad": {
+          "type": "boolean",
+          "default": true,
+          "description": "快速加载：优先使用已保存的中间态 JSON 缓存，不重复解析 mod 的 json；关闭后每次打开都从源文件重新解析"
+        },
+        "cultistNodeEditor.watchWorkspace": {
+          "type": "boolean",
+          "default": true,
+          "description": "监听整个 mod 工作区的 json 变化：改动后只重新解析变化的文件，并增量更新画布"
+        },
+        "cultistNodeEditor.watchDebounce": {
+          "type": "number",
+          "default": 300,
+          "description": "工作区监听的防抖时长（毫秒）：连续保存会触发多个事件，合并成一次重载"
+        },
+        "cultistNodeEditor.autoSaveDoc": {
+          "type": "boolean",
+          "default": true,
+          "description": "自动保存画布文档（节点位置 / 页面 / 视图状态）到扩展存储，下次打开编辑器自动恢复"
+        },
+        "cultistNodeEditor.snapshotPercent": {
+          "type": "number",
+          "default": 40,
+          "description": "工作区变化超过该百分比时，改为重发全量节点图而不是增量补丁（1-100）"
+        },
+        "cultistNodeEditor.fieldPlugins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "自定义字段插件（JSON 文件或目录，相对工作区或绝对路径）。插件为 mapping 的连接性白名单补充字段规则，例如：`{\"id\":\"my-fields\",\"categories\":{\"recipes\":{\"outputs\":[{\"from\":\"myReward\",\"extract\":\"map\"}]}}}`"
+        },
+        "cultistNodeEditor.disabledPlugins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "要禁用的字段插件 id（内置插件：`trm`、`import-extension`）"
         }
       }
     },
@@ -63,6 +112,7 @@
     "test:ui:file": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000",
     "test:ui:watch": "node --expose-gc node_modules/mocha/bin/mocha.js --timeout 20000 --watch \"test/ui/**/*.test.mjs\"",
     "test:ui:memory": "node --expose-gc test/ui/memory-check.mjs",
+    "gen:field-stats": "node frontend/scripts/gen-node-field-stats.mjs",
     "clean:vscode-test": "node -e \"require('node:fs').rmSync('.vscode-test', { recursive: true, force: true })\"",
     "package:vsix": "npx --yes @vscode/vsce@^3 package",
     "verify": "npm run lint && npm run test:ui && npm run build:ui",
