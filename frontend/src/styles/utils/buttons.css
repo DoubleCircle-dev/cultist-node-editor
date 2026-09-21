@@ -199,6 +199,154 @@
     line-height: 1.4;
 }
 
+/* 设置字段下方的补充说明（如「属性档位」各档含义） */
+.settings-hint {
+    color: var(--text-muted, #888888);
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 2px 0 4px;
+}
+.settings-hint:empty {
+    display: none;
+}
+
+/* 节点配色：设置弹窗里只放一条色板预览，点它打开独立的配色悬浮面板 */
+.palette-preview {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 2px;
+    width: 100%;
+    padding: 3px;
+    background: var(--bg-tertiary, #2d2d30);
+    border: 1px solid var(--border-color, #3e3e42);
+    border-radius: var(--radius-sm, 3px);
+    cursor: pointer;
+}
+
+.palette-preview:hover {
+    border-color: var(--accent-primary, #71c6ff);
+}
+
+.palette-chip {
+    display: block;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* 「节点配色」悬浮面板（子页面式浮层）：不放在设置弹窗里，
+   免得原生调色板弹层被窄 popover 的滚动容器裁剪 */
+.color-panel {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10500;
+    display: flex;
+    flex-direction: column;
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100vh - 96px);
+    padding: 10px 12px;
+    background: var(--bg-secondary, #252526);
+    border: 1px solid var(--border-color, #3e3e42);
+    border-radius: 8px;
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.4));
+    color: var(--text-primary, #cccccc);
+    font-size: 12px;
+}
+
+.color-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.color-panel-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.color-panel-close {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    font: inherit;
+    font-size: 11px;
+    line-height: 1;
+    color: var(--text-secondary, #a0a0a0);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm, 3px);
+    cursor: pointer;
+}
+
+.color-panel-close:hover {
+    color: var(--text-primary, #cccccc);
+    border-color: var(--border-color, #3e3e42);
+}
+
+.color-panel-body {
+    overflow-y: auto;
+}
+
+.color-panel-footer {
+    border-top: 1px solid var(--border-color, #3e3e42);
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+/* 配色面板里的每一行：原生色块 + 中文名 */
+.settings-color-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px 10px;
+}
+
+.settings-color-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 11px;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.settings-color-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-color-item input[type='color'] {
+    width: 24px;
+    height: 18px;
+    min-height: 18px;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid var(--border-color, #3e3e42);
+    border-radius: var(--radius-sm, 3px);
+    background: none;
+    cursor: pointer;
+}
+
+.settings-reset-btn {
+    margin-top: 6px;
+    width: 100%;
+    padding: 4px 8px;
+    font: inherit;
+    font-size: 11px;
+    color: var(--text-primary, #cccccc);
+    background: var(--bg-tertiary, #2d2d30);
+    border: 1px solid var(--border-color, #3e3e42);
+    border-radius: var(--radius-sm, 3px);
+    cursor: pointer;
+}
+
+.settings-reset-btn:hover {
+    border-color: var(--accent-primary, #71c6ff);
+    color: var(--accent-primary, #71c6ff);
+}
+
 /* 浅色主题仅覆盖编辑器基础色变量，组件继续沿用各自变量。 */
 :root[data-theme='light'] {
     --bg-primary: #f5f5f5;

@@ -30,7 +30,7 @@ let categoryIndex = null;
  *
  * @returns {Promise<{fileName: string, text: string} | null>} 未选择/取消时返回 null
  */
-function pickJsonFile() {
+export function pickJsonFile() {
     return new Promise((resolve) => {
         const input = document.createElement('input');
         input.type = 'file';

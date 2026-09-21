@@ -1,12 +1,16 @@
 import { ControllerCore } from './controllers/controllerCore.js';
 import { NodeModel } from './models/nodeModels/nodeModel.js';
 import { NodeTypeRegistry } from './types/nodeTypes.js';
+import { PROPERTY_LEVEL_OPTIONS } from './types/nodePropertyLevels.js';
+import { NODE_COLOR_ITEMS, getNodeColors, resetNodeColors, setFactoryNodeColors } from './types/nodeColors.js';
 import { NodeGenerator } from './generators/nodeGenerator.js';
 import { NodeView } from './views/nodeView.js';
+import { setHubLabelMode } from './generators/propViewGenerator.js';
 import { NodeSearchBox } from './views/nodeSearchBox.js';
+import { TabBar } from './views/tabBar.js';
 import { ModDataRegistry } from './modDataRegistry.js';
 import { graphToDataPool } from './dataContract.js';
-import { previewJsonInBrowser } from './devPreview.js';
+import { previewJsonInBrowser, pickJsonFile } from './devPreview.js';
 
 let vscode = null;
 
@@ -47,32 +51,131 @@ export function readMod() {
     }
 }
 
-/** 保存图表（经 VSCode 后端写入文件） */
+/** 保存图表：把全部页面（各自内容 + 视图状态）写进一个文件，宿主侧仍走 `saveGraph` */
 export function saveGraph() {
-    updateStatus('保存图表...');
-    if (!vscode) {
-        console.warn('非 VSCode 环境，无法保存图表');
-        return;
+    if (!core) {
+        updateStatus('❌ 编辑器尚未初始化');
+        return false;
     }
-    const graphData = {
-        nodes: (core ? core.nodes : []).map((node) => node.toJSON()),
-        connections: [],
-        metadata: {
-            created: new Date().toISOString(),
-            version: '1.0',
-        },
-    };
-    vscode.postMessage({ command: 'saveGraph', data: graphData });
+    const doc = core.pageManager.snapshot();
+    updateStatus(`保存 ${doc.pages.length} 个页面...`);
+    if (vscode) {
+        vscode.postMessage({ command: 'saveGraph', data: doc });
+        return true;
+    }
+    // 浏览器开发环境：没有宿主的保存对话框，退化成下载
+    const fileName = `node-pages-${timestamp()}.json`;
+    if (downloadJson(fileName, doc)) updateStatus(`✅ 已下载 ${fileName}（${doc.pages.length} 个页面）`);
+    return true;
 }
 
-/** 加载图表（从 JSON 文件恢复） */
+/**
+ * 把**某一个**页面单独存成文件（tab 栏「页面管理 → 💾」）。
+ * 存出来的文档与「💾 保存」同构，只是 pages 里只有一页，加载回来就是单页。
+ *
+ * @param {string} [pageId] - 缺省存当前页
+ * @returns {boolean}
+ */
+export function savePageToFile(pageId) {
+    if (!core) return false;
+    const page = core.pageManager.getPage(pageId || core.pageManager.activeId);
+    if (!page) return false;
+
+    const doc = core.pageManager.snapshot({ pageId: page.id });
+    const fileName = `${safeFileName(page.name)}-${timestamp()}.json`;
+    if (vscode) {
+        vscode.postMessage({ command: 'saveGraph', data: doc });
+        updateStatus(`保存页面「${page.name}」...`);
+        return true;
+    }
+    if (downloadJson(fileName, doc)) updateStatus(`✅ 已下载「${page.name}」到 ${fileName}`);
+    return true;
+}
+
+/** 加载页面文档（从 JSON 文件恢复） */
 export function loadGraph() {
-    updateStatus('加载图表...');
+    if (!core) return false;
+    updateStatus('加载页面...');
     if (vscode) {
         vscode.postMessage({ command: 'loadGraph' });
-    } else {
-        console.warn('非 VSCode 环境，无法加载图表');
+        return true;
     }
+    // 浏览器开发环境：用原生文件选择器顶替宿主的打开对话框
+    pickJsonFile().then((picked) => {
+        if (!picked) {
+            updateStatus('已取消加载');
+            return;
+        }
+        try {
+            importPages(JSON.parse(picked.text), picked.fileName);
+        } catch (error) {
+            console.error('[加载] JSON 解析失败:', error);
+            updateStatus(`❌ ${picked.fileName} 不是合法 JSON`);
+        }
+    });
+    return true;
+}
+
+/**
+ * 导入页面文档：宿主「📂 加载」回发、浏览器选文件、预览子页面都走这里
+ *
+ * @param {any} doc - `{ pages: [...] }` 或旧的 `{ nodes, connections }`
+ * @param {string} [label] - 来源描述（状态提示用）
+ * @returns {{ pages: number, nodes: number, connections: number } | null}
+ */
+function importPages(doc, label = '文件') {
+    if (!core) return null;
+    const stats = core.pageManager.importDocument(doc);
+    if (!stats.pages) {
+        updateStatus(`❌ ${label} 里没有可导入的页面`);
+        return stats;
+    }
+    updateStatus(`✅ 已从${label}导入 ${stats.pages} 个页面（${stats.nodes} 个节点 / ${stats.connections} 条连线）`);
+    return stats;
+}
+
+/**
+ * 浏览器开发环境的回退：把 JSON 存成下载文件（宿主里由扩展写文件）
+ *
+ * @param {string} fileName
+ * @param {any} data
+ * @returns {boolean}
+ */
+function downloadJson(fileName, data) {
+    try {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+        return true;
+    } catch (error) {
+        console.error('下载失败:', error);
+        updateStatus('❌ 下载失败');
+        return false;
+    }
+}
+
+/** @returns {string} `20260920-1530` 形式的文件名时间戳 */
+function timestamp() {
+    const d = new Date();
+    const pad = (/** @type {number} */ n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
+
+/**
+ * 页面名 → 安全的文件名（去掉路径分隔符与 Windows 不允许的字符）
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+function safeFileName(name) {
+    const cleaned = String(name || '')
+        .replace(/[\\/:*?"<>|]/g, '_')
+        .trim();
+    return cleaned || 'page';
 }
 
 /** 新建 mod 基础结构（synopsis.json + content/） */
@@ -101,19 +204,33 @@ export function openJsonPreview() {
  *
  * @param {string} label - 来源描述（用于状态提示）
  * @param {any} rawData - 后端回发的节点图（core 数据契约，见 dataContract.js）
+ * @param {{ layout?: boolean }} [options] - `layout: false` 时只登记数据池备用（不换页、不铺图、不连线），
+ * 供「添加节点 → 数据选择器」按需手动取用；缺省 true（读 mod / 预览 json 仍自动铺图）
  */
 /** 已预览过的命名空间集合（jsonPreviewLoaded 去重用，防止画布重复铺图） */
 const __previewedNamespaces = new Set();
 
-function registerData(label, rawData) {
+function registerData(label, rawData, options = {}) {
     // 后端回发的是节点图；前端内部仍按「类别 + 连接候选」消费，这里做一层适配
     const data = graphToDataPool(rawData);
     if (!data || !data.categories || typeof data.categories !== 'object') return;
+    const shouldLayout = options.layout !== false;
+    // 记下「当前编辑的命名空间」：origin / 其他 mod 的数据只读（引用副本的受保护来源判定用）
+    if (core && data.namespace) core.editingNamespace = data.namespace;
     // 防御：同一命名空间重复加载时先卸载旧数据，避免数据池累积（如重复读取 mod / 预览）
     if (data.namespace && ModDataRegistry.sources[data.namespace]) {
         ModDataRegistry.unregister(data.namespace);
     }
     const registered = ModDataRegistry.register(data);
+    // 只备数据（origin 预加载走这里）：画布与页面都不动，等用户在「添加节点」里按类别自取
+    if (!shouldLayout) {
+        updateStatus(`📦 ${label}：已备 ${registered} 条数据（未铺图）`);
+        console.log(`[数据池] ${label} 加载 ${registered} 条（来源: ${data.source}），仅备用未铺图`);
+        return;
+    }
+    // 铺图目标页面：当前页已经有内容就新开一页（读 mod / 预览 json 是换数据集，
+    // 不该和使用中的页面混在一起；页名用数据来源，tab 上就能看出这页是哪个 mod）
+    if (core) core.pageManager.pageForImport(label);
     // 加载后自动把数据转换为可查看的节点（铺到画布，受规模上限限制；超出保留在数据池）
     const laid = core ? core.autoLayoutLoadedData(data.namespace) : { count: 0, created: [] };
     const created = (laid && laid.count) || 0;
@@ -131,6 +248,33 @@ function registerData(label, rawData) {
             });
         });
     }
+    // 容器节点：把后端拆出来的内联子节点自动合并成容器（设置开关，默认关）
+    if (core) {
+        const containers = core.attachInlineContainers();
+        const restored = core.restoreContainers(); // 恢复上次的成员 / 收起态 / 转发端口
+        // 引用副本：恢复「哪个副本代理哪个原节点」（副本节点本身在页面快照里）
+        const refs = core.restoreRefNodes();
+        if (refs) console.log(`[引用副本] 恢复 ${refs} 个`);
+        if (containers.containers || restored) {
+            console.log(
+                `[容器节点] 自动合并 ${containers.containers} 个（成员 ${containers.members}），恢复 ${restored} 个`
+            );
+        }
+    }
+    // 额外解析（设置开关，默认关）：把 list / dict 字段解析成列表 / 字典变量节点并连线
+    if (core && core.setting.extraParseListVariables) {
+        const stats = core.attachVariableNodes();
+        if (stats.created || stats.skipped) {
+            console.log(`[额外解析] 生成 ${stats.created} 个变量节点（连线 ${stats.linked}，跳过 ${stats.skipped}）`);
+        }
+    }
+    // 悬空端口（设置开关，默认开）：画布上指向画布外的引用 → 只有端口的占位节点
+    if (core && core.setting.showDanglingPorts) {
+        const dangling = core.attachDanglingPorts();
+        if (dangling.created) {
+            console.log(`[悬空端口] 生成 ${dangling.created} 个（连线 ${dangling.linked}）`);
+        }
+    }
     updateStatus(`✅ ${label}：已加载 ${registered} 条数据，铺图 ${created} 个节点`);
     console.log(`[数据池] ${label} 加载 ${registered} 条（来源: ${data.source}），自动铺图 ${created} 个`);
 }
@@ -145,7 +289,9 @@ function handleVscodeMessage(event) {
             updateStatus(message.message || '已就绪');
             break;
         case 'originLoaded':
-            registerData('游戏基础内容', message.data);
+            // 游戏基础内容只进数据池备用（供「添加节点 → 数据选择器」按类别取用），
+            // 不自动铺图/换页：免得每次打开编辑器都被原版节点占满画布
+            registerData('游戏基础内容', message.data, { layout: false });
             break;
         case 'modLoaded': {
             //: 打印后端输出数据
@@ -175,7 +321,7 @@ function handleVscodeMessage(event) {
             updateStatus(`✅ 图表已保存到: ${message.path}`);
             break;
         case 'graphLoaded':
-            updateStatus(`✅ 图表已加载（${message.data ? message.data.nodes?.length || 0 : 0} 个节点）`);
+            importPages(message.data, '加载的文件');
             break;
         case 'error':
             updateStatus(`❌ ${message.message || '发生错误'}`);
@@ -247,6 +393,13 @@ export function openFilesPage() {}
 let settingsPopoverEl = null;
 let settingsOutsideHandler = null;
 
+/** 设置弹窗里的「节点配色」色板预览（面板里改色后同步刷新；弹窗关闭时置空） */
+let palettePreviewEl = null;
+
+/** 「节点配色」悬浮面板（子页面式浮层） */
+let colorPanelEl = null;
+let colorPanelKeyHandler = null;
+
 const SETTINGS_STORAGE_KEY = 'nodeEditor.settings';
 
 /** @param {string} key @param {any} value */
@@ -285,27 +438,208 @@ function applySetting(key, value) {
         document.documentElement.dataset.theme = String(value);
     } else if (key === 'language') {
         document.documentElement.lang = String(value);
+    } else if (key === 'propertyLevel') {
+        // 属性档位只影响此后新建节点：已有节点的属性不动（要换档请新建节点）
+        NodeTypeRegistry.setPropertyLevel(String(value));
+    } else if (key === 'refPropertyLayout') {
+        // 副本排布变了：重建所有引用副本（属性区 + 端口）
+        core.refreshAllRefs();
+    } else if (key === 'extraParseListVariables') {
+        // 开关即时生效：开启 → 解析当前画布；关闭 → 清掉自己生成的变量节点
+        if (value) core.attachVariableNodes();
+        else core.detachVariableNodes();
+    } else if (key === 'showDanglingPorts') {
+        // 同理：开启 → 建悬空端口；关闭 → 清掉它们
+        if (value) core.attachDanglingPorts();
+        else core.detachDanglingPorts();
+    } else if (key === 'inlineAutoMerge') {
+        // 开启：把后端拆出来的内联子节点合并成容器；关闭：把容器拆开
+        if (value) core.attachInlineContainers();
+        else core.detachContainers();
+    } else if (key === 'passthroughVariables' || key === 'passthroughListVariables') {
+        // 透传开关变了：重建各个容器的透传属性（代理属性同步跟着重新绑）
+        core.containerNodes.forEach((_record, containerId) => core._refreshContainerViews(containerId));
+    } else if (key === 'hubLabelMode') {
+        setHubLabelMode(String(value));
+        // 重新渲染容器，让标签在「标签栏 / 右下角图标」之间切过来
+        core.containerNodes.forEach((_record, containerId) => {
+            const view = core.nodeManager.nodeViews.get(String(containerId));
+            if (view && typeof view.redraw === 'function') view.redraw();
+        });
     }
 }
 
 /** 将保存的可视设置应用到当前页面 */
 function applySavedSettings() {
     if (!core || !core.setting) return;
-    ['theme', 'language', 'defaultZoom', 'animationSpeed', 'connectionStyle', 'gridSize', 'showGrid'].forEach((key) => applySetting(key, core.setting[key]));
+    [
+        'theme',
+        'language',
+        'defaultZoom',
+        'animationSpeed',
+        'connectionStyle',
+        'gridSize',
+        'showGrid',
+        'propertyLevel',
+        'refPropertyLayout',
+        'extraParseListVariables',
+        'showDanglingPorts',
+        'inlineAutoMerge',
+        'passthroughVariables',
+        'passthroughListVariables',
+        'hubLabelMode',
+    ].forEach((key) => applySetting(key, core.setting[key]));
 }
 
-/** 读取 config.json 中的设置默认值；已有本地用户设置时优先保留用户选择。 */
+/**
+ * 读取 config.json：快捷键/设置默认值 + 出厂节点配色
+ *
+ * 配色永远先应用（用户本地改过的项在配色表里优先），设置默认值仅在用户没存过设置时生效。
+ */
 async function loadConfigSettings() {
     try {
         const response = await fetch('./config.json');
         if (!response.ok) return;
         const config = await response.json();
-        if (!config || !config.settings || !core || core.hasSavedSettings) return;
+        if (!config) return;
+        // 出厂配色（config.json → nodeColors）：用户本地覆盖仍然优先
+        if (config.nodeColors && setFactoryNodeColors(config.nodeColors)) {
+            if (core) core.applyNodeColors();
+        }
+        if (!config.settings || !core || core.hasSavedSettings) return;
         Object.assign(core.setting, config.settings);
         applySavedSettings();
     } catch {
         // 浏览器离线或 Webview 资源加载失败时继续使用内置默认设置
     }
+}
+
+/**
+ * 刷新设置面板里「属性档位」的说明文字（跟着下拉框当前值走）
+ *
+ * @param {HTMLElement} popover - 设置弹窗根元素
+ */
+function updatePropertyLevelHint(popover) {
+    const hint = /** @type {HTMLElement | null} */ (popover.querySelector('[data-hint-for="propertyLevel"]'));
+    const select = /** @type {HTMLSelectElement | null} */ (popover.querySelector('[data-setting="propertyLevel"]'));
+    if (!hint || !select) return;
+    const option = PROPERTY_LEVEL_OPTIONS.find((item) => item.value === select.value);
+    hint.textContent = option ? option.description : '';
+}
+
+/** 设置里「节点配色」的色板预览（20 个小色块，点它打开配色面板） */
+function renderPaletteChips() {
+    const colors = getNodeColors();
+    return NODE_COLOR_ITEMS.map(
+        (item) => `<span class="palette-chip" data-chip="${item.key}" style="background: ${colors[item.key] || '#ffffff'}"></span>`
+    ).join('');
+}
+
+/** 刷新设置弹窗里的色板预览（面板里改完色后同步） */
+function updatePalettePreview() {
+    if (!palettePreviewEl) return;
+    const colors = getNodeColors();
+    palettePreviewEl.querySelectorAll('[data-chip]').forEach((/** @type {HTMLElement} */ chip) => {
+        const key = chip.dataset.chip;
+        if (key) chip.style.background = colors[key] || '#ffffff';
+    });
+}
+
+/**
+ * 接线设置弹窗里的色板预览：点一下打开「节点配色」悬浮面板
+ *
+ * @param {HTMLElement} popover - 设置弹窗根元素
+ */
+function initPalettePreview(popover) {
+    palettePreviewEl = /** @type {HTMLElement | null} */ (popover.querySelector('[data-open-colors]'));
+    palettePreviewEl?.addEventListener('click', () => openColorPanel());
+}
+
+/**
+ * 打开 / 切换「节点配色」悬浮面板（子页面式浮层）
+ *
+ * 配色放在自己的浮层里而不是设置弹窗内：设置弹窗是窄且可滚动的 popover，
+ * 原生调色板弹层在里面容易被裁剪/滚动顶掉，这里给它一个独立、不受裁剪的容器。
+ * 面板内容：20 行 `[原生色块][中文名]` + 「恢复默认配色」；✕ / Esc 关闭。
+ */
+export function openColorPanel() {
+    if (colorPanelEl) {
+        closeColorPanel();
+        return;
+    }
+    const panel = document.createElement('div');
+    panel.className = 'color-panel';
+    panel.innerHTML = `
+        <div class="color-panel-header">
+            <span class="color-panel-title">🎨 节点配色</span>
+            <button type="button" class="color-panel-close" data-close-colors title="关闭（Esc）">✕</button>
+        </div>
+        <div class="color-panel-body">
+            <div class="settings-color-grid">
+                ${NODE_COLOR_ITEMS.map(
+                    (item) =>
+                        `<div class="settings-color-item" title="--node-${item.key}"><input type="color" data-node-color="${item.key}" /><span>${item.label}</span></div>`
+                ).join('')}
+            </div>
+        </div>
+        <div class="color-panel-footer">
+            <div class="settings-hint">改完立即应用到画布上已有节点；选择记在本地</div>
+            <button type="button" class="settings-reset-btn" data-reset-colors>恢复默认配色</button>
+        </div>
+    `;
+    document.body.appendChild(panel);
+    panel.querySelector('[data-close-colors]')?.addEventListener('click', closeColorPanel);
+    colorPanelKeyHandler = (e) => {
+        if (e.key === 'Escape') closeColorPanel();
+    };
+    document.addEventListener('keydown', colorPanelKeyHandler);
+    initColorControls(panel);
+    colorPanelEl = panel;
+}
+
+/** 关闭「节点配色」悬浮面板 */
+function closeColorPanel() {
+    if (colorPanelKeyHandler) {
+        document.removeEventListener('keydown', colorPanelKeyHandler);
+        colorPanelKeyHandler = null;
+    }
+    if (colorPanelEl) {
+        colorPanelEl.remove();
+        colorPanelEl = null;
+    }
+    updatePalettePreview();
+}
+
+/**
+ * 接线配色面板里的色块：改色走 `NodeTypeRegistry.setNodeColor()`（改配色表 + 存本地），
+ * 再让画布上已有节点重绘。
+ *
+ * @param {HTMLElement} panel - 配色面板根元素
+ */
+function initColorControls(panel) {
+    const current = getNodeColors();
+    panel.querySelectorAll('[data-node-color]').forEach((/** @type {HTMLInputElement} */ input) => {
+        const key = input.dataset.nodeColor;
+        if (!key) return;
+        input.value = current[key] || '#ffffff';
+        input.addEventListener('change', () => {
+            if (!NodeTypeRegistry.setNodeColor(key, input.value)) input.value = getNodeColors()[key] || '#ffffff';
+            if (core) core.applyNodeColors();
+            updatePalettePreview();
+        });
+    });
+
+    const resetBtn = panel.querySelector('[data-reset-colors]');
+    resetBtn?.addEventListener('click', () => {
+        resetNodeColors();
+        const defaults = getNodeColors();
+        panel.querySelectorAll('[data-node-color]').forEach((/** @type {HTMLInputElement} */ input) => {
+            const key = input.dataset.nodeColor;
+            if (key) input.value = defaults[key] || '#ffffff';
+        });
+        if (core) core.applyNodeColors();
+        updatePalettePreview();
+    });
 }
 
 /** 关闭设置弹窗 */
@@ -314,6 +648,7 @@ function closeSettings() {
         settingsPopoverEl.remove();
         settingsPopoverEl = null;
     }
+    palettePreviewEl = null;
     if (settingsOutsideHandler) {
         document.removeEventListener('mousedown', settingsOutsideHandler, true);
         settingsOutsideHandler = null;
@@ -365,6 +700,27 @@ export function openSettings() {
             </label>
         </section>
         <section class="settings-section">
+            <div class="settings-section-title">节点</div>
+            <label class="settings-field">属性档位
+                <select data-setting="propertyLevel">${PROPERTY_LEVEL_OPTIONS.map((option) => `<option value="${option.value}">${option.label}</option>`).join('')}</select>
+            </label>
+            <div class="settings-hint" data-hint-for="propertyLevel"></div>
+            <label class="settings-option"><select data-setting="refPropertyLayout"><option value="copy">按原节点复制（默认）</option><option value="spread">端口集中到两侧</option></select><span class="settings-option-text"><span class="settings-option-name">引用副本属性区</span><span class="settings-option-desc">副本内部怎么摆：照原节点的样子复制（分组、端口位置都不变），或压平成只读值、把所有端口（含可变属性里的）收到左右两侧，布线时不用找</span></span></label>
+            <label class="settings-option"><input data-setting="extraParseListVariables" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">额外解析列表 / 字典变量</span><span class="settings-option-desc">导入数据时，把字段里的对象 / 对象数组额外解析成 table / list 变量节点（变量节点的字典 / 列表形态）并连线（默认关：节点数会明显增加）</span></span></label>
+            <label class="settings-option"><input data-setting="showDanglingPorts" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">显示悬空端口</span><span class="settings-option-desc">给指向画布外目标的引用建一个只有端口的占位节点（可看明细与跳转）</span></span></label>
+            <label class="settings-option"><input data-setting="inlineAutoMerge" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">自动合并内联子节点</span><span class="settings-option-desc">把后端拆出来的内联子节点（宿主 + 子节点）自动合并成一个容器节点（默认关：用右键「合并为容器节点」手动做）</span></span></label>
+            <label class="settings-option"><input data-setting="passthroughVariables" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">透传变量</span><span class="settings-option-desc">容器收起时，把成员的文本变量直接摆出来（可直接编辑，改的就是里面那个节点）</span></span></label>
+            <label class="settings-option"><input data-setting="passthroughListVariables" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">透传列表 / 字典变量</span><span class="settings-option-desc">容器收起时，把成员的 table / list 变量节点直接摆出来（同样可编辑）</span></span></label>
+            <label class="settings-option"><select data-setting="hubLabelMode"><option value="bar">标签栏（默认）</option><option value="corner">右下角图标</option></select><span class="settings-option-text"><span class="settings-option-name">Hub 标签样式</span><span class="settings-option-desc">容器透传属性的来源标签：放在 hub 上方的标签栏，或收到右下角图标里悬停看</span></span></label>
+        </section>
+        <section class="settings-section">
+            <div class="settings-section-title">节点配色</div>
+            <button type="button" class="palette-preview" data-open-colors title="点击打开配色面板">
+                ${renderPaletteChips()}
+            </button>
+            <div class="settings-hint">点击色板打开配色面板（原生调色板）；改完立即生效，选择记在本地</div>
+        </section>
+        <section class="settings-section">
             <div class="settings-section-title">编辑</div>
             <label class="settings-option"><input data-setting="realtimeTextSync" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">实时文本同步</span><span class="settings-option-desc">编辑文本输入框或文本变量节点时，每次键入立即同步到连接的文本节点</span></span></label>
             <label class="settings-option"><input data-setting="autoSave" type="checkbox" /><span class="settings-option-text"><span class="settings-option-name">自动保存</span></span></label>
@@ -379,7 +735,7 @@ export function openSettings() {
             </label>
         </section>
     `;
-    popover.querySelectorAll('[data-setting]').forEach((/** @type {HTMLElement} */ control) => {
+    popover.querySelectorAll('[data-setting]').forEach((/** @type {HTMLInputElement | HTMLSelectElement} */ control) => {
         const key = control.dataset.setting;
         if (!key || !core || !core.setting) return;
         if (control instanceof HTMLInputElement && control.type === 'checkbox') {
@@ -395,9 +751,12 @@ export function openSettings() {
                       ? Number(control.value)
                       : control.value;
             saveSetting(key, value);
+            if (key === 'propertyLevel') updatePropertyLevelHint(popover);
         });
     });
     document.body.appendChild(popover);
+    updatePropertyLevelHint(popover);
+    initPalettePreview(popover);
 
     // 定位在齿轮按钮正下方、右缘对齐
     const rect = btn ? btn.getBoundingClientRect() : { bottom: 48, right: 280 };
@@ -565,6 +924,27 @@ function initNodeSearchBox(coreInstance) {
     return nodeSearchBox;
 }
 
+/**
+ * 顶部页面（工作区）选项卡栏：新建 / 切换 / 改名 / 拖拽排序 / 关闭 / 逐页存成文件。
+ * 具体动作都在 views/tabBar.js 与 PageManager 里，这里只把「存文件」接到宿主（或浏览器下载）。
+ *
+ * @param {ControllerCore} coreInstance
+ */
+function initPageTabs(coreInstance) {
+    if (tabBar) return tabBar;
+    tabBar = new TabBar({
+        pageManager: coreInstance.pageManager,
+        onSavePage: (pageId) => savePageToFile(pageId),
+        onSaveAll: () => saveGraph(),
+        onStatus: (text) => updateStatus(text),
+    });
+    win.pageTabBar = tabBar;
+    return tabBar;
+}
+
+/** @type {TabBar | null} 页面选项卡栏（预览模式不建） */
+let tabBar = null;
+
 // 初始化函数
 function initWebview(callback) {
     console.log('初始化Webview');
@@ -593,11 +973,22 @@ function initWebview(callback) {
             applySavedSettings();
             loadConfigSettings();
 
+            // 状态栏消息（如悬空端口跳转的三态提示）：核心控制器只发事件，文案在这里落地
+            core.bus.on('status:message', (e) => {
+                const ce = /** @type {CustomEvent} */ (e);
+                if (ce && ce.detail && ce.detail.text) updateStatus(ce.detail.text);
+            });
+
+            // 通知后端 webview 已就绪（自定义编辑器「打开方式」依赖此信号发送预览数据）
             if (PREVIEW_MODE) {
                 // 预览仅查看：用 select 模式（点击节点可选中并拖动整理布局）；
                 // 注意不能用 drag 模式——nodeManager 在 drag 模式下对节点 mousedown 直接清选并 return，节点无法拖动。
                 core.canvasManager.setMode('select');
                 initNodeSearchBox(core);
+            } else {
+                // 编辑模式：挂上页面（工作区）选项卡栏，并打开「刷新后仍在」
+                initPageTabs(core);
+                core.pageManager.enablePersistence();
             }
 
             // 通知后端 webview 已就绪（自定义编辑器「打开方式」依赖此信号发送预览数据）
@@ -642,9 +1033,18 @@ win.addTestNode = addTestNode;
 
 win.readMod = readMod;
 win.saveGraph = saveGraph;
+win.savePageToFile = savePageToFile;
 win.loadGraph = loadGraph;
 win.newMod = newMod;
 win.openJsonPreview = openJsonPreview;
+
+// 页面（工作区）：功能与 tab 栏一致，供控制台 / 自定义按钮直接调
+win.newPage = () => tabBar?.newPage() ?? (core ? core.pageManager.createPage() : null);
+win.switchPage = (id) => core?.pageManager.switchTo(id);
+win.closePage = (id) => tabBar?.closePage(id) ?? core?.pageManager.closePage(id);
+win.renamePage = (id, name) => core?.pageManager.renamePage(id, name);
+win.listPages = () => (core ? core.pageManager.describe() : []);
+win.openPageManager = () => tabBar?.togglePanel(true);
 
 win.setScale = setScale;
 win.fitView = fitView;

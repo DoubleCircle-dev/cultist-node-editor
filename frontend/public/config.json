@@ -13,6 +13,9 @@
     { "id": "save", "key": "Ctrl+S", "action": "保存当前更改", "category": "文件", "editable": true },
     { "id": "find_node", "key": "Ctrl+F", "action": "搜索节点", "category": "搜索", "editable": true }
   ],
+  "nodeColors": {
+
+  },
   "settings": {
     "theme": "dark",
     "language": "zh-cn",
@@ -27,6 +30,7 @@
     "connectionStyle": "bezier",
     "showGrid": true,
     "showMiniMap": false,
+    "propertyLevel": "standard",
     "realtimeTextSync": false
   }
 }
